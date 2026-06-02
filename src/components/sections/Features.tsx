@@ -40,7 +40,7 @@ export function Features() {
               height={24}
               className="w-6 h-6 select-none flex-shrink-0"
             />
-            <h2 className="font-urbanist font-bold text-[20px] leading-[120%] tracking-[0%] text-[#424242] dark:text-white transition-colors duration-300 text-center whitespace-nowrap">
+            <h2 className="font-urbanist font-bold text-[21px] leading-[120%] tracking-[0%] text-[#212121] dark:text-white transition-colors duration-300 text-center whitespace-nowrap">
               Upgrade To Get Exclusive Access.
             </h2>
           </div>
@@ -79,14 +79,14 @@ export function Features() {
 
             {/* Content Container - 20px padding left and right */}
             <div className="relative z-10 w-full px-5 py-8 sm:py-10 md:py-12 lg:py-16">
-              {/* Heading with Star Icon */}
+              {/* Heading with Star Icon - Star on LEFT side */}
               <div className="flex items-start gap-3 mb-8 sm:mb-10 md:mb-12">
                 <Image
                   src={images.starIcon}
                   alt="Star Icon"
                   width={24}
                   height={24}
-                  className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 select-none flex-shrink-0 mt-1"
+                  className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 select-none flex-shrink-0 mt-1 order-first"
                 />
                 <h2 className="font-urbanist font-bold text-[clamp(1.75rem,5vw,2.75rem)] leading-[120%] tracking-[0%] text-[#424242] dark:text-white transition-colors duration-300">
                   Upgrade To Get Exclusive Access.

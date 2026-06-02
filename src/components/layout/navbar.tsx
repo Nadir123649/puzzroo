@@ -10,8 +10,8 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <header className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative">
-      <div className="w-full px-[clamp(16px,4vw,80px)] py-[22px]">
+    <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative z-50 shadow-sm">
+      <div className="w-full px-[clamp(16px,4vw,80px)] py-[8px] md:py-[22px]">
         <div className="w-full flex items-center justify-between h-[48px]">
 
           {/* LEFT: Logo + Brand */}
@@ -68,10 +68,10 @@ export function Navbar() {
           </div>
 
           {/* RIGHT: Mobile Actions - Theme + Hamburger */}
-          <div className="flex md:hidden items-center gap-3">
+          <div className="flex md:hidden items-center">
             <button
               onClick={toggleTheme}
-              className="flex items-center gap-2 h-[38px] px-3 rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
+              className="flex items-center gap-1.5 h-[38px] px-2 rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
               aria-label="Toggle theme"
               suppressHydrationWarning
             >
@@ -99,10 +99,10 @@ export function Navbar() {
               className="p-2 rounded-lg"
               aria-label="Toggle menu"
             >
-              <div className="w-6 h-5 flex flex-col justify-between">
-                <span className={`w-full h-0.5 bg-[#181A20] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-                <span className={`w-full h-0.5 bg-[#181A20] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
-                <span className={`w-full h-0.5 bg-[#181A20] dark:bg-white transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+              <div className="w-5 h-4 flex flex-col justify-between">
+                <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+                <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
+                <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
               </div>
             </button>
           </div>

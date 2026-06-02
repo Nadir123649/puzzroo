@@ -101,17 +101,17 @@ function FAQItemComponent({ faq, isOpen, onToggle, onKeyDown }: FAQItemComponent
       <div
         id={`faq-answer-${faq.id}`}
         className={cn(
-          'overflow-hidden transition-all duration-300 ease-in-out',
-          isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+          'grid transition-all duration-500 ease-in-out',
+          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
         )}
       >
-        {isOpen && (
+        <div className="overflow-hidden">
           <div className="mt-6 pt-6 border-t border-[#35383F]">
             <p className="font-urbanist font-medium text-[14px] md:text-[clamp(1rem,2.5vw,1.125rem)] leading-[140%] tracking-[0.2px] text-[#424242] dark:text-[#E0E0E0] transition-colors duration-300">
               {faq.answer}
             </p>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

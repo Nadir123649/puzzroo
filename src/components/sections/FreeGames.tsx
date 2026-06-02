@@ -20,6 +20,7 @@ const gamesData: GameCard[] = [
     title: 'NUMBER NINJA',
     status: 'Unplayed',
     image: images.gameCards.numberNinja,
+    imageLight: images.gameCards.numberNinjaWhite,
     imageAlt: 'Number Ninja Game',
   },
   {
@@ -109,9 +110,7 @@ function GameCardComponent({ game }: GameCardComponentProps) {
   const currentImage = theme === 'light' && game.imageLight ? game.imageLight : game.image
   
   return (
-    <div
-      className="flex flex-col bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[20px] lg:p-[30.78px] gap-[12px] md:gap-[20px] lg:gap-[30.78px] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group min-h-[235px] md:min-h-auto"
-    >
+    <div className="flex flex-col bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[20px] lg:p-[30.78px] gap-[12px] md:gap-[20px] lg:gap-[30.78px] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group md:min-h-auto">
       {/* Game Image - Fluid and responsive */}
       <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F0EDFF] dark:bg-[#1F222A]">
         <Image
@@ -120,41 +119,23 @@ function GameCardComponent({ game }: GameCardComponentProps) {
           width={0}
           height={0}
           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="w-full h-full object-cover select-none group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover select-none"
         />
       </div>
 
       {/* Text Content */}
-      <div className="flex flex-col gap-[10px] md:gap-[15px] lg:gap-[20.52px]">
+      <div className="flex flex-col gap-[10px] md:gap-[15px] lg:gap-[20.52px] md:flex-1">
         <div className="flex items-center justify-between">
           <h3 className="font-urbanist font-bold text-[9px] md:text-[clamp(1rem,3vw,1.28rem)] leading-[120%] text-[#212121] dark:text-[#FAFAFA]">
             {game.title}
           </h3>
-          {/* Mobile: Cross Icon for Cross Word, Text for others */}
-          {game.id === 'cross-word' ? (
-            <Image
-              src={images.gameCards.crossWordIcon}
-              alt="Cross Word Icon"
-              width={12}
-              height={12}
-              className="w-3 h-3 md:hidden"
-            />
-          ) : (
-            <span className="font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#212121] dark:text-[#FAFAFA]">
-              {game.status}
-            </span>
-          )}
-          {/* Desktop: Always show status text */}
-          <span className="hidden md:inline font-urbanist font-semibold text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#212121] dark:text-[#FAFAFA]">
+          <span className="font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#212121] dark:text-[#FAFAFA]">
             {game.status}
           </span>
         </div>
 
-        {/* Play Now Button */}
-        <button
-          className="w-full md:w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-[2px] md:rounded-[4px] border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0"
-          aria-label={`Play ${game.title}`}
-        >
+        {/* Play Now Button - with margin-top auto only on desktop to push to bottom */}
+        <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-[2px] md:rounded-[4px] border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0 md:mt-auto" aria-label={`Play ${game.title}`}>
           Play Now
         </button>
       </div>

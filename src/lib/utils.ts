@@ -49,11 +49,12 @@ export const images = {
   // Feature Section
   featureBackground: '/feature-background.svg',
   featureStars: '/feature-right.svg',
-  featureMobile: '/feature-mobile.svg',
+  featureMobile: '/feature-mobile.png',
 
   // Game Cards
   gameCards: {
     numberNinja: '/number-ninja.svg',
+    numberNinjaWhite: '/number-ninja-white.svg',
     crossWord: '/cross-world.svg',
     crossWordIcon: '/cross-icon.svg',
     sudoku: '/soduko.svg',
