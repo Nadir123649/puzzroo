@@ -36,7 +36,7 @@ export function GameInfo({ name, about, howToPlay, bulletPoints, keyboardControl
             </p>
 
             {/* Bullet Points Container */}
-            <div className="w-full max-w-[622px] rounded-[4px] bg-[var(--color-bg-tertiary)] dark:bg-[#1F222A] p-5 md:pl-[30px] md:pr-[30px] md:py-[20px] flex flex-col gap-3 transition-colors duration-300">
+            <div className="w-full max-w-[622px] rounded-[4px] bg-[var(--color-bg-tertiary)] dark:bg-[#1F222A] p-5 md:pr-5 md:pr-5 md:py-[20px] flex flex-col gap-3 transition-colors duration-300">
               {bulletPoints.map((point, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <span className="text-[#616161] dark:text-[var(--color-light)] flex-shrink-0">•</span>

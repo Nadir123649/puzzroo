@@ -8,7 +8,7 @@ import { FAQ } from "@/components/sections/FAQ";
 export default function Home() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-      <div className="w-full max-w-[1380px] mx-auto">
+      <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col">
         <Navbar />
         <main className="flex-grow flex flex-col justify-start pb-12">
           <Hero />
@@ -18,8 +18,8 @@ export default function Home() {
           </div>
           <FAQ />
         </main>
-        <Footer />
       </div>
+      <Footer />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { DifficultyTabs } from './DifficultyTabs'
 import { useTheme } from '@/hooks/use-theme'
 
@@ -16,6 +17,10 @@ export function GameHero({ name, image, imageLight, difficulties }: GameHeroProp
   const { theme } = useTheme()
   
   const currentImage = theme === 'light' && imageLight ? imageLight : image
+  
+  // Check if this is Sudoku to link to the actual game page
+  const isSudoku = name.toLowerCase() === 'sudoku'
+  const playUrl = isSudoku ? '/sudoku' : '#'
 
   return (
     <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-12 md:py-16">
@@ -42,10 +47,20 @@ export function GameHero({ name, image, imageLight, difficulties }: GameHeroProp
           <DifficultyTabs difficulties={difficulties} />
 
           {/* Play Button with Icon */}
-          <button className="w-full max-w-[382px] h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95 px-4 flex items-center justify-center gap-2">
-            <span>Play</span>
-            <span className="text-white text-[10px] w-[10px] h-[10px] flex items-center justify-center">▶</span>
-          </button>
+          {isSudoku ? (
+            <Link 
+              href={playUrl}
+              className="w-full max-w-[382px] h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95 px-4 flex items-center justify-center gap-2"
+            >
+              <span>Play</span>
+              <span className="text-white text-[10px] w-[10px] h-[10px] flex items-center justify-center">▶</span>
+            </Link>
+          ) : (
+            <button className="w-full max-w-[382px] h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95 px-4 flex items-center justify-center gap-2">
+              <span>Play</span>
+              <span className="text-white text-[10px] w-[10px] h-[10px] flex items-center justify-center">▶</span>
+            </button>
+          )}
 
         </div>
       </div>
