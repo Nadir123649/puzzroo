@@ -5,12 +5,34 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Brand Colors */
+  --color-primary: #6949FF;
+  --color-primary-hover: #5536E6;
+  
+  /* Text Colors */
+  --color-heading: #212121;
+  --color-body: #424242;
+  --color-light: #FAFAFA;
+  
+  /* Background Colors */
+  --color-bg-secondary: #F0EDFF;
+  --color-bg-tertiary: #F5F5F5;
+  
+  /* Border Colors */
+  --color-border: #35383F;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    
+    /* Dark Mode Overrides */
+    --color-heading: #FFFFFF;
+    --color-body: #E0E0E0;
+    --color-bg-secondary: #1F222A;
+    --color-bg-tertiary: #1F222A;
   }
 }
 

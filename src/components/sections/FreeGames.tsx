@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { images } from '@/lib/utils'
 import { useTheme } from '@/hooks/use-theme'
 
@@ -24,7 +25,7 @@ const gamesData: GameCard[] = [
     imageAlt: 'Number Ninja Game',
   },
   {
-    id: 'cross-word',
+    id: 'crossword',
     title: 'CROSS WORD',
     status: 'Unplayed',
     image: images.gameCards.crossWord,
@@ -135,9 +136,11 @@ function GameCardComponent({ game }: GameCardComponentProps) {
         </div>
 
         {/* Play Now Button - with margin-top auto only on desktop to push to bottom */}
-        <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-[2px] md:rounded-[4px] border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0 md:mt-auto" aria-label={`Play ${game.title}`}>
-          Play Now
-        </button>
+        <Link href={`/game/${game.id}`} className="w-full">
+          <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-[2px] md:rounded-[4px] border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0 md:mt-auto" aria-label={`Play ${game.title}`}>
+            Play Now
+          </button>
+        </Link>
       </div>
     </div>
   )

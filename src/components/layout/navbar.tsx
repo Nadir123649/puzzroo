@@ -10,7 +10,7 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative z-50 shadow-sm">
+    <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative z-50">
       <div className="w-full px-[clamp(16px,4vw,80px)] py-[8px] md:py-[22px]">
         <div className="w-full flex items-center justify-between h-[48px]">
 
@@ -47,13 +47,6 @@ export function Navbar() {
               aria-label="Toggle theme"
               suppressHydrationWarning
             >
-              <span
-                className="text-[16px] font-semibold font-urbanist text-[#181A20] dark:text-white transition-colors duration-300"
-                suppressHydrationWarning
-              >
-                {mounted ? (theme === 'dark' ? 'Dark Mode' : 'Light Mode') : 'Dark Mode'}
-              </span>
-
               <Image
                 src={images.darkIcon}
                 alt="Theme icon"
@@ -75,13 +68,6 @@ export function Navbar() {
               aria-label="Toggle theme"
               suppressHydrationWarning
             >
-              <span
-                className="text-[14px] font-semibold font-urbanist text-[#181A20] dark:text-white transition-colors duration-300"
-                suppressHydrationWarning
-              >
-                {mounted ? (theme === 'dark' ? 'Dark Mode' : 'Light Mode') : 'Dark Mode'}
-              </span>
-
               <Image
                 src={images.darkIcon}
                 alt="Theme icon"
