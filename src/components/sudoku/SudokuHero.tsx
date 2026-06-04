@@ -5,8 +5,8 @@ import Image from 'next/image'
 
 export function SudokuHero() {
   return (
-    <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-12 md:py-16">
-      <div className="w-full px-[clamp(16px,4vw,80px)]">
+    <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-[30px] md:py-[30px]">
+      <div className="w-full px-[20px]">
         <div className="flex flex-col items-center gap-8 md:gap-10">
           
           {/* Sudoku Image with background */}

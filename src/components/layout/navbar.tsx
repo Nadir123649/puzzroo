@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useTheme } from '../../hooks/use-theme'
 import { images } from '@/lib/utils'
 
@@ -11,23 +12,25 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative z-50">
-      <div className="w-full px-[clamp(16px,4vw,80px)] py-[8px] md:py-[22px]">
+      <div className="w-full px-[20px] py-[8px] md:py-[22px]">
         <div className="w-full flex items-center justify-between h-[48px]">
 
           {/* LEFT: Logo + Brand */}
           <div className="flex items-center gap-[clamp(8px,1vw,12px)] select-none">
-            <Image
-              src={images.logo}
-              alt="Puzzroo Logo"
-              width={32}
-              height={32}
-              className="w-6 h-6 md:w-8 md:h-8 rounded-lg"
-              priority
-            />
+            <Link href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] cursor-pointer">
+              <Image
+                src={images.logo}
+                alt="Puzzroo Logo"
+                width={32}
+                height={32}
+                className="w-6 h-6 md:w-8 md:h-8 rounded-lg"
+                priority
+              />
 
-            <span className="font-urbanist text-[24px] font-extrabold text-[clamp(20px,2.5vw,40px)] tracking-tight text-[#181A20] dark:text-white transition-colors duration-300">
-              Puzzroo
-            </span>
+              <span className="font-urbanist text-[24px] font-extrabold text-[clamp(20px,2.5vw,40px)] tracking-tight text-[#181A20] dark:text-white transition-colors duration-300">
+                Puzzroo
+              </span>
+            </Link>
           </div>
 
           {/* RIGHT: Desktop Actions */}
@@ -43,7 +46,7 @@ export function Navbar() {
 
             <button
               onClick={toggleTheme}
-              className="flex items-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
+              className="flex items-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-200 active:scale-95 "
               aria-label="Toggle theme"
               suppressHydrationWarning
             >
@@ -56,12 +59,15 @@ export function Navbar() {
                 className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
                   }`}
               />
+              <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
+                {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+              </span>
             </button>
 
           </div>
 
           {/* RIGHT: Mobile Actions - Theme + Hamburger */}
-          <div className="flex md:hidden items-center">
+          <div className="flex md:hidden items-center ml-[20px] gap-1">
             <button
               onClick={toggleTheme}
               className="flex items-center gap-1.5 h-[38px] px-2 rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"

@@ -68,7 +68,7 @@ export function FreeGames() {
   id="free-games"
   className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-8 sm:py-10 md:py-8 lg:py-14 "
 >
-  <div className="w-full px-[clamp(16px,4vw,80px)]">
+  <div className="w-full px-[20px]">
     <div className="flex flex-col gap-7">
 
       {/* Heading */}

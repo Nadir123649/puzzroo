@@ -25,7 +25,7 @@ export function FAQ() {
       id="faq"
       className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-4 md:py-0 lg:py-14 md:pb-3"
     >
-      <div className="w-full px-[clamp(16px,4vw,64px)]">
+      <div className="w-full px-[20px]">
         <div className="flex flex-col gap-7">
           {/* FAQ Header */}
           <div className="w-full flex items-center gap-3">

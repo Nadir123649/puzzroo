@@ -8,7 +8,7 @@ export function Footer() {
 
   return (
     <footer className="w-full bg-[#F0EDFF] dark:bg-[#1F222A] transition-colors duration-300">
-      <div className="w-full px-[clamp(16px,4vw,80px)]">
+      <div className="w-full max-w-[1380px] mx-auto px-[20px]">
         <div className="flex flex-row items-center justify-between gap-4 py-5 min-h-[54px]">
           {/* Left Side: Copyright */}
           <div className="flex items-center">

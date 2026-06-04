@@ -10,7 +10,7 @@ export function Hero() {
       id="hero"
       className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300"
     >
-      <div className="w-full px-[clamp(16px,4vw,80px)]">
+      <div className="w-full px-[20px]">
         {/* Desktop Hero Image */}
         <div className="hidden md:block relative w-full aspect-[1322/352] overflow-hidden rounded-xl sm:rounded-2xl md:rounded-[12px] shadow-lg shadow-purple-500/5 dark:shadow-none hover:shadow-xl hover:shadow-purple-500/10 dark:hover:shadow-none transition-all duration-300">
           <Image

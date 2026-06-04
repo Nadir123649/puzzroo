@@ -1,16 +1,33 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import type { Difficulty } from '@/data/sudoku/types'
 
 interface DifficultyTabsProps {
   difficulties: string[]
+  selectedDifficulty?: Difficulty
+  onDifficultyChange?: (difficulty: Difficulty) => void
 }
 
-export function DifficultyTabs({ difficulties }: DifficultyTabsProps) {
-  const [selected, setSelected] = useState(0)
+export function DifficultyTabs({ 
+  difficulties, 
+  selectedDifficulty,
+  onDifficultyChange 
+}: DifficultyTabsProps) {
+  const modes = difficulties.slice(0, 3)
+  
+  // Find initial selected index based on selectedDifficulty
+  const getInitialIndex = () => {
+    if (!selectedDifficulty) return 0
+    const index = modes.findIndex(
+      (d) => d.toLowerCase() === selectedDifficulty.toLowerCase()
+    )
+    return index >= 0 ? index : 0
+  }
+  
+  const [selected, setSelected] = useState(getInitialIndex)
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 84 })
   const buttonsRef = useRef<(HTMLButtonElement | null)[]>([])
-  const modes = difficulties.slice(0, 3)
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -35,6 +52,14 @@ export function DifficultyTabs({ difficulties }: DifficultyTabsProps) {
     return () => window.removeEventListener('resize', updateIndicator)
   }, [selected])
 
+  const handleClick = (index: number) => {
+    setSelected(index)
+    if (onDifficultyChange) {
+      const difficulty = modes[index].toLowerCase() as Difficulty
+      onDifficultyChange(difficulty)
+    }
+  }
+
   return (
     <div className="flex items-center justify-center gap-4">
       <span className="font-urbanist font-bold text-[16px] leading-[140%] tracking-[0.2px] text-[#424242] dark:text-[var(--color-light)]">
@@ -47,7 +72,7 @@ export function DifficultyTabs({ difficulties }: DifficultyTabsProps) {
             ref={(el) => {
               buttonsRef.current[index] = el
             }}
-            onClick={() => setSelected(index)}
+            onClick={() => handleClick(index)}
             className="relative flex flex-col items-center gap-2 group z-10"
           >
             <span

@@ -28,7 +28,7 @@ export function Features() {
       id="features"
       className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-4 md:py-4 lg:py-8 "
     >
-      <div className="w-full px-[clamp(16px,4vw,80px)]">
+      <div className="w-full px-[20px]">
         {/* MOBILE LAYOUT - Completely Different */}
         <div className="md:hidden flex flex-col gap-7">
           {/* Mobile: Star Icon + Heading (Center-aligned) */}
