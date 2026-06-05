@@ -45,8 +45,8 @@ export function SudokuGame() {
 
   const handleNewGame = async () => {
     setIsResetting(true)
-    // Show loading for 2-3 seconds
-    await new Promise(resolve => setTimeout(resolve, 2500))
+    // Show loading for 2 seconds
+    await new Promise(resolve => setTimeout(resolve, 2000))
     resetBoard()
     setIsResetting(false)
   }
