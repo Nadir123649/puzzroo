@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
@@ -30,6 +30,7 @@ export function SudokuGame() {
     isWinAnimating,
     availableHints,
     scoreFeedbacks,
+    difficulty,
     selectCell,
     selectNumber,
     eraseCell,
@@ -38,6 +39,11 @@ export function SudokuGame() {
     requestHint,
     removeScoreFeedback,
   } = useSudoku()
+
+  // Update URL when difficulty changes
+  useEffect(() => {
+    router.replace(`/sudoku?difficulty=${difficulty}`, { scroll: false })
+  }, [difficulty, router])
 
   const handleBackToGames = () => {
     router.push('/game/sudoku')
@@ -55,7 +61,7 @@ export function SudokuGame() {
   return (
     <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative">
       <div className="w-full px-[20px] flex justify-center">
-        <div className="w-full max-w-[717.5px] flex flex-col gap-[30px] pb-0 md:pb-[50px]">
+        <div className="w-full max-w-[717.5px] flex flex-col gap-[15px] pb-0 md:pb-[50px]">
           
           {/* Desktop Layout */}
           <div className="hidden md:flex gap-[30px] justify-center items-start">

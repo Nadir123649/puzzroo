@@ -11,13 +11,13 @@ export default function TermsAndConditionsPage() {
       <main className="flex-1 w-full">
         <div className="w-full max-w-[1380px] mx-auto px-[20px] py-[60px] md:py-[100px]">
           <div className="max-w-[900px] mx-auto">
-            <h1 className="font-urbanist font-bold text-[32px] md:text-[48px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[24px] md:mb-[32px] text-center">
+            <h1 className="font-urbanist font-bold text-[32px] md:text-[48px] leading-[120%] text-[#6949FF] mb-[24px] md:mb-[32px] text-center">
               Terms and Conditions
             </h1>
             
             <div className="space-y-[32px]">
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Agreement to Terms
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -26,7 +26,7 @@ export default function TermsAndConditionsPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Use License
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD] mb-[12px]">
@@ -42,7 +42,7 @@ export default function TermsAndConditionsPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   User Accounts
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -51,7 +51,7 @@ export default function TermsAndConditionsPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Intellectual Property
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -60,7 +60,7 @@ export default function TermsAndConditionsPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Game Rules and Fair Play
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD] mb-[12px]">
@@ -75,7 +75,7 @@ export default function TermsAndConditionsPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Disclaimer
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -84,7 +84,7 @@ export default function TermsAndConditionsPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Limitations
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -93,7 +93,7 @@ export default function TermsAndConditionsPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Modifications
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -102,7 +102,7 @@ export default function TermsAndConditionsPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Governing Law
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -111,7 +111,7 @@ export default function TermsAndConditionsPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Contact Information
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -133,3 +133,4 @@ export default function TermsAndConditionsPage() {
     </div>
   )
 }
+

@@ -162,6 +162,7 @@ export function Features() {
                       height={0}
                       sizes="(max-width: 1024px) 100vw, 359px"
                       className="w-full h-auto object-cover"
+                      style={{ height: 'auto' }}
                     />
                   </div>
                 </div>

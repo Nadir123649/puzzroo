@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { images } from '@/lib/utils'
@@ -62,7 +62,36 @@ const gamesData: GameCard[] = [
   },
 ]
 
+// Helper functions for localStorage
+const getPlayedGames = (): Set<string> => {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    const played = localStorage.getItem('puzzroo_played_games')
+    return played ? new Set(JSON.parse(played)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+export const markGameAsPlayed = (gameId: string): void => {
+  if (typeof window === 'undefined') return
+  try {
+    const playedGames = getPlayedGames()
+    playedGames.add(gameId)
+    localStorage.setItem('puzzroo_played_games', JSON.stringify([...playedGames]))
+  } catch (error) {
+    console.error('Failed to mark game as played:', error)
+  }
+}
+
 export function FreeGames() {
+  const [playedGames, setPlayedGames] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    // Load played games from localStorage
+    setPlayedGames(getPlayedGames())
+  }, [])
+
   return (
    <section
   id="free-games"
@@ -90,7 +119,11 @@ export function FreeGames() {
       <div className="w-full">
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 md:gap-7 lg:gap-[30px]">
           {gamesData.map((game) => (
-            <GameCardComponent key={game.id} game={game} />
+            <GameCardComponent 
+              key={game.id} 
+              game={game} 
+              isPlayed={playedGames.has(game.id)}
+            />
           ))}
         </div>
       </div>
@@ -103,12 +136,14 @@ export function FreeGames() {
 
 interface GameCardComponentProps {
   game: GameCard
+  isPlayed: boolean
 }
 
-function GameCardComponent({ game }: GameCardComponentProps) {
+function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
   const { theme } = useTheme()
   
   const currentImage = theme === 'light' && game.imageLight ? game.imageLight : game.image
+  const displayStatus = isPlayed ? 'Played' : game.status
   
   return (
     <div className="flex flex-col bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[20px] lg:p-[30.78px] gap-[12px] md:gap-[20px] lg:gap-[30.78px] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group md:min-h-auto">
@@ -130,15 +165,17 @@ function GameCardComponent({ game }: GameCardComponentProps) {
           <h3 className="font-urbanist font-bold text-[9px] md:text-[clamp(1rem,3vw,1.28rem)] leading-[120%] text-[#212121] dark:text-[#FAFAFA]">
             {game.title}
           </h3>
-          <span className="font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#212121] dark:text-[#FAFAFA]">
-            {game.status}
+          <span className={`font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] ${
+            isPlayed ? 'text-[#22C55E]' : 'text-[#212121] dark:text-[#FAFAFA]'
+          }`}>
+            {displayStatus}
           </span>
         </div>
 
         {/* Play Now Button - with margin-top auto only on desktop to push to bottom */}
         <Link href={`/game/${game.id}`} className="w-full">
           <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-[2px] md:rounded-[4px] border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0 md:mt-auto" aria-label={`Play ${game.title}`}>
-            Play Now
+            {isPlayed ? 'Play Again' : 'Play Now'}
           </button>
         </Link>
       </div>

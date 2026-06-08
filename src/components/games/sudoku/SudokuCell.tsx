@@ -50,7 +50,7 @@ export function SudokuCell({
 
   const textColorClass = cell.fixed
     ? 'text-[#C3B6FF] dark:text-[#C3B6FF]'
-    : 'text-[#424242] dark:text-[#F5F5F5]'
+    : 'text-[#212121] dark:text-[#FAFAFA]'
 
   const textSizeClass = isMobile ? 'text-[24px]' : 'text-[36.4px]'
   const borderRightClass = isRightBorder ? 'border-r-[3.03px]' : ''

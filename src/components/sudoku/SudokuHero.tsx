@@ -19,19 +19,19 @@ export function SudokuHero() {
 
   return (
     <>
-      <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-[30px] md:py-[30px]">
+      <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-[10px] md:py-[15px]">
         <div className="w-full px-[20px]">
           {/* Back Arrow */}
           <button
             onClick={handleBackClick}
             disabled={isNavigating}
-            className="mb-6 w-12 h-12 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center p-2 hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="mb-2 w-12 h-12 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center p-2 hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
             aria-label="Back to games"
           >
             <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
           </button>
 
-          <div className="flex flex-col items-center gap-8 md:gap-10">
+          <div className="flex flex-col items-center gap-4 md:gap-5">
             
             {/* Sudoku Image with background */}
             <div className="w-[129px] h-[129px] relative flex items-center justify-center bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] p-[14px]">

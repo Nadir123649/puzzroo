@@ -1,17 +1,32 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
 import { SudokuHero } from '@/components/sudoku/SudokuHero'
 import { SudokuGame } from '@/components/sudoku/SudokuGame'
+import { markGameAsPlayed } from '@/components/sections/FreeGames'
 
 export default function SudokuPage() {
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    
+    // Mark Sudoku as played
+    markGameAsPlayed('sudoku')
+    
+    // Get difficulty from URL or use default
+    const difficulty = searchParams.get('difficulty') || 'easy'
+    
+    // Validate difficulty
+    if (!['easy', 'medium', 'hard'].includes(difficulty)) {
+      router.replace('/sudoku?difficulty=easy')
+    }
+  }, [searchParams, router])
 
   if (!mounted) {
     return null

@@ -13,6 +13,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { SudokuBoard, Position, GameStatus, Difficulty } from '@/lib/sudoku/types'
 import { getRandomPuzzle } from '@/data/sudoku'
 import type { ScoreFeedback } from '@/components/games/sudoku/FloatingScoreFeedback'
@@ -43,6 +44,8 @@ import {
 } from '@/lib/sudoku/storage'
 
 export function useSudoku() {
+  const router = useRouter()
+  
   // Load difficulty preference
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [isInitialized, setIsInitialized] = useState(false)
@@ -409,7 +412,10 @@ export function useSudoku() {
     })
     setDifficulty(newDifficulty)
     saveDifficultyPreference(newDifficulty)
-  }, [difficulty])
+    
+    // Update URL with new difficulty
+    router.push(`/sudoku?difficulty=${newDifficulty}`)
+  }, [difficulty, router])
 
   /**
    * Reset board / New game

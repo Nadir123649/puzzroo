@@ -1,9 +1,30 @@
 'use client'
 
+import { useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import Navbar from '@/components/layout/navbar'
 import Footer from '@/components/layout/Footer'
 
 export default function PrivacyPolicyPage() {
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Simulate content loading
+  useState(() => {
+    setTimeout(() => setIsLoading(false), 300)
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="animate-spin text-[#6949FF]" size={48} />
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300">
       <Navbar />
@@ -11,13 +32,13 @@ export default function PrivacyPolicyPage() {
       <main className="flex-1 w-full">
         <div className="w-full max-w-[1380px] mx-auto px-[20px] py-[60px] md:py-[100px]">
           <div className="max-w-[900px] mx-auto">
-            <h1 className="font-urbanist font-bold text-[32px] md:text-[48px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[24px] md:mb-[32px] text-center">
+            <h1 className="font-urbanist font-bold text-[32px] md:text-[48px] leading-[120%] text-[#6949FF] mb-[24px] md:mb-[32px] text-center">
               Privacy Policy
             </h1>
             
             <div className="space-y-[32px]">
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Introduction
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -26,7 +47,7 @@ export default function PrivacyPolicyPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Information We Collect
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD] mb-[12px]">
@@ -41,7 +62,7 @@ export default function PrivacyPolicyPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   How We Use Your Information
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD] mb-[12px]">
@@ -58,7 +79,7 @@ export default function PrivacyPolicyPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Local Storage
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -67,7 +88,7 @@ export default function PrivacyPolicyPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Data Security
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -76,7 +97,7 @@ export default function PrivacyPolicyPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Your Legal Rights
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD] mb-[12px]">
@@ -94,7 +115,7 @@ export default function PrivacyPolicyPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Contact Us
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -103,7 +124,7 @@ export default function PrivacyPolicyPage() {
               </section>
 
               <section>
-                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] dark:text-[#A592FF] mb-[16px]">
+                <h2 className="font-urbanist font-bold text-[24px] md:text-[32px] leading-[120%] text-[#6949FF] mb-[16px]">
                   Changes to This Policy
                 </h2>
                 <p className="font-urbanist font-normal text-[16px] md:text-[18px] leading-[160%] text-[#757575] dark:text-[#BDBDBD]">
@@ -122,3 +143,4 @@ export default function PrivacyPolicyPage() {
     </div>
   )
 }
+
