@@ -339,7 +339,7 @@ export function useNonogram() {
 
   // Handle pointer move - detect cell under pointer
   const handlePointerMove = useCallback((e: PointerEvent) => {
-    if (!isDragging || isPinching) return
+    if (!isDragging) return
     
     // Get element under pointer
     const element = document.elementFromPoint(e.clientX, e.clientY)
@@ -357,7 +357,7 @@ export function useNonogram() {
     if (isNaN(row) || isNaN(col)) return
     
     handleDragEnter({ row, col })
-  }, [isDragging, isPinching, handleDragEnter])
+  }, [isDragging, handleDragEnter])
 
   // Setup global pointer move listener for drag
   useEffect(() => {
