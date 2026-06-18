@@ -29,7 +29,6 @@ export function NonogramGame() {
     inputMode,
     handleCellClick,
     handleDragStart,
-    handleDragEnter,
     handleDragEnd,
     resetPuzzle,
     newPuzzle,
@@ -436,6 +435,7 @@ export function NonogramGame() {
                         return (
                           <button
                             key={`cell-${rowIdx}-${colIdx}`}
+                            data-cell-position={`${rowIdx}-${colIdx}`}
                             onClick={(e) => {
                               e.preventDefault()
                               if (!isDragging && !isPinching) {
@@ -447,16 +447,6 @@ export function NonogramGame() {
                               e.stopPropagation()
                               if (!isPinching) {
                                 handleDragStart(position)
-                              }
-                            }}
-                            onPointerEnter={(e) => {
-                              if (!isPinching && isDragging) {
-                                handleDragEnter(position)
-                              }
-                            }}
-                            onPointerMove={(e) => {
-                              if (!isPinching && isDragging) {
-                                handleDragEnter(position)
                               }
                             }}
                             disabled={gameStatus !== 'playing'}

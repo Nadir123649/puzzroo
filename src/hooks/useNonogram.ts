@@ -337,6 +337,36 @@ export function useNonogram() {
     setDragPreviewCells((prev) => new Set([...prev, cellKey]))
   }, [isDragging, dragDirection, currentPuzzle])
 
+  // Handle pointer move - detect cell under pointer
+  const handlePointerMove = useCallback((e: PointerEvent) => {
+    if (!isDragging || isPinching) return
+    
+    // Get element under pointer
+    const element = document.elementFromPoint(e.clientX, e.clientY)
+    if (!element) return
+    
+    // Find the cell button element
+    const cellButton = element.closest('button[data-cell-position]')
+    if (!cellButton) return
+    
+    // Extract position from data attribute
+    const positionData = cellButton.getAttribute('data-cell-position')
+    if (!positionData) return
+    
+    const [row, col] = positionData.split('-').map(Number)
+    if (isNaN(row) || isNaN(col)) return
+    
+    handleDragEnter({ row, col })
+  }, [isDragging, isPinching, handleDragEnter])
+
+  // Setup global pointer move listener for drag
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('pointermove', handlePointerMove)
+      return () => window.removeEventListener('pointermove', handlePointerMove)
+    }
+  }, [isDragging, handlePointerMove])
+
   // End drag - apply changes with sequential flip animation
   const handleDragEnd = useCallback(() => {
     if (!isDragging) return
@@ -563,6 +593,7 @@ export function useNonogram() {
     handleDragStart,
     handleDragEnter,
     handleDragEnd,
+    handlePointerMove,
     resetPuzzle,
     newPuzzle,
     changeDifficulty,
