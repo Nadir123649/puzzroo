@@ -1,54 +1,17 @@
 /**
- * Tangram Easy Difficulty Puzzles
- * 5 core reference puzzles — each built from exact Tangram geometry
+ * Tangram Easy Difficulty - Polygon-Based
+ * Contains all 3 polygon puzzle datasets for Easy mode
  */
 
-import { TangramPuzzle, TIME_LIMITS } from '@/types/tangram-puzzle'
-import { SQUARE_SOLUTION, SQUARE_SILHOUETTE } from '@/lib/tangram/squareSolution'
-import { HOUSE_SOLUTION, HOUSE_SILHOUETTE } from '@/lib/tangram/solutions/house'
-import { BOAT_SOLUTION, BOAT_SILHOUETTE } from '@/lib/tangram/solutions/boat'
-import { ROCKET_SOLUTION, ROCKET_SILHOUETTE } from '@/lib/tangram/solutions/rocket'
-import { WINDMILL_SOLUTION, WINDMILL_SILHOUETTE } from '@/lib/tangram/solutions/windmill'
+import { PolygonPuzzle } from '@/types/tangram-polygon'
+import { POLYGON_DATASETS } from './polygon-datasets'
 
-export const easyPuzzles: TangramPuzzle[] = [
-  {
-    id: 'easy-square',
-    title: 'Square',
-    difficulty: 'easy',
-    silhouette: SQUARE_SILHOUETTE,
-    solution: SQUARE_SOLUTION,
-    timeLimit: TIME_LIMITS.easy,
-  },
-  {
-    id: 'easy-house',
-    title: 'House',
-    difficulty: 'easy',
-    silhouette: HOUSE_SILHOUETTE,
-    solution: HOUSE_SOLUTION,
-    timeLimit: TIME_LIMITS.easy,
-  },
-  {
-    id: 'easy-boat',
-    title: 'Boat',
-    difficulty: 'easy',
-    silhouette: BOAT_SILHOUETTE,
-    solution: BOAT_SOLUTION,
-    timeLimit: TIME_LIMITS.easy,
-  },
-  {
-    id: 'easy-rocket',
-    title: 'Rocket',
-    difficulty: 'easy',
-    silhouette: ROCKET_SILHOUETTE,
-    solution: ROCKET_SOLUTION,
-    timeLimit: TIME_LIMITS.easy,
-  },
-  {
-    id: 'easy-windmill',
-    title: 'Windmill',
-    difficulty: 'easy',
-    silhouette: WINDMILL_SILHOUETTE,
-    solution: WINDMILL_SOLUTION,
-    timeLimit: TIME_LIMITS.easy,
-  },
-]
+export function getEasyPuzzle(): PolygonPuzzle {
+  // Return a random easy puzzle
+  const activePuzzles = POLYGON_DATASETS.filter(p => p.active && p.difficulty === 'easy')
+  return activePuzzles[Math.floor(Math.random() * activePuzzles.length)]
+}
+
+export const easyPuzzles: PolygonPuzzle[] = POLYGON_DATASETS.filter(
+  p => p.active && p.difficulty === 'easy'
+)

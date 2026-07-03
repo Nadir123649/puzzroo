@@ -1,0 +1,2 @@
+﻿export const PARALLELOGRAM_SOLUTION = {}
+export const PARALLELOGRAM_SILHOUETTE = ''

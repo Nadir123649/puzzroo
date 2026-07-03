@@ -1,0 +1,183 @@
+{
+  "name": "Hard",
+  "description": "Complex shapes requiring advanced spatial reasoning",
+  "timeLimit": 600,
+  "puzzles": [
+    {
+      "id": "hard-swan",
+      "title": "Swan",
+      "difficulty": "hard",
+      "description": "Create an elegant swan",
+      "solution": {
+        "large-triangle-1": {
+          "x": 0,
+          "y": 70.7,
+          "rotation": 315
+        },
+        "large-triangle-2": {
+          "x": 141.4,
+          "y": 141.4,
+          "rotation": 180
+        },
+        "medium-triangle": {
+          "x": 141.4,
+          "y": 0,
+          "rotation": 270
+        },
+        "small-triangle-1": {
+          "x": 212.1,
+          "y": 70.7,
+          "rotation": 225
+        },
+        "small-triangle-2": {
+          "x": 70.7,
+          "y": 212.1,
+          "rotation": 45
+        },
+        "square": {
+          "x": 35.35,
+          "y": 141.4,
+          "rotation": 45
+        },
+        "parallelogram": {
+          "x": 176.75,
+          "y": 141.4,
+          "rotation": 315
+        }
+      },
+      "validation_hash": "swan_elegant_canonical"
+    },
+    {
+      "id": "hard-runner",
+      "title": "Running Figure",
+      "difficulty": "hard",
+      "description": "Form a person running",
+      "solution": {
+        "large-triangle-1": {
+          "x": 70.7,
+          "y": 0,
+          "rotation": 225
+        },
+        "large-triangle-2": {
+          "x": 0,
+          "y": 141.4,
+          "rotation": 45
+        },
+        "medium-triangle": {
+          "x": 141.4,
+          "y": 141.4,
+          "rotation": 225
+        },
+        "small-triangle-1": {
+          "x": 141.4,
+          "y": 70.7,
+          "rotation": 315
+        },
+        "small-triangle-2": {
+          "x": 212.1,
+          "y": 70.7,
+          "rotation": 180
+        },
+        "square": {
+          "x": 70.7,
+          "y": 141.4,
+          "rotation": 0
+        },
+        "parallelogram": {
+          "x": 35.35,
+          "y": 70.7,
+          "rotation": 270
+        }
+      },
+      "validation_hash": "runner_figure_canonical"
+    },
+    {
+      "id": "hard-candle",
+      "title": "Candle",
+      "difficulty": "hard",
+      "description": "Create a burning candle",
+      "solution": {
+        "large-triangle-1": {
+          "x": 35.35,
+          "y": 70.7,
+          "rotation": 0
+        },
+        "large-triangle-2": {
+          "x": 106.05,
+          "y": 212.1,
+          "rotation": 180
+        },
+        "medium-triangle": {
+          "x": 70.7,
+          "y": 0,
+          "rotation": 135
+        },
+        "small-triangle-1": {
+          "x": 0,
+          "y": 212.1,
+          "rotation": 0
+        },
+        "small-triangle-2": {
+          "x": 141.4,
+          "y": 141.4,
+          "rotation": 270
+        },
+        "square": {
+          "x": 35.35,
+          "y": 176.75,
+          "rotation": 0
+        },
+        "parallelogram": {
+          "x": 70.7,
+          "y": 141.4,
+          "rotation": 90
+        }
+      },
+      "validation_hash": "candle_burning_canonical"
+    },
+    {
+      "id": "hard-bird",
+      "title": "Flying Bird",
+      "difficulty": "hard",
+      "description": "Form a bird in flight",
+      "solution": {
+        "large-triangle-1": {
+          "x": 0,
+          "y": 70.7,
+          "rotation": 0
+        },
+        "large-triangle-2": {
+          "x": 141.4,
+          "y": 70.7,
+          "rotation": 180
+        },
+        "medium-triangle": {
+          "x": 70.7,
+          "y": 141.4,
+          "rotation": 315
+        },
+        "small-triangle-1": {
+          "x": 141.4,
+          "y": 0,
+          "rotation": 225
+        },
+        "small-triangle-2": {
+          "x": 0,
+          "y": 0,
+          "rotation": 135
+        },
+        "square": {
+          "x": 106.05,
+          "y": 35.35,
+          "rotation": 45
+        },
+        "parallelogram": {
+          "x": 35.35,
+          "y": 176.75,
+          "rotation": 45
+        }
+      },
+      "validation_hash": "bird_flying_canonical"
+    }
+  ]
+}

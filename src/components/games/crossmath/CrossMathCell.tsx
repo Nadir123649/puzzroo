@@ -84,8 +84,9 @@ export function CrossMathCell({ cell, isSelected, onClick }: CrossMathCellProps)
 
   return (
     <button
-      onClick={onClick}
+      onClick={isEditable ? onClick : undefined}
       disabled={!isEditable}
+      type="button"
       className={`
         aspect-square w-full min-w-[36px] min-h-[36px] md:min-w-[46px] md:min-h-[46px]
         flex items-center justify-center
@@ -99,6 +100,7 @@ export function CrossMathCell({ cell, isSelected, onClick }: CrossMathCellProps)
         ${hoverClass}
         transition-all duration-150
         select-none
+        ${isEditable ? 'pointer-events-auto' : 'pointer-events-none'}
       `}
       tabIndex={isEditable ? 0 : -1}
       aria-label={

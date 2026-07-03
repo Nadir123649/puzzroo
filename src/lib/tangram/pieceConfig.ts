@@ -12,7 +12,7 @@
  * - Parallelogram: sides = 1 unit & √2 units, area = 1 unit²
  */
 
-export const PIECE_SCALE = 0.75 // Centralized scale factor (25% reduction) — ensures tall shapes fit
+export const PIECE_SCALE = 0.75 // Centralized scale factor (25% reduction)
 export const UNIT = 70.7 * PIECE_SCALE // Base unit for 200×200px square (scaled)
 
 /**
@@ -72,9 +72,14 @@ export const PIECE_CONFIG = {
     displayWidth: UNIT * 2,    // 141.4px - full width of bounding box
     displayHeight: UNIT,       // 70.7px
     area: UNIT * UNIT,
-    // Standard tangram parallelogram: sides UNIT and UNIT*√2
-    // Vertices: (UNIT,0) → (2*UNIT,0) → (UNIT, UNIT) → (0, UNIT)
-    svgPath: `M ${UNIT} 0 L ${UNIT * 2} 0 L ${UNIT} ${UNIT} L 0 ${UNIT} Z`,
+    // MIRRORED: Parallelogram with RIGHT-side vertical, slanting left
+    // Shape: |\
+    //        | \
+    //        |  |
+    //         \ |
+    //          \|
+    // Vertices: (0, UNIT) → (UNIT, 0) → (2*UNIT, 0) → (UNIT, UNIT)
+    svgPath: `M 0 ${UNIT} L ${UNIT} 0 L ${UNIT * 2} 0 L ${UNIT} ${UNIT} Z`,
     rotationOrigin: { x: UNIT, y: UNIT / 2 },
   },
 } as const

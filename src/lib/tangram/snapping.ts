@@ -11,10 +11,15 @@
 
 import { UNIT, PIECE_CONFIG } from './pieceConfig'
 import { TangramPiece } from '@/types/tangram'
-import { SQUARE_BOTTOM, SQUARE_LEFT, SQUARE_RIGHT, SQUARE_TOP } from './boardConfig'
+import { BOARD_VIRTUAL_WIDTH, SILHOUETTE_HEIGHT } from './boardConfig'
 
-// Re-export for consumers that imported from snapping.ts
-export { SQUARE_LEFT, SQUARE_TOP, SQUARE_RIGHT, SQUARE_BOTTOM }
+// ── Square silhouette geometry (must match TangramBoard.tsx) ─────────────────
+const SQUARE_SIZE = 200
+
+export const SQUARE_LEFT   = BOARD_VIRTUAL_WIDTH / 2 - SQUARE_SIZE / 2
+export const SQUARE_TOP    = (SILHOUETTE_HEIGHT / 2 - SQUARE_SIZE / 2) * 0.9
+export const SQUARE_RIGHT  = SQUARE_LEFT + SQUARE_SIZE
+export const SQUARE_BOTTOM = SQUARE_TOP + SQUARE_SIZE
 
 // ── Thresholds ──────────────────────────────────────────────────────────────
 const EDGE_SNAP_THRESHOLD     = 25   // px — snap piece edge to square boundary

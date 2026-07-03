@@ -36,6 +36,12 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "validateAllTangramSolutions.ts",
+    "verifyTangramPuzzles.ts",
+    "auditPuzzles.js",
+    "fixNonogramPuzzles.js",
+    "repairAllNonogramPuzzles.js",
+    "validateRepair.js"
   ]
 }

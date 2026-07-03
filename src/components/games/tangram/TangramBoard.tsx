@@ -48,11 +48,11 @@ export function TangramBoard({ children, mobile = false, silhouette }: TangramBo
 
   return (
     <div
-      className={`relative tangram-board-container overflow-visible ${
-        mobile
-          ? 'w-full max-w-[450px] mx-auto aspect-[750/493]'
-          : 'w-[700px] h-[460px] shrink-0'
-      }`}
+      className={`relative tangram-board-container overflow-visible w-full aspect-[750/493] ${mobile
+          ? 'max-w-[450px] mx-auto'
+          : 'max-w-[700px]'
+        }`}
+      style={{ touchAction: 'none' }}
     >
       <canvas
         ref={canvasRef}

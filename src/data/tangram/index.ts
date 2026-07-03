@@ -1,14 +1,16 @@
 /**
- * Tangram Puzzle Datasets
- * Phase 3: Difficulty System
+ * Tangram Puzzle Datasets - Polygon-Based
+ * Using polygon datasets only
  */
 
-import { TangramDifficulty, TangramPuzzle } from '@/types/tangram-puzzle'
-import { easyPuzzles } from './easy'
-import { mediumPuzzles } from './medium'
-import { hardPuzzles } from './hard'
+import { PolygonPuzzle } from '@/types/tangram-polygon'
+import { easyPuzzles, getEasyPuzzle } from './easy'
+import { mediumPuzzles, getMediumPuzzle } from './medium'
+import { hardPuzzles, getHardPuzzle } from './hard'
 
-export function getPuzzlesByDifficulty(difficulty: TangramDifficulty): TangramPuzzle[] {
+export type TangramDifficulty = 'easy' | 'medium' | 'hard'
+
+export function getPuzzlesByDifficulty(difficulty: TangramDifficulty): PolygonPuzzle[] {
   switch (difficulty) {
     case 'easy':
       return easyPuzzles
@@ -21,16 +23,23 @@ export function getPuzzlesByDifficulty(difficulty: TangramDifficulty): TangramPu
   }
 }
 
-export function getRandomPuzzle(difficulty: TangramDifficulty): TangramPuzzle | null {
+export function getRandomPuzzle(difficulty: TangramDifficulty, excludeId?: string): PolygonPuzzle {
   const puzzles = getPuzzlesByDifficulty(difficulty)
-  if (puzzles.length === 0) return null
   
-  const randomIndex = Math.floor(Math.random() * puzzles.length)
-  return puzzles[randomIndex]
+  // If we have more than one puzzle and an excludeId is provided, exclude it
+  if (puzzles.length > 1 && excludeId) {
+    const filteredPuzzles = puzzles.filter(p => p.sourceId !== excludeId)
+    if (filteredPuzzles.length > 0) {
+      return filteredPuzzles[Math.floor(Math.random() * filteredPuzzles.length)]
+    }
+  }
+  
+  return puzzles[Math.floor(Math.random() * puzzles.length)]
 }
 
 export function isDifficultyLocked(difficulty: TangramDifficulty): boolean {
-  return difficulty === 'medium' || difficulty === 'hard'
+  return false // All difficulties now available
 }
 
-export { easyPuzzles, mediumPuzzles, hardPuzzles }
+export { easyPuzzles, getEasyPuzzle, mediumPuzzles, getMediumPuzzle, hardPuzzles, getHardPuzzle }
+

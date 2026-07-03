@@ -4,7 +4,8 @@ import React, { useRef, useState } from 'react'
 import { TangramPiece as TangramPieceType } from '@/types/tangram'
 import { OrbitalHelper } from './OrbitalHelper'
 import { PIECE_CONFIG } from '@/lib/tangram/pieceConfig'
-import { snapToPieces } from '@/lib/tangram/snapping'
+import { snapToPieces, snapToSquareEdge } from '@/lib/tangram/snapping'
+import { SQUARE_SOLUTION } from '@/lib/tangram/squareSolution'
 import {
   BOARD_VIRTUAL_HEIGHT,
   BOARD_VIRTUAL_WIDTH,
@@ -22,7 +23,7 @@ interface TangramPieceProps {
   onRotateLeft: () => void
   onRotateRight: () => void
   isInTray?: boolean
-  solution?: Record<string, { x: number; y: number; rotation: number }>
+  solutionPosition?: { x: number; y: number; rotation: number }
   onSnapToSolution?: (x: number, y: number, rotation: number) => void
   boardContainerWidth?: number // actual rendered px width of the board container
   allPieces?: TangramPieceType[]
@@ -36,7 +37,7 @@ export function TangramPiece({
   onRotateLeft,
   onRotateRight,
   isInTray = false,
-  solution,
+  solutionPosition,
   onSnapToSolution,
   boardContainerWidth,
   allPieces,
@@ -63,18 +64,18 @@ export function TangramPiece({
   // ── Snapping Priority Check ────────────────────────────────────────────────
   const trySnap = (x: number, y: number) => {
     // 1. Exact solution slot (snaps to correct position AND automatically rotates to correct angle)
-    if (onSnapToSolution && solution) {
+    if (onSnapToSolution) {
       // Find candidate solution slots for this piece type
       const slots: { x: number; y: number; rotation: number }[] = []
       const type = piece.type
       if (type === 'large-triangle-1' || type === 'large-triangle-2') {
-        if (solution['large-triangle-1']) slots.push(solution['large-triangle-1'])
-        if (solution['large-triangle-2']) slots.push(solution['large-triangle-2'])
+        slots.push(SQUARE_SOLUTION['large-triangle-1'])
+        slots.push(SQUARE_SOLUTION['large-triangle-2'])
       } else if (type === 'small-triangle-1' || type === 'small-triangle-2') {
-        if (solution['small-triangle-1']) slots.push(solution['small-triangle-1'])
-        if (solution['small-triangle-2']) slots.push(solution['small-triangle-2'])
-      } else if (solution[type]) {
-        slots.push(solution[type])
+        slots.push(SQUARE_SOLUTION['small-triangle-1'])
+        slots.push(SQUARE_SOLUTION['small-triangle-2'])
+      } else if (solutionPosition) {
+        slots.push(solutionPosition)
       }
 
       for (const slot of slots) {
@@ -105,6 +106,13 @@ export function TangramPiece({
         onMove(pieceSnap.x, pieceSnap.y)
         return true
       }
+    }
+
+    // 3. Board-edge/Square-edge snapping
+    const edgeSnap = snapToSquareEdge(piece.type, x, y, piece.position.rotation)
+    if (edgeSnap.snapped) {
+      onMove(edgeSnap.x, edgeSnap.y)
+      return true
     }
 
     return false

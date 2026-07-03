@@ -7,28 +7,40 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
-import { useTangram } from '@/hooks/useTangram'
+import { Loader2, Lightbulb, RotateCcw, Undo } from 'lucide-react'
+import { images } from '@/lib/utils'
+import { polygonToSVGPath } from '@/lib/tangram/polygon-renderer'
+import { usePolygonTangram } from '@/hooks/usePolygonTangram'
 import { TangramBoard } from '@/components/games/tangram/TangramBoard'
-import { TangramPiece } from '@/components/games/tangram/TangramPiece'
+import { PolygonPiece } from '@/components/games/tangram/PolygonPiece'
 import { TangramModal } from '@/components/games/tangram/TangramModal'
 import { CountdownTimer } from '@/components/games/tangram/CountdownTimer'
 import { HintButton } from '@/components/games/tangram/HintButton'
-import { HintGhost } from '@/components/games/tangram/HintGhost'
+import { PolygonHintGhost } from '@/components/games/tangram/PolygonHintGhost'
 
-import { TangramPieceType } from '@/types/tangram'
-import { TangramDifficulty, MAX_HINTS } from '@/types/tangram-puzzle'
+import { TangramPieceId } from '@/types/tangram-polygon'
+import { TangramDifficulty } from '@/data/tangram'
 
-export function TangramGame() {
+const MAX_HINTS = 3
+
+interface TangramGameProps {
+  mode?: 'normal' | 'daily' | 'past'
+  puzzleId?: string
+}
+
+export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}) {
   const searchParams = useSearchParams()
   const difficulty = (searchParams?.get('difficulty') as TangramDifficulty) || 'easy'
   
   const [isResetting, setIsResetting] = useState(false)
   const [mobileBoardWidth, setMobileBoardWidth] = useState(350)
+  const [desktopBoardWidth, setDesktopBoardWidth] = useState(700)
   const router = useRouter()
   const mobileBoardRef = useRef<HTMLDivElement>(null)
+  const desktopBoardRef = useRef<HTMLDivElement>(null)
 
   const {
+    puzzle,
     pieces,
     selectedPiece,
     gameStatus,
@@ -38,7 +50,7 @@ export function TangramGame() {
     hintPiece,
     availableHints,
     isSolved,
-    currentPuzzle,
+    scaledData,
     selectPiece,
     movePiece,
     rotateLeft,
@@ -47,8 +59,9 @@ export function TangramGame() {
     autoFill,
     resetGame,
     newGame,
-    snapPiece,
-  } = useTangram({ difficulty })
+    replayPuzzle,
+    undoLastMove
+  } = usePolygonTangram(difficulty)
 
   // Track mobile board rendered width
   useEffect(() => {
@@ -62,6 +75,18 @@ export function TangramGame() {
     return () => observer.disconnect()
   }, [])
 
+  // Track desktop board rendered width
+  useEffect(() => {
+    if (!desktopBoardRef.current) return
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setDesktopBoardWidth(entry.contentRect.width)
+      }
+    })
+    observer.observe(desktopBoardRef.current)
+    return () => observer.disconnect()
+  }, [])
+
   const handleNewGame = async () => {
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -72,8 +97,16 @@ export function TangramGame() {
   const handleRetry = async () => {
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 500))
-    resetGame()
+    replayPuzzle()
     setIsResetting(false)
+  }
+
+  const handleReplay = () => {
+    replayPuzzle()
+  }
+
+  const handleUndo = () => {
+    undoLastMove()
   }
 
   const handleAutoFill = () => {
@@ -84,12 +117,12 @@ export function TangramGame() {
     router.push('/tangram')
   }
 
-  const handlePieceSelect = (pieceId: string) => {
-    selectPiece(pieceId as TangramPieceType)
+  const handlePieceSelect = (pieceId: TangramPieceId) => {
+    selectPiece(pieceId)
   }
 
-  const handlePieceMove = (pieceId: string, x: number, y: number) => {
-    movePiece(pieceId as TangramPieceType, x, y)
+  const handlePieceMove = (pieceId: TangramPieceId, x: number, y: number, onSnapSuccess?: () => void) => {
+    movePiece(pieceId, x, y, onSnapSuccess)
   }
 
   const handlePieceRotateLeft = () => {
@@ -100,17 +133,18 @@ export function TangramGame() {
     if (selectedPiece) rotateRight()
   }
 
-  const handleSnapToSolution = (pieceId: string, x: number, y: number, rotation: number) => {
-    snapPiece(pieceId as TangramPieceType, x, y, rotation)
-  }
-
   const handleRequestHint = () => {
     requestHint()
   }
 
-  // Get hint piece data - use current puzzle's solution
-  const hintPieceData = hintPiece ? pieces.find(p => p.type === hintPiece) : null
-  const hintSolution = (hintPiece && currentPuzzle) ? currentPuzzle.solution[hintPiece] : null
+  // Get hint piece data from polygon pieces
+  const hintPieceData = hintPiece ? pieces.find(p => p.id === hintPiece) : null
+
+  // Get silhouette path from scaled polygon data
+  const silhouettePath = scaledData ? polygonToSVGPath(scaledData.polygon) : undefined
+
+  // Check if any pieces are placed for undo functionality
+  const hasPlacedPieces = pieces.some(p => p.isPlaced)
 
   return (
     <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative">
@@ -121,32 +155,29 @@ export function TangramGame() {
           <div className="hidden md:flex gap-[30px] justify-start items-start overflow-visible">
 
             {/* LEFT SIDE - BOARD */}
-            <div className="flex-shrink-0 w-[700px] overflow-visible">
-              <TangramBoard silhouette={currentPuzzle?.silhouette}>
+            <div ref={desktopBoardRef} className="flex-1 max-w-[700px] min-w-[320px] overflow-visible">
+              <TangramBoard silhouette={silhouettePath}>
                 {/* Hint Ghost */}
-                {hintPiece && hintSolution && hintPieceData && (
-                  <HintGhost
-                    pieceType={hintPiece}
-                    solution={hintSolution}
+                {hintPiece && hintPieceData && (
+                  <PolygonHintGhost
+                    pieceId={hintPiece}
+                    targetPolygon={hintPieceData.targetPolygon}
                     color={hintPieceData.color}
-                    boardContainerWidth={700}
+                    boardContainerWidth={desktopBoardWidth}
                   />
                 )}
                 
                 {/* Actual Pieces */}
                 {pieces.map((piece) => (
-                  <TangramPiece
+                  <PolygonPiece
                     key={piece.id}
                     piece={piece}
                     isSelected={selectedPiece === piece.id}
                     onSelect={() => handlePieceSelect(piece.id)}
-                    onMove={(x, y) => handlePieceMove(piece.id, x, y)}
+                    onMove={(x, y, onSnapSuccess) => handlePieceMove(piece.id, x, y, onSnapSuccess)}
                     onRotateLeft={handlePieceRotateLeft}
                     onRotateRight={handlePieceRotateRight}
-                    isInTray={!piece.isPlaced}
-                    solution={currentPuzzle?.solution}
-                    onSnapToSolution={(x, y, r) => handleSnapToSolution(piece.id, x, y, r)}
-                    boardContainerWidth={700}
+                    boardContainerWidth={desktopBoardWidth}
                     allPieces={pieces}
                   />
                 ))}
@@ -154,47 +185,86 @@ export function TangramGame() {
             </div>
 
             {/* RIGHT SIDE - CONTROLS PANEL */}
-            <div className="flex-shrink-0 w-[280px] flex flex-col gap-[20px] sticky top-[100px]">
-              {/* Puzzle Title */}
-              {currentPuzzle && (
-                <div className="text-center">
-                  <h3 className="font-urbanist text-xl font-bold text-[#212121] dark:text-white">
-                    {currentPuzzle.title}
-                  </h3>
-                  <p className="font-urbanist text-sm text-[#757575] dark:text-[#9E9E9E] capitalize">
-                    {currentPuzzle.difficulty}
-                  </p>
+            <div className="flex-shrink-0 w-[230px] flex flex-col gap-[20px] sticky top-[100px]">
+              {/* Stats Section - Sudoku style */}
+              <div className="w-full flex flex-col gap-[12px]">
+                {/* Difficulty Heading - centered, bold, larger */}
+                {puzzle && (
+                  <div className="text-center">
+                    <h3 className="font-urbanist text-3xl font-extrabold text-[#212121] dark:text-white capitalize select-none">
+                      {puzzle.difficulty}
+                    </h3>
+                  </div>
+                )}
+
+                {/* Score and Time Row */}
+                <div className="flex justify-between items-center">
+                  {/* Score - Left */}
+                  <div className="flex flex-col items-start">
+                    <span className="font-urbanist text-sm font-medium text-[#757575] dark:text-[#9E9E9E]">
+                      Score
+                    </span>
+                    <span className="font-urbanist text-xl font-bold text-[var(--color-primary)]">
+                      {score}
+                    </span>
+                  </div>
+
+                  {/* Time Remaining - Right */}
+                  <div className="flex flex-col items-end">
+                    <span className="font-urbanist text-sm font-medium text-[#757575] dark:text-[#9E9E9E]">
+                      Time
+                    </span>
+                    <CountdownTimer timeRemaining={timeRemaining} className="text-xl" />
+                  </div>
                 </div>
-              )}
 
-              {/* Countdown Timer */}
-              <div className="bg-[#F0EDFF] dark:bg-[#1F222A] rounded-2xl p-4 flex flex-col items-center gap-2">
-                <span className="font-urbanist text-sm font-medium text-[#757575] dark:text-[#9E9E9E]">
-                  Time Remaining
-                </span>
-                <CountdownTimer timeRemaining={timeRemaining} />
-              </div>
+                {/* Feature Row - Hint + Replay + Undo (Sudoku style) */}
+                <div className="w-[230px] h-[50.31px] flex justify-between items-center gap-[8px]">
+                  {/* Hint Button */}
+                  <button
+                    onClick={handleRequestHint}
+                    disabled={gameStatus !== 'playing' || availableHints === 0}
+                    className="relative w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={`${availableHints} hint${availableHints !== 1 ? 's' : ''} remaining`}
+                    aria-label="Hint"
+                  >
+                    <Lightbulb size={27} strokeWidth={2} className="text-[#424242]" />
+                    {/* Hint Badge */}
+                    {availableHints > 0 && (
+                      <span className="absolute -top-1 -right-1 w-[18px] h-[18px] bg-[#A592FF] rounded-full border-2 border-white dark:border-[#181A20] flex items-center justify-center z-10">
+                        <span className="font-urbanist font-bold text-white text-[9px]">
+                          {availableHints}
+                        </span>
+                      </span>
+                    )}
+                  </button>
 
-              {/* Score */}
-              <div className="bg-[#F0EDFF] dark:bg-[#1F222A] rounded-2xl p-4 flex flex-col items-center gap-2">
-                <span className="font-urbanist text-sm font-medium text-[#757575] dark:text-[#9E9E9E]">
-                  Score
-                </span>
-                <span className="font-urbanist text-2xl font-bold text-[var(--color-primary)]">
-                  {score}
-                </span>
+                  {/* Replay Button */}
+                  <button
+                    onClick={handleReplay}
+                    disabled={gameStatus !== 'playing'}
+                    className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Restart same puzzle"
+                    aria-label="Replay"
+                  >
+                    <RotateCcw size={27} strokeWidth={2} className="text-[#424242]" />
+                  </button>
+
+                  {/* Undo Button */}
+                  <button
+                    onClick={handleUndo}
+                    disabled={gameStatus !== 'playing' || !hasPlacedPieces}
+                    className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Undo last move"
+                    aria-label="Undo"
+                  >
+                    <Undo size={27} strokeWidth={2} className="text-[#424242]" />
+                  </button>
+                </div>
               </div>
 
               {/* Empty Space */}
-              <div className="flex-1 min-h-[100px]" />
-
-              {/* Hint Button */}
-              <HintButton
-                availableHints={availableHints}
-                maxHints={MAX_HINTS}
-                onRequestHint={handleRequestHint}
-                disabled={gameStatus !== 'playing'}
-              />
+              <div className="flex-1 min-h-[150px]" />
 
               {/* Auto Fill Button (Development Only) */}
               {process.env.NODE_ENV === 'development' && (
@@ -207,9 +277,9 @@ export function TangramGame() {
                 </button>
               )}
 
-              {/* New Game Button */}
+              {/* New Game / Replay Button */}
               <button
-                onClick={handleNewGame}
+                onClick={mode === 'normal' ? handleNewGame : handleReplay}
                 disabled={isResetting}
                 className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
@@ -219,7 +289,7 @@ export function TangramGame() {
                     <span>Loading...</span>
                   </>
                 ) : (
-                  'New Game'
+                  mode === 'normal' ? 'New Game' : 'Replay'
                 )}
               </button>
             </div>
@@ -247,12 +317,12 @@ export function TangramGame() {
 
             {/* Board */}
             <div ref={mobileBoardRef} className="w-full">
-              <TangramBoard mobile silhouette={currentPuzzle?.silhouette}>
+              <TangramBoard mobile silhouette={silhouettePath}>
                 {/* Hint Ghost */}
-                {hintPiece && hintSolution && hintPieceData && (
-                  <HintGhost
-                    pieceType={hintPiece}
-                    solution={hintSolution}
+                {hintPiece && hintPieceData && (
+                  <PolygonHintGhost
+                    pieceId={hintPiece}
+                    targetPolygon={hintPieceData.targetPolygon}
                     color={hintPieceData.color}
                     boardContainerWidth={mobileBoardWidth}
                   />
@@ -260,17 +330,14 @@ export function TangramGame() {
                 
                 {/* Actual Pieces */}
                 {pieces.map((piece) => (
-                  <TangramPiece
+                  <PolygonPiece
                     key={piece.id}
                     piece={piece}
                     isSelected={selectedPiece === piece.id}
                     onSelect={() => handlePieceSelect(piece.id)}
-                    onMove={(x, y) => handlePieceMove(piece.id, x, y)}
+                    onMove={(x, y, onSnapSuccess) => handlePieceMove(piece.id, x, y, onSnapSuccess)}
                     onRotateLeft={handlePieceRotateLeft}
                     onRotateRight={handlePieceRotateRight}
-                    isInTray={!piece.isPlaced}
-                    solution={currentPuzzle?.solution}
-                    onSnapToSolution={(x, y, r) => handleSnapToSolution(piece.id, x, y, r)}
                     boardContainerWidth={mobileBoardWidth}
                     allPieces={pieces}
                   />
@@ -278,13 +345,49 @@ export function TangramGame() {
               </TangramBoard>
             </div>
 
-            {/* Hint Button Mobile */}
-            <HintButton
-              availableHints={availableHints}
-              maxHints={MAX_HINTS}
-              onRequestHint={handleRequestHint}
-              disabled={gameStatus !== 'playing'}
-            />
+            {/* Feature Row Mobile - Hint + Replay + Undo */}
+            <div className="w-full flex justify-between items-center px-4">
+              {/* Hint Button */}
+              <button
+                onClick={handleRequestHint}
+                disabled={gameStatus !== 'playing' || availableHints === 0}
+                className="relative w-[63.44px] h-[63.44px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                title={`${availableHints} hint${availableHints !== 1 ? 's' : ''} remaining`}
+                aria-label="Hint"
+              >
+                <Lightbulb size={34} strokeWidth={2} className="text-[#424242]" />
+                {/* Hint Badge */}
+                {availableHints > 0 && (
+                  <span className="absolute -top-1 -right-1 w-[20px] h-[20px] bg-[#A592FF] rounded-full border-2 border-white dark:border-[#181A20] flex items-center justify-center z-10">
+                    <span className="font-urbanist font-bold text-white text-[10px]">
+                      {availableHints}
+                    </span>
+                  </span>
+                )}
+              </button>
+
+              {/* Replay Button */}
+              <button
+                onClick={handleReplay}
+                disabled={gameStatus !== 'playing'}
+                className="w-[63.44px] h-[63.44px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Restart same puzzle"
+                aria-label="Replay"
+              >
+                <RotateCcw size={34} strokeWidth={2} className="text-[#424242]" />
+              </button>
+
+              {/* Undo Button */}
+              <button
+                onClick={handleUndo}
+                disabled={gameStatus !== 'playing' || !hasPlacedPieces}
+                className="w-[63.44px] h-[63.44px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Undo last move"
+                aria-label="Undo"
+              >
+                <Undo size={34} strokeWidth={2} className="text-[#424242]" />
+              </button>
+            </div>
 
             {/* Auto Fill Button Mobile (Development Only) */}
             {process.env.NODE_ENV === 'development' && (
@@ -297,9 +400,9 @@ export function TangramGame() {
               </button>
             )}
 
-            {/* New Game Button Mobile */}
+            {/* New Game / Replay Button Mobile */}
             <button
-              onClick={handleNewGame}
+              onClick={mode === 'normal' ? handleNewGame : handleReplay}
               disabled={isResetting}
               className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
@@ -309,7 +412,7 @@ export function TangramGame() {
                   <span>Loading...</span>
                 </>
               ) : (
-                'New Game'
+                mode === 'normal' ? 'New Game' : 'Replay'
               )}
             </button>
           </div>
@@ -336,7 +439,7 @@ export function TangramGame() {
         mistakes={0}
         hintsUsed={hintsUsed}
         score={score}
-        difficulty={difficulty}
+        difficulty={puzzle?.difficulty || 'easy'}
         timeRemaining={timeRemaining}
         isTimeUp={gameStatus === 'lost'}
         onPlayAgain={handleRetry}

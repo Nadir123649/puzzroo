@@ -75,6 +75,12 @@ export const images = {
     close: '/icons/close.svg',
     arrow: '/icons/arrow.svg',
   },
+  
+  // Game Icons
+  bulb: '/Bulb.svg',
+  eraser: '/Eraser.svg',
+  edit: '/Edit.svg',
+  arrowCounterClockwise: '/Arrow Counter Clockwise.svg',
 } as const
 
 // Image dimensions for optimization

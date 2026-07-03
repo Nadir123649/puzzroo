@@ -522,8 +522,11 @@ export function useSudoku() {
       }
 
       if (KEYBOARD_KEYS.NUMBERS.includes(e.key as any)) {
+        e.preventDefault() // Prevent any default input behavior
         const num = parseInt(e.key, 10)
-        enterNumber(num)
+        if (num >= 1 && num <= 9) { // Only accept 1-9, not 0
+          enterNumber(num)
+        }
         return
       }
 

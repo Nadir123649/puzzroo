@@ -79,7 +79,7 @@ export function SudokuCell({
       tabIndex={-1}
       suppressHydrationWarning
     >
-      {cell.value ? cell.value : null}
+      {cell.value && typeof cell.value === 'number' && cell.value >= 1 && cell.value <= 9 ? cell.value : null}
       {!cell.value && cell.notes && cell.notes.length > 0 && (
         <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0 p-1 pointer-events-none">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (

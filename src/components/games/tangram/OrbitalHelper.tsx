@@ -1,12 +1,12 @@
 /**
  * Orbital Helper Component
- * Fixed orbital ring - only the shape inside rotates
- * Click + drag on circle border or touch gestures to rotate shape
+ * Premium smooth rotation with Pointer Events
+ * Fixed orbital ring - only the piece rotates
  */
 
 'use client'
 
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 
 interface OrbitalHelperProps {
   x: number | string
@@ -16,119 +16,134 @@ interface OrbitalHelperProps {
   onRotateRight: () => void
   rotation: number
   orbitRadius?: number
+  onRotateDrag?: (deltaAngle: number) => void
+  onRotateEnd?: () => void
 }
 
-export function OrbitalHelper({ x, y, show, onRotateLeft, onRotateRight, rotation, orbitRadius = 85 }: OrbitalHelperProps) {
-  const [isDragging, setIsDragging] = useState(false)
-  const dragStartAngle = useRef<number>(0)
-  const currentAngle = useRef<number>(0)
+export function OrbitalHelper({
+  x,
+  y,
+  show,
+  onRotateLeft,
+  onRotateRight,
+  rotation,
+  orbitRadius = 85,
+  onRotateDrag,
+  onRotateEnd,
+}: OrbitalHelperProps) {
+  // Use refs only - no state to avoid rerenders during drag
+  const isDraggingRef = useRef(false)
   const centerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
-  const lastTouchAngle = useRef<number>(0)
+  const dragStartRotationRef = useRef(0)
+  const startAngleRef = useRef(0)
+  const lastAngleRef = useRef(0)
+  const accumulatedDeltaRef = useRef(0)
+  const circleRef = useRef<SVGCircleElement>(null)
+
+  // Store callbacks in refs to avoid stale closures
+  const onRotateDragRef = useRef(onRotateDrag)
+  const onRotateEndRef = useRef(onRotateEnd)
+  const onRotateLeftRef = useRef(onRotateLeft)
+  const onRotateRightRef = useRef(onRotateRight)
+
+  useEffect(() => {
+    onRotateDragRef.current = onRotateDrag
+    onRotateEndRef.current = onRotateEnd
+    onRotateLeftRef.current = onRotateLeft
+    onRotateRightRef.current = onRotateRight
+  }, [onRotateDrag, onRotateEnd, onRotateLeft, onRotateRight])
 
   if (!show) return null
 
-  const getAngle = (clientX: number, clientY: number) => {
+  const getAngle = (clientX: number, clientY: number): number => {
     const dx = clientX - centerRef.current.x
     const dy = clientY - centerRef.current.y
     return Math.atan2(dy, dx) * (180 / Math.PI)
   }
 
-  const handleCircleMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation()
+  const normalizeAngleDiff = (diff: number): number => {
+    // Normalize to -180 to +180 range
+    while (diff > 180) diff -= 360
+    while (diff < -180) diff += 360
+    return diff
+  }
 
-    const rect = e.currentTarget.getBoundingClientRect()
+  const handlePointerDown = (e: React.PointerEvent<SVGCircleElement>) => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    const target = e.currentTarget
+    target.setPointerCapture(e.pointerId)
+
+    const rect = target.getBoundingClientRect()
     centerRef.current = {
       x: rect.left + rect.width / 2,
       y: rect.top + rect.height / 2,
     }
-    dragStartAngle.current = getAngle(e.clientX, e.clientY)
-    currentAngle.current = dragStartAngle.current
-    setIsDragging(true)
+
+    const angle = getAngle(e.clientX, e.clientY)
+    dragStartRotationRef.current = rotation
+    startAngleRef.current = angle
+    lastAngleRef.current = angle
+    accumulatedDeltaRef.current = 0
+    isDraggingRef.current = true
   }
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return
+  const handlePointerMove = (e: React.PointerEvent<SVGCircleElement>) => {
+    if (!isDraggingRef.current) return
+
+    e.stopPropagation()
+    e.preventDefault()
 
     const newAngle = getAngle(e.clientX, e.clientY)
-    let angleDiff = newAngle - currentAngle.current
+    const diff = normalizeAngleDiff(newAngle - lastAngleRef.current)
 
-    if (angleDiff > 180) {
-      angleDiff -= 360
-    }
+    accumulatedDeltaRef.current += diff
+    lastAngleRef.current = newAngle
 
-    if (angleDiff < -180) {
-      angleDiff += 360
-    }
+    const absoluteRotation = dragStartRotationRef.current + accumulatedDeltaRef.current
 
-    // Continuous smooth rotation - rotate every 15 degrees of circle drag
-    if (Math.abs(angleDiff) >= 15) {
-      if (angleDiff > 0) {
-        onRotateRight()
-      } else {
-        onRotateLeft()
-      }
-      currentAngle.current = newAngle
+    if (onRotateDragRef.current) {
+      onRotateDragRef.current(absoluteRotation)
     }
   }
 
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
+  const handlePointerUp = (e: React.PointerEvent<SVGCircleElement>) => {
+    if (!isDraggingRef.current) return
 
-  const handleTouchStart = (e: React.TouchEvent) => {
     e.stopPropagation()
-
-    if (e.touches.length === 1) {
-      const rect = e.currentTarget.getBoundingClientRect()
-      centerRef.current = {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-      }
-      const touch = e.touches[0]
-      dragStartAngle.current = getAngle(touch.clientX, touch.clientY)
-      currentAngle.current = dragStartAngle.current
-      lastTouchAngle.current = dragStartAngle.current
-      setIsDragging(true)
-    }
-  }
-
-  const handleTouchMove = (e: TouchEvent) => {
-    if (!isDragging || e.touches.length !== 1) return
-
     e.preventDefault()
-    const touch = e.touches[0]
-    const newAngle = getAngle(touch.clientX, touch.clientY)
-    const angleDiff = newAngle - currentAngle.current
 
-    // Smooth rotation for touch - rotate every 15 degrees
-    if (Math.abs(angleDiff) >= 15) {
-      if (angleDiff > 0) {
-        onRotateRight()
-      } else {
-        onRotateLeft()
-      }
-      currentAngle.current = newAngle
+    const target = e.currentTarget
+    target.releasePointerCapture(e.pointerId)
+
+    isDraggingRef.current = false
+
+    if (onRotateEndRef.current) {
+      onRotateEndRef.current()
     }
+
+    // Reset temporary values
+    dragStartRotationRef.current = 0
+    startAngleRef.current = 0
+    lastAngleRef.current = 0
+    accumulatedDeltaRef.current = 0
   }
 
-  const handleTouchEnd = () => {
-    setIsDragging(false)
+  const handlePointerCancel = (e: React.PointerEvent<SVGCircleElement>) => {
+    handlePointerUp(e)
   }
 
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-      document.addEventListener('touchmove', handleTouchMove, { passive: false })
-      document.addEventListener('touchend', handleTouchEnd)
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
-        document.removeEventListener('touchmove', handleTouchMove)
-        document.removeEventListener('touchend', handleTouchEnd)
-      }
+  const handleArrowClick = (e: React.UIEvent, direction: 'left' | 'right') => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    if (direction === 'left') {
+      onRotateLeftRef.current()
+    } else {
+      onRotateRightRef.current()
     }
-  }, [isDragging])
+  }
 
   return (
     <div
@@ -139,6 +154,7 @@ export function OrbitalHelper({ x, y, show, onRotateLeft, onRotateRight, rotatio
         transform: 'translate(-50%, -50%)',
         pointerEvents: 'none',
         zIndex: 9999,
+        touchAction: 'none',
       }}
     >
       {/* Fixed orbital ring - does NOT rotate */}
@@ -151,6 +167,7 @@ export function OrbitalHelper({ x, y, show, onRotateLeft, onRotateRight, rotatio
           top: '50%',
           transform: 'translate(-50%, -50%)',
           pointerEvents: 'none',
+          touchAction: 'none',
         }}
       >
         {/* Clickable circle BORDER ONLY for rotation */}
@@ -163,6 +180,7 @@ export function OrbitalHelper({ x, y, show, onRotateLeft, onRotateRight, rotatio
           }}
         >
           <circle
+            ref={circleRef}
             cx={orbitRadius}
             cy={orbitRadius}
             r={orbitRadius - 12}
@@ -170,11 +188,14 @@ export function OrbitalHelper({ x, y, show, onRotateLeft, onRotateRight, rotatio
             stroke="transparent"
             strokeWidth="24"
             style={{
-              cursor: isDragging ? 'grabbing' : 'grab',
+              cursor: isDraggingRef.current ? 'grabbing' : 'grab',
               pointerEvents: 'stroke',
+              touchAction: 'none',
             }}
-            onMouseDown={handleCircleMouseDown}
-            onTouchStart={handleTouchStart}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerCancel}
           />
         </svg>
 
@@ -218,12 +239,10 @@ export function OrbitalHelper({ x, y, show, onRotateLeft, onRotateRight, rotatio
           <div className="bg-[#6949FF] rounded-full px-3 py-1.5 flex items-center gap-2 shadow-lg">
             {/* Rotate Left Button */}
             <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onRotateLeft()
-              }}
+              onPointerDown={(e) => handleArrowClick(e, 'left')}
               className="hover:scale-125 active:scale-95 transition-transform duration-150"
               aria-label="Rotate left"
+              style={{ touchAction: 'manipulation' }}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M8 2 L4 6 L8 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -232,12 +251,10 @@ export function OrbitalHelper({ x, y, show, onRotateLeft, onRotateRight, rotatio
 
             {/* Rotate Right Button */}
             <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onRotateRight()
-              }}
+              onPointerDown={(e) => handleArrowClick(e, 'right')}
               className="hover:scale-125 active:scale-95 transition-transform duration-150"
               aria-label="Rotate right"
+              style={{ touchAction: 'manipulation' }}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M4 2 L8 6 L4 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

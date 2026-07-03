@@ -1,0 +1,183 @@
+{
+  "name": "Easy",
+  "description": "Simple geometric shapes with clear structure",
+  "timeLimit": 300,
+  "puzzles": [
+    {
+      "id": "easy-square",
+      "title": "Square",
+      "difficulty": "easy",
+      "description": "Form a perfect square using all 7 pieces",
+      "solution": {
+        "large-triangle-1": {
+          "x": 29.29,
+          "y": -70.71,
+          "rotation": 225
+        },
+        "large-triangle-2": {
+          "x": -70.71,
+          "y": 29.29,
+          "rotation": 135
+        },
+        "medium-triangle": {
+          "x": 100,
+          "y": 100,
+          "rotation": 180
+        },
+        "small-triangle-1": {
+          "x": 14.64,
+          "y": 164.64,
+          "rotation": 45
+        },
+        "small-triangle-2": {
+          "x": 114.64,
+          "y": 64.64,
+          "rotation": 315
+        },
+        "square": {
+          "x": 64.64,
+          "y": 114.64,
+          "rotation": 45
+        },
+        "parallelogram": {
+          "x": 104.29,
+          "y": 39.64,
+          "rotation": 180
+        }
+      },
+      "validation_hash": "square_200x200_canonical"
+    },
+    {
+      "id": "easy-rectangle",
+      "title": "Rectangle",
+      "difficulty": "easy",
+      "description": "Create a rectangle shape",
+      "solution": {
+        "large-triangle-1": {
+          "x": 0,
+          "y": 141.4,
+          "rotation": 270
+        },
+        "large-triangle-2": {
+          "x": 282.8,
+          "y": 141.4,
+          "rotation": 180
+        },
+        "medium-triangle": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0
+        },
+        "square": {
+          "x": 99.98,
+          "y": 141.4,
+          "rotation": 0
+        },
+        "parallelogram": {
+          "x": 170.68,
+          "y": 141.4,
+          "rotation": 0
+        },
+        "small-triangle-1": {
+          "x": 241.38,
+          "y": 141.4,
+          "rotation": 270
+        },
+        "small-triangle-2": {
+          "x": 241.38,
+          "y": 212.1,
+          "rotation": 0
+        }
+      },
+      "validation_hash": "rectangle_4x2_canonical"
+    },
+    {
+      "id": "easy-triangle",
+      "title": "Triangle",
+      "difficulty": "easy",
+      "description": "Form a large triangle",
+      "solution": {
+        "large-triangle-1": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0
+        },
+        "large-triangle-2": {
+          "x": 141.4,
+          "y": 0,
+          "rotation": 90
+        },
+        "medium-triangle": {
+          "x": 70.7,
+          "y": 70.7,
+          "rotation": 180
+        },
+        "small-triangle-1": {
+          "x": 0,
+          "y": 141.4,
+          "rotation": 0
+        },
+        "small-triangle-2": {
+          "x": 70.7,
+          "y": 141.4,
+          "rotation": 90
+        },
+        "square": {
+          "x": 35.35,
+          "y": 106.05,
+          "rotation": 45
+        },
+        "parallelogram": {
+          "x": 70.7,
+          "y": 212.1,
+          "rotation": 0
+        }
+      },
+      "validation_hash": "triangle_large_canonical"
+    },
+    {
+      "id": "easy-parallelogram",
+      "title": "Parallelogram",
+      "difficulty": "easy",
+      "description": "Create a parallelogram shape",
+      "solution": {
+        "large-triangle-1": {
+          "x": 0,
+          "y": 0,
+          "rotation": 0
+        },
+        "large-triangle-2": {
+          "x": 141.4,
+          "y": 141.4,
+          "rotation": 180
+        },
+        "medium-triangle": {
+          "x": 141.4,
+          "y": 0,
+          "rotation": 45
+        },
+        "small-triangle-1": {
+          "x": 70.7,
+          "y": 70.7,
+          "rotation": 225
+        },
+        "small-triangle-2": {
+          "x": 70.7,
+          "y": 141.4,
+          "rotation": 315
+        },
+        "square": {
+          "x": 35.35,
+          "y": 35.35,
+          "rotation": 0
+        },
+        "parallelogram": {
+          "x": 106.05,
+          "y": 106.05,
+          "rotation": 135
+        }
+      },
+      "validation_hash": "parallelogram_canonical"
+    }
+  ]
+}

@@ -43,7 +43,7 @@ function TangramDailyChallengeContent() {
           </div>
         </div>
       </section>
-      <TangramGame />
+      <TangramGame mode="daily" />
     </>
   )
 }
