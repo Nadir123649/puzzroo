@@ -114,7 +114,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
   }
 
   const handleBackToLobby = () => {
-    router.push('/tangram')
+    router.push('/game/tangram')
   }
 
   const handlePieceSelect = (pieceId: TangramPieceId) => {
@@ -148,11 +148,11 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
 
   return (
     <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative">
-      <div className="w-full max-w-[1380px] mx-auto px-[20px] flex justify-start overflow-visible">
+      <div className="w-full max-w-[1380px] mx-auto px-[20px] flex justify-center overflow-visible">
         <div className="w-full flex flex-col gap-[20px] pb-0 md:pb-[10px] max-w-full overflow-visible">
 
           {/* Desktop Layout */}
-          <div className="hidden md:flex gap-[30px] justify-start items-start overflow-visible">
+          <div className="hidden md:flex gap-[30px] justify-center items-start overflow-visible">
 
             {/* LEFT SIDE - BOARD */}
             <div ref={desktopBoardRef} className="flex-1 max-w-[700px] min-w-[320px] overflow-visible">
