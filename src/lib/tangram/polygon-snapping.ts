@@ -116,7 +116,8 @@ export function attemptSnap(
   currentTransform: { x: number; y: number; rotation: number },
   targetPolygons: number[][][],
   pieceShapeIds: string[],
-  scale: number = 1
+  scale: number = 1,
+  occupiedTargetIndices: Set<number> = new Set()
 ): SnapResult | null {
   const validIndices = getValidTargetIndices(pieceId, pieceShapeIds)
   
@@ -124,6 +125,8 @@ export function attemptSnap(
   let bestDistance = SNAP_THRESHOLD
   
   for (const index of validIndices) {
+    if (occupiedTargetIndices.has(index)) continue
+    
     const targetPolygon = targetPolygons[index]
     
     // Check if the current polygon geometrically matches the target slot polygon (order-independent)

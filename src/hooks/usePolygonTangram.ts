@@ -12,7 +12,7 @@ import type { TangramDifficulty } from '@/data/tangram'
 import { scaleAndCenterPolygon, polygonToSVGPath } from '@/lib/tangram/polygon-renderer'
 import { calculateCentroid, polygonToPoints } from '@/lib/tangram/polygon-geometry'
 import { validatePuzzle } from '@/lib/tangram/polygon-validation'
-import { attemptSnap } from '@/lib/tangram/polygon-snapping'
+import { attemptSnap, geometricallyMatches } from '@/lib/tangram/polygon-snapping'
 import { PIECE_CONFIG, UNIT } from '@/lib/tangram/pieceConfig'
 
 const PIECE_COLORS: Record<TangramPieceId, string> = {
@@ -119,6 +119,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const [hintPiece, setHintPiece] = useState<TangramPieceId | null>(null)
   
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const shownHints = useRef<Set<TangramPieceId>>(new Set())
   const scaledData = useRef<ReturnType<typeof scaleAndCenterPolygon> | null>(null)
 
@@ -185,6 +186,15 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       }
     }
   }, [gameStatus])
+
+  // Cleanup hint timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hintTimeoutRef.current) {
+        clearTimeout(hintTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Initialize pieces from puzzle
   useEffect(() => {
@@ -313,13 +323,28 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       
       // Try snapping
       const targetPolygons = prev.map(p => p.targetPolygon)
+      
+      // Calculate which target slots are already occupied by other snapped pieces
+      const occupiedTargetIndices = new Set<number>()
+      prev.forEach(p => {
+        if (p.id !== pieceId && p.isSnapped) {
+          const matchedIndex = targetPolygons.findIndex(targetPoly => 
+            geometricallyMatches(p.currentPolygon, targetPoly, 5)
+          )
+          if (matchedIndex !== -1) {
+            occupiedTargetIndices.add(matchedIndex)
+          }
+        }
+      })
+
       const snapResult = attemptSnap(
         pieceId,
         newPolygon,
         newTransform,
         targetPolygons,
         puzzle.pieceShapeIds,
-        scaledData.current?.scale || 1
+        scaledData.current?.scale || 1,
+        occupiedTargetIndices
       )
       
       if (snapResult?.shouldSnap) {
@@ -396,6 +421,12 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const requestHint = useCallback(() => {
     if (hintsUsed >= 3) return
     
+    // Clear any existing hint timeout to prevent overlapping timeouts from hiding the hint early
+    if (hintTimeoutRef.current) {
+      clearTimeout(hintTimeoutRef.current)
+      hintTimeoutRef.current = null
+    }
+    
     const currentPolygons = pieces.map(p => p.currentPolygon)
     const targetPolygons = pieces.map(p => p.targetPolygon)
     const pieceIds = pieces.map(p => p.id)
@@ -412,23 +443,28 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     // Get unsolved pieces that haven't been shown yet
     const unhintedPieces = unsolvedPieces.filter(p => !shownHints.current.has(p.id))
     
+    let chosenPieceId: TangramPieceId
+    
     // If all unsolved pieces have been hinted, clear the set and start over
     if (unhintedPieces.length === 0) {
       shownHints.current.clear()
       // Now all unsolved pieces are available for hints again
       const randomPiece = unsolvedPieces[Math.floor(Math.random() * unsolvedPieces.length)]
-      shownHints.current.add(randomPiece.id)
-      setHintsUsed(h => h + 1)
-      setHintPiece(randomPiece.id)
+      chosenPieceId = randomPiece.id
     } else {
       // Show hint for a random unhinted piece
       const randomPiece = unhintedPieces[Math.floor(Math.random() * unhintedPieces.length)]
-      shownHints.current.add(randomPiece.id)
-      setHintsUsed(h => h + 1)
-      setHintPiece(randomPiece.id)
+      chosenPieceId = randomPiece.id
     }
     
-    setTimeout(() => setHintPiece(null), 5000)
+    shownHints.current.add(chosenPieceId)
+    setHintsUsed(h => h + 1)
+    setHintPiece(chosenPieceId)
+    
+    hintTimeoutRef.current = setTimeout(() => {
+      setHintPiece(null)
+      hintTimeoutRef.current = null
+    }, 5000)
   }, [hintsUsed, pieces])
 
   const autoFill = useCallback(() => {
@@ -456,6 +492,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setHintsUsed(0)
     setHintPiece(null)
     shownHints.current.clear()
+    if (hintTimeoutRef.current) {
+      clearTimeout(hintTimeoutRef.current)
+      hintTimeoutRef.current = null
+    }
     // Set new puzzle - this will trigger piece initialization
     setPuzzle(getRandomPuzzle(difficulty))
   }, [difficulty])
@@ -470,6 +510,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setHintsUsed(0)
     setHintPiece(null)
     shownHints.current.clear()
+    if (hintTimeoutRef.current) {
+      clearTimeout(hintTimeoutRef.current)
+      hintTimeoutRef.current = null
+    }
     // Get a different puzzle - this will trigger piece initialization
     const newPuzzle = getRandomPuzzle(difficulty, puzzle?.sourceId)
     setPuzzle(newPuzzle)
@@ -485,6 +529,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setHintsUsed(0)
     setHintPiece(null)
     shownHints.current.clear()
+    if (hintTimeoutRef.current) {
+      clearTimeout(hintTimeoutRef.current)
+      hintTimeoutRef.current = null
+    }
     // Trigger re-initialization by updating puzzle reference
     setPuzzle(prev => prev ? {...prev} : prev)
   }, [])

@@ -185,7 +185,10 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
             </div>
 
             {/* RIGHT SIDE - CONTROLS PANEL */}
-            <div className="flex-shrink-0 w-[230px] flex flex-col gap-[20px] sticky top-[100px]">
+            <div 
+              className="flex-shrink-0 w-[230px] flex flex-col justify-between sticky top-[100px]"
+              style={{ height: `${(desktopBoardWidth * 493) / 750}px` }}
+            >
               {/* Stats Section - Sudoku style */}
               <div className="w-full flex flex-col gap-[12px]">
                 {/* Difficulty Heading - centered, bold, larger */}
@@ -263,35 +266,35 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
                 </div>
               </div>
 
-              {/* Empty Space */}
-              <div className="flex-1 min-h-[150px]" />
-
-              {/* Auto Fill Button (Development Only) */}
-              {process.env.NODE_ENV === 'development' && (
-                <button
-                  onClick={handleAutoFill}
-                  disabled={isResetting || isSolved}
-                  className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Auto Fill
-                </button>
-              )}
-
-              {/* New Game / Replay Button */}
-              <button
-                onClick={mode === 'normal' ? handleNewGame : handleReplay}
-                disabled={isResetting}
-                className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isResetting ? (
-                  <>
-                    <Loader2 className="animate-spin" size={20} />
-                    <span>Loading...</span>
-                  </>
-                ) : (
-                  mode === 'normal' ? 'New Game' : 'Replay'
+              {/* Bottom Actions Section */}
+              <div className="w-full flex flex-col gap-[12px]">
+                {/* Auto Fill Button (Development Only) */}
+                {process.env.NODE_ENV === 'development' && (
+                  <button
+                    onClick={handleAutoFill}
+                    disabled={isResetting || isSolved}
+                    className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Auto Fill
+                  </button>
                 )}
-              </button>
+
+                {/* New Game / Replay Button */}
+                <button
+                  onClick={mode === 'normal' ? handleNewGame : handleReplay}
+                  disabled={isResetting}
+                  className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isResetting ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    mode === 'normal' ? 'New Game' : 'Replay'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
