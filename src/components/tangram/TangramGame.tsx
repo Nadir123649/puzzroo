@@ -7,7 +7,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, Lightbulb, RotateCcw, Undo } from 'lucide-react'
+import { Loader2, Lightbulb, RotateCcw, Undo, ArrowLeft } from 'lucide-react'
 import { images } from '@/lib/utils'
 import { GameLoader } from '@/components/ui/GameLoader'
 import { polygonToSVGPath } from '@/lib/tangram/polygon-renderer'
@@ -159,8 +159,17 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
       <div className="w-full max-w-[1380px] mx-auto px-[20px] flex justify-center overflow-visible">
         <div className="w-full flex flex-col gap-[20px] pb-0 md:pb-[10px] max-w-full overflow-visible">
 
-          {/* Desktop Layout */}
-          <div className="hidden md:flex gap-[50px] justify-center items-start overflow-visible">
+          {/* Desktop Layout - arrow sits left of board, no extra row */}
+          <div className="hidden md:flex gap-[50px] justify-center items-start overflow-visible relative md:pt-2">
+
+            {/* Back arrow - absolutely positioned to the left of the board, vertically centred to top */}
+            <button
+              onClick={handleBackToLobby}
+              className="absolute -left-2 top-0 w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 z-10"
+              aria-label="Back to lobby"
+            >
+              <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
+            </button>
 
             {/* LEFT SIDE - BOARD */}
             <div ref={desktopBoardRef} className="flex-1 max-w-[700px] min-w-[320px] overflow-visible">
@@ -197,8 +206,8 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
               className="flex-shrink-0 w-[230px] flex flex-col justify-between sticky top-[100px]"
               style={{ height: `${(desktopBoardWidth * 493) / 750}px` }}
             >
-              {/* Premium Controls Card */}
-              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 shadow-lg shadow-purple-500/5 flex flex-col gap-5">
+              {/* Premium Controls Card - fills space but doesn't push buttons down */}
+              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 shadow-lg shadow-purple-500/5 flex flex-col gap-5 flex-1 mb-3">
                 {/* Difficulty Heading - centered, bold, larger */}
                 {puzzle && (
                   <div className="text-center pb-3">
@@ -306,6 +315,16 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
 
           {/* Mobile Layout */}
           <div className="md:hidden flex flex-col gap-[16px] items-center pb-[50px]">
+            {/* Back arrow row - compact, just the button */}
+            <div className="w-full flex justify-start">
+              <button
+                onClick={handleBackToLobby}
+                className="w-10 h-10 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95"
+                aria-label="Back to lobby"
+              >
+                <ArrowLeft size={18} className="text-[var(--color-primary)]" strokeWidth={2.5} />
+              </button>
+            </div>
             {/* Timer & Score Row */}
             <div className="w-full grid grid-cols-2 gap-3">
               <div className="bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl p-3 flex flex-col items-center gap-1">
