@@ -1,12 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import { AccountLayout } from '@/components/account/AccountLayout'
+import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
 import { getCurrentUser, getLastLoginInfo } from '@/lib/auth/frontend-auth'
 import { Check, Activity, BarChart3, Monitor, MapPin } from 'lucide-react'
 
 export default function AccountInformationPage() {
   const user = getCurrentUser()
   const loginInfo = getLastLoginInfo()
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
 
   return (
     <AccountLayout>
@@ -103,7 +106,10 @@ export default function AccountInformationPage() {
                   <span className="font-urbanist font-semibold text-[14px] text-[#757575] dark:text-[#BDBDBD] mb-2 sm:mb-0">
                     Password
                   </span>
-                  <button className="w-full sm:w-auto px-6 py-2 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[14px] transition-all duration-200 active:scale-95">
+                  <button 
+                    onClick={() => setIsPasswordModalOpen(true)}
+                    className="w-full sm:w-auto px-6 py-2 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[14px] transition-all duration-200 active:scale-95"
+                  >
                     Change
                   </button>
                 </div>
@@ -241,6 +247,11 @@ export default function AccountInformationPage() {
                 </div>
               )}
             </div>
+            
+            <ChangePasswordModal 
+              isOpen={isPasswordModalOpen} 
+              onClose={() => setIsPasswordModalOpen(false)} 
+            />
     </AccountLayout>
   )
 }

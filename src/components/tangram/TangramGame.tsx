@@ -7,7 +7,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, Lightbulb, RotateCcw, Undo, ArrowLeft } from 'lucide-react'
+import { Undo, RotateCcw, Lightbulb, Loader2, Redo, ArrowLeft } from 'lucide-react'
 import { images } from '@/lib/utils'
 import { GameLoader } from '@/components/ui/GameLoader'
 import { polygonToSVGPath } from '@/lib/tangram/polygon-renderer'
@@ -62,8 +62,23 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
     resetGame,
     newGame,
     replayPuzzle,
-    undoLastMove
+    undoMove,
+    redoMove,
+    hasUndo,
+    hasRedo,
+    commitHistory
   } = usePolygonTangram(difficulty)
+
+  const [isModalVisible, setIsModalVisible] = useState(false)
+
+  // Show modal automatically when game is won or lost
+  useEffect(() => {
+    if (gameStatus === 'won' || gameStatus === 'lost') {
+      setIsModalVisible(true)
+    } else {
+      setIsModalVisible(false)
+    }
+  }, [gameStatus])
 
   // Track mobile board rendered width
   useEffect(() => {
@@ -106,7 +121,11 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
   }
 
   const handleUndo = () => {
-    undoLastMove()
+    undoMove()
+  }
+
+  const handleRedo = () => {
+    redoMove()
   }
 
   const handleAutoFill = () => {
@@ -194,8 +213,10 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
                     onMove={(x, y, onSnapSuccess) => handlePieceMove(piece.id, x, y, onSnapSuccess)}
                     onRotateLeft={handlePieceRotateLeft}
                     onRotateRight={handlePieceRotateRight}
+                    onDragEnd={commitHistory}
                     boardContainerWidth={desktopBoardWidth}
                     allPieces={pieces}
+                    disabled={isSolved}
                   />
                 ))}
               </TangramBoard>
@@ -203,7 +224,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
 
             {/* RIGHT SIDE - CONTROLS PANEL */}
             <div 
-              className="flex-shrink-0 w-[230px] flex flex-col justify-between sticky top-[100px]"
+              className="flex-shrink-0 w-[360px] flex flex-col justify-between sticky top-[100px]"
               style={{ height: `${(desktopBoardWidth * 493) / 750}px` }}
             >
               {/* Premium Controls Card - fills space but doesn't push buttons down */}
@@ -278,12 +299,23 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
                   {/* Undo Button */}
                   <button
                     onClick={handleUndo}
-                    disabled={gameStatus !== 'playing' || !hasPlacedPieces}
+                    disabled={!hasUndo}
                     className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Undo last move"
                     aria-label="Undo"
                   >
                     <Undo size={27} strokeWidth={2} className="text-[#424242]" />
+                  </button>
+
+                  {/* Redo Button */}
+                  <button
+                    onClick={handleRedo}
+                    disabled={!hasRedo}
+                    className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Redo move"
+                    aria-label="Redo"
+                  >
+                    <Redo size={27} strokeWidth={2} className="text-[#424242]" />
                   </button>
                 </div>
               </div>
@@ -366,8 +398,10 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
                     onMove={(x, y, onSnapSuccess) => handlePieceMove(piece.id, x, y, onSnapSuccess)}
                     onRotateLeft={handlePieceRotateLeft}
                     onRotateRight={handlePieceRotateRight}
+                    onDragEnd={commitHistory}
                     boardContainerWidth={mobileBoardWidth}
                     allPieces={pieces}
+                    disabled={isSolved}
                   />
                 ))}
               </TangramBoard>
@@ -408,12 +442,23 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
               {/* Undo Button */}
               <button
                 onClick={handleUndo}
-                disabled={gameStatus !== 'playing' || !hasPlacedPieces}
+                disabled={!hasUndo}
                 className="w-[63.44px] h-[63.44px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Undo last move"
                 aria-label="Undo"
               >
                 <Undo size={34} strokeWidth={2} className="text-[#424242]" />
+              </button>
+
+              {/* Redo Button */}
+              <button
+                onClick={handleRedo}
+                disabled={!hasRedo}
+                className="w-[63.44px] h-[63.44px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Redo move"
+                aria-label="Redo"
+              >
+                <Redo size={34} strokeWidth={2} className="text-[#424242]" />
               </button>
             </div>
 
@@ -446,7 +491,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
 
       {/* Completion Modal */}
       <TangramModal
-        isOpen={gameStatus === 'won' || gameStatus === 'lost'}
+        isOpen={isModalVisible}
         time={0}
         mistakes={0}
         hintsUsed={hintsUsed}
@@ -457,6 +502,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
         onPlayAgain={handleRetry}
         onNewPuzzle={handleNewGame}
         onBackToLobby={handleBackToLobby}
+        onClose={() => setIsModalVisible(false)}
       />
     </section>
   )

@@ -141,25 +141,15 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
           {/* Back Arrow */}
           <Link href="/">
             <button
-              className="mb-4 w-12 h-12 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center p-2 hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95"
+              className="w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95"
               aria-label="Back to home"
             >
               <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
             </button>
           </Link>
 
-          {/* Header - OUTSIDE the bordered container */}
-          <div className="text-center md:mb-8 mb-3">
-            <h1 className="font-urbanist font-bold text-[32px] md:text-[48px] text-[#181A20] dark:text-white">
-              {gameTitle}
-            </h1>
-            <p className="font-urbanist text-[14px] md:text-[16px] text-[#757575] dark:text-[#BDBDBD]">
-              Daily Challenges
-            </p>
-          </div>
-
           {/* Main Container with Border */}
-          <div className="border-[0.95px] border-[#979797] dark:border-[#E0E0E0] rounded-3xl pt-4 pb-4 pl-3 pr-3 md:p-6 md:pb-6">
+          <div className="border-[0.95px] border-[#979797] dark:border-[#E0E0E0] rounded-3xl pt-4 pb-4 pl-3 pr-3 md:p-6 md:pb-6 md:mt-5">
             <div className="flex flex-col gap-6">
 
               {/* Filter + Controls Container */}

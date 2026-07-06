@@ -17,6 +17,7 @@ interface NonogramModalProps {
   onPlayAgain: () => void
   onNewPuzzle: () => void
   onBackToGames?: () => void
+  onClose?: () => void
 }
 
 export function NonogramModal({
@@ -31,6 +32,7 @@ export function NonogramModal({
   onPlayAgain,
   onNewPuzzle,
   onBackToGames,
+  onClose,
 }: NonogramModalProps) {
   // Handle ESC key
   useEffect(() => {
@@ -90,7 +92,7 @@ export function NonogramModal({
             
             {/* Close button */}
             <button
-              onClick={onPlayAgain}
+              onClick={onClose ?? onPlayAgain}
               className="absolute top-2 right-2 z-20 w-7 h-7 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
               aria-label="Close modal"
             >
@@ -191,6 +193,12 @@ export function NonogramModal({
                   >
                     Replay
                   </button>
+                  <button
+                    onClick={onNewPuzzle}
+                    className="w-full h-[40px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
+                  >
+                    New Game
+                  </button>
                 </>
               ) : (
                 <>
@@ -199,6 +207,12 @@ export function NonogramModal({
                     className="w-full h-[40px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
                   >
                     Try Again
+                  </button>
+                  <button
+                    onClick={onNewPuzzle}
+                    className="w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] hover:bg-[#6949FF]/10 font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none"
+                  >
+                    New Game
                   </button>
                 </>
               )}

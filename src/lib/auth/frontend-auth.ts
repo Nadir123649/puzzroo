@@ -33,14 +33,40 @@ const DEV_CREDENTIALS = {
   password: 'Password123',
 }
 
+const AUTH_PASSWORD_KEY = 'puzzroo_dev_password'
 const AUTH_STORAGE_KEY = 'puzzroo_auth'
 const USER_STORAGE_KEY = 'puzzroo_user'
+
+/**
+ * Get current stored password
+ */
+export function getStoredPassword(): string {
+  if (typeof window === 'undefined') return DEV_CREDENTIALS.password
+  return localStorage.getItem(AUTH_PASSWORD_KEY) || DEV_CREDENTIALS.password
+}
 
 /**
  * Validate login credentials
  */
 export function validateLogin(email: string, password: string): boolean {
-  return email === DEV_CREDENTIALS.email && password === DEV_CREDENTIALS.password
+  return email === DEV_CREDENTIALS.email && password === getStoredPassword()
+}
+
+/**
+ * Change user password
+ */
+export function changePassword(oldPassword: string, newPassword: string): { success: boolean; error?: string } {
+  if (oldPassword !== getStoredPassword()) {
+    return {
+      success: false,
+      error: 'Incorrect current password',
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(AUTH_PASSWORD_KEY, newPassword)
+  }
+  return { success: true }
 }
 
 /**

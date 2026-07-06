@@ -32,6 +32,8 @@ interface PolygonPieceProps {
   onRotateRight: () => void
   boardContainerWidth?: number
   allPieces?: PieceState[]
+  disabled?: boolean
+  onDragEnd?: () => void
 }
 
 export function PolygonPiece({
@@ -42,6 +44,8 @@ export function PolygonPiece({
   onRotateLeft,
   onRotateRight,
   boardContainerWidth,
+  disabled = false,
+  onDragEnd,
 }: PolygonPieceProps) {
   const dragStartPos = useRef<{ x: number; y: number } | null>(null)
   const pieceStartPos = useRef<{ x: number; y: number } | null>(null)
@@ -108,6 +112,10 @@ export function PolygonPiece({
         (target as HTMLElement).releasePointerCapture(upEvent.pointerId)
       } catch (err) {}
 
+      if (onDragEnd) {
+        onDragEnd()
+      }
+
       dragStartPos.current = null
       pieceStartPos.current = null
       isDraggingRef.current = false
@@ -124,7 +132,7 @@ export function PolygonPiece({
   const leftPercent = (cx / VIRTUAL_W) * 100
   const topPercent = (cy / VIRTUAL_H) * 100
 
-  const isAnimating = !isDraggingRef.current && !piece.isSnapped
+  const isAnimating = !isDraggingRef.current
   const positionTransition = isAnimating
     ? 'left 0.3s cubic-bezier(0.25, 1, 0.5, 1), top 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
     : 'none'
@@ -201,12 +209,12 @@ export function PolygonPiece({
               stroke={isSelected ? '#6949FF' : 'rgba(255,255,255,0.2)'}
               strokeWidth={isSelected ? '2' : '1'}
               style={{
-                pointerEvents: 'auto',
-                cursor: isDraggingRef.current ? 'grabbing' : 'grab',
+                pointerEvents: disabled ? 'none' : 'auto',
+                cursor: disabled ? 'default' : isDraggingRef.current ? 'grabbing' : 'grab',
                 filter: isSelected ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15))' : 'none',
                 touchAction: 'none',
               }}
-              onPointerDown={handlePointerDown}
+              onPointerDown={disabled ? undefined : handlePointerDown}
             />
 
             {showPulse && (
@@ -224,8 +232,8 @@ export function PolygonPiece({
         </g>
       </svg>
 
-      {/* Orbital helper positioned at STABLE center */}
-      {isSelected && (
+      {/* Orbital helper positioned at STABLE center - hidden when disabled */}
+      {isSelected && !disabled && (
         <div
           className="absolute"
           style={{

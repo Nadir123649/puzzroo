@@ -19,6 +19,7 @@ export function SudokuGame() {
   const searchParams = useSearchParams()
   const [isResetting, setIsResetting] = useState(false)
   const [loaderText, setLoaderText] = useState('Loading game...')
+  const [showModal, setShowModal] = useState(false)
   
   // Check if this is from past puzzles or daily challenge (has date param)
   const dateParam = searchParams?.get('date')
@@ -61,6 +62,15 @@ export function SudokuGame() {
       document.body.style.touchAction = ''
     }
   }, [isResetting])
+
+  // Show modal automatically when game is won or lost
+  useEffect(() => {
+    if (gameStatus === 'won' || gameStatus === 'lost') {
+      setShowModal(true)
+    } else {
+      setShowModal(false)
+    }
+  }, [gameStatus])
 
   const handleBackToGames = () => {
     const params = new URLSearchParams(window.location.search)
@@ -266,26 +276,30 @@ export function SudokuGame() {
 
       {/* Win Modal */}
       <SudokuModal
-        isOpen={gameStatus === 'won'}
+        isOpen={gameStatus === 'won' && showModal}
         type="win"
         time={time}
         mistakes={mistakes}
         maxMistakes={maxMistakes}
         score={score}
         onPlayAgain={() => handleNewGame(true)}
+        onNewGame={() => handleNewGame(false)}
         onBackToGames={handleBackToGames}
+        onClose={() => setShowModal(false)}
       />
 
       {/* Game Over Modal */}
       <SudokuModal
-        isOpen={gameStatus === 'lost'}
+        isOpen={gameStatus === 'lost' && showModal}
         type="gameOver"
         time={time}
         mistakes={mistakes}
         maxMistakes={maxMistakes}
         score={score}
         onPlayAgain={() => handleNewGame(true)}
+        onNewGame={() => handleNewGame(false)}
         onBackToGames={handleBackToGames}
+        onClose={() => setShowModal(false)}
       />
     </section>
   )

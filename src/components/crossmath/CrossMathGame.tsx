@@ -303,7 +303,9 @@ export function CrossMathGame() {
         maxMistakes={maxMistakes}
         score={score}
         onPlayAgain={handlePlayAgain}
+        onNewGame={() => handleNewGame(true)}
         onBackToGames={handleBackToGames}
+        onClose={() => setShowModal(false)}
         gameName="CrossMath"
       />
 

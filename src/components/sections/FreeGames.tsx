@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { images } from '@/lib/utils'
 import { useTheme } from '@/hooks/use-theme'
 
@@ -151,6 +152,7 @@ interface GameCardComponentProps {
 
 function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
   const { theme } = useTheme()
+  const router = useRouter()
   const isActive = ACTIVE_GAMES.includes(game.id)
   
   const currentImage = theme === 'light' && game.imageLight ? game.imageLight : game.image
@@ -223,7 +225,10 @@ function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
   
   // Active game card with 3 buttons
   return (
-    <div className="flex flex-col bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[20px] lg:p-[30.78px] gap-[12px] md:gap-[20px] lg:gap-[30.78px] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group md:min-h-auto">
+    <div 
+      onClick={() => router.push(`/game/${game.id}`)}
+      className="flex flex-col bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[20px] lg:p-[30.78px] gap-[12px] md:gap-[20px] lg:gap-[30.78px] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group md:min-h-auto cursor-pointer"
+    >
       {/* Game Image - Fluid and responsive */}
       <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F0EDFF] dark:bg-[#1F222A]">
         <Image
@@ -252,21 +257,21 @@ function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
         {/* Button Group */}
         <div className="flex flex-col gap-[6px] md:gap-[10px]">
           {/* Daily Challenge Button */}
-          <Link href={`/daily-challenge/${game.id}`} className="w-full">
+          <Link href={`/daily-challenge/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()}>
             <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Daily Challenge for ${game.title}`}>
               Daily Challenge
             </button>
           </Link>
 
           {/* Play Now Button */}
-          <Link href={`/game/${game.id}`} className="w-full">
+          <Link href={`/game/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()}>
             <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}>
               {isPlayed ? 'Play Again' : 'Play Now'}
             </button>
           </Link>
 
           {/* Past Puzzle Button */}
-          <Link href={`/past-puzzles/${game.id}`} className="w-full group">
+          <Link href={`/past-puzzles/${game.id}`} className="w-full group" onClick={(e) => e.stopPropagation()}>
             <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] hover:text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Past Puzzles for ${game.title}`}>
               Past Puzzle
             </button>

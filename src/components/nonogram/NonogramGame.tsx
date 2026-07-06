@@ -48,6 +48,16 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
 
   const [isResetting, setIsResetting] = useState(false)
   const [loaderText, setLoaderText] = useState('Loading game...')
+  const [showCompletionModal, setShowCompletionModal] = useState(false)
+
+  // Show modal automatically when game is won or lost
+  useEffect(() => {
+    if (gameStatus === 'won' || gameStatus === 'lost') {
+      setShowCompletionModal(true)
+    } else {
+      setShowCompletionModal(false)
+    }
+  }, [gameStatus])
 
   const handleReplay = async () => {
     setLoaderText('Replaying game...')
@@ -788,7 +798,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
 
       {/* Completion & Game Over Modal */}
       <NonogramModal
-        isOpen={gameStatus === 'won' || gameStatus === 'lost'}
+        isOpen={(gameStatus === 'won' || gameStatus === 'lost') && showCompletionModal}
         difficulty={currentPuzzle.difficulty}
         time={elapsedSeconds}
         completionPercentage={progress.percentComplete}
@@ -799,6 +809,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
         onPlayAgain={handleReplay}
         onNewPuzzle={handleNewPuzzle}
         onBackToGames={handleBackToGames}
+        onClose={() => setShowCompletionModal(false)}
       />
 
       {/* Loading Overlay */}

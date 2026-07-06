@@ -19,6 +19,7 @@
     onPlayAgain: () => void
     onNewPuzzle?: () => void
     onBackToLobby?: () => void
+    onClose?: () => void
   }
 
   export function TangramModal({
@@ -33,6 +34,7 @@
     onPlayAgain,
     onNewPuzzle,
     onBackToLobby,
+    onClose,
   }: TangramModalProps) {
     // Handle ESC key
     useEffect(() => {
@@ -69,13 +71,23 @@
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}>
           <div
-            className={`bg-[#F0EDFF] dark:bg-[#1F222A] rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all duration-300 ${
+            className={`relative bg-[#F0EDFF] dark:bg-[#1F222A] rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all duration-300 ${
               isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
             }`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"
           >
+            {/* X Close Button - lets user peek at the solved board */}
+            <button
+              onClick={onClose ?? onPlayAgain}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-[#757575] hover:text-[#212121] dark:text-[#9E9E9E] dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all"
+              aria-label="Close"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
             {/* Modal Content */}
             <div className="text-center mb-6">
               <div className="text-6xl mb-4">{isTimeUp ? '⏰' : '🎉'}</div>

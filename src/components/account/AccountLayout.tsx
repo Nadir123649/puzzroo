@@ -14,11 +14,18 @@ interface AccountLayoutProps {
 export function AccountLayout({ children }: AccountLayoutProps) {
   const router = useRouter()
 
+  const [mounted, setMounted] = React.useState(false)
+
   useEffect(() => {
+    setMounted(true)
     if (!isLoggedIn()) {
       router.push('/login')
     }
   }, [router])
+
+  if (!mounted) {
+    return null
+  }
 
   if (!isLoggedIn()) {
     return null

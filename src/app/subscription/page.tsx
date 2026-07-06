@@ -1,7 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { AccountLayout } from '@/components/account/AccountLayout'
-import { Check, Zap } from 'lucide-react'
+import { Check, Zap, Loader2 } from 'lucide-react'
 
 const features = [
   'Unlimited access to all games and difficulty levels',
@@ -13,6 +14,100 @@ const features = [
 ]
 
 export default function SubscriptionPage() {
+  const [currency, setCurrency] = useState<'USD' | 'EUR' | 'PKR'>('EUR') // Default to EUR as it was the original
+  const [isCurrencyLoading, setIsCurrencyLoading] = useState(true)
+
+  useEffect(() => {
+    const detectCurrency = async () => {
+      let detectedCountry = ''
+      
+      // 1. Try IP-based detection via XMLHttpRequest (bypasses Next.js dev-overlay fetch interceptor)
+      try {
+        const data = await new Promise<any>((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('GET', 'https://ipapi.co/json/', true)
+          xhr.timeout = 4000 // 4 seconds timeout
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                resolve(JSON.parse(xhr.responseText))
+              } catch (e) {
+                reject(e)
+              }
+            } else {
+              reject(new Error(`HTTP ${xhr.status}`))
+            }
+          }
+          xhr.onerror = () => reject(new Error('Network error'))
+          xhr.ontimeout = () => reject(new Error('Timeout'))
+          xhr.send()
+        })
+        
+        if (data && data.country_code) {
+          detectedCountry = data.country_code
+        }
+      } catch (err) {
+        console.warn('IP-based currency detection failed, falling back to timezone:', err)
+      }
+
+      // 2. Fallback to timezone-based detection if IP lookup failed
+      if (!detectedCountry) {
+        try {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+          const tzMap: Record<string, string> = {
+            'Asia/Karachi': 'PK',
+            'Europe/Berlin': 'DE',
+            'Europe/Riga': 'LV',
+            'Europe/Paris': 'FR',
+            'Europe/Rome': 'IT',
+            'Europe/Madrid': 'ES',
+            'Europe/Amsterdam': 'NL',
+            'Europe/Brussels': 'BE',
+            'Europe/Vienna': 'AT',
+            'Europe/Lisbon': 'PT',
+            'Europe/Helsinki': 'FI',
+            'Europe/Dublin': 'IE',
+            'Europe/Athens': 'GR',
+            'Europe/Tallinn': 'EE',
+            'Europe/Vilnius': 'LT',
+            'Europe/Bratislava': 'SK',
+            'Europe/Ljubljana': 'SI',
+          }
+          
+          if (tzMap[tz]) {
+            detectedCountry = tzMap[tz]
+          } else if (tz.startsWith('Europe/')) {
+            detectedCountry = 'DE' // default to EU country if in Europe timezone
+          }
+        } catch (tzErr) {
+          console.error('Timezone detection failed:', tzErr)
+        }
+      }
+
+      // 3. Map country code to currency
+      const euCountries = ['FR', 'DE', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'FI', 'IE', 'GR', 'LU', 'MT', 'CY', 'EE', 'LV', 'LT', 'SK', 'SI']
+      
+      if (detectedCountry === 'PK') {
+        setCurrency('PKR')
+      } else if (euCountries.includes(detectedCountry)) {
+        setCurrency('EUR')
+      } else {
+        setCurrency('USD')
+      }
+      setIsCurrencyLoading(false)
+    }
+
+    detectCurrency()
+  }, [])
+
+  const pricing = {
+    USD: { symbol: '$', monthly: '0.99', yearly: '9.90', lifetime: '29.90' },
+    EUR: { symbol: '€', monthly: '0.99', yearly: '9.90', lifetime: '29.90' },
+    PKR: { symbol: 'Rs ', monthly: '300', yearly: '3000', lifetime: '9000' }
+  }
+
+  const currentPricing = pricing[currency]
+
   return (
     <AccountLayout>
             {/* Hero Section */}
@@ -34,9 +129,9 @@ export default function SubscriptionPage() {
                 </h3>
                 <div className="mb-6">
                   <span className="font-urbanist font-bold text-[40px] text-[#6949FF]">
-                    €0.99
+                    {isCurrencyLoading ? <Loader2 className="animate-spin inline-block w-8 h-8" /> : `${currentPricing.symbol}${currentPricing.monthly}`}
                   </span>
-                  <span className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD]">
+                  <span className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD] ml-1">
                     /month
                   </span>
                 </div>
@@ -62,9 +157,9 @@ export default function SubscriptionPage() {
                 </h3>
                 <div className="mb-2">
                   <span className="font-urbanist font-bold text-[40px] text-[#6949FF]">
-                    €9.90
+                    {isCurrencyLoading ? <Loader2 className="animate-spin inline-block w-8 h-8" /> : `${currentPricing.symbol}${currentPricing.yearly}`}
                   </span>
-                  <span className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD]">
+                  <span className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD] ml-1">
                     /year
                   </span>
                 </div>
@@ -88,9 +183,9 @@ export default function SubscriptionPage() {
                 </h3>
                 <div className="mb-6">
                   <span className="font-urbanist font-bold text-[40px] text-[#6949FF]">
-                    €29.90
+                    {isCurrencyLoading ? <Loader2 className="animate-spin inline-block w-8 h-8" /> : `${currentPricing.symbol}${currentPricing.lifetime}`}
                   </span>
-                  <span className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD]">
+                  <span className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD] ml-1">
                     /one-time
                   </span>
                 </div>

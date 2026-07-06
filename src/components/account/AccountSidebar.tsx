@@ -111,12 +111,9 @@ export function AccountSidebar() {
 
       {/* Mobile Drawer - SLIDE FROM LEFT with Glassmorphism */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 h-full w-[280px] backdrop-blur-xl bg-white/95 dark:bg-[#1A1D23]/95 border-r border-purple-200/80 dark:border-purple-500/30 z-50 transition-transform duration-300 shadow-2xl shadow-purple-500/10 ${
+        className={`lg:hidden fixed top-0 left-0 h-full w-[280px] backdrop-blur-xl bg-gradient-to-br from-white via-purple-50/90 to-purple-100/90 dark:bg-none dark:bg-[#1A1D23]/95 border-r border-purple-200/80 dark:border-purple-500/30 z-50 transition-transform duration-300 shadow-2xl shadow-purple-500/10 ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
-        style={{
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(249,245,255,0.95) 50%, rgba(243,237,255,0.98) 100%)',
-        }}
       >
         {/* Close Button */}
         <div className="flex items-center justify-between p-5 border-b border-purple-200/50 dark:border-purple-500/20 backdrop-blur-sm">
