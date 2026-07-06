@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { images } from '@/lib/utils'
+import { GameLoader } from '@/components/ui/GameLoader'
 
 interface CrossMathHeroProps {
   backTo?: string // Optional custom back navigation path
@@ -33,8 +34,10 @@ export function CrossMathHero({ backTo }: CrossMathHeroProps = {}) {
     setIsNavigating(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // Check for return URL from past puzzles
-    const returnUrl = typeof window !== 'undefined' ? sessionStorage.getItem('puzzroo_return_url') : null
+    const params = new URLSearchParams(window.location.search)
+    const hasDate = params.has('date')
+    
+    const returnUrl = hasDate ? (typeof window !== 'undefined' ? sessionStorage.getItem('puzzroo_return_url') : null) : null
     if (returnUrl) {
       sessionStorage.removeItem('puzzroo_return_url')
       router.push(returnUrl)
@@ -80,27 +83,7 @@ export function CrossMathHero({ backTo }: CrossMathHeroProps = {}) {
       </section>
 
       {/* Loading Overlay for Navigation */}
-      {isNavigating && (
-        <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-50">
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4">
-            {/* Puzzroo Logo + Text */}
-            <div className="flex items-center gap-3">
-              <Image
-                src={images.logo}
-                alt="Puzzroo Logo"
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-lg"
-              />
-              <span className="font-urbanist text-[32px] font-extrabold tracking-tight text-[#181A20] dark:text-white">
-                Puzzroo
-              </span>
-            </div>
-            
-            <Loader2 className="animate-spin text-[var(--color-primary)]" size={48} />
-          </div>
-        </div>
-      )}
+      <GameLoader isOpen={isNavigating} text="Back to lobby..." />
     </>
   )
 }

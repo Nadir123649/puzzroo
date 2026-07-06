@@ -230,8 +230,8 @@ export function useCrossMath() {
     if (isBoardComplete(newBoard) && validateBoard(newBoard, currentPuzzle.solution)) {
       // Mark puzzle as completed in universal completion system
       const dateParam = searchParams.get('date')
-      // Convert date to full puzzle ID format: daily-crossmath-MM-DD-YY
-      const puzzleId = dateParam ? `daily-crossmath-${dateParam}` : currentPuzzle.id
+      // Convert date to full puzzle ID format: daily-cross-math-MM-DD-YY
+      const puzzleId = dateParam ? `daily-cross-math-${dateParam}` : currentPuzzle.id
       markPuzzleCompleted('crossmath', puzzleId, {
         time: time,
         score: score,
@@ -315,8 +315,8 @@ export function useCrossMath() {
     if (isBoardComplete(newBoard) && validateBoard(newBoard, currentPuzzle.solution)) {
       // Mark puzzle as completed in universal completion system
       const dateParam = searchParams.get('date')
-      // Convert date to full puzzle ID format: daily-crossmath-MM-DD-YY
-      const puzzleId = dateParam ? `daily-crossmath-${dateParam}` : currentPuzzle.id
+      // Convert date to full puzzle ID format: daily-cross-math-MM-DD-YY
+      const puzzleId = dateParam ? `daily-cross-math-${dateParam}` : currentPuzzle.id
       markPuzzleCompleted('crossmath', puzzleId, {
         time: time,
         score: score,
@@ -435,8 +435,8 @@ export function useCrossMath() {
     if (isBoardComplete(newBoard) && validateBoard(newBoard, currentPuzzle.solution)) {
       // Mark puzzle as completed in universal completion system
       const dateParam = searchParams.get('date')
-      // Convert date to full puzzle ID format: daily-crossmath-MM-DD-YY
-      const puzzleId = dateParam ? `daily-crossmath-${dateParam}` : currentPuzzle.id
+      // Convert date to full puzzle ID format: daily-cross-math-MM-DD-YY
+      const puzzleId = dateParam ? `daily-cross-math-${dateParam}` : currentPuzzle.id
       markPuzzleCompleted('crossmath', puzzleId, {
         time: time,
         score: newScore,
@@ -544,8 +544,8 @@ export function useCrossMath() {
       if (isBoardComplete(newBoard) && validateBoard(newBoard, currentPuzzle.solution)) {
         // Mark puzzle as completed in universal completion system
         const dateParam = searchParams.get('date')
-        // Convert date to full puzzle ID format: daily-crossmath-MM-DD-YY
-        const puzzleId = dateParam ? `daily-crossmath-${dateParam}` : currentPuzzle.id
+        // Convert date to full puzzle ID format: daily-cross-math-MM-DD-YY
+        const puzzleId = dateParam ? `daily-cross-math-${dateParam}` : currentPuzzle.id
         markPuzzleCompleted('crossmath', puzzleId, {
           time: time,
           score: isCorrect ? score + SCORING.CORRECT_ANSWER : Math.max(0, score + SCORING.WRONG_ANSWER),

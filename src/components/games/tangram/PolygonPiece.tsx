@@ -233,7 +233,7 @@ export function PolygonPiece({
             top: `${topPercent}%`,
             transform: 'translate(-50%, -50%)',
             transition: positionTransition,
-            zIndex: 99999,
+            zIndex: 45,
             pointerEvents: 'none',
           }}
         >

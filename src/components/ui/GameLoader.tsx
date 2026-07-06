@@ -1,0 +1,46 @@
+'use client'
+
+import React from 'react'
+import Image from 'next/image'
+import { Loader2 } from 'lucide-react'
+import { images } from '@/lib/utils'
+
+interface GameLoaderProps {
+  isOpen: boolean
+  text?: string
+}
+
+export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-[99999] flex items-center justify-center transition-opacity duration-300">
+      <div className="flex flex-col items-center gap-4 text-center select-none">
+        {/* Puzzroo Logo & Brand */}
+        <div className="flex items-center gap-2.5">
+          <Image
+            src={images.logo}
+            alt="Puzzroo Logo"
+            width={36}
+            height={36}
+            className="w-9 h-9 rounded-lg animate-pulse"
+            priority
+          />
+          <span className="font-urbanist text-2xl font-extrabold tracking-tight text-[#181A20] dark:text-white">
+            Puzzroo
+          </span>
+        </div>
+        
+        {/* Loading Spinner */}
+        <Loader2 className="animate-spin text-[var(--color-primary)] mt-2" size={40} />
+        
+        {/* Loading Text */}
+        <p className="font-urbanist text-base font-semibold text-[var(--color-primary)] animate-pulse mt-1">
+          {text}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default GameLoader

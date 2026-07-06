@@ -7,7 +7,7 @@ import { TangramPieceId } from '@/types/tangram-polygon'
 import { calculatePolygonDistance, calculateCentroid, polygonToPoints } from './polygon-geometry'
 import { getValidTargetIndices } from './polygon-validation'
 
-const SNAP_THRESHOLD = 25
+const SNAP_THRESHOLD = 35
 
 export function geometricallyMatches(poly1: number[][], poly2: number[][], threshold: number = 25): boolean {
   if (poly1.length !== poly2.length) return false
@@ -124,6 +124,19 @@ export function attemptSnap(
   let bestIndex: number | null = null
   let bestDistance = SNAP_THRESHOLD
   
+  const PIECE_TYPE_MAP: Record<string, string> = {
+    'baseTriangle1': 'large-triangle-1',
+    'baseTriangle2': 'large-triangle-2',
+    'mediumTriangle': 'medium-triangle',
+    'smallTriangle1': 'small-triangle-1',
+    'smallTriangle2': 'small-triangle-2',
+    'square': 'square',
+    'parallelogram': 'parallelogram'
+  }
+  
+  const pieceType = PIECE_TYPE_MAP[pieceId] || 'square'
+  const ownIndex = pieceShapeIds.indexOf(pieceId)
+  
   for (const index of validIndices) {
     if (occupiedTargetIndices.has(index)) continue
     
@@ -131,6 +144,27 @@ export function attemptSnap(
     
     // Check if the current polygon geometrically matches the target slot polygon (order-independent)
     if (geometricallyMatches(currentPolygon, targetPolygon, SNAP_THRESHOLD)) {
+      // Calculate relative rotation between the snapped target slot and the piece's own target slot
+      const ownTargetPolygon = ownIndex !== -1 ? targetPolygons[ownIndex] : targetPolygon
+      const targetRotation = getTargetRotation(pieceType, targetPolygon, scale)
+      const baseRotation = getTargetRotation(pieceType, ownTargetPolygon, scale)
+      const snapRotation = ((targetRotation - baseRotation) % 360 + 360) % 360
+      
+      // Enforce rotation check with rotational symmetry
+      let symmetry = 360
+      if (pieceId === 'square') {
+        symmetry = 90
+      } else if (pieceId === 'parallelogram') {
+        symmetry = 180
+      }
+
+      const rotDiff = Math.abs((currentTransform.rotation - snapRotation) % 360)
+      const symDiff = rotDiff % symmetry
+      const normalizedRotDiff = symDiff > symmetry / 2 ? symmetry - symDiff : symDiff
+      if (normalizedRotDiff > 20) {
+        continue
+      }
+      
       const distance = calculateGeomCentroidDistance(currentPolygon, targetPolygon)
       if (distance < bestDistance) {
         bestDistance = distance
@@ -144,23 +178,8 @@ export function attemptSnap(
   const targetPolygon = targetPolygons[bestIndex]
   const targetCentroid = calculateCentroid(polygonToPoints(targetPolygon))
   
-  // Calculate relative rotation between the snapped target slot and the piece's own target slot
-  const PIECE_TYPE_MAP: Record<string, string> = {
-    'baseTriangle1': 'large-triangle-1',
-    'baseTriangle2': 'large-triangle-2',
-    'mediumTriangle': 'medium-triangle',
-    'smallTriangle1': 'small-triangle-1',
-    'smallTriangle2': 'small-triangle-2',
-    'square': 'square',
-    'parallelogram': 'parallelogram'
-  }
-  
-  const pieceType = PIECE_TYPE_MAP[pieceId] || 'square'
-  
   // Get piece's own solved slot target polygon in the puzzle
-  const ownIndex = pieceShapeIds.indexOf(pieceId)
   const ownTargetPolygon = ownIndex !== -1 ? targetPolygons[ownIndex] : targetPolygon
-  
   const targetRotation = getTargetRotation(pieceType, targetPolygon, scale)
   const baseRotation = getTargetRotation(pieceType, ownTargetPolygon, scale)
   

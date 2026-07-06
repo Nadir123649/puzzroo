@@ -9,6 +9,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, Lightbulb, RotateCcw, Undo } from 'lucide-react'
 import { images } from '@/lib/utils'
+import { GameLoader } from '@/components/ui/GameLoader'
 import { polygonToSVGPath } from '@/lib/tangram/polygon-renderer'
 import { usePolygonTangram } from '@/hooks/usePolygonTangram'
 import { TangramBoard } from '@/components/games/tangram/TangramBoard'
@@ -33,6 +34,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
   const difficulty = (searchParams?.get('difficulty') as TangramDifficulty) || 'easy'
   
   const [isResetting, setIsResetting] = useState(false)
+  const [loaderText, setLoaderText] = useState('Loading game...')
   const [mobileBoardWidth, setMobileBoardWidth] = useState(350)
   const [desktopBoardWidth, setDesktopBoardWidth] = useState(700)
   const router = useRouter()
@@ -88,17 +90,15 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
   }, [])
 
   const handleNewGame = async () => {
+    setLoaderText('Loading game...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
     newGame()
     setIsResetting(false)
   }
 
-  const handleRetry = async () => {
-    setIsResetting(true)
-    await new Promise(resolve => setTimeout(resolve, 500))
+  const handleRetry = () => {
     replayPuzzle()
-    setIsResetting(false)
   }
 
   const handleReplay = () => {
@@ -114,7 +114,15 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
   }
 
   const handleBackToLobby = () => {
-    router.push('/game/tangram')
+    const params = new URLSearchParams(window.location.search)
+    const hasDate = params.has('date')
+    const returnUrl = hasDate ? (typeof window !== 'undefined' ? sessionStorage.getItem('puzzroo_return_url') : null) : null
+    if (returnUrl) {
+      sessionStorage.removeItem('puzzroo_return_url')
+      router.push(returnUrl)
+    } else {
+      router.push('/game/tangram')
+    }
   }
 
   const handlePieceSelect = (pieceId: TangramPieceId) => {
@@ -152,7 +160,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
         <div className="w-full flex flex-col gap-[20px] pb-0 md:pb-[10px] max-w-full overflow-visible">
 
           {/* Desktop Layout */}
-          <div className="hidden md:flex gap-[30px] justify-center items-start overflow-visible">
+          <div className="hidden md:flex gap-[50px] justify-center items-start overflow-visible">
 
             {/* LEFT SIDE - BOARD */}
             <div ref={desktopBoardRef} className="flex-1 max-w-[700px] min-w-[320px] overflow-visible">
@@ -189,40 +197,45 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
               className="flex-shrink-0 w-[230px] flex flex-col justify-between sticky top-[100px]"
               style={{ height: `${(desktopBoardWidth * 493) / 750}px` }}
             >
-              {/* Stats Section - Sudoku style */}
-              <div className="w-full flex flex-col gap-[12px]">
+              {/* Premium Controls Card */}
+              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 shadow-lg shadow-purple-500/5 flex flex-col gap-5">
                 {/* Difficulty Heading - centered, bold, larger */}
                 {puzzle && (
-                  <div className="text-center">
-                    <h3 className="font-urbanist text-3xl font-extrabold text-[#212121] dark:text-white capitalize select-none">
+                  <div className="text-center pb-3">
+                    <span className="font-urbanist text-[11px] text-[#757575] dark:text-[#9E9E9E] uppercase tracking-wider font-bold">
+                      Difficulty
+                    </span>
+                    <h3 className="font-urbanist text-2xl font-extrabold text-[#212121] dark:text-white capitalize select-none mt-0.5">
                       {puzzle.difficulty}
                     </h3>
                   </div>
                 )}
 
                 {/* Score and Time Row */}
-                <div className="flex justify-between items-center">
-                  {/* Score - Left */}
-                  <div className="flex flex-col items-start">
-                    <span className="font-urbanist text-sm font-medium text-[#757575] dark:text-[#9E9E9E]">
+                <div className="grid grid-cols-2 gap-2 text-center">
+                  {/* Score */}
+                  <div className="bg-white dark:bg-[#181A20] rounded-xl p-2 border border-[#E0E0E0] dark:border-[#35383F]">
+                    <span className="font-urbanist text-[10px] font-semibold text-[#757575] dark:text-[#9E9E9E] uppercase tracking-wide">
                       Score
                     </span>
-                    <span className="font-urbanist text-xl font-bold text-[var(--color-primary)]">
+                    <span className="font-urbanist text-lg font-bold text-[var(--color-primary)] block mt-0.5" style={{ fontVariantNumeric: 'tabular-nums' }}>
                       {score}
                     </span>
                   </div>
 
-                  {/* Time Remaining - Right */}
-                  <div className="flex flex-col items-end">
-                    <span className="font-urbanist text-sm font-medium text-[#757575] dark:text-[#9E9E9E]">
+                  {/* Time Remaining */}
+                  <div className="bg-white dark:bg-[#181A20] rounded-xl p-2 border border-[#E0E0E0] dark:border-[#35383F]">
+                    <span className="font-urbanist text-[10px] font-semibold text-[#757575] dark:text-[#9E9E9E] uppercase tracking-wide">
                       Time
                     </span>
-                    <CountdownTimer timeRemaining={timeRemaining} className="text-xl" />
+                    <div className="block mt-0.5">
+                      <CountdownTimer timeRemaining={timeRemaining} className="text-lg" />
+                    </div>
                   </div>
                 </div>
 
                 {/* Feature Row - Hint + Replay + Undo (Sudoku style) */}
-                <div className="w-[230px] h-[50.31px] flex justify-between items-center gap-[8px]">
+                <div className="flex justify-between items-center gap-[8px] pt-1">
                   {/* Hint Button */}
                   <button
                     onClick={handleRequestHint}
@@ -285,14 +298,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
                   disabled={isResetting}
                   className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isResetting ? (
-                    <>
-                      <Loader2 className="animate-spin" size={20} />
-                      <span>Loading...</span>
-                    </>
-                  ) : (
-                    mode === 'normal' ? 'New Game' : 'Replay'
-                  )}
+                  {mode === 'normal' ? 'New Game' : 'Replay'}
                 </button>
               </div>
             </div>
@@ -409,14 +415,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
               disabled={isResetting}
               className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {isResetting ? (
-                <>
-                  <Loader2 className="animate-spin" size={20} />
-                  <span>Loading...</span>
-                </>
-              ) : (
-                mode === 'normal' ? 'New Game' : 'Replay'
-              )}
+              {mode === 'normal' ? 'New Game' : 'Replay'}
             </button>
           </div>
 
@@ -424,16 +423,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
       </div>
 
       {/* Loading Overlay */}
-      {isResetting && (
-        <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="animate-spin text-[var(--color-primary)]" size={48} />
-            <p className="font-urbanist text-lg font-semibold text-[var(--color-primary)]">
-              Loading...
-            </p>
-          </div>
-        </div>
-      )}
+      <GameLoader isOpen={isResetting} text={loaderText} />
 
       {/* Completion Modal */}
       <TangramModal

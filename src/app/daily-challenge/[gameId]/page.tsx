@@ -57,22 +57,22 @@ function DailyChallengeContent() {
           {/* Reuse existing Hero components with custom back navigation */}
           {gameId === 'sudoku' ? (
             <>
-              <SudokuHero backTo="/#free-games" />
+              <SudokuHero backTo="/past-puzzles/sudoku" />
               <SudokuGame />
             </>
           ) : gameId === 'cross-math' ? (
             <>
-              <CrossMathHero backTo="/#free-games" />
+              <CrossMathHero backTo="/past-puzzles/cross-math" />
               <CrossMathGame />
             </>
           ) : gameId === 'nonogram' ? (
             <>
-              <NonogramHero backTo="/#free-games" />
+              <NonogramHero backTo="/past-puzzles/nonogram" />
               <NonogramGame />
             </>
           ) : gameId === 'tangram' ? (
             <>
-              <TangramHero />
+              <TangramHero backTo="/past-puzzles/tangram" />
               <TangramGame />
             </>
           ) : (

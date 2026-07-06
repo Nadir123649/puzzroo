@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { GameLoader } from '@/components/ui/GameLoader'
 import { DifficultyTabs } from './DifficultyTabs'
 import { useTheme } from '@/hooks/use-theme'
 import { useGameLobby } from '@/contexts/GameLobbyContext'
@@ -114,8 +115,8 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
     if (isSudoku || isCrossMath || isNonogram || isTangram) {
       e.preventDefault()
       setIsLoading(true)
-      // Show loading for 2-3 seconds
-      await new Promise(resolve => setTimeout(resolve, 2500))
+      // Show loading for 1 second
+      await new Promise(resolve => setTimeout(resolve, 1000))
       router.push(`${playUrl}?difficulty=${localDifficulty.toLowerCase()}`)
     }
   }
@@ -198,30 +199,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
         </div>
 
         {/* Loading Overlay */}
-        {isLoading && (
-          <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-50">
-            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4">
-              {/* Puzzroo Logo + Text */}
-              <div className="flex items-center gap-3">
-                <Image
-                  src={images.logo}
-                  alt="Puzzroo Logo"
-                  width={40}
-                  height={40}
-                  className="w-10 h-10 rounded-lg"
-                />
-                <span className="font-urbanist text-[32px] font-extrabold tracking-tight text-[#181A20] dark:text-white">
-                  Puzzroo
-                </span>
-              </div>
-              
-              <Loader2 className="animate-spin text-[var(--color-primary)]" size={48} />
-              <p className="font-urbanist text-lg font-semibold text-[var(--color-primary)]">
-                Loading Game...
-              </p>
-            </div>
-          </div>
-        )}
+        <GameLoader isOpen={isLoading} text="Loading game..." />
       </section>
     </>
   )

@@ -3,6 +3,7 @@ import { Urbanist } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/app/providers";
 import { images, imageDimensions } from "@/lib/utils";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -73,6 +74,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={urbanist.variable}>
       <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider>
+          <ScrollToTop />
           {children}
         </ThemeProvider>
       </body>

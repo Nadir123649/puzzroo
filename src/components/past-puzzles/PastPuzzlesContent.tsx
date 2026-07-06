@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Lock, Calendar, Loader2, X, Check } from 'lucide-react'
+import { Lock, Calendar, Loader2, X, Check, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { generatePastPuzzles } from '@/lib/dailyChallenge/generator'
 import { getChallengeStatus, getAccessiblePastChallenges } from '@/lib/dailyChallenge/storage'
@@ -16,6 +16,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { getCompletedPuzzleIds } from '@/lib/completion/universal'
 import Navbar from '@/components/layout/navbar'
 import Footer from '@/components/layout/Footer'
+import { GameLoader } from '@/components/ui/GameLoader'
 
 interface PastPuzzlesContentProps {
   gameId: 'sudoku' | 'cross-math' | 'nonogram' | 'tangram'
@@ -134,9 +135,19 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   return (
     <>
       <Navbar />
-      <section className="w-full min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 py-4 md:pb-16">
+      <section className="w-full min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 py-4 md:pb-10">
         <div className="w-full px-[20px] max-w-[1380px] mx-auto">
           
+          {/* Back Arrow */}
+          <Link href="/">
+            <button
+              className="mb-4 w-12 h-12 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center p-2 hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95"
+              aria-label="Back to home"
+            >
+              <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
+            </button>
+          </Link>
+
           {/* Header - OUTSIDE the bordered container */}
           <div className="text-center md:mb-8 mb-3">
             <h1 className="font-urbanist font-bold text-[32px] md:text-[48px] text-[#181A20] dark:text-white">
@@ -148,7 +159,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
           </div>
 
           {/* Main Container with Border */}
-          <div className="border-[0.95px] border-[#979797] dark:border-[#E0E0E0] rounded-3xl pt-4 pb-4 pl-3 pr-3 md:p-10">
+          <div className="border-[0.95px] border-[#979797] dark:border-[#E0E0E0] rounded-3xl pt-4 pb-4 pl-3 pr-3 md:p-6 md:pb-6">
             <div className="flex flex-col gap-6">
 
               {/* Filter + Controls Container */}
@@ -244,30 +255,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
       />
 
       {/* Loading Overlay */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-50">
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4">
-            {/* Puzzroo Logo + Text */}
-            <div className="flex items-center gap-3">
-              <Image
-                src={images.logo}
-                alt="Puzzroo Logo"
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-lg"
-              />
-              <span className="font-urbanist text-[32px] font-extrabold tracking-tight text-[#181A20] dark:text-white">
-                Puzzroo
-              </span>
-            </div>
-            
-            <Loader2 className="animate-spin text-[var(--color-primary)]" size={48} />
-            <p className="font-urbanist text-lg font-semibold text-[var(--color-primary)]">
-              Loading Game...
-            </p>
-          </div>
-        </div>
-      )}
+      <GameLoader isOpen={isLoading} text="Loading game..." />
     </>
   )
 }
@@ -377,9 +365,10 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
 
   const handleCardClick = async (e: React.MouseEvent) => {
     e.preventDefault()
+    if (isCompleted) return
     onPlayClick(true)
-    // Show loading for 2-3 seconds
-    await new Promise(resolve => setTimeout(resolve, 2500))
+    // Show loading for 1 second
+    await new Promise(resolve => setTimeout(resolve, 1000))
     // Route directly to game page with date in URL
     const gameUrl = puzzle.gameId === 'sudoku' 
       ? `/sudoku?date=${puzzle.dateString}` 
@@ -449,15 +438,25 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
       </div>
 
       {/* Play Button - CTA Style like Signup */}
-      <button
-        onClick={handleCardClick}
-        className="w-full h-[37px] md:h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-semibold text-[14px] md:text-[16px] transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
-      >
-        <span>Play Puzzle</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="transform group-hover:translate-x-1 transition-transform">
-          <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
+      {isCompleted ? (
+        <button
+          disabled
+          className="w-full h-[37px] md:h-[46px] rounded-full bg-[#EEEEEE] dark:bg-[#35383F] text-[#757575] dark:text-[#9E9E9E] font-urbanist font-bold text-[14px] md:text-[16px] flex items-center justify-center gap-2 cursor-not-allowed"
+        >
+          <span>Completed</span>
+          <Check size={16} className="text-[#22C55E]" strokeWidth={3} />
+        </button>
+      ) : (
+        <button
+          onClick={handleCardClick}
+          className="w-full h-[37px] md:h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-semibold text-[14px] md:text-[16px] transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
+        >
+          <span>Play Puzzle</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="transform group-hover:translate-x-1 transition-transform">
+            <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

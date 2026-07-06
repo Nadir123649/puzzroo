@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
+import { GameLoader } from '@/components/ui/GameLoader'
 import { useCrossMath } from '@/hooks/useCrossMath'
 import { CrossMathBoard } from '@/components/games/crossmath/CrossMathBoard'
 import { CrossMathNumberPad } from '@/components/games/crossmath/CrossMathNumberPad'
@@ -18,6 +19,7 @@ export function CrossMathGame() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isResetting, setIsResetting] = useState(false)
+  const [loaderText, setLoaderText] = useState('Loading game...')
   const [showModal, setShowModal] = useState(false)
   
   // Check if this is from past puzzles or daily challenge (has date param)
@@ -73,7 +75,8 @@ export function CrossMathGame() {
     }
   }, [isResetting])
 
-  const handleNewGame = async () => {
+  const handleNewGame = async (isReplay = false) => {
+    setLoaderText(isReplay ? 'Replaying game...' : 'Loading game...')
     setIsResetting(true)
     setShowModal(false)
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -86,7 +89,15 @@ export function CrossMathGame() {
   }
 
   const handleBackToGames = () => {
-    router.push('/')
+    const params = new URLSearchParams(window.location.search)
+    const hasDate = params.has('date')
+    const returnUrl = hasDate ? (typeof window !== 'undefined' ? sessionStorage.getItem('puzzroo_return_url') : null) : null
+    if (returnUrl) {
+      sessionStorage.removeItem('puzzroo_return_url')
+      router.push(returnUrl)
+    } else {
+      router.push('/game/cross-math')
+    }
   }
 
   // Determine numbers per row based on difficulty
@@ -147,7 +158,7 @@ export function CrossMathGame() {
               <SudokuControls
                 notesMode={false}
                 availableHints={availableHints}
-                onUndo={handleNewGame}
+                onUndo={() => handleNewGame(true)}
                 onErase={eraseCell}
                 onTogglePencil={() => {}}
                 onHint={requestHint}
@@ -162,10 +173,25 @@ export function CrossMathGame() {
                 requiredNumbersCount={requiredNumbersCount}
               />
 
-              {/* New Game Button - Only show for regular games, not past puzzles/daily challenges */}
-              {!isFromPastPuzzles && (
+              {/* Action Button - New Game or Replay Game */}
+              {isFromPastPuzzles ? (
                 <button
-                  onClick={handleNewGame}
+                  onClick={() => handleNewGame(true)}
+                  disabled={isResetting}
+                  className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isResetting ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    'Replay Game'
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleNewGame(false)}
                   disabled={isResetting}
                   className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
@@ -224,30 +250,45 @@ export function CrossMathGame() {
             <SudokuControls
               notesMode={false}
               availableHints={availableHints}
-              onUndo={handleNewGame}
+              onUndo={() => handleNewGame(true)}
               onErase={eraseCell}
               onTogglePencil={() => {}}
               onHint={requestHint}
               mobile
             />
 
-            {/* New Game Button Mobile - Only show for regular games, not past puzzles/daily challenges */}
-            {!isFromPastPuzzles && (
-              <button
-                onClick={handleNewGame}
-                disabled={isResetting}
-                className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isResetting ? (
-                  <>
-                    <Loader2 className="animate-spin" size={20} />
-                    <span>Loading...</span>
-                  </>
-                ) : (
-                  'New Game'
-                )}
-              </button>
-            )}
+             {/* Action Button Mobile - New Game or Replay Game */}
+             {isFromPastPuzzles ? (
+               <button
+                 onClick={() => handleNewGame(true)}
+                 disabled={isResetting}
+                 className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+               >
+                 {isResetting ? (
+                   <>
+                     <Loader2 className="animate-spin" size={20} />
+                     <span>Loading...</span>
+                   </>
+                 ) : (
+                   'Replay Game'
+                 )}
+               </button>
+             ) : (
+               <button
+                 onClick={() => handleNewGame(false)}
+                 disabled={isResetting}
+                 className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+               >
+                 {isResetting ? (
+                   <>
+                     <Loader2 className="animate-spin" size={20} />
+                     <span>Loading...</span>
+                   </>
+                 ) : (
+                   'New Game'
+                 )}
+               </button>
+             )}
           </div>
 
         </div>
@@ -267,30 +308,7 @@ export function CrossMathGame() {
       />
 
       {/* Loading Overlay for New Game */}
-      {isResetting && (
-        <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-50">
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4">
-            {/* Puzzroo Logo + Text */}
-            <div className="flex items-center gap-3">
-              <Image
-                src={images.logo}
-                alt="Puzzroo Logo"
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-lg"
-              />
-              <span className="font-urbanist text-[32px] font-extrabold tracking-tight text-[#181A20] dark:text-white">
-                Puzzroo
-              </span>
-            </div>
-            
-            <Loader2 className="animate-spin text-[var(--color-primary)]" size={48} />
-            <p className="font-urbanist text-lg font-semibold text-[var(--color-primary)]">
-              Loading New Game...
-            </p>
-          </div>
-        </div>
-      )}
+      <GameLoader isOpen={isResetting} text={loaderText} />
     </section>
   )
 }

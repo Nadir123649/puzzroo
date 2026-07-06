@@ -64,14 +64,14 @@ export function NonogramModal({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/50 dark:bg-black/70 z-50 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[99999] transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onPlayAgain}
       />
 
       {/* Modal */}
-      <div className={`fixed inset-0 z-50 flex items-center justify-center p-3 transition-opacity duration-300 ${
+      <div className={`fixed inset-0 z-[100000] flex items-center justify-center p-3 transition-opacity duration-300 ${
         isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}>
         <div

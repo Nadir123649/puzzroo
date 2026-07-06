@@ -66,6 +66,11 @@ export function login(email: string, password: string): { success: boolean; erro
   }
   localStorage.setItem('puzzroo_login_info', JSON.stringify(loginInfo))
 
+  // Dispatch auth-change event
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('auth-change'))
+  }
+
   return { success: true }
 }
 
@@ -76,6 +81,11 @@ export function logout(): void {
   localStorage.removeItem(AUTH_STORAGE_KEY)
   localStorage.removeItem(USER_STORAGE_KEY)
   localStorage.removeItem('puzzroo_login_info')
+
+  // Dispatch auth-change event
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('auth-change'))
+  }
 }
 
 /**

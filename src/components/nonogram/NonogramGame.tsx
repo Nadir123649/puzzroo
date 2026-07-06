@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Lightbulb, Flag, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNonogram } from '@/hooks/useNonogram'
 import { NonogramModal } from './NonogramModal'
+import { GameLoader } from '@/components/ui/GameLoader'
 import { InputModeToolbar } from '@/components/games/nonogram/InputModeToolbar'
 import { formatTime } from '@/lib/nonogram/helpers'
 import type { CellPosition } from '@/lib/nonogram/types'
@@ -44,6 +45,25 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     autoFill,
     setInputMode,
   } = useNonogram(puzzleId)
+
+  const [isResetting, setIsResetting] = useState(false)
+  const [loaderText, setLoaderText] = useState('Loading game...')
+
+  const handleReplay = async () => {
+    setLoaderText('Replaying game...')
+    setIsResetting(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    resetPuzzle()
+    setIsResetting(false)
+  }
+
+  const handleNewPuzzle = async () => {
+    setLoaderText('Loading game...')
+    setIsResetting(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    newPuzzle()
+    setIsResetting(false)
+  }
 
   const [windowWidth, setWindowWidth] = useState(0)
   const [zoomLevel, setZoomLevel] = useState(1) // 1 = 100%, 0.6 = 60%, 1.5 = 150%
@@ -233,7 +253,15 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   }, [currentPuzzle, windowWidth, zoomLevel])
 
   const handleBackToGames = () => {
-    router.push('/#free-games')
+    const params = new URLSearchParams(window.location.search)
+    const hasDate = params.has('date')
+    const returnUrl = hasDate ? (typeof window !== 'undefined' ? sessionStorage.getItem('puzzroo_return_url') : null) : null
+    if (returnUrl) {
+      sessionStorage.removeItem('puzzroo_return_url')
+      router.push(returnUrl)
+    } else {
+      router.push('/game/nonogram')
+    }
   }
 
   // These must be computed before any early return to satisfy Rules of Hooks
@@ -254,13 +282,9 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
 
   if (!isInitialized || !currentPuzzle || rowValidation.length === 0 || columnValidation.length === 0) {
     return (
-      <section className="w-full bg-white dark:bg-[#181A20] min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="font-urbanist text-lg text-[#2B2F3A] dark:text-white">
-            Loading puzzle...
-          </p>
-        </div>
-      </section>
+      <div className="min-h-screen bg-white dark:bg-[#181A20]">
+        <GameLoader isOpen={true} text="Loading game..." />
+      </div>
     )
   }
 
@@ -698,15 +722,6 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                 )}
               </button>
 
-              {/* AutoFill Button - For Testing */}
-              <button
-                onClick={autoFill}
-                className="px-3 h-[46px] rounded-full bg-[#22C55E] hover:bg-[#16A34A] text-white font-urbanist font-bold text-[13px] transition-all duration-200 active:scale-95"
-                title="Auto-fill solution (testing)"
-              >
-                Auto
-              </button>
-              
               {/* Reset Button */}
               <button
                 onClick={resetPuzzle}
@@ -715,22 +730,29 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                 Reset
               </button>
               
-              {/* Replay Button */}
-              <button
-                onClick={resetPuzzle}
-                className="flex-1 h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
-              >
-                Replay
-              </button>
-              
-              {/* New Puzzle Button - Only show for regular games, not past puzzles/daily challenges */}
-              {!isFromPastPuzzles && (
+              {/* Action Button - Replay or New Puzzle */}
+              {isFromPastPuzzles ? (
                 <button
-                  onClick={() => newPuzzle()}
+                  onClick={handleReplay}
                   className="flex-1 h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
                 >
-                  New Puzzle
+                  Replay Game
                 </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleReplay}
+                    className="flex-1 h-[46px] rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] hover:bg-[#D4C5F9] dark:hover:bg-[#4A3A8C] text-[#6949FF] dark:text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
+                  >
+                    Replay
+                  </button>
+                  <button
+                    onClick={handleNewPuzzle}
+                    className="flex-1 h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
+                  >
+                    New Puzzle
+                  </button>
+                </>
               )}
             </div>
 
@@ -774,10 +796,13 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
         mistakes={mistakeCount}
         maxMistakes={maxMistakes}
         isWin={gameStatus === 'won'}
-        onPlayAgain={resetPuzzle}
-        onNewPuzzle={() => newPuzzle()}
+        onPlayAgain={handleReplay}
+        onNewPuzzle={handleNewPuzzle}
         onBackToGames={handleBackToGames}
       />
+
+      {/* Loading Overlay */}
+      <GameLoader isOpen={isResetting} text={loaderText} />
     </>
   )
 }

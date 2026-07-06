@@ -153,7 +153,7 @@ export function OrbitalHelper({
         top: typeof y === 'number' ? `${y}px` : y,
         transform: 'translate(-50%, -50%)',
         pointerEvents: 'none',
-        zIndex: 9999,
+        zIndex: 45,
         touchAction: 'none',
       }}
     >

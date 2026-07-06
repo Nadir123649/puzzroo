@@ -30,6 +30,18 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected }: Calen
     }
   }, [isOpen])
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   const year = currentDate.getFullYear()
@@ -132,8 +144,16 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected }: Calen
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#1F222A] rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[99999]"
+        onClick={onClose}
+      />
+
+      {/* Modal Container */}
+      <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-[#1F222A] rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -245,5 +265,6 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected }: Calen
         </div>
       </div>
     </div>
+    </>
   )
 }

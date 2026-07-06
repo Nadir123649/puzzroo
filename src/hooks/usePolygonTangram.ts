@@ -6,6 +6,8 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { markPuzzleCompleted } from '@/lib/completion/universal'
 import { PolygonPuzzle, TangramPieceId } from '@/types/tangram-polygon'
 import { getRandomPuzzle } from '@/data/tangram'
 import type { TangramDifficulty } from '@/data/tangram'
@@ -110,6 +112,7 @@ const getTargetRotation = (pieceType: string, scaledTarget: number[][], scale: n
 
 export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const [puzzle, setPuzzle] = useState<PolygonPuzzle>(() => getRandomPuzzle(difficulty))
+  const searchParams = useSearchParams()
   const [pieces, setPieces] = useState<PieceState[]>([])
   const [selectedPiece, setSelectedPiece] = useState<TangramPieceId | null>(null)
   const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing')
@@ -302,6 +305,17 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       setGameStatus('won')
       const finalScore = Math.max(0, 1000 + timeRemaining * 5 - hintsUsed * 100)
       setScore(finalScore)
+
+      // Mark puzzle as completed in universal completion system
+      const dateParam = searchParams?.get('date')
+      const puzzleId = dateParam ? `daily-tangram-${dateParam}` : puzzle?.id
+      if (puzzleId) {
+        markPuzzleCompleted('tangram', puzzleId, {
+          time: 300 - timeRemaining,
+          score: finalScore,
+          difficulty: difficulty,
+        })
+      }
     }
   }, [pieces, gameStatus, timeRemaining, hintsUsed])
 
@@ -520,22 +534,77 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   }, [difficulty, puzzle])
 
   const replayPuzzle = useCallback(() => {
-    // Clear pieces first to prevent validation from running on old state
-    setPieces([])
     setSelectedPiece(null)
     setGameStatus('playing')
     setTimeRemaining(300)
     setScore(0)
-    setHintsUsed(0)
     setHintPiece(null)
-    shownHints.current.clear()
     if (hintTimeoutRef.current) {
       clearTimeout(hintTimeoutRef.current)
       hintTimeoutRef.current = null
     }
-    // Trigger re-initialization by updating puzzle reference
-    setPuzzle(prev => prev ? {...prev} : prev)
-  }, [])
+    
+    // Smoothly transition all pieces back to their tray positions
+    setPieces(prev => prev.map(piece => {
+      // Re-create tray position for this piece - MUST match initialization layout
+      const TRAY_LAYOUT: Record<string, { cx: number; cy: number; rotation: number }> = {
+        'baseTriangle1': { cx: 140, cy: 335, rotation: 45 },
+        'mediumTriangle': { cx: 375, cy: 335, rotation: 45 },
+        'baseTriangle2': { cx: 610, cy: 335, rotation: 45 },
+        'smallTriangle1': { cx: 125, cy: 445, rotation: 45 },
+        'smallTriangle2': { cx: 290, cy: 445, rotation: 45 },
+        'square': { cx: 455, cy: 445, rotation: 0 },
+        'parallelogram': { cx: 620, cy: 445, rotation: 0 }
+      }
+      
+      const trayLayoutItem = TRAY_LAYOUT[piece.id] || { cx: 100, cy: 400, rotation: 0 }
+      const pieceType = PIECE_TYPE_MAP[piece.id]
+      const scale = scaledData.current?.scale || 1
+      
+      const targetRotation = getTargetRotation(pieceType, piece.targetPolygon, scale)
+      
+      const puzzleUnit = 5 * scale
+      const basePolygons: Record<string, number[][]> = {
+        'large-triangle-1': [[0, 0], [puzzleUnit * 2, 0], [0, puzzleUnit * 2], [0, 0]],
+        'large-triangle-2': [[0, 0], [puzzleUnit * 2, 0], [0, puzzleUnit * 2], [0, 0]],
+        'medium-triangle': [[0, 0], [puzzleUnit * Math.SQRT2, 0], [0, puzzleUnit * Math.SQRT2], [0, 0]],
+        'small-triangle-1': [[0, 0], [puzzleUnit, 0], [0, puzzleUnit], [0, 0]],
+        'small-triangle-2': [[0, 0], [puzzleUnit, 0], [0, puzzleUnit], [0, 0]],
+        'square': [[0, 0], [puzzleUnit, 0], [puzzleUnit, puzzleUnit], [0, puzzleUnit], [0, 0]],
+        'parallelogram': [[0, puzzleUnit], [puzzleUnit, 0], [puzzleUnit * 2, 0], [puzzleUnit, puzzleUnit], [0, puzzleUnit]]
+      }
+      
+      const base = basePolygons[pieceType] || [[0, 0], [50, 0], [50, 50], [0, 50], [0, 0]]
+      const radians = (trayLayoutItem.rotation * Math.PI) / 180
+      const cos = Math.cos(radians)
+      const sin = Math.sin(radians)
+      const rotated = base.map(([x, y]) => [
+        x * cos - y * sin,
+        x * sin + y * cos
+      ])
+      const rotatedAvgX = rotated.reduce((sum, p) => sum + p[0], 0) / rotated.length
+      const rotatedAvgY = rotated.reduce((sum, p) => sum + p[1], 0) / rotated.length
+      
+      const trayPos = {
+        x: trayLayoutItem.cx - rotatedAvgX,
+        y: trayLayoutItem.cy - rotatedAvgY,
+        rotation: trayLayoutItem.rotation
+      }
+      
+      const standardPolygon = createStandardPolygon(pieceType, trayPos, scale)
+      
+      const trayCentroidX = standardPolygon.reduce((sum, p) => sum + p[0], 0) / standardPolygon.length
+      const trayCentroidY = standardPolygon.reduce((sum, p) => sum + p[1], 0) / standardPolygon.length
+      
+      return {
+        ...piece,
+        transform: { x: trayCentroidX, y: trayCentroidY, rotation: trayLayoutItem.rotation - targetRotation },
+        currentPolygon: standardPolygon,
+        isPlaced: false,
+        isSnapped: false
+      }
+    }))
+  }, [createStandardPolygon])
 
   const undoLastMove = useCallback(() => {
     // Find the most recently placed piece and return it to tray
