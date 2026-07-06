@@ -48,6 +48,18 @@
       return () => window.removeEventListener('keydown', handleEsc)
     }, [isOpen, onPlayAgain])
 
+    // Disable body scroll when modal is open
+    useEffect(() => {
+      if (isOpen) {
+        document.body.style.overflow = 'hidden'
+      } else {
+        document.body.style.overflow = ''
+      }
+      return () => {
+        document.body.style.overflow = ''
+      }
+    }, [isOpen])
+
     if (!isOpen) return null
 
     const formatTime = (seconds: number): string => {
