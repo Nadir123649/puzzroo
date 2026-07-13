@@ -78,7 +78,7 @@ function FAQItemComponent({ faq, isOpen, onToggle, onKeyDown }: FAQItemComponent
     >
       {/* Question and Icon Row */}
       <div className="flex items-center justify-between gap-4">
-        <h3 className="font-urbanist font-bold text-[18px] md:text-[clamp(1.125rem,3vw,1.5rem)] leading-[120%] text-[#181A20] dark:text-white transition-colors duration-300 flex-1">
+        <h3 className="font-urbanist font-bold text-[16px] leading-[120%] text-[#181A20] dark:text-white transition-colors duration-300 flex-1">
           {faq.question}
         </h3>
         
@@ -106,8 +106,8 @@ function FAQItemComponent({ faq, isOpen, onToggle, onKeyDown }: FAQItemComponent
         )}
       >
         <div className="overflow-hidden">
-          <div className="mt-6 pt-6 border-t border-[#35383F]">
-            <p className="font-urbanist font-medium text-[14px] md:text-[clamp(1rem,2.5vw,1.125rem)] leading-[140%] tracking-[0.2px] text-[#424242] dark:text-[#E0E0E0] transition-colors duration-300">
+          <div className="mt-4 pt-4 border-t border-[#E0E0E0] dark:border-[#35383F]">
+            <p className="font-urbanist font-medium text-[12px] leading-[140%] tracking-[0.2px] text-[#424242] dark:text-[#E0E0E0] transition-colors duration-300">
               {faq.answer}
             </p>
           </div>

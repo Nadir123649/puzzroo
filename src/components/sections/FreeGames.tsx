@@ -161,10 +161,10 @@ function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
   // Locked/Coming Soon state
   if (!isActive) {
     return (
-      <div className="flex flex-col bg-[#F0EDFF] dark:bg-[#262A34] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[20px] lg:p-[30.78px] gap-[12px] md:gap-[20px] lg:gap-[30.78px] opacity-60 cursor-not-allowed relative md:min-h-auto border-2 border-transparent dark:border-[#35383F]">
+      <div className="flex flex-col bg-[#F0EDFF] dark:bg-[#262A34] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[16px] lg:p-[24px] gap-[12px] md:gap-[16px] lg:gap-[24px] opacity-60 cursor-not-allowed relative md:min-h-auto border-2 border-transparent dark:border-[#35383F]">
         {/* Overlay effect - NO BLUR */}
         <div className="absolute inset-0 bg-gray-500/10 dark:bg-black/20 rounded-[6px] md:rounded-[12.31px] z-10 flex items-center justify-center">
-          <span className="font-urbanist font-bold text-[14px] md:text-[18px] lg:text-[22px] text-[#212121] dark:text-[#FAFAFA] bg-white/80 dark:bg-black/60 px-6 py-3 rounded-full">
+          <span className="font-urbanist font-bold text-[12px] md:text-[16px] lg:text-[18px] text-[#212121] dark:text-[#FAFAFA] bg-white/80 dark:bg-black/60 px-4 py-2 md:px-6 md:py-3 rounded-full">
             Coming Soon
           </span>
         </div>
@@ -174,8 +174,7 @@ function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
           <Image
             src={currentImage}
             alt={game.imageAlt}
-            width={0}
-            height={0}
+            fill
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="w-full h-full object-cover select-none"
           />
@@ -227,15 +226,14 @@ function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
   return (
     <div 
       onClick={() => router.push(`/game/${game.id}`)}
-      className="flex flex-col bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[20px] lg:p-[30.78px] gap-[12px] md:gap-[20px] lg:gap-[30.78px] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group md:min-h-auto cursor-pointer"
+      className="flex flex-col bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[16px] lg:p-[24px] gap-[12px] md:gap-[16px] lg:gap-[24px] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group md:min-h-auto cursor-pointer"
     >
       {/* Game Image - Fluid and responsive */}
       <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F0EDFF] dark:bg-[#1F222A]">
         <Image
           src={currentImage}
           alt={game.imageAlt}
-          width={0}
-          height={0}
+          fill
           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className="w-full h-full object-cover select-none"
         />

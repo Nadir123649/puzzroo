@@ -22,6 +22,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const isDark = document.documentElement.classList.contains('dark')
     setTheme(isDark ? 'dark' : 'light')
     setMounted(true)
+
+    // Register PWA service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
+        .catch((err) => console.warn('Service Worker registration failed:', err))
+    }
   }, [])
 
   const toggleTheme = () => {

@@ -95,7 +95,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
           <X size={18} strokeWidth={2.5} />
         </button>
 
-        <div className="p-8 sm:p-10">
+        <div className="p-4 sm:p-10">
           {/* Header */}
           <div className="flex flex-col items-center text-center mb-8">
             <div className="w-16 h-16 bg-purple-50 dark:bg-[#6949FF]/10 rounded-2xl flex items-center justify-center mb-5 border border-purple-100 dark:border-[#6949FF]/20 shadow-sm">

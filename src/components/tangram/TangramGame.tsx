@@ -179,12 +179,12 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
         <div className="w-full flex flex-col gap-[20px] pb-0 md:pb-[10px] max-w-full overflow-visible">
 
           {/* Desktop Layout - arrow sits left of board, no extra row */}
-          <div className="hidden md:flex gap-[50px] justify-center items-start overflow-visible relative md:pt-2">
+          <div className="hidden md:flex gap-[50px] justify-center items-start overflow-visible relative md:pt-6">
 
             {/* Back arrow - absolutely positioned to the left of the board, vertically centred to top */}
             <button
               onClick={handleBackToLobby}
-              className="absolute -left-2 top-0 w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 z-10"
+              className="absolute -left-14 top-4 w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 z-10"
               aria-label="Back to lobby"
             >
               <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />

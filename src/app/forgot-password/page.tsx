@@ -42,19 +42,19 @@ export default function ForgotPasswordPage() {
       <Navbar />
       
       <main className="flex-grow flex items-center justify-center px-[20px] py-[40px] md:py-[60px]">
-        <div className="w-full max-w-[420px] bg-white dark:bg-[#1F222A] rounded-[24px] p-6 sm:p-8 border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-lg shadow-purple-500/5 transition-all duration-300">
+        <div className="w-full max-w-[420px] bg-white dark:bg-[#1F222A] rounded-[24px] p-4 sm:p-5 border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-lg shadow-purple-500/5 transition-all duration-300">
           
           {/* Logo & Header */}
           <div className="flex flex-col items-center mb-6">
-            <Link href="/" className="flex items-center gap-2.5 mb-3 select-none">
+            <Link href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none">
               <Image
                 src={images.logo}
                 alt="Puzzroo Logo"
-                width={36}
-                height={36}
-                className="w-9 h-9 rounded-lg"
+                width={32}
+                height={32}
+                className="w-6 h-6 md:w-8 md:h-8 rounded-lg"
               />
-              <span className="font-urbanist text-[28px] font-extrabold tracking-tight text-[#181A20] dark:text-white">
+              <span className="font-urbanist text-[20px] md:text-[24px] font-extrabold tracking-tight text-[#181A20] dark:text-white">
                 Puzzroo
               </span>
             </Link>

@@ -14,7 +14,7 @@ export interface User {
   accountStatus: 'active' | 'inactive'
   subscriptionPlan: 'free' | 'monthly' | 'yearly' | 'lifetime'
   avatar?: string
-}
+}  
 
 // Mock user data
 const MOCK_USER: User = {

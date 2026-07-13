@@ -19,8 +19,22 @@ const leaderboardData = [
 export function EarlyLegends() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(true)
+  const [cardsPerRow, setCardsPerRow] = useState(3)
   const sliderRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setCardsPerRow(2)
+      } else {
+        setCardsPerRow(3)
+      }
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     // Auto-slide every 3 seconds
@@ -51,8 +65,8 @@ export function EarlyLegends() {
     if (!containerRef.current) return '0px'
     
     const containerWidth = containerRef.current.offsetWidth
-    const gap = 20 // Fixed gap between cards
-    const cardWidth = (containerWidth - gap * 2) / 3 // Width of one card
+    const gap = cardsPerRow === 2 ? 12 : 20 // Fixed gap between cards
+    const cardWidth = (containerWidth - gap * (cardsPerRow - 1)) / cardsPerRow // Width of one card
     
     return `-${currentIndex * (cardWidth + gap)}px`
   }
@@ -79,14 +93,15 @@ export function EarlyLegends() {
             >
               {extendedData.map((player, index) => {
                 const originalIndex = index % leaderboardData.length
+                const gap = cardsPerRow === 2 ? 12 : 20
                 
                 return (
                   <div
                     key={`card-${index}`}
                     className="flex-shrink-0"
                     style={{
-                      width: 'calc((100% - 40px) / 3)',
-                      marginRight: index === extendedData.length - 1 ? '0' : '20px'
+                      width: cardsPerRow === 2 ? 'calc((100% - 12px) / 2)' : 'calc((100% - 40px) / 3)',
+                      marginRight: index === extendedData.length - 1 ? '0' : `${gap}px`
                     }}
                   >
                     <div className="relative bg-[#F0EDFF] dark:bg-[#1F222A] border-2 border-[#E8E8E8] dark:border-[#35383F] rounded-xl md:rounded-2xl p-4 md:p-6 transition-all duration-300 hover:border-[#6949FF] hover:shadow-lg h-full">

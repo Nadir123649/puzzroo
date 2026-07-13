@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Urbanist } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/app/providers";
@@ -12,7 +12,21 @@ const urbanist = Urbanist({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  themeColor: '#6949FF',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
+
 export const metadata: Metadata = {
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Puzzroo',
+  },
   title: {
     default: "Puzzroo - SEO Optimized Landing Page",
     template: "%s | Puzzroo",

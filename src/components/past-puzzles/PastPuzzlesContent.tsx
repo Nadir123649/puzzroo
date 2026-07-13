@@ -135,11 +135,11 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   return (
     <>
       <Navbar />
-      <section className="w-full min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 py-4 md:pb-10">
+      <section className="w-full min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 pt-4 pb-0 md:pb-10">
         <div className="w-full px-[20px] max-w-[1380px] mx-auto">
           
           {/* Back Arrow */}
-          <Link href="/">
+          <Link href="/" className="hidden md:inline-block">
             <button
               className="w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95"
               aria-label="Back to home"
@@ -199,7 +199,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
               </div>
 
               {/* Past Puzzle Grid - 1 column mobile, 4 columns desktop */}
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 sm:gap-6 md:gap-7 lg:gap-[30px]  py-4 md:px-0 md:py-0">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-6 md:gap-7 lg:gap-[30px] pt-4 pb-0 md:px-0 md:py-0">
                 {filteredPuzzles.map((puzzle) => (
                   <PuzzleCard
                     key={puzzle.id}
@@ -373,7 +373,7 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
   }
 
   return (
-    <div className="relative bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 flex flex-col gap-4 hover:border-[#6949FF] transition-all duration-300 group"
+    <div className="relative bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-4 md:p-5 flex flex-col gap-2.5 md:gap-4 hover:border-[#6949FF] transition-all duration-300 group"
     >
       {/* Completion Badge */}
       {isCompleted && !isLocked && (
@@ -384,13 +384,13 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
       
       {/* Top Icon */}
       <div className="flex justify-center">
-        <div className="w-20 h-20 bg-[#F0EDFF] dark:bg-[#35383F] rounded-xl flex items-center justify-center group-hover:shadow-md group-hover:shadow-purple-500/20 transition-shadow duration-300">
+        <div className="w-14 h-14 md:w-20 md:h-20 bg-[#F0EDFF] dark:bg-[#35383F] rounded-lg md:rounded-xl flex items-center justify-center group-hover:shadow-md group-hover:shadow-purple-500/20 transition-shadow duration-300">
           <Image
             src={gameIcon}
             alt="Game Icon"
-            width={40}
-            height={40}
-            className="object-contain"
+            width={28}
+            height={28}
+            className="object-contain w-7 h-7 md:w-10 md:h-10"
           />
         </div>
       </div>

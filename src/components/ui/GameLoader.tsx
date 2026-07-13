@@ -17,16 +17,16 @@ export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
     <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-[99999] flex items-center justify-center transition-opacity duration-300">
       <div className="flex flex-col items-center gap-4 text-center select-none">
         {/* Puzzroo Logo & Brand */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-[clamp(8px,1vw,12px)] select-none">
           <Image
             src={images.logo}
             alt="Puzzroo Logo"
-            width={36}
-            height={36}
-            className="w-9 h-9 rounded-lg animate-pulse"
+            width={32}
+            height={32}
+            className="w-6 h-6 md:w-8 md:h-8 rounded-lg animate-pulse"
             priority
           />
-          <span className="font-urbanist text-2xl font-extrabold tracking-tight text-[#181A20] dark:text-white">
+          <span className="font-urbanist text-[20px] md:text-[24px] font-extrabold tracking-tight text-[#181A20] dark:text-white transition-colors duration-300">
             Puzzroo
           </span>
         </div>
