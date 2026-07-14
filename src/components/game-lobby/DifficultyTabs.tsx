@@ -74,6 +74,8 @@ export function DifficultyTabs({
         Difficulty:
       </span>
       <div className="flex items-center gap-0 flex-1 sm:w-[253px] sm:flex-none justify-between relative">
+        {/* Continuous grey line in background */}
+        <div className="absolute left-0 right-0 h-[2px] bg-[#EEEEEE] rounded-full z-0" style={{ bottom: '0px' }}></div>
         {modes.map((difficulty, index) => (
           <button
             key={difficulty}
@@ -92,8 +94,8 @@ export function DifficultyTabs({
             >
               {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
             </span>
-            {/* Grey background line */}
-            <div className="grey-line w-[78px] sm:w-[80px] md:w-[84px] h-[2px] bg-[#EEEEEE] rounded-full"></div>
+            {/* Transparent placeholder for JS indicator calculation */}
+            <div className="grey-line w-[78px] sm:w-[80px] md:w-[84px] h-0 opacity-0"></div>
           </button>
         ))}
         

@@ -11,8 +11,12 @@ import {
   patternToGameGrid,
 } from '@/data/crossmath/patterns'
 
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min
+function createPRNG(seed: number) {
+  let s = seed
+  return function() {
+    const x = Math.sin(s++) * 10000
+    return x - Math.floor(x)
+  }
 }
 
 function applyOp(a: number, op: string, b: number): number {
@@ -27,10 +31,10 @@ function applyOp(a: number, op: string, b: number): number {
   }
 }
 
-function shuffle<T>(arr: T[]): T[] {
+function shuffle<T>(arr: T[], nextRand: () => number): T[] {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = Math.floor(nextRand() * (i + 1))
     ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
@@ -39,8 +43,16 @@ function shuffle<T>(arr: T[]): T[] {
 /**
  * Solve pattern by assigning random operands (1-9) and evaluating row/column results.
  */
-function solvePattern(pattern: BoardPattern, grid: Cell[][]): Record<string, number> | null {
-  for (let attempt = 0; attempt < 500; attempt++) {
+function solvePattern(
+  pattern: BoardPattern,
+  grid: Cell[][],
+  nextRand: () => number
+): Record<string, number> | null {
+  const randomIntVal = (min: number, max: number) => {
+    return Math.floor(nextRand() * (max - min + 1)) + min
+  }
+
+  for (let attempt = 0; attempt < 1000; attempt++) {
     const solution: Record<string, number> = {}
 
     // 1. Assign random numbers 1–9 to all non-result NUMBER cells
@@ -54,7 +66,7 @@ function solvePattern(pattern: BoardPattern, grid: Cell[][]): Record<string, num
       if (pc.type === 'NUMBER') {
         const key = `${pc.row}-${pc.col}`
         if (!resultCellsSet.has(key)) {
-          solution[key] = randomInt(1, 9)
+          solution[key] = randomIntVal(1, 9)
         }
       }
     }
@@ -117,7 +129,8 @@ function applyBlanks(
   grid: Cell[][],
   solution: Record<string, number>,
   difficulty: Difficulty,
-  pattern: BoardPattern
+  pattern: BoardPattern,
+  nextRand: () => number
 ): void {
   // Collect all inner number cells (i.e. NUMBER cells in pattern that are NOT results)
   const resultCellsSet = new Set<string>()
@@ -146,9 +159,6 @@ function applyBlanks(
   }
 
   // Target blank counts by difficulty:
-  // Easy: ~45% of inner cells blanked
-  // Medium: ~60% of inner cells blanked
-  // Hard: ~75% of inner cells blanked
   const totalInner = innerCells.length
   let blankCount = 3
   if (difficulty === 'easy') {
@@ -159,7 +169,7 @@ function applyBlanks(
     blankCount = Math.max(6, Math.round(totalInner * 0.75))
   }
 
-  const shuffledInner = shuffle(innerCells)
+  const shuffledInner = shuffle(innerCells, nextRand)
   for (let i = 0; i < Math.min(blankCount, shuffledInner.length); i++) {
     const cell = shuffledInner[i]
     cell.type = 'empty'
@@ -173,32 +183,37 @@ function applyBlanks(
  */
 export function generatePuzzleFromPattern(
   pattern: BoardPattern,
-  difficulty: Difficulty
+  difficulty: Difficulty,
+  seed?: number
 ): CrossMathPuzzle {
   const grid = patternToGameGrid(pattern)
-  const solved = solvePattern(pattern, grid)
+  const finalSeed = seed !== undefined ? seed : Math.floor(Math.random() * 1000000)
+  const nextRand = createPRNG(finalSeed)
+
+  const solved = solvePattern(pattern, grid, nextRand)
 
   if (!solved) {
-    // Fallback if solver fails (should never happen)
+    // Fallback solver
     const fallbackSolution: Record<string, number> = {}
     for (const pc of pattern.cells) {
       if (pc.type === 'NUMBER') {
         fallbackSolution[`${pc.row}-${pc.col}`] = 5
       }
     }
-    return buildPuzzle(pattern, grid, fallbackSolution, difficulty)
+    return buildPuzzle(pattern, grid, fallbackSolution, difficulty, nextRand)
   }
 
-  return buildPuzzle(pattern, grid, solved, difficulty)
+  return buildPuzzle(pattern, grid, solved, difficulty, nextRand)
 }
 
 function buildPuzzle(
   pattern: BoardPattern,
   grid: Cell[][],
   solution: Record<string, number>,
-  difficulty: Difficulty
+  difficulty: Difficulty,
+  nextRand: () => number
 ): CrossMathPuzzle {
-  applyBlanks(grid, solution, difficulty, pattern)
+  applyBlanks(grid, solution, difficulty, pattern, nextRand)
 
   // Build availableNumbers from the solution values that are blanked
   const editableValues = new Set<number>()
@@ -214,8 +229,11 @@ function buildPuzzle(
   const availableNumbers = Array.from(editableValues).sort((a, b) => a - b)
 
   // Ensure minimum pad size
+  const randomIntVal = (min: number, max: number) => {
+    return Math.floor(nextRand() * (max - min + 1)) + min
+  }
   while (availableNumbers.length < 4) {
-    const num = randomInt(1, 9)
+    const num = randomIntVal(1, 9)
     if (!availableNumbers.includes(num)) {
       availableNumbers.push(num)
       availableNumbers.sort((a, b) => a - b)
@@ -225,7 +243,7 @@ function buildPuzzle(
   const maxMistakes = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 4 : 3
 
   return {
-    id: `pattern-${pattern.pattern_id}-${Date.now()}`,
+    id: `pattern-${pattern.pattern_id}-${Date.now()}-${Math.floor(nextRand() * 1000)}`,
     difficulty,
     rows: pattern.grid_rows,
     columns: pattern.grid_cols,
@@ -240,10 +258,13 @@ function buildPuzzle(
  * Generate a random puzzle using a pattern matched to difficulty
  */
 export function generateRandomPatternPuzzle(
-  difficulty: Difficulty
+  difficulty: Difficulty,
+  seed?: number
 ): CrossMathPuzzle {
+  const finalSeed = seed !== undefined ? seed : Math.floor(Math.random() * 1000000)
+  const nextRand = createPRNG(finalSeed)
   const pattern = getRandomPatternForDifficulty(difficulty)
-  return generatePuzzleFromPattern(pattern, difficulty)
+  return generatePuzzleFromPattern(pattern, difficulty, finalSeed)
 }
 
 /**
@@ -251,9 +272,10 @@ export function generateRandomPatternPuzzle(
  */
 export function generatePuzzleByPatternId(
   patternId: number,
-  difficulty: Difficulty
+  difficulty: Difficulty,
+  seed?: number
 ): CrossMathPuzzle | null {
   const pattern = findPatternById(patternId)
   if (!pattern) return null
-  return generatePuzzleFromPattern(pattern, difficulty)
+  return generatePuzzleFromPattern(pattern, difficulty, seed)
 }

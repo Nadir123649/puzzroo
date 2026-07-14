@@ -112,7 +112,7 @@ export function PuzzleSelection({ onSelectPuzzle }: PuzzleSelectionProps) {
               <div
                 key={puzzle.id}
                 onClick={() => handlePuzzleClick(puzzle.id)}
-                className="group relative bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 flex flex-col gap-4 hover:border-[#6949FF] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"
+                className="group relative bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-4 flex flex-col gap-4 hover:border-[#6949FF] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {

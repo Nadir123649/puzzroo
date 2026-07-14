@@ -113,10 +113,12 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
   }
 
   const handleRetry = () => {
+    setIsModalVisible(false)
     replayPuzzle()
   }
 
   const handleReplay = () => {
+    setIsModalVisible(false)
     replayPuzzle()
   }
 
@@ -178,17 +180,24 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
       <div className="w-full max-w-[1380px] mx-auto px-[20px] flex justify-center overflow-visible">
         <div className="w-full flex flex-col gap-[20px] pb-0 md:pb-[10px] max-w-full overflow-visible">
 
+          {/* Puzzle Metadata */}
+          <div className="text-center space-y-1 w-full mt-4">
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] font-urbanist text-[12px] font-semibold text-[#6949FF] dark:text-[#A592FF]">
+                <span className="capitalize">{puzzle?.difficulty || 'easy'}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5F6FA] dark:bg-[#35383F] font-urbanist text-[12px] font-semibold text-[#616161] dark:text-[#A0A4B8]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>~{difficulty === 'hard' ? '1.5' : difficulty === 'medium' ? '3' : '5'} min</span>
+              </span>
+            </div>
+          </div>
+
           {/* Desktop Layout - arrow sits left of board, no extra row */}
           <div className="hidden md:flex gap-[50px] justify-center items-start overflow-visible relative md:pt-6">
-
-            {/* Back arrow - absolutely positioned to the left of the board, vertically centred to top */}
-            <button
-              onClick={handleBackToLobby}
-              className="absolute -left-14 top-4 w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 z-10"
-              aria-label="Back to lobby"
-            >
-              <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
-            </button>
 
             {/* LEFT SIDE - BOARD */}
             <div ref={desktopBoardRef} className="flex-1 max-w-[700px] min-w-[320px] overflow-visible">
@@ -216,7 +225,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
                     onDragEnd={commitHistory}
                     boardContainerWidth={desktopBoardWidth}
                     allPieces={pieces}
-                    disabled={isSolved}
+                    disabled={false}
                   />
                 ))}
               </TangramBoard>
@@ -347,16 +356,6 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
 
           {/* Mobile Layout */}
           <div className="md:hidden flex flex-col gap-[16px] items-center pb-[50px]">
-            {/* Back arrow row - compact, just the button */}
-            <div className="w-full flex justify-start">
-              <button
-                onClick={handleBackToLobby}
-                className="w-10 h-10 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95"
-                aria-label="Back to lobby"
-              >
-                <ArrowLeft size={18} className="text-[var(--color-primary)]" strokeWidth={2.5} />
-              </button>
-            </div>
             {/* Timer & Score Row */}
             <div className="w-full grid grid-cols-2 gap-3">
               <div className="bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl p-3 flex flex-col items-center gap-1">
@@ -401,7 +400,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
                     onDragEnd={commitHistory}
                     boardContainerWidth={mobileBoardWidth}
                     allPieces={pieces}
-                    disabled={isSolved}
+                    disabled={false}
                   />
                 ))}
               </TangramBoard>
@@ -413,15 +412,15 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
               <button
                 onClick={handleRequestHint}
                 disabled={gameStatus !== 'playing' || availableHints === 0}
-                className="relative w-[63.44px] h-[63.44px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 title={`${availableHints} hint${availableHints !== 1 ? 's' : ''} remaining`}
                 aria-label="Hint"
               >
-                <Lightbulb size={34} strokeWidth={2} className="text-[#424242]" />
+                <Lightbulb size={20} strokeWidth={2} className="text-[#424242]" />
                 {/* Hint Badge */}
                 {availableHints > 0 && (
-                  <span className="absolute -top-1 -right-1 w-[20px] h-[20px] bg-[#A592FF] rounded-full border-2 border-white dark:border-[#181A20] flex items-center justify-center z-10">
-                    <span className="font-urbanist font-bold text-white text-[10px]">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#A592FF] rounded-full border border-white dark:border-[#181A20] flex items-center justify-center z-10">
+                    <span className="font-urbanist font-bold text-white text-[8px]">
                       {availableHints}
                     </span>
                   </span>
@@ -432,33 +431,33 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
               <button
                 onClick={handleReplay}
                 disabled={gameStatus !== 'playing'}
-                className="w-[63.44px] h-[63.44px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Restart same puzzle"
                 aria-label="Replay"
               >
-                <RotateCcw size={34} strokeWidth={2} className="text-[#424242]" />
+                <RotateCcw size={20} strokeWidth={2} className="text-[#424242]" />
               </button>
 
               {/* Undo Button */}
               <button
                 onClick={handleUndo}
                 disabled={!hasUndo}
-                className="w-[63.44px] h-[63.44px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Undo last move"
                 aria-label="Undo"
               >
-                <Undo size={34} strokeWidth={2} className="text-[#424242]" />
+                <Undo size={20} strokeWidth={2} className="text-[#424242]" />
               </button>
 
               {/* Redo Button */}
               <button
                 onClick={handleRedo}
                 disabled={!hasRedo}
-                className="w-[63.44px] h-[63.44px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Redo move"
                 aria-label="Redo"
               >
-                <Redo size={34} strokeWidth={2} className="text-[#424242]" />
+                <Redo size={20} strokeWidth={2} className="text-[#424242]" />
               </button>
             </div>
 
@@ -473,14 +472,16 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
               </button>
             )}
 
-            {/* New Game / Replay Button Mobile */}
-            <button
-              onClick={mode === 'normal' ? handleNewGame : handleReplay}
-              disabled={isResetting}
-              className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {mode === 'normal' ? 'New Game' : 'Replay'}
-            </button>
+            {/* New Game Button Mobile */}
+            {mode === 'normal' && (
+              <button
+                onClick={handleNewGame}
+                disabled={isResetting}
+                className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                New Game
+              </button>
+            )}
           </div>
 
         </div>
@@ -492,7 +493,16 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
       {/* Completion Modal */}
       <TangramModal
         isOpen={isModalVisible}
-        time={0}
+        time={(() => {
+          const getInitialTime = (diff: string) => {
+            switch (diff) {
+              case 'hard': return 90
+              case 'medium': return 180
+              default: return 300
+            }
+          }
+          return getInitialTime(difficulty) - timeRemaining
+        })()}
         mistakes={0}
         hintsUsed={hintsUsed}
         score={score}
@@ -500,7 +510,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
         timeRemaining={timeRemaining}
         isTimeUp={gameStatus === 'lost'}
         onPlayAgain={handleRetry}
-        onNewPuzzle={handleNewGame}
+        onNewPuzzle={mode === 'normal' ? handleNewGame : undefined}
         onBackToLobby={handleBackToLobby}
         onClose={() => setIsModalVisible(false)}
       />

@@ -54,7 +54,7 @@ export function CrossMathHero({ backTo }: CrossMathHeroProps = {}) {
           <button
             onClick={handleBackClick}
             disabled={isNavigating}
-            className="mb-2 w-12 h-12 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center p-2 hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="md:fixed md:left-4 md:top-[100px] z-[50] mb-2 w-12 h-12 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center p-2 hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
             aria-label="Back to games"
           >
             <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />

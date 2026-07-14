@@ -32,7 +32,7 @@ export function AboutPuzzroo() {
             
             {/* Logo Icon */}
             <div className="flex justify-center">
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-xl p-2 md:p-2.5 shadow-md">
+              <div className="w-8 h-8 md:w-14 md:h-14 bg-white rounded-xl p-2 md:p-2.5 shadow-md">
                 <Image
                   src={images.logo}
                   alt="Puzzroo Logo"
@@ -44,7 +44,7 @@ export function AboutPuzzroo() {
             </div>
 
             {/* Heading */}
-            <h2 className="font-urbanist font-bold text-[28px] md:text-[38px] leading-[120%] text-white">
+            <h2 className="font-urbanist font-bold text-[24px] md:text-[38px] leading-[120%] text-white">
               About Puzzroo
             </h2>
 
@@ -56,15 +56,15 @@ export function AboutPuzzroo() {
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-4 md:gap-6 mt-4 max-w-[700px] mx-auto">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 md:p-5">
-                <div className="font-urbanist font-bold text-[20px] md:text-[28px] text-white">15K+</div>
+                <div className="font-urbanist font-bold text-[16px] md:text-[28px] text-white">15K+</div>
                 <div className="font-urbanist font-medium text-[10px] md:text-[12px] text-white/80">Active Players</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 md:p-5">
-                <div className="font-urbanist font-bold text-[20px] md:text-[28px] text-white">6</div>
+                <div className="font-urbanist font-bold text-[16px] md:text-[28px] text-white">6</div>
                 <div className="font-urbanist font-medium text-[10px] md:text-[12px] text-white/80">Puzzle Games</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 md:p-5">
-                <div className="font-urbanist font-bold text-[20px] md:text-[28px] text-white">100%</div>
+                <div className="font-urbanist font-bold text-[16px] md:text-[28px] text-white">100%</div>
                 <div className="font-urbanist font-medium text-[10px] md:text-[12px] text-white/80">Ad-Free</div>
               </div>
             </div>

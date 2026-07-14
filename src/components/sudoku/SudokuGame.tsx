@@ -21,9 +21,9 @@ export function SudokuGame() {
   const [loaderText, setLoaderText] = useState('Loading game...')
   const [showModal, setShowModal] = useState(false)
   
-  // Check if this is from past puzzles or daily challenge (has date param)
+  // Check if this is from past puzzles or daily challenge (has date param or route contains daily-challenge)
   const dateParam = searchParams?.get('date')
-  const isFromPastPuzzles = !!dateParam
+  const isFromPastPuzzles = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
   
   const {
     board,

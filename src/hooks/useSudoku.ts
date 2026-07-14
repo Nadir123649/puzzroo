@@ -15,7 +15,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SudokuBoard, Position, GameStatus, Difficulty } from '@/lib/sudoku/types'
-import { getRandomPuzzle } from '@/data/sudoku'
+import { getRandomPuzzle, puzzleDataset } from '@/data/sudoku'
 import type { ScoreFeedback } from '@/components/games/sudoku/FloatingScoreFeedback'
 import {
   getCellAt,
@@ -26,9 +26,7 @@ import {
   moveSelection,
   cloneBoard,
   isBoardComplete,
-  validateBoardAgainstSolution,
   getCorrectValue,
-  findEmptyCell,
   calculateAvailableHints,
   convertToSudokuBoard,
   isValidMove,
@@ -44,10 +42,23 @@ import {
 } from '@/lib/sudoku/storage'
 import { markPuzzleCompleted } from '@/lib/completion/universal'
 
+function getDailySudokuPuzzle(date: Date, diff: Difficulty) {
+  const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
+  const pool = puzzleDataset[diff as 'easy' | 'medium' | 'hard'] || puzzleDataset['easy']
+  const x = Math.sin(seed) * 10000
+  const rand = x - Math.floor(x)
+  const index = Math.floor(rand * pool.length)
+  return pool[index]
+}
+
 export function useSudoku() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlDifficulty = (searchParams.get('difficulty') || 'easy') as Difficulty
+  
+  // Check if this is from daily challenge
+  const dateParam = searchParams.get('date')
+  const isDailyChallenge = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
   
   // Load difficulty preference
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
@@ -72,8 +83,20 @@ export function useSudoku() {
       }
     }
 
-    // Load new random puzzle
-    const puzzle = getRandomPuzzle(diff)
+    // Load new puzzle
+    let puzzle
+    if (isDailyChallenge) {
+      let dailyDate = new Date()
+      if (dateParam) {
+        const [month, day, year] = dateParam.split('-')
+        const fullYear = 2000 + parseInt(year)
+        dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
+      }
+      puzzle = getDailySudokuPuzzle(dailyDate, diff)
+    } else {
+      puzzle = getRandomPuzzle(diff)
+    }
+
     const currentBoard = convertToSudokuBoard(puzzle.puzzle)
     const initialBoard = cloneBoard(currentBoard)
     const solution = convertToSudokuBoard(puzzle.solution)
@@ -82,13 +105,13 @@ export function useSudoku() {
       currentBoard,
       initialBoard,
       solution,
-      puzzleId: puzzle.id,
+      puzzleId: isDailyChallenge && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id,
       mistakes: 0,
       score: 0,
       time: 0,
       gameStatus: 'playing' as GameStatus,
     }
-  }, [])
+  }, [isDailyChallenge, dateParam])
 
   const [gameState, setGameState] = useState(() => {
     // Fallback initializer for initial server render
@@ -107,15 +130,10 @@ export function useSudoku() {
       setGameState((prev) => {
         // Only re-initialize if the loaded game is for a different difficulty
         if (isInitialized && prev.puzzleId && prev.currentBoard.length > 0) {
-          // If we already initialized a board of this difficulty, do not overwrite it
           const saved = loadGameState()
           if (saved && saved.difficulty === currentDiff) {
             return saved
           }
-          // If there is no saved game, but prev difficulty matches currentDiff, keep it
-          // This avoids re-generating on hot reloads/re-renders
-          const currentBoardDiff = prev.currentBoard.some(row => row.some(cell => cell.value !== undefined)) ? null : currentDiff
-          // Actually, we can check a simple flag or just verify the current board.
         }
 
         // Try to load saved game first
@@ -134,7 +152,19 @@ export function useSudoku() {
         }
         
         // Start fresh
-        const puzzle = getRandomPuzzle(currentDiff)
+        let puzzle
+        if (isDailyChallenge) {
+          let dailyDate = new Date()
+          if (dateParam) {
+            const [month, day, year] = dateParam.split('-')
+            const fullYear = 2000 + parseInt(year)
+            dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
+          }
+          puzzle = getDailySudokuPuzzle(dailyDate, currentDiff)
+        } else {
+          puzzle = getRandomPuzzle(currentDiff)
+        }
+        
         const currentBoard = convertToSudokuBoard(puzzle.puzzle)
         const initialBoard = cloneBoard(currentBoard)
         const solution = convertToSudokuBoard(puzzle.solution)
@@ -142,7 +172,7 @@ export function useSudoku() {
           currentBoard,
           initialBoard,
           solution,
-          puzzleId: puzzle.id,
+          puzzleId: isDailyChallenge && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id,
           mistakes: 0,
           score: 0,
           time: 0,
@@ -292,30 +322,10 @@ export function useSudoku() {
 
       // Validate using Sudoku rules (no duplicates in row/column/box)
       const isValid = isValidMove(gameState.currentBoard, selectedCell, num)
-      const correctValue = getCorrectValue(gameState.solution, selectedCell)
-
-      // 🔍 DEBUG: Log validation details
-      console.log('🎯 VALIDATION:', {
-        row: selectedCell.row,
-        col: selectedCell.col,
-        enteredValue: num,
-        isValidBySudokuRules: isValid,
-        matchesSolution: num === correctValue,
-        solutionValue: correctValue,
-        puzzleId: gameState.puzzleId,
-        difficulty,
-      })
 
       // Validate based on Sudoku rules
       if (!isValid) {
         // Invalid move - violates Sudoku rules (duplicate in row/column/box)
-        console.warn('❌ INVALID MOVE (Sudoku rules violated):', {
-          row: selectedCell.row,
-          col: selectedCell.col,
-          enteredValue: num,
-          puzzleId: gameState.puzzleId,
-        })
-        
         newBoard[selectedCell.row][selectedCell.col].isError = true
         newBoard[selectedCell.row][selectedCell.col].isCorrect = false
         
@@ -332,12 +342,8 @@ export function useSudoku() {
           setGameState((prev) => ({ ...prev, gameStatus: 'lost' }))
           clearGameState()
         }
-        
-        // Error state persists - no setTimeout to clear it
       } else {
         // Valid move - follows Sudoku rules
-        console.log('✅ VALID MOVE (Sudoku rules satisfied)')
-        
         newBoard[selectedCell.row][selectedCell.col].isError = false
         newBoard[selectedCell.row][selectedCell.col].isCorrect = true
         updateScore(10) // +10 for correct answer
@@ -346,12 +352,10 @@ export function useSudoku() {
 
         // Check for win - validate entire board using Sudoku rules
         if (isBoardComplete(newBoard) && isValidCompletedBoard(newBoard)) {
-          console.log('🎉 PUZZLE COMPLETED! All Sudoku rules satisfied.')
           setIsWinAnimating(true)
           
           // Mark puzzle as completed in universal completion system
           const dateParam = searchParams.get('date')
-          // Convert date to full puzzle ID format: daily-sudoku-MM-DD-YY  
           const puzzleId = dateParam ? `daily-sudoku-${dateParam}` : gameState.puzzleId
           markPuzzleCompleted('sudoku', puzzleId, {
             time: gameState.time,
@@ -402,11 +406,6 @@ export function useSudoku() {
     newBoard[selectedCell.row][selectedCell.col].isCorrect = false
     newBoard[selectedCell.row][selectedCell.col].isError = false
     
-    console.log('🧹 CELL ERASED:', {
-      row: selectedCell.row,
-      col: selectedCell.col,
-    })
-    
     setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
   }, [selectedCell, gameState])
 
@@ -441,26 +440,26 @@ export function useSudoku() {
       return false
     }
 
-    // Find best target cell — prefer selected cell if it's valid
+    // Find best target cell — prefer selected cell if it's empty or has an error
     let targetCell: Position | null = null
 
     if (selectedCell) {
       const cell = getCellAt(gameState.currentBoard, selectedCell)
-      if (cell && !cell.fixed && !cell.value) {
+      // Allow hinting on empty cells OR cells with errors (wrong values)
+      if (cell && !cell.fixed && (!cell.value || cell.isError)) {
         const correctValue = getCorrectValue(gameState.solution, selectedCell)
-        // Only use selected cell if the correct value won't conflict with current board state
         if (correctValue && !conflictsWithBoard(gameState.currentBoard, selectedCell, correctValue)) {
           targetCell = selectedCell
         }
       }
     }
 
-    // Fall back to finding any empty cell whose correct value doesn't conflict
+    // Fall back to finding any empty/error cell whose correct value doesn't conflict
     if (!targetCell) {
       for (let row = 0; row < 9; row++) {
         for (let col = 0; col < 9; col++) {
           const cell = gameState.currentBoard[row][col]
-          if (!cell.fixed && !cell.value) {
+          if (!cell.fixed && (!cell.value || cell.isError)) {
             const pos = { row, col }
             const correctValue = getCorrectValue(gameState.solution, pos)
             if (correctValue && !conflictsWithBoard(gameState.currentBoard, pos, correctValue)) {
@@ -483,15 +482,15 @@ export function useSudoku() {
     newBoard[targetCell.row][targetCell.col] = clearNotes(
       newBoard[targetCell.row][targetCell.col]
     )
-    // Mark as correct
+    // Mark as correct and clear any error
     newBoard[targetCell.row][targetCell.col].isCorrect = true
+    newBoard[targetCell.row][targetCell.col].isError = false
 
     updateScore(-20) // -20 for hint
     setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
 
     // Check for win - validate entire board using Sudoku rules
     if (isBoardComplete(newBoard) && isValidCompletedBoard(newBoard)) {
-      console.log('🎉 PUZZLE COMPLETED! All Sudoku rules satisfied.')
       setIsWinAnimating(true)
       
       // Mark puzzle as completed in universal completion system
@@ -516,14 +515,8 @@ export function useSudoku() {
    * Change difficulty
    */
   const changeDifficulty = useCallback((newDifficulty: Difficulty) => {
-    console.log('🔄 DIFFICULTY CHANGED:', {
-      from: difficulty,
-      to: newDifficulty,
-    })
     setDifficulty(newDifficulty)
     saveDifficultyPreference(newDifficulty)
-    
-    // Update URL with new difficulty
     router.push(`/sudoku?difficulty=${newDifficulty}`)
   }, [difficulty, router])
 

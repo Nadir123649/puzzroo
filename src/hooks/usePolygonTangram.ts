@@ -149,6 +149,17 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [hasWonOnce, setHasWonOnce] = useState(false)
   
+  const moveHistoryRef = useRef<PieceState[][]>([])
+  const historyIndexRef = useRef(-1)
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    moveHistoryRef.current = moveHistory
+  }, [moveHistory])
+  useEffect(() => {
+    historyIndexRef.current = historyIndex
+  }, [historyIndex])
+
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const shownHints = useRef<Set<TangramPieceId>>(new Set())
@@ -191,14 +202,21 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     return rotated.map(([x, y]) => [x + trayPos.x, y + trayPos.y])
   }, [])
 
-  // Timer effect
+  // Timer effect — only depends on gameStatus to avoid unnecessary restarts
   useEffect(() => {
+    // Stop timer if not actively playing or already won
     if (gameStatus !== 'playing' || hasWonOnce) {
       if (timerRef.current) {
         clearInterval(timerRef.current)
         timerRef.current = null
       }
       return
+    }
+
+    // Clear any existing interval before starting a new one
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
     }
 
     timerRef.current = setInterval(() => {
@@ -217,7 +235,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         timerRef.current = null
       }
     }
-  }, [gameStatus])
+  }, [gameStatus, hasWonOnce])
 
   // Cleanup hint timeout on unmount
   useEffect(() => {
@@ -319,6 +337,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     // Don't validate if pieces haven't been initialized yet or if the game is lost
     if (pieces.length === 0 || gameStatus === 'lost') return
     
+    // Once the puzzle has been won, don't re-run win/loss detection
+    // This allows undo/redo without re-triggering the modal
+    if (hasWonOnce) return
+    
     // Only validate if at least one piece is placed when in playing mode
     if (gameStatus === 'playing') {
       const hasPlacedPieces = pieces.some(p => p.isPlaced)
@@ -353,13 +375,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         }, 300)
         return () => clearTimeout(timer)
       }
-    } else {
-      // If the puzzle is no longer solved but the status is 'won' (due to an undo/move revert), revert status back to 'playing'
-      if (gameStatus === 'won') {
-        setGameStatus('playing')
-      }
     }
-  }, [pieces, gameStatus, timeRemaining, hintsUsed, searchParams, puzzle, difficulty])
+  }, [pieces, gameStatus, hasWonOnce, timeRemaining, hintsUsed, searchParams, puzzle, difficulty])
 
 
   const selectPiece = useCallback((pieceId: TangramPieceId) => {
@@ -375,64 +392,68 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         const deltaX = centerX - piece.transform.x
         const deltaY = centerY - piece.transform.y
       
-      // Apply delta to all polygon points
-      const newPolygon = piece.currentPolygon.map(([px, py]) => [px + deltaX, py + deltaY])
-      const newTransform = { x: centerX, y: centerY, rotation: piece.transform.rotation }
-      
-      // Try snapping
-      const targetPolygons = prev.map(p => p.targetPolygon)
-      
-      // Calculate which target slots are already occupied by other snapped pieces
-      const occupiedTargetIndices = new Set<number>()
-      prev.forEach(p => {
-        if (p.id !== pieceId && p.isSnapped) {
-          const matchedIndex = targetPolygons.findIndex(targetPoly => 
-            geometricallyMatches(p.currentPolygon, targetPoly, 5)
-          )
-          if (matchedIndex !== -1) {
-            occupiedTargetIndices.add(matchedIndex)
+        // Apply delta to all polygon points
+        const newPolygon = piece.currentPolygon.map(([px, py]) => [px + deltaX, py + deltaY])
+        const newTransform = { x: centerX, y: centerY, rotation: piece.transform.rotation }
+        
+        // Try snapping
+        const targetPolygons = prev.map(p => p.targetPolygon)
+        
+        // Calculate which target slots are already occupied by other snapped pieces
+        const occupiedTargetIndices = new Set<number>()
+        prev.forEach(p => {
+          if (p.id !== pieceId && p.isSnapped) {
+            const matchedIndex = targetPolygons.findIndex(targetPoly => 
+              geometricallyMatches(p.currentPolygon, targetPoly, 5)
+            )
+            if (matchedIndex !== -1) {
+              occupiedTargetIndices.add(matchedIndex)
+            }
+          }
+        })
+
+        const snapResult = attemptSnap(
+          pieceId,
+          newPolygon,
+          newTransform,
+          targetPolygons,
+          puzzle.pieceShapeIds,
+          scaledData.current?.scale || 1,
+          occupiedTargetIndices
+        )
+        
+        if (snapResult?.shouldSnap) {
+          // Trigger pulse animation on successful snap
+          if (onSnapSuccess) {
+            setTimeout(() => onSnapSuccess(), 0)
+          }
+          // Deselect piece on successful snap
+          setTimeout(() => {
+            setSelectedPiece(null)
+          }, 0)
+          
+          // Snap: use target polygon and target center
+          return {
+            ...piece,
+            transform: snapResult.snapTransform,
+            currentPolygon: snapResult.targetPolygon,
+            isPlaced: true,
+            isSnapped: true
           }
         }
-      })
-
-      const snapResult = attemptSnap(
-        pieceId,
-        newPolygon,
-        newTransform,
-        targetPolygons,
-        puzzle.pieceShapeIds,
-        scaledData.current?.scale || 1,
-        occupiedTargetIndices
-      )
-      
-      if (snapResult?.shouldSnap) {
-        // Trigger pulse animation on successful snap
-        if (onSnapSuccess) {
-          setTimeout(() => onSnapSuccess(), 0)
-        }
         
-        // Snap: use target polygon and target center
+        // No snap: use new position
         return {
           ...piece,
-          transform: snapResult.snapTransform,
-          currentPolygon: snapResult.targetPolygon,
+          transform: newTransform,
+          currentPolygon: newPolygon,
           isPlaced: true,
-          isSnapped: true
+          isSnapped: false
         }
-      }
+      })
       
-      // No snap: use new position
-      return {
-        ...piece,
-        transform: newTransform,
-        currentPolygon: newPolygon,
-        isPlaced: true,
-        isSnapped: false
-      }
+      return newPieces
     })
-    
-    return newPieces
-  })
   }, [puzzle])
 
   const rotatePiece = useCallback((pieceId: TangramPieceId, direction: 1 | -1) => {
@@ -688,40 +709,32 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   }, [difficulty, createStandardPolygon])
 
   const undoMove = useCallback(() => {
-    setHistoryIndex(idx => {
-      if (idx > 0) {
-        const newIdx = idx - 1
-        setPieces(prev => {
-          if (moveHistory[newIdx]) {
-            const nextPieces = moveHistory[newIdx]
-            lastCommittedStateRef.current = nextPieces
-            return nextPieces
-          }
-          return prev
-        })
-        return newIdx
+    const currentIdx = historyIndexRef.current
+    const history = moveHistoryRef.current
+    if (currentIdx > 0) {
+      const newIdx = currentIdx - 1
+      const targetState = history[newIdx]
+      if (targetState) {
+        setPieces(targetState)
+        lastCommittedStateRef.current = targetState
+        setHistoryIndex(newIdx)
       }
-      return idx
-    })
-  }, [moveHistory])
+    }
+  }, [])
 
   const redoMove = useCallback(() => {
-    setHistoryIndex(idx => {
-      if (idx < moveHistory.length - 1) {
-        const newIdx = idx + 1
-        setPieces(prev => {
-          if (moveHistory[newIdx]) {
-            const nextPieces = moveHistory[newIdx]
-            lastCommittedStateRef.current = nextPieces
-            return nextPieces
-          }
-          return prev
-        })
-        return newIdx
+    const currentIdx = historyIndexRef.current
+    const history = moveHistoryRef.current
+    if (currentIdx < history.length - 1) {
+      const newIdx = currentIdx + 1
+      const targetState = history[newIdx]
+      if (targetState) {
+        setPieces(targetState)
+        lastCommittedStateRef.current = targetState
+        setHistoryIndex(newIdx)
       }
-      return idx
-    })
-  }, [moveHistory])
+    }
+  }, [])
 
   const clearHistory = useCallback(() => {
     setMoveHistory([])

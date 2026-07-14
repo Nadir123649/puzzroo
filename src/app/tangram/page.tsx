@@ -9,6 +9,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
+import { TangramHero } from '@/components/tangram/TangramHero'
 import { TangramGame } from '@/components/tangram/TangramGame'
 import { markGameAsPlayed } from '@/components/sections/FreeGames'
 
@@ -38,6 +39,7 @@ function TangramContent() {
 
   return (
     <>
+      <TangramHero />
       <TangramGame />
     </>
   )

@@ -24,14 +24,42 @@ interface PastPuzzlesContentProps {
 
 export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   const [puzzles, setPuzzles] = useState<DailyChallenge[]>([])
-  const [filter, setFilter] = useState<'all' | 'not-started' | 'in-progress' | 'completed'>('all')
+  
+  // Persist filter + selected date in sessionStorage so navigation doesn't reset them
+  const storageKey = `puzzroo_past_filter_${gameId}`
+  const dateStorageKey = `puzzroo_past_date_${gameId}`
+
+  const [filter, setFilter] = useState<'all' | 'not-started' | 'in-progress' | 'completed'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(storageKey)
+      if (saved && ['all', 'not-started', 'in-progress', 'completed'].includes(saved)) {
+        return saved as 'all' | 'not-started' | 'in-progress' | 'completed'
+      }
+    }
+    return 'all'
+  })
+  
+  const [selectedDate, setSelectedDate] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem(dateStorageKey) || null
+    }
+    return null
+  })
+  
   const [showAccessModal, setShowAccessModal] = useState(false)
   const [showCalendarModal, setShowCalendarModal] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [completedPuzzles, setCompletedPuzzles] = useState<Set<string>>(new Set())
   const accessibleCount = getAccessiblePastChallenges()
   const { theme } = useTheme()
+
+  // Persist filter changes to sessionStorage
+  const handleFilterChange = (newFilter: 'all' | 'not-started' | 'in-progress' | 'completed') => {
+    setFilter(newFilter)
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(storageKey, newFilter)
+    }
+  }
 
   // Format game title
   const gameTitle = gameId === 'cross-math' ? 'CrossMath' : gameId === 'sudoku' ? 'Sudoku' : gameId === 'nonogram' ? 'Nonogram' : gameId === 'tangram' ? 'Tangram' : gameId
@@ -125,11 +153,17 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
 
   const handleDateSelected = (dateString: string) => {
     setSelectedDate(dateString)
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(dateStorageKey, dateString)
+    }
     setShowCalendarModal(false)
   }
 
   const clearDateFilter = () => {
     setSelectedDate(null)
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(dateStorageKey)
+    }
   }
 
   return (
@@ -155,7 +189,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
               {/* Filter + Controls Container */}
               <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center flex-wrap px-0">
                 <div className="w-full md:w-auto">
-                  <FilterDropdown value={filter} onChange={setFilter} />
+                  <FilterDropdown value={filter} onChange={handleFilterChange} />
                 </div>
                 
                 <button 
@@ -242,6 +276,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
         onClose={() => setShowCalendarModal(false)}
         gameId={gameId}
         onDateSelected={handleDateSelected}
+        initialSelectedDate={selectedDate}
       />
 
       {/* Loading Overlay */}

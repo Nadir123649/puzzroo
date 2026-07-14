@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Cell, Difficulty, CrossMathPuzzle } from '@/lib/crossmath/types'
-import { getRandomPuzzle, getRandomPatternPuzzle } from '@/data/crossmath'
+import { getRandomPuzzle } from '@/data/crossmath'
+import { generateRandomPatternPuzzle } from '@/lib/crossmath/puzzleGenerator'
 import { SCORING } from '@/lib/crossmath/constants'
 import {
   isBoardComplete,
@@ -19,19 +20,44 @@ import {
 } from '@/lib/crossmath/storage'
 import { markPuzzleCompleted } from '@/lib/completion/universal'
 
+function getDailyCrossMathPuzzle(date: Date, diff: Difficulty): CrossMathPuzzle {
+  const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
+  return generateRandomPatternPuzzle(diff, seed)
+}
+
 export function useCrossMath() {
   const searchParams = useSearchParams()
   const difficultyParam = (searchParams.get('difficulty') || 'easy') as Difficulty
-  // Pattern mode is disabled to load the exact hand-crafted layout shapes
-  const usePatternMode = false
+  const usePatternMode = true
   
-  const [difficulty, setDifficulty] = useState<Difficulty>(difficultyParam)
+  const dateParam = searchParams.get('date')
+  const isDailyChallenge = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
+  
+  const getInitialTime = (diff: Difficulty) => {
+    switch (diff) {
+      case 'hard': return 600
+      case 'medium': return 420
+      default: return 300
+    }
+  }
+
+  const getInitialDifficulty = () => {
+    if (typeof window !== 'undefined') {
+      const saved = loadGameState()
+      if (saved && saved.difficulty) {
+        return saved.difficulty
+      }
+    }
+    return difficultyParam
+  }
+
+  const [difficulty, setDifficulty] = useState<Difficulty>(getInitialDifficulty)
   const [board, setBoard] = useState<Cell[][]>([])
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null)
   const [mistakes, setMistakes] = useState(0)
   const [maxMistakes, setMaxMistakes] = useState(5)
   const [score, setScore] = useState(0)
-  const [time, setTime] = useState(0)
+  const [time, setTime] = useState(() => getInitialTime(getInitialDifficulty()))
   const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing')
   const [availableNumbers, setAvailableNumbers] = useState<Set<number>>(new Set())
   const [usedNumbersCount, setUsedNumbersCount] = useState<Map<number, number>>(new Map())
@@ -42,10 +68,30 @@ export function useCrossMath() {
     value: number
     timestamp: number
   }>>([])
+  
+  const [history, setHistory] = useState<any[]>([])
+
+  const pushToHistory = useCallback((
+    position: { row: number; col: number },
+    previousValue: number | string | undefined,
+    previousType: Cell['type'],
+    previousIsCorrect: boolean | undefined,
+    previousIsError: boolean | undefined
+  ) => {
+    setHistory(prev => [
+      ...prev,
+      {
+        position,
+        previousValue,
+        previousType,
+        previousIsCorrect,
+        previousIsError,
+      }
+    ])
+  }, [])
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Derive required number counts from the solution — only for values shown in the number pad
   const requiredNumbersCount = useMemo(() => {
     if (!currentPuzzle) return new Map<number, number>()
     const counts = new Map<number, number>()
@@ -58,13 +104,10 @@ export function useCrossMath() {
     return counts
   }, [currentPuzzle])        
 
-  // Initialize puzzle
   useEffect(() => {
-    // Try to load saved game first
     const savedGame = loadGameState()
     
     if (savedGame && savedGame.difficulty === difficulty) {
-      // Restore saved game
       setBoard(savedGame.board)
       setMistakes(savedGame.mistakes)
       setScore(savedGame.score)
@@ -73,13 +116,24 @@ export function useCrossMath() {
       setSelectedCell(null)
       setIsTyping(false)
       
-      // Get puzzle to restore metadata
-      const puzzle = usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)
+      let puzzle
+      if (isDailyChallenge) {
+        let dailyDate = new Date()
+        if (dateParam) {
+          const [month, day, year] = dateParam.split('-')
+          const fullYear = 2000 + parseInt(year)
+          dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
+        }
+        puzzle = getDailyCrossMathPuzzle(dailyDate, difficulty)
+      } else {
+        puzzle = usePatternMode ? generateRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)
+      }
+      
       setCurrentPuzzle(puzzle)
-      setMaxMistakes(puzzle.maxMistakes)
+      const limit = difficulty === 'hard' ? 2 : puzzle.maxMistakes
+      setMaxMistakes(limit)
       setAvailableNumbers(new Set(puzzle.availableNumbers))
       
-      // Restore used numbers count
       const usedCount = new Map<number, number>()
       savedGame.board.forEach(row => {
         row.forEach(cell => {
@@ -91,25 +145,37 @@ export function useCrossMath() {
       })
       setUsedNumbersCount(usedCount)
     } else {
-      // Start new game
-      const puzzle = usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)
+      let puzzle
+      if (isDailyChallenge) {
+        let dailyDate = new Date()
+        if (dateParam) {
+          const [month, day, year] = dateParam.split('-')
+          const fullYear = 2000 + parseInt(year)
+          dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
+        }
+        puzzle = getDailyCrossMathPuzzle(dailyDate, difficulty)
+      } else {
+        puzzle = usePatternMode ? generateRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)
+      }
+      
       const gridCopy = puzzle.grid.map(row => row.map(cell => ({ ...cell })))
       setBoard(gridCopy)
       setCurrentPuzzle(puzzle)
-      setMaxMistakes(puzzle.maxMistakes)
+      const limit = difficulty === 'hard' ? 2 : puzzle.maxMistakes
+      setMaxMistakes(limit)
       setAvailableNumbers(new Set(puzzle.availableNumbers))
       setUsedNumbersCount(new Map())
       setMistakes(0)
       setScore(0)
-      setTime(0)
+      setTime(getInitialTime(difficulty))
       setGameStatus('playing')
       setSelectedCell(null)
       setIsTyping(false)
+      setHistory([])
       clearGameState()
     }
-  }, [difficulty, usePatternMode])
+  }, [difficulty, usePatternMode, isDailyChallenge, dateParam])
 
-  // Save game state whenever it changes
   useEffect(() => {
     if (gameStatus === 'playing' && board.length > 0 && currentPuzzle) {
       saveGameState({
@@ -128,7 +194,16 @@ export function useCrossMath() {
   useEffect(() => {
     if (gameStatus === 'playing') {
       timerRef.current = setInterval(() => {
-        setTime(prev => prev + 1)
+        setTime(prev => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current!)
+            setGameStatus('lost')
+            setSelectedCell(null)
+            clearGameState()
+            return 0
+          }
+          return prev - 1
+        })
       }, 1000)
     } else {
       if (timerRef.current) {
@@ -172,6 +247,15 @@ export function useCrossMath() {
     if (!cell.isEditable) return
 
     setIsTyping(false)
+    
+    // Save move in history stack for undo
+    pushToHistory(
+      { row, col },
+      typeof cell.value === 'number' ? cell.value : undefined,
+      cell.type,
+      cell.isCorrect,
+      cell.isError
+    )
 
     const newBoard = board.map(r => r.map(c => ({ ...c })))
     
@@ -221,6 +305,7 @@ export function useCrossMath() {
       // Check game over
       if (newMistakes >= maxMistakes) {
         setGameStatus('lost')
+        setSelectedCell(null)
         clearGameState()
         return
       }
@@ -230,7 +315,6 @@ export function useCrossMath() {
     if (isBoardComplete(newBoard) && validateBoard(newBoard, currentPuzzle.solution)) {
       // Mark puzzle as completed in universal completion system
       const dateParam = searchParams.get('date')
-      // Convert date to full puzzle ID format: daily-cross-math-MM-DD-YY
       const puzzleId = dateParam ? `daily-cross-math-${dateParam}` : currentPuzzle.id
       markPuzzleCompleted('crossmath', puzzleId, {
         time: time,
@@ -238,10 +322,13 @@ export function useCrossMath() {
         difficulty: difficulty,
       })
       
+      // Clear selection on win
+      setSelectedCell(null)
+      setIsTyping(false)
       setGameStatus('won')
       clearGameState()
     }
-  }, [selectedCell, board, gameStatus, usedNumbersCount, score, mistakes, maxMistakes, currentPuzzle, time, difficulty, searchParams])
+  }, [selectedCell, board, gameStatus, usedNumbersCount, score, mistakes, maxMistakes, currentPuzzle, time, difficulty, searchParams, pushToHistory])
 
   const commitCurrentInput = useCallback(() => {
     if (!selectedCell || gameStatus !== 'playing' || !currentPuzzle || !isTyping) return
@@ -306,6 +393,7 @@ export function useCrossMath() {
       
       if (newMistakes >= maxMistakes) {
         setGameStatus('lost')
+        setSelectedCell(null)
         clearGameState()
         return
       }
@@ -315,7 +403,6 @@ export function useCrossMath() {
     if (isBoardComplete(newBoard) && validateBoard(newBoard, currentPuzzle.solution)) {
       // Mark puzzle as completed in universal completion system
       const dateParam = searchParams.get('date')
-      // Convert date to full puzzle ID format: daily-cross-math-MM-DD-YY
       const puzzleId = dateParam ? `daily-cross-math-${dateParam}` : currentPuzzle.id
       markPuzzleCompleted('crossmath', puzzleId, {
         time: time,
@@ -323,6 +410,9 @@ export function useCrossMath() {
         difficulty: difficulty,
       })
       
+      // Clear selection on win
+      setSelectedCell(null)
+      setIsTyping(false)
       setGameStatus('won')
       clearGameState()
     }
@@ -348,6 +438,15 @@ export function useCrossMath() {
     const cell = board[row][col]
 
     if (!cell.isEditable || cell.type === 'empty') return
+    
+    // Save last move for undo
+    pushToHistory(
+      { row, col },
+      typeof cell.value === 'number' ? cell.value : undefined,
+      cell.type,
+      cell.isCorrect,
+      cell.isError
+    )
 
     // Return number to unused pool - decrement usage count
     if (typeof cell.value === 'number') {
@@ -370,24 +469,96 @@ export function useCrossMath() {
 
     setBoard(newBoard)
     setIsTyping(false)
-  }, [selectedCell, board, gameStatus, usedNumbersCount])
+  }, [selectedCell, board, gameStatus, usedNumbersCount, pushToHistory])
+  
+  const undoLastMove = useCallback(() => {
+    if (history.length === 0 || gameStatus !== 'playing') return
+    
+    const lastMove = history[history.length - 1]
+    const { position, previousValue, previousType, previousIsCorrect, previousIsError } = lastMove
+    const { row, col } = position
+    
+    const newBoard = board.map(r => r.map(c => ({ ...c })))
+    const cell = newBoard[row][col]
+    
+    // Update number usage count
+    const newUsedCount = new Map(usedNumbersCount)
+    
+    // Remove current value from count
+    if (cell.type === 'number' && typeof cell.value === 'number') {
+      const currentCount = newUsedCount.get(cell.value) || 0
+      if (currentCount > 0) {
+        newUsedCount.set(cell.value, currentCount - 1)
+      }
+    }
+    
+    // Add previous value to count if it was a number
+    if (previousType === 'number' && typeof previousValue === 'number') {
+      const prevCount = newUsedCount.get(previousValue) || 0
+      newUsedCount.set(previousValue, prevCount + 1)
+    }
+    
+    setUsedNumbersCount(newUsedCount)
+    
+    // Restore previous cell state
+    newBoard[row][col] = {
+      ...cell,
+      type: previousType,
+      value: previousValue,
+      isCorrect: previousIsCorrect,
+      isError: previousIsError,
+    }
+    
+    setBoard(newBoard)
+    setHistory(prev => prev.slice(0, -1)) // Pop the stack
+    setIsTyping(false)
+  }, [history, board, gameStatus, usedNumbersCount])
+
+  const replayBoard = useCallback(() => {
+    if (!currentPuzzle) return
+    const gridCopy = currentPuzzle.grid.map(row => row.map(cell => ({ ...cell })))
+    setBoard(gridCopy)
+    setUsedNumbersCount(new Map())
+    setMistakes(0)
+    setScore(0)
+    setTime(getInitialTime(difficulty))
+    setGameStatus('playing')
+    setSelectedCell(null)
+    setIsTyping(false)
+    setHistory([])
+    clearGameState()
+  }, [currentPuzzle, difficulty])
 
   const resetBoard = useCallback(() => {
-    const puzzle = usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)
+    let puzzle
+    if (isDailyChallenge) {
+      let dailyDate = new Date()
+      if (dateParam) {
+        const [month, day, year] = dateParam.split('-')
+        const fullYear = 2000 + parseInt(year)
+        dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
+      }
+      puzzle = getDailyCrossMathPuzzle(dailyDate, difficulty)
+    } else {
+      puzzle = usePatternMode ? generateRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)
+    }
+
     const gridCopy = puzzle.grid.map(row => row.map(cell => ({ ...cell })))
     setBoard(gridCopy)
     setCurrentPuzzle(puzzle)
-    setMaxMistakes(puzzle.maxMistakes)
+    const limit = difficulty === 'hard' ? 2 : puzzle.maxMistakes
+    setMaxMistakes(limit)
     setAvailableNumbers(new Set(puzzle.availableNumbers))
     setUsedNumbersCount(new Map())
     setMistakes(0)
     setScore(0)
-    setTime(0)
+    setTime(getInitialTime(difficulty))
     setGameStatus('playing')
     setSelectedCell(null)
     setIsTyping(false)
+    setHistory([])
     clearGameState()
-  }, [difficulty, usePatternMode])
+  }, [difficulty, usePatternMode, isDailyChallenge, dateParam])
 
   const requestHint = useCallback(() => {
     if (gameStatus !== 'playing' || !currentPuzzle) return
@@ -443,6 +614,9 @@ export function useCrossMath() {
         difficulty: difficulty,
       })
       
+      // Clear selection on win
+      setSelectedCell(null)
+      setIsTyping(false)
       setGameStatus('won')
       clearGameState()
     }
@@ -552,6 +726,9 @@ export function useCrossMath() {
           difficulty: difficulty,
         })
         
+        // Clear selection on win
+        setSelectedCell(null)
+        setIsTyping(false)
         setGameStatus('won')
         clearGameState()
       }
@@ -680,9 +857,12 @@ export function useCrossMath() {
     selectCell,
     enterNumber,
     eraseCell,
+    undoLastMove,
     resetBoard,
+    replayBoard,
     requestHint,
     availableHints: calculateAvailableHints(score),
     handleFeedbackComplete,
+    canUndo: history.length > 0,
   }
 }

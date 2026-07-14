@@ -132,9 +132,18 @@ export function PolygonPiece({
   const leftPercent = (cx / VIRTUAL_W) * 100
   const topPercent = (cy / VIRTUAL_H) * 100
 
+  // Total rotation = base rotation + visual offset or absolute drag rotation
+  const totalRotation = dragRotation !== null ? dragRotation : piece.transform.rotation
+  const isRotating = dragRotation !== null
+
   const isAnimating = !isDraggingRef.current
   const positionTransition = isAnimating
     ? 'left 0.3s cubic-bezier(0.25, 1, 0.5, 1), top 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
+    : 'none'
+  
+  // Smooth transform transition for the SVG elements
+  const transformTransition = isAnimating && !isRotating
+    ? 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
     : 'none'
 
   const orbitalBoardWidth = boardContainerWidth ?? VIRTUAL_W
@@ -167,10 +176,6 @@ export function PolygonPiece({
     setDragRotation(null)
   }
 
-  // Total rotation = base rotation + visual offset or absolute drag rotation
-  const totalRotation = dragRotation !== null ? dragRotation : piece.transform.rotation
-  const isRotating = dragRotation !== null
-
   return (
     <>
       {/* SVG covering the entire board */}
@@ -189,7 +194,7 @@ export function PolygonPiece({
         <g
           style={{
             transform: `translate(${cx}px, ${cy}px)`,
-            transition: isAnimating ? 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)' : 'none',
+            transition: transformTransition,
           }}
         >
           {/* Rotation Container - applies total rotation around (0,0) */}
@@ -197,9 +202,7 @@ export function PolygonPiece({
             style={{
               transform: `rotate(${totalRotation}deg)`,
               transformOrigin: '0px 0px',
-              transition: isAnimating && !isRotating 
-                ? 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)' 
-                : 'none',
+              transition: transformTransition,
             }}
           >
             {/* The piece path - UNROTATED coordinates */}

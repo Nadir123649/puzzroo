@@ -62,6 +62,7 @@ export const images = {
     dotsMatch: '/dots-match.svg',
     nonogram: '/nonogram.svg',
     nonogramWhite: '/nonogram-white.svg',
+    tangram: '/kakuro.svg',
   },
 
   // Placeholders

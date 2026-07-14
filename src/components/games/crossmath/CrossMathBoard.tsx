@@ -17,31 +17,8 @@ export function CrossMathBoard({
   onCellClick,
   mobile = false,
 }: CrossMathBoardProps) {
-  // Filter out completely dead rows (all non-editable empty cells with no value)
-  const activeBoard = board.filter(row =>
-    row.some(cell => !(cell.type === 'empty' && !cell.isEditable && !cell.value))
-  )
-
-  // Similarly filter columns: find columns that have at least one active cell
-  const totalCols = activeBoard[0]?.length || 0
-  const activeCols = new Set<number>()
-  activeBoard.forEach(row => {
-    row.forEach((cell, colIndex) => {
-      if (!(cell.type === 'empty' && !cell.isEditable && !cell.value)) {
-        activeCols.add(colIndex)
-      }
-    })
-  })
-
-  // Determine column range: from first active col to last active col (inclusive)
-  const minCol = activeCols.size > 0 ? Math.min(...activeCols) : 0
-  const maxCol = activeCols.size > 0 ? Math.max(...activeCols) : totalCols - 1
-
-  // Slice each row to only include the active column range
-  const trimmedBoard = activeBoard.map(row => row.slice(minCol, maxCol + 1))
-
-  const rows = trimmedBoard.length
-  const cols = trimmedBoard[0]?.length || 0
+  const rows = board.length
+  const cols = board[0]?.length || 0
 
   return (
     <div
@@ -64,21 +41,20 @@ export function CrossMathBoard({
           gridTemplateRows: `repeat(${rows}, 1fr)`,
         }}
       >
-        {trimmedBoard.map((row, rowIndex) =>
-          row.map((cell, colIndex) => (
-            <CrossMathCell
-              key={`${rowIndex}-${colIndex}`}
-              cell={cell}
-              isSelected={
-                selectedCell?.row === (rowIndex + (board.length - activeBoard.length)) &&
-                selectedCell?.col === colIndex + minCol
-              }
-              onClick={() => onCellClick(
-                rowIndex + (board.length - activeBoard.length),
-                colIndex + minCol
-              )}
-            />
-          ))
+        {board.map((row, rowIndex) =>
+          row.map((cell, colIndex) => {
+            return (
+              <CrossMathCell
+                key={`${rowIndex}-${colIndex}`}
+                cell={cell}
+                isSelected={
+                  selectedCell?.row === rowIndex &&
+                  selectedCell?.col === colIndex
+                }
+                onClick={() => onCellClick(rowIndex, colIndex)}
+              />
+            )
+          })
         )}
       </div>
     </div>

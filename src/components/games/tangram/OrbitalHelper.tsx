@@ -31,6 +31,8 @@ export function OrbitalHelper({
   onRotateDrag,
   onRotateEnd,
 }: OrbitalHelperProps) {
+
+
   // Use refs only - no state to avoid rerenders during drag
   const isDraggingRef = useRef(false)
   const centerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -170,7 +172,7 @@ export function OrbitalHelper({
           touchAction: 'none',
         }}
       >
-        {/* Clickable circle BORDER ONLY for rotation */}
+        {/* Clickable circle - full area (fill + stroke) for rotation drag */}
         <svg
           width={orbitRadius * 2}
           height={orbitRadius * 2}
@@ -183,13 +185,13 @@ export function OrbitalHelper({
             ref={circleRef}
             cx={orbitRadius}
             cy={orbitRadius}
-            r={orbitRadius - 12}
-            fill="none"
+            r={orbitRadius - 4}
+            fill="transparent"
             stroke="transparent"
-            strokeWidth="24"
+            strokeWidth="8"
             style={{
               cursor: isDraggingRef.current ? 'grabbing' : 'grab',
-              pointerEvents: 'stroke',
+              pointerEvents: 'all',
               touchAction: 'none',
             }}
             onPointerDown={handlePointerDown}

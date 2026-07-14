@@ -88,7 +88,7 @@ export function CrossMathCell({ cell, isSelected, onClick }: CrossMathCellProps)
       disabled={!isEditable}
       type="button"
       className={`
-        aspect-square w-full min-w-[36px] min-h-[36px] md:min-w-[46px] md:min-h-[46px]
+        aspect-square w-full md:min-w-[46px] md:min-h-[46px]
         flex items-center justify-center
         rounded-[4px]
         font-urbanist font-bold

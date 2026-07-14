@@ -10,9 +10,10 @@ interface CalendarModalProps {
   onClose: () => void
   gameId: 'sudoku' | 'cross-math' | 'nonogram' | 'tangram'
   onDateSelected?: (dateString: string) => void
+  initialSelectedDate?: string | null
 }
 
-export function CalendarModal({ isOpen, onClose, gameId, onDateSelected }: CalendarModalProps) {
+export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initialSelectedDate }: CalendarModalProps) {
   const router = useRouter()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -21,14 +22,25 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected }: Calen
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Reset state when modal opens/closes
+  // Reset state when modal opens - restore previously selected date if available
   useEffect(() => {
     if (isOpen) {
-      setCurrentDate(new Date())
-      setSelectedDate(null)
       setErrorMessage('')
+      if (initialSelectedDate) {
+        // Parse the stored dateString (MM-DD-YY) back into a Date
+        const [month, day, year] = initialSelectedDate.split('-')
+        const fullYear = 2000 + parseInt(year)
+        const restoredDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
+        restoredDate.setHours(0, 0, 0, 0)
+        setSelectedDate(restoredDate)
+        // Navigate calendar to that month
+        setCurrentDate(new Date(fullYear, parseInt(month) - 1, 1))
+      } else {
+        setCurrentDate(new Date())
+        setSelectedDate(null)
+      }
     }
-  }, [isOpen])
+  }, [isOpen, initialSelectedDate])
 
   // Lock body scroll when modal is open
   useEffect(() => {

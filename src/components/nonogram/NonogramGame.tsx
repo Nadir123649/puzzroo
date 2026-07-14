@@ -14,13 +14,15 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // Check if this is from past puzzles or daily challenge (has date param)
+  // Check if this is from past puzzles or daily challenge (has date param or daily challenge route)
   const dateParam = searchParams?.get('date')
-  const isFromPastPuzzles = !!dateParam
+  const isFromPastPuzzles = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
   
   const {
     grid,
     selectedCell,
+    hoveredCell,
+    mousePosition,
     currentPuzzle,
     isInitialized,
     gameStatus,
@@ -44,6 +46,8 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     useHint,
     autoFill,
     setInputMode,
+    setHoveredCell,
+    setMousePosition,
   } = useNonogram(puzzleId)
 
   const [isResetting, setIsResetting] = useState(false)
@@ -78,8 +82,6 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   const [windowWidth, setWindowWidth] = useState(0)
   const [zoomLevel, setZoomLevel] = useState(1) // 1 = 100%, 0.6 = 60%, 1.5 = 150%
   const [isPinching, setIsPinching] = useState(false)
-  const [hoveredCell, setHoveredCell] = useState<CellPosition | null>(null)
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null)
   const initialPinchDistance = useRef<number>(0)
   const initialZoomLevel = useRef<number>(1)
 
@@ -117,38 +119,45 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     return () => window.removeEventListener('resize', updateWidth)
   }, [])
 
-  // Track mouse position for tooltip
+  // Track mouse position and element under cursor for tooltip during normal hover and drag
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (hoveredCell) {
+      if (hoveredCell && !isDragging) {
         setMousePosition({ x: e.clientX, y: e.clientY })
-        
-        // During drag, update hoveredCell based on element under cursor
-        if (isDragging) {
-          const element = document.elementFromPoint(e.clientX, e.clientY)
-          if (element) {
-            const cellButton = element.closest('button[data-cell-position]')
-            if (cellButton) {
-              const positionData = cellButton.getAttribute('data-cell-position')
-              if (positionData) {
-                const [row, col] = positionData.split('-').map(Number)
-                if (!isNaN(row) && !isNaN(col)) {
-                  setHoveredCell({ row, col })
-                }
-              }
+      }
+    }
+
+    if (hoveredCell && !isDragging) {
+      window.addEventListener('mousemove', handleMouseMove)
+      return () => window.removeEventListener('mousemove', handleMouseMove)
+    }
+  }, [hoveredCell, isDragging, setMousePosition])
+
+  // Track global coordinates during drag
+  useEffect(() => {
+    const handleGlobalDragMove = (e: PointerEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+      
+      const element = document.elementFromPoint(e.clientX, e.clientY)
+      if (element) {
+        const cellButton = element.closest('button[data-cell-position]')
+        if (cellButton) {
+          const positionData = cellButton.getAttribute('data-cell-position')
+          if (positionData) {
+            const [row, col] = positionData.split('-').map(Number)
+            if (!isNaN(row) && !isNaN(col)) {
+              setHoveredCell({ row, col })
             }
           }
         }
       }
     }
 
-    if (hoveredCell) {
-      window.addEventListener('mousemove', handleMouseMove)
-      return () => window.removeEventListener('mousemove', handleMouseMove)
-    } else {
-      setMousePosition(null)
+    if (isDragging) {
+      window.addEventListener('pointermove', handleGlobalDragMove)
+      return () => window.removeEventListener('pointermove', handleGlobalDragMove)
     }
-  }, [hoveredCell, isDragging])
+  }, [isDragging, setMousePosition, setHoveredCell])
 
   // Pinch zoom handler
   useEffect(() => {
@@ -669,7 +678,8 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                         boardContainerRef.current.scrollLeft -= 50
                       }
                     }}
-                    className="lg:hidden w-8 h-8 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] text-[#6949FF] dark:text-[#A592FF] flex items-center justify-center active:scale-95 transition-all duration-200"
+                    className="lg:hidden flex-shrink-0 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] text-[#6949FF] dark:text-[#A592FF] flex items-center justify-center active:scale-95 transition-all duration-200"
+                    style={{ width: 32, height: 32, minWidth: 32, minHeight: 32 }}
                     title="Scroll left"
                   >
                     <ChevronLeft size={16} />
@@ -696,7 +706,8 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                         boardContainerRef.current.scrollLeft += 50
                       }
                     }}
-                    className="lg:hidden w-8 h-8 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] text-[#6949FF] dark:text-[#A592FF] flex items-center justify-center active:scale-95 transition-all duration-200"
+                    className="lg:hidden flex-shrink-0 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] text-[#6949FF] dark:text-[#A592FF] flex items-center justify-center active:scale-95 transition-all duration-200"
+                    style={{ width: 32, height: 32, minWidth: 32, minHeight: 32 }}
                     title="Scroll right"
                   >
                     <ChevronRight size={16} />
@@ -766,10 +777,10 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
               )}
             </div>
 
-            {/* Keyboard Instructions */}
-            <div className="text-center mt-4">
+            {/* Keyboard Instructions - desktop only */}
+            <div className="text-center mt-4 hidden md:block">
               <p className="font-urbanist text-[12px] text-[#616161] dark:text-[#A0A4B8]">
-                <strong>F</strong>: Fill Mode • <strong>M</strong>: Mark Mode • Click/Drag to interact • Arrow keys to navigate • <strong>Space</strong>: Apply mode • Backspace to clear
+                <strong>F</strong>: Fill Mode • <strong>M</strong>: Mark Mode • Click/Drag to interact • Arrow keys to navigate • <strong>Enter</strong>: Apply mode • Backspace to clear
               </p>
             </div>
 
