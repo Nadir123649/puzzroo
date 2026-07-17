@@ -379,7 +379,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   }, [pieces, gameStatus, hasWonOnce, timeRemaining, hintsUsed, searchParams, puzzle, difficulty])
 
 
-  const selectPiece = useCallback((pieceId: TangramPieceId) => {
+  const selectPiece = useCallback((pieceId: TangramPieceId | null) => {
     setSelectedPiece(pieceId)
   }, [])
 
