@@ -6,7 +6,7 @@ import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
 import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
 import { cookieOptions } from "@/lib/server/utils/cookieOptions";
 import { sendVerificationEmail } from "@/lib/server/services/emailService";
-import { getAuth } from "@/lib/server/config/firebase";
+import { getFirebaseAuth } from "@/lib/server/config/firebase";
 import { auth } from "@/lib/server/middleware/auth";
 import { validate } from "@/lib/server/middleware/validate";
 import { forgotPasswordSchema } from "@/lib/server/validators/authValidator";
@@ -76,7 +76,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!isFirebaseReady) return errorResponse(500, "firebase_not_configured", "Firebase is not configured");
       const { firebaseToken } = body;
       if (!firebaseToken) return errorResponse(400, "validation_error", "Firebase token is required");
-      const decoded = await getAuth().verifyIdToken(firebaseToken);
+      const firebaseAuth = await getFirebaseAuth();
+      const decoded = await firebaseAuth.verifyIdToken(firebaseToken);
       const phoneNumber = decoded.phone_number;
       if (!phoneNumber) return errorResponse(400, "no_phone", "No phone number in Firebase token");
       const userResult = auth(request);
