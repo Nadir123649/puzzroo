@@ -6,8 +6,8 @@
 'use client'
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import type { Difficulty } from '@/data/sudoku/types'
-import { loadDifficultyPreference, saveDifficultyPreference } from '@/lib/sudoku/storage'
+import type { Difficulty } from '@shared/data/sudoku/types'
+import { loadDifficultyPreference, saveDifficultyPreference } from '@shared/lib/sudoku/storage'
 
 interface SudokuContextType {
   difficulty: Difficulty

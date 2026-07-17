@@ -1,15 +1,16 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { User, CreditCard, Bell, History, LogOut, X, Menu, type LucideIcon } from 'lucide-react'
-import { logout } from '@/lib/auth/frontend-auth'
+import { User, CreditCard, Bell, History, LogOut, X, Menu, Activity, type LucideIcon } from 'lucide-react'
+import { logout, getCurrentUser } from '@/lib/auth/frontend-auth'
 
 interface MenuItem {
   href: string
   label: string
   icon: LucideIcon
+  adminOnly?: boolean
 }
 
 const menuItems: MenuItem[] = [
@@ -33,16 +34,29 @@ const menuItems: MenuItem[] = [
     label: 'Billing History',
     icon: History,
   },
+  {
+    href: '/admin/tracking',
+    label: 'User Tracking',
+    icon: Activity,
+    adminOnly: true,
+  },
 ]
 
 export function AccountSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    setIsAdmin(getCurrentUser()?.role === 'admin')
+  }, [])
+
+  const visibleItems = menuItems.filter((item) => !item.adminOnly || isAdmin)
 
   const handleLogout = () => {
     logout()
-    router.push('/')
+    router.push('/login')
     router.refresh()
   }
 
@@ -72,7 +86,7 @@ export function AccountSidebar() {
         <div className="sticky top-[90px]">
           <nav className="bg-gradient-to-br from-white via-purple-50/20 to-purple-50/40 dark:from-[#1A1D23] dark:via-[#1A1D23] dark:to-[#1A1D23] rounded-xl border border-purple-100/50 dark:border-[#2A2D35] overflow-hidden shadow-sm shadow-purple-500/5 h-[calc(100vh-130px)] flex flex-col justify-between">
             <div className="flex-1 overflow-y-auto">
-              {menuItems.map((item) => {
+              {visibleItems.map((item) => {
                 const Icon = item.icon
                 const active = isActive(item.href)
                 
@@ -118,7 +132,7 @@ export function AccountSidebar() {
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Menu Items */}
           <nav className="py-4">
-            {menuItems.map((item) => {
+            {visibleItems.map((item) => {
               const Icon = item.icon
               const active = isActive(item.href)
               

@@ -23,11 +23,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme(isDark ? 'dark' : 'light')
     setMounted(true)
 
-    // Register PWA service worker
+    // Service worker handling.
+    // The old caching service worker caused stale /login, /signup and other
+    // pages to be served from cache. We no longer register it in development.
+    // We also proactively unregister any previously-installed worker and clear
+    // its caches so existing devices recover. (public/sw.js is now a
+    // self-destructing worker that finishes the cleanup on the client too.)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
-        .catch((err) => console.warn('Service Worker registration failed:', err))
+      navigator.serviceWorker.getRegistrations()
+        .then((regs) => regs.forEach((reg) => reg.unregister()))
+        .catch(() => {})
+      if (typeof caches !== 'undefined') {
+        caches.keys()
+          .then((keys) => keys.forEach((key) => caches.delete(key)))
+          .catch(() => {})
+      }
     }
   }, [])
 

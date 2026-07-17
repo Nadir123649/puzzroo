@@ -7,15 +7,15 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { markPuzzleCompleted } from '@/lib/completion/universal'
-import { PolygonPuzzle, TangramPieceId } from '@/types/tangram-polygon'
-import { getRandomPuzzle } from '@/data/tangram'
-import type { TangramDifficulty } from '@/data/tangram'
-import { scaleAndCenterPolygon, polygonToSVGPath } from '@/lib/tangram/polygon-renderer'
-import { calculateCentroid, polygonToPoints } from '@/lib/tangram/polygon-geometry'
-import { validatePuzzle } from '@/lib/tangram/polygon-validation'
-import { attemptSnap, geometricallyMatches } from '@/lib/tangram/polygon-snapping'
-import { PIECE_CONFIG, UNIT } from '@/lib/tangram/pieceConfig'
+import { markPuzzleCompleted } from '@shared/lib/completion/universal'
+import { PolygonPuzzle, TangramPieceId } from '@shared/types/tangram-polygon'
+import { getRandomPuzzle } from '@shared/data/tangram'
+import type { TangramDifficulty } from '@shared/data/tangram'
+import { scaleAndCenterPolygon, polygonToSVGPath } from '@shared/lib/tangram/polygon-renderer'
+import { calculateCentroid, polygonToPoints } from '@shared/lib/tangram/polygon-geometry'
+import { validatePuzzle } from '@shared/lib/tangram/polygon-validation'
+import { attemptSnap, geometricallyMatches } from '@shared/lib/tangram/polygon-snapping'
+import { PIECE_CONFIG, UNIT } from '@shared/lib/tangram/pieceConfig'
 
 const PIECE_COLORS: Record<TangramPieceId, string> = {
   baseTriangle1: '#4A90E2',

@@ -10,7 +10,7 @@ import {
   BOARD_VIRTUAL_HEIGHT,
   BOARD_VIRTUAL_WIDTH,
   TRAY_TOP,
-} from '@/lib/tangram/boardConfig'
+} from '@shared/lib/tangram/boardConfig'
 
 interface TangramBoardProps {
   children: React.ReactNode

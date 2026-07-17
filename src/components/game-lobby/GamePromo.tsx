@@ -51,10 +51,10 @@ function useCurrentDate() {
 export function GamePromo() {
   const timeLeft = useCountdownToMidnight()
   const currentDate = useCurrentDate()
-  const [userLoggedIn, setUserLoggedIn] = useState(false)
+  const [authed, setAuthed] = useState(false)
 
   useEffect(() => {
-    setUserLoggedIn(isLoggedIn())
+    setAuthed(isLoggedIn())
   }, [])
 
   return (
@@ -62,20 +62,24 @@ export function GamePromo() {
       <div className="w-full px-[20px]">
         <div className="flex flex-col items-center gap-4 max-w-[382px] mx-auto">
           
-          {/* Promotional Text */}
-          <p className="font-urbanist font-medium text-[14px] text-center text-[#424242] dark:text-[#E0E0E0]">
-            Want to access more games or features?
-          </p>
+          {/* Promotional Text - only for guests */}
+          {!authed && (
+            <p className="font-urbanist font-medium text-[14px] text-center text-[#424242] dark:text-[#E0E0E0]">
+              Want to access more games or features?
+            </p>
+          )}
 
-          {/* Subscribe Button - Full Width */}
-          <Link href="/signup" className="w-full">
-            <button className="w-full h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
-              Subscribe
-            </button>
-          </Link>
+          {/* Subscribe Button - only for guests */}
+          {!authed && (
+            <Link href="/signup" className="w-full">
+              <button className="w-full h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
+                Subscribe
+              </button>
+            </Link>
+          )}
 
-          {/* Log In Button - Full Width */}
-          {!userLoggedIn && (
+          {/* Log In Button - only for guests */}
+          {!authed && (
             <Link href="/login" className="w-full">
               <button className="w-full h-[46px] rounded-full border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] hover:text-white text-[#6949FF] font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
                 Log In

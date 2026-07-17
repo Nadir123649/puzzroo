@@ -1,6 +1,6 @@
 'use client'
 
-import { InputMode } from '@/lib/nonogram/types'
+import { InputMode } from '@shared/lib/nonogram/types'
 import { PaintBucket, Flag } from 'lucide-react'
 
 interface InputModeToolbarProps {

@@ -1,6 +1,6 @@
 'use client'
 
-import { CellState, CellPosition, GridSize } from '@/lib/nonogram/types'
+import { CellState, CellPosition, GridSize } from '@shared/lib/nonogram/types'
 import { NonogramCell } from './NonogramCell'
 import { useCallback } from 'react'
 

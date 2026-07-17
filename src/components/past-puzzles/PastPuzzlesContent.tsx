@@ -5,15 +5,15 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Lock, Calendar, Loader2, X, Check, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { generatePastPuzzles } from '@/lib/dailyChallenge/generator'
-import { getChallengeStatus, getAccessiblePastChallenges } from '@/lib/dailyChallenge/storage'
-import { DailyChallenge, DailyChallengeStatus } from '@/lib/dailyChallenge/types'
+import { generatePastPuzzles } from '@shared/lib/dailyChallenge/generator'
+import { getChallengeStatus, getAccessiblePastChallenges } from '@shared/lib/dailyChallenge/storage'
+import { DailyChallenge, DailyChallengeStatus } from '@shared/lib/dailyChallenge/types'
 import { AccessModal } from './AccessModal'
 import { FilterDropdown } from './FilterDropdown'
 import { CalendarModal } from './CalendarModal'
 import { images } from '@/lib/utils'
 import { useTheme } from '@/hooks/use-theme'
-import { getCompletedPuzzleIds } from '@/lib/completion/universal'
+import { getCompletedPuzzleIds } from '@shared/lib/completion/universal'
 import Navbar from '@/components/layout/navbar'
 import Footer from '@/components/layout/Footer'
 import { GameLoader } from '@/components/ui/GameLoader'
@@ -51,6 +51,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   const [showCalendarModal, setShowCalendarModal] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [completedPuzzles, setCompletedPuzzles] = useState<Set<string>>(new Set())
+  const [authed, setAuthed] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 8
   const accessibleCount = getAccessiblePastChallenges()
@@ -59,6 +60,10 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
 
   useEffect(() => {
     setUserLoggedIn(isLoggedIn())
+  }, [])
+
+  useEffect(() => {
+    setAuthed(isLoggedIn())
   }, [])
 
   // Persist filter changes to sessionStorage
@@ -238,8 +243,8 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
                 )}
               </div>
 
-              {/* Access Info Modal (visible for guests, hidden for logged in users) */}
-              {!userLoggedIn && (
+              {/* Access Info Modal - only for guests */}
+              {!authed && (
                 <div className="bg-[#F0EDFF] dark:bg-[#35383F] rounded-xl p-4 flex flex-col md:flex-row items-center gap-4">
                   <div className="flex-1">
                     <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">

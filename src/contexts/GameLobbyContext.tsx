@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, ReactNode } from 'react'
-import type { Difficulty } from '@/data/sudoku/types'
+import type { Difficulty } from '@shared/data/sudoku/types'
 
 interface GameLobbyContextType {
   selectedDifficulty: Difficulty

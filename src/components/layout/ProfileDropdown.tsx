@@ -3,8 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { User, CreditCard, Bell, History, LogOut } from 'lucide-react'
-import { logout } from '@/lib/auth/frontend-auth'
+import { User, CreditCard, Bell, History, LogOut, Activity } from 'lucide-react'
+import { logout, getCurrentUser } from '@/lib/auth/frontend-auth'
 
 interface ProfileDropdownProps {
   userName: string
@@ -13,8 +13,16 @@ interface ProfileDropdownProps {
 
 export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    const syncRole = () => setIsAdmin(getCurrentUser()?.role === 'admin')
+    syncRole()
+    window.addEventListener('auth-change', syncRole)
+    return () => window.removeEventListener('auth-change', syncRole)
+  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -36,12 +44,12 @@ export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
   const handleLogout = () => {
     logout()
     setIsOpen(false)
-    router.push('/')
+    router.push('/login')
     router.refresh()
   }
 
   // Truncate name if too long
-  const displayName = userName.length > 15 ? `${userName.substring(0, 12)}...` : userName
+  const displayName = (userName || "User").length > 15 ? `${(userName || "User").substring(0, 12)}...` : (userName || "User")
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -86,10 +94,10 @@ export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
           {/* User Info */}
           <div className="px-4 py-3 border-b border-[#E0E0E0] dark:border-[#35383F]">
             <p className="font-urbanist font-bold text-[15px] text-[#212121] dark:text-white truncate">
-              {userName}
+              {userName || "User"}
             </p>
             <p className="font-urbanist text-[13px] text-[#757575] dark:text-[#BDBDBD] truncate">
-              {userEmail}
+              {userEmail || ""}
             </p>
           </div>
 
@@ -138,6 +146,19 @@ export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
                 History
               </span>
             </Link>
+
+            {isAdmin && (
+              <Link
+                href="/admin/tracking"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
+              >
+                <Activity size={18} className="text-[#6949FF]" strokeWidth={2} />
+                <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+                  User Tracking
+                </span>
+              </Link>
+            )}
           </div>
 
           {/* Logout */}
