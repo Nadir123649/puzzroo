@@ -1,7 +1,7 @@
 import User from "@/lib/server/models/User";
 import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
 import { formatUser } from "@/lib/server/utils/formatUser";
-import { getAuth } from "@/lib/server/config/firebase";
+import { getFirebaseAuth } from "@/lib/server/config/firebase";
 import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { generatePublicId } from "@/lib/server/utils/publicId";
 
@@ -30,7 +30,8 @@ export async function handleOAuth(
   if (!isFirebaseReady) {
     return undefined;
   }
-  const decoded = await getAuth().verifyIdToken(firebaseToken);
+  const firebaseAuth = await getFirebaseAuth();
+  const decoded = await firebaseAuth.verifyIdToken(firebaseToken);
   const { uid, email, name, picture } = decoded;
   const firebaseProvider = decoded.firebase?.sign_in_provider;
   if (firebaseProvider !== provider) {
