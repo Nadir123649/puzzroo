@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import type { Difficulty } from '@/data/sudoku/types'
+import type { Difficulty } from '@shared/data/sudoku/types'
 
 interface DifficultyTabsProps {
   difficulties: string[]

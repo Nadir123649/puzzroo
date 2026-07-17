@@ -3,8 +3,9 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import { Eye, EyeOff, X, Lock } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { images } from '@/lib/utils'
-import { changePassword } from '@/lib/auth/frontend-auth'
+import { changePassword, forgotPassword, getCurrentUser } from '@/lib/auth/frontend-auth'
 
 interface ChangePasswordModalProps {
   isOpen: boolean
@@ -21,8 +22,35 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotSent, setForgotSent] = useState(false)
 
   if (!isOpen) return null
+
+  const handleForgotPassword = async () => {
+    const user = getCurrentUser()
+    if (!user?.email) {
+      setError('No email is associated with this account')
+      return
+    }
+    setError('')
+    setForgotLoading(true)
+    try {
+      const res = await forgotPassword(user.email)
+      if (res.success) {
+        setForgotSent(true)
+        toast.success('Password reset link sent to your email')
+      } else {
+        setError(res.error || 'Failed to send reset email')
+        toast.error(res.error || 'Failed to send reset email')
+      }
+    } catch {
+      setError('Failed to send reset email. Please try again.')
+      toast.error('Failed to send reset email. Please try again.')
+    } finally {
+      setForgotLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,18 +62,25 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
       return
     }
 
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters long')
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long')
+      return
+    }
+
+    if (newPassword.length > 16) {
+      setError('Password must be at most 16 characters long')
+      return
+    }
+
+    if (newPassword === currentPassword) {
+      setError('You are already using this password. Please choose a different password.')
       return
     }
 
     setIsLoading(true)
 
     try {
-      // Simulate API network delay
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      const res = changePassword(currentPassword, newPassword)
+      const res = await changePassword(currentPassword, newPassword)
       if (!res.success) {
         setError(res.error || 'Failed to change password')
         setIsLoading(false)
@@ -53,7 +88,6 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
       }
 
       setSuccess(true)
-      // Automatically close after success
       setTimeout(() => {
         onClose()
         setCurrentPassword('')
@@ -74,6 +108,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
     setNewPassword('')
     setConfirmPassword('')
     setSuccess(false)
+    setForgotSent(false)
     onClose()
   }
 
@@ -127,6 +162,14 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
               </div>
             )}
 
+            {forgotSent && (
+              <div className="p-4 bg-green-50 dark:bg-green-500/10 border border-green-100 dark:border-green-500/20 rounded-xl">
+                <p className="font-urbanist text-[14px] font-semibold text-green-600 dark:text-green-400 text-center">
+                  We've emailed you a password reset link. Check your inbox.
+                </p>
+              </div>
+            )}
+
             {/* Current Password Field */}
             <div className="flex flex-col gap-2">
               <label className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
@@ -149,6 +192,16 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
                   {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={forgotLoading}
+                  className="font-urbanist font-semibold text-[13px] text-[#6949FF] hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {forgotLoading ? 'Sending reset link…' : 'Forgot password?'}
+                </button>
+              </div>
             </div>
 
             {/* New Password Field */}
@@ -160,6 +213,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
                 <input
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
+                  maxLength={16}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
                   required
@@ -184,6 +238,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
+                  maxLength={16}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
                   required

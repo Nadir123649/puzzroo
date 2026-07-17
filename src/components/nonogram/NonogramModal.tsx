@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { formatTime } from '@/lib/nonogram/helpers'
-import type { Difficulty } from '@/lib/nonogram/types'
+import { formatTime } from '@shared/lib/nonogram/helpers'
+import type { Difficulty } from '@shared/lib/nonogram/types'
 import { Trophy, Clock, Target, Lightbulb, Frown, X } from 'lucide-react'
 
 interface NonogramModalProps {

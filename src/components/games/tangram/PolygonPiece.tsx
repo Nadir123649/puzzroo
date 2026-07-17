@@ -1,13 +1,13 @@
 'use client'
 
 import React, { useRef, useState, useEffect } from 'react'
-import { TangramPieceId } from '@/types/tangram-polygon'
+import { TangramPieceId } from '@shared/types/tangram-polygon'
 import { OrbitalHelper } from './OrbitalHelper'
-import { polygonToSVGPath } from '@/lib/tangram/polygon-renderer'
+import { polygonToSVGPath } from '@shared/lib/tangram/polygon-renderer'
 import {
   BOARD_VIRTUAL_HEIGHT,
   BOARD_VIRTUAL_WIDTH,
-} from '@/lib/tangram/boardConfig'
+} from '@shared/lib/tangram/boardConfig'
 
 const VIRTUAL_W = BOARD_VIRTUAL_WIDTH
 const VIRTUAL_H = BOARD_VIRTUAL_HEIGHT

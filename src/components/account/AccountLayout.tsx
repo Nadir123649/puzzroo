@@ -19,16 +19,24 @@ export function AccountLayout({ children }: AccountLayoutProps) {
   useEffect(() => {
     setMounted(true)
     if (!isLoggedIn()) {
-      router.push('/login')
+      router.replace('/login')
     }
   }, [router])
 
   if (!mounted) {
-    return null
+    return (
+      <div className="min-h-screen bg-white dark:bg-[#181A20] flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-[#6949FF] border-t-transparent rounded-full" />
+      </div>
+    )
   }
 
   if (!isLoggedIn()) {
-    return null
+    return (
+      <div className="min-h-screen bg-white dark:bg-[#181A20] flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-[#6949FF] border-t-transparent rounded-full" />
+      </div>
+    )
   }
 
   return (

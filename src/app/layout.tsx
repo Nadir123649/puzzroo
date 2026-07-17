@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/app/providers";
 import { images, imageDimensions } from "@/lib/utils";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { Toaster } from "react-hot-toast";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -21,6 +23,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://enhance-wrinkle-disjoin.ngrok-free.dev'),
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -89,7 +92,27 @@ export default function RootLayout({
       <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider>
           <ScrollToTop />
+          <AnalyticsProvider />
           {children}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#1F222A',
+                color: '#fff',
+                borderRadius: '12px',
+                fontFamily: 'var(--font-urbanist)',
+                fontSize: '14px',
+              },
+              success: {
+                iconTheme: { primary: '#22C55E', secondary: '#fff' },
+              },
+              error: {
+                iconTheme: { primary: '#EF4444', secondary: '#fff' },
+              },
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

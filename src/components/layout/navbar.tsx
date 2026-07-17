@@ -9,62 +9,46 @@ import { images } from '@/lib/utils'
 import { isLoggedIn, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
 import { ProfileDropdown } from './ProfileDropdown'
 
-// Module-level global cache to persist state across SPA page navigations without resetting
-let globalLoggedIn: boolean | null = null
-let globalUser: { name: string; email: string } | null = null
-let globalNavbarMounted = false
-
 export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [loggedIn, setLoggedIn] = useState(() => {
-    if (globalLoggedIn !== null) return globalLoggedIn
-    return false
-  })
-  const [user, setUser] = useState<{ name: string; email: string } | null>(() => {
-    if (globalUser !== null) return globalUser
-    return null
-  })
-  const [navbarMounted, setNavbarMounted] = useState(() => globalNavbarMounted)
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+  const [navbarMounted, setNavbarMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
-  // Check login status on mount, when component updates, and when pathname changes
+  const [authKey, setAuthKey] = useState(0)
+
   useEffect(() => {
-    globalNavbarMounted = true
     setNavbarMounted(true)
 
     const checkAuth = () => {
       const isAuth = isLoggedIn()
-      globalLoggedIn = isAuth
       setLoggedIn(isAuth)
-      
+
       if (isAuth) {
         const userData = getCurrentUser()
         if (userData) {
-          const u = {
-            name: userData.name,
+          setUser({
+            name: userData.name || userData.username,
             email: userData.email,
-          }
-          globalUser = u
-          setUser(u)
+          })
         }
       } else {
-        globalUser = null
         setUser(null)
       }
     }
 
     checkAuth()
-    
-    // Listen for storage changes (login/logout in other tabs) and custom auth changes
+
     window.addEventListener('storage', checkAuth)
     window.addEventListener('auth-change', checkAuth)
     return () => {
       window.removeEventListener('storage', checkAuth)
       window.removeEventListener('auth-change', checkAuth)
     }
-  }, [pathname])
+  }, [pathname, authKey])
 
   return (
     <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-300 z-[200]">
@@ -106,33 +90,24 @@ export function Navbar() {
             {navbarMounted ? (
               loggedIn && user ? (
                 <>
-                  {/* Subscribe Button */}
-                  <Link href="/subscription">
-                    <button className="h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                      Subscribe Us
-                    </button>
+                  <Link href="/subscription" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                    Subscribe Us
                   </Link>
 
-                  {/* Profile Dropdown */}
                   <ProfileDropdown userName={user.name} userEmail={user.email} />
                 </>
               ) : (
                 <>
-                  <Link href="/signup">
-                    <button className="h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                      Sign up
-                    </button>
+                  <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                    Sign up
                   </Link>
 
-                  <Link href="/login">
-                    <button className="h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                      Login
-                    </button>
+                  <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                    Login
                   </Link>
                 </>
               )
             ) : (
-              // Hydration Placeholder to prevent layouts jumping on first load
               <div className="h-[38px] w-[180px]" />
             )}
 
@@ -216,7 +191,7 @@ export function Navbar() {
                 onClick={() => {
                   logout()
                   setIsMenuOpen(false)
-                  router.push('/')
+                  router.push('/login')
                   router.refresh()
                 }}
                 className="font-urbanist font-semibold text-[15px] text-red-600 dark:text-red-400 text-left py-1"
@@ -226,15 +201,11 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/signup" onClick={() => setIsMenuOpen(false)}>
-                <button className="w-full h-[40px] rounded-full bg-[#6949FF] text-white text-[16px] font-semibold font-urbanist transition-all duration-200">
-                  Sign up
-                </button>
+              <Link href="/signup" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full h-[40px] rounded-full bg-[#6949FF] text-white text-[16px] font-semibold font-urbanist transition-all duration-200">
+                Sign up
               </Link>
-              <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                <button className="w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] dark:text-white text-[16px] font-semibold font-urbanist transition-all duration-200">
-                  Login
-                </button>
+              <Link href="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] dark:text-white text-[16px] font-semibold font-urbanist transition-all duration-200">
+                Login
               </Link>
             </>
           )}

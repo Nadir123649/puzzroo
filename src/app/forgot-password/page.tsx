@@ -4,9 +4,11 @@ import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { images } from '@/lib/utils'
+import { RedirectIfAuthenticated } from '@/components/auth/RedirectIfAuthenticated'
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
+import { forgotPassword } from '@/lib/auth/frontend-auth'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -31,14 +33,17 @@ export default function ForgotPasswordPage() {
     if (!validate()) return
 
     setIsSubmitting(true)
-    // Simulate forgot password API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    const result = await forgotPassword(email)
     setIsSubmitting(false)
-    setIsSuccess(true)
+    if (result.success) {
+      setIsSuccess(true)
+    } else {
+      setError(result.error)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
+    <RedirectIfAuthenticated><div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
       <Navbar />
       
       <main className="flex-grow flex items-center justify-center px-[20px] py-[40px] md:py-[60px]">
@@ -135,6 +140,6 @@ export default function ForgotPasswordPage() {
       </main>
       
       <Footer />
-    </div>
+    </div></RedirectIfAuthenticated>
   )
 }

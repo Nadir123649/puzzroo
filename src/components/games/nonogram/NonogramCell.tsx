@@ -1,7 +1,7 @@
 'use client'
 
-import { CellState, CellPosition } from '@/lib/nonogram/types'
-import { shouldHaveThickBorder } from '@/lib/nonogram/helpers'
+import { CellState, CellPosition } from '@shared/lib/nonogram/types'
+import { shouldHaveThickBorder } from '@shared/lib/nonogram/helpers'
 import { useCallback, useState, useEffect } from 'react'
 import { Flag } from 'lucide-react'
 

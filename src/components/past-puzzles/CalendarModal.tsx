@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { generateDailyChallenge } from '@/lib/dailyChallenge/generator'
+import { generateDailyChallenge } from '@shared/lib/dailyChallenge/generator'
 
 interface CalendarModalProps {
   isOpen: boolean

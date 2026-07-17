@@ -1,7 +1,7 @@
 'use client'
 
-import { Clue, GridSize } from '@/lib/nonogram/types'
-import { COLORS, GRID_CONFIG } from '@/lib/nonogram/constants'
+import { Clue, GridSize } from '@shared/lib/nonogram/types'
+import { COLORS, GRID_CONFIG } from '@shared/lib/nonogram/constants'
 
 interface NonogramCluesProps {
   rowClues: Clue[]

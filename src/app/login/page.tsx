@@ -1,34 +1,48 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import toast from 'react-hot-toast'
 import { Eye, EyeOff } from 'lucide-react'
 import { images } from '@/lib/utils'
+import { RedirectIfAuthenticated } from '@/components/auth/RedirectIfAuthenticated'
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
-import { login } from '@/lib/auth/frontend-auth'
+import { login, resendVerificationEmail } from '@/lib/auth/frontend-auth'
+import { auth, googleProvider, facebookProvider, isFirebaseConfigured } from '@/lib/config/firebase-client'
+import { signInWithPopup } from 'firebase/auth'
+import { api } from '@/lib/api/client'
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const searchParams = useSearchParams()
+  const verified = searchParams.get('verified')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   
   // Validation errors
   const [showPassword, setShowPassword] = useState(false)
-  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({})
+  const [errors, setErrors] = useState<{ identifier?: string; password?: string; general?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
+  const [verifiedBanner, setVerifiedBanner] = useState<'success' | 'error' | null>(verified === 'true' ? 'success' : verified === 'false' ? 'error' : null)
+  const [emailNotVerified, setEmailNotVerified] = useState(false)
+  const [resendingVerification, setResendingVerification] = useState(false)
+
+  useEffect(() => {
+    if (verified === 'true') toast.success('Email verified! You can now log in.', { duration: 5000 })
+    if (verified === 'false') toast.error('Verification link invalid or expired.', { duration: 5000 })
+  }, [verified])
 
   const validate = () => {
     const newErrors: typeof errors = {}
     
-    if (!email.trim()) {
-      newErrors.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Invalid email format'
+    if (!identifier.trim()) {
+      newErrors.identifier = 'Email or username is required'
     }
     
     if (!password) {
@@ -47,23 +61,21 @@ export default function LoginPage() {
 
     setIsSubmitting(true)
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    // Attempt login with frontend auth
-    const result = login(email, password)
+    const result = await login(identifier, password, rememberMe)
     
     setIsSubmitting(false)
 
     if (result.success) {
+      toast.success('Welcome back!')
       setIsSuccess(true)
       // Redirect to home after showing success message
       setTimeout(() => {
-        router.push('/')
-        router.refresh() // Force navbar to update
+        window.location.href = '/'
       }, 1500)
     } else {
+      toast.error(result.error || 'Invalid email or password')
       setErrors({ general: result.error || 'Invalid email or password' })
+      setEmailNotVerified(result.code === 'email_not_verified')
     }
   }
 
@@ -104,37 +116,73 @@ export default function LoginPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Verification Banner */}
+              {verifiedBanner === 'success' && (
+                <div className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                  <p className="font-urbanist font-semibold text-[14px] text-green-600 dark:text-green-400 text-center">
+                    Email verified! You can now log in.
+                  </p>
+                </div>
+              )}
+              {verifiedBanner === 'error' && (
+                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                  <p className="font-urbanist font-semibold text-[14px] text-red-600 dark:text-red-400 text-center">
+                    Verification link invalid or expired. Please sign up again.
+                  </p>
+                </div>
+              )}
               {/* General Error Message */}
               {errors.general && (
                 <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
                   <p className="font-urbanist font-semibold text-[14px] text-red-600 dark:text-red-400 text-center">
                     {errors.general}
                   </p>
+                  {emailNotVerified && identifier && (
+                    <div className="mt-2 text-center">
+                      <button
+                        type="button"
+                        disabled={resendingVerification}
+                        onClick={async () => {
+                          setResendingVerification(true)
+                          const result = await resendVerificationEmail(identifier.trim())
+                          setResendingVerification(false)
+                          if (result.success) {
+                            toast.success('Verification email sent! Check your inbox.')
+                          } else {
+                            toast.error(result.error || 'Failed to resend verification email')
+                          }
+                        }}
+                        className="font-urbanist font-semibold text-[13px] text-[#6949FF] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {resendingVerification ? 'Sending...' : 'Resend verification email'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Email Input */}
+              {/* Email or Username Input */}
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="email" className="font-urbanist font-bold text-[14px] text-[#424242] dark:text-[#E0E0E0]">
-                  Email address
+                <label htmlFor="identifier" className="font-urbanist font-bold text-[14px] text-[#424242] dark:text-[#E0E0E0]">
+                  Email or Username
                 </label>
                 <input
-                  type="email"
-                  id="email"
-                  value={email}
+                  type="text"
+                  id="identifier"
+                  value={identifier}
                   onChange={(e) => {
-                    setEmail(e.target.value)
-                    if (errors.email) setErrors(prev => ({ ...prev, email: undefined }))
+                    setIdentifier(e.target.value)
+                    if (errors.identifier) setErrors(prev => ({ ...prev, identifier: undefined }))
                   }}
                   className={`w-full h-[48px] px-4 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
-                    errors.email ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
+                    errors.identifier ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                   }`}
-                  placeholder="name@example.com"
-                  autoComplete="email"
+                  placeholder="name@example.com or username"
+                  autoComplete="username"
                 />
-                {errors.email && (
+                {errors.identifier && (
                   <span className="font-urbanist font-semibold text-[12px] text-red-500">
-                    {errors.email}
+                    {errors.identifier}
                   </span>
                 )}
               </div>
@@ -182,6 +230,30 @@ export default function LoginPage() {
                 )}
               </div>
 
+              {/* Remember Me */}
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-[18px] h-[18px] rounded-md border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] bg-white dark:bg-[#181A20] peer-checked:bg-[#6949FF] peer-checked:border-[#6949FF] transition-all duration-200 flex items-center justify-center">
+                      {rememberMe && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="font-urbanist font-medium text-[14px] text-[#424242] dark:text-[#E0E0E0]">
+                    Remember me
+                  </span>
+                </label>
+              </div>
+
               {/* Submit button */}
               <Button
                 type="submit"
@@ -191,6 +263,8 @@ export default function LoginPage() {
                 Log In
               </Button>
 
+              {isFirebaseConfigured && (
+              <>
               {/* Divider */}
               <div className="flex items-center gap-3 my-4">
                 <div className="h-[1px] flex-grow bg-[#E0E0E0] dark:bg-[#35383F]" />
@@ -202,25 +276,52 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={async () => {
-                  setIsSubmitting(true)
-                  await new Promise(resolve => setTimeout(resolve, 800))
-                  localStorage.setItem('puzzroo_auth', 'true')
-                  localStorage.setItem('puzzroo_user', JSON.stringify({
-                    id: '69f9e8eaacc567cc2a27db28',
-                    name: 'Abdul Raheem',
-                    email: 'abdulraheem55jutt@gmail.com',
-                    username: 'abdulraheem',
-                    joinedDate: '5 May 2026',
-                    accountStatus: 'active',
-                    subscriptionPlan: 'free',
-                  }))
-                  window.dispatchEvent(new Event('auth-change'))
-                  setIsSubmitting(false)
-                  setIsSuccess(true)
-                  setTimeout(() => {
-                    router.push('/')
-                    router.refresh()
-                  }, 1500)
+                  try {
+                    if (!auth || !googleProvider) return
+                    const result = await signInWithPopup(auth, googleProvider)
+                    const firebaseToken = await result.user.getIdToken()
+                    setIsSubmitting(true)
+                    const res = await api('/api/v1/oauth/google', {
+                      method: 'POST',
+                      body: JSON.stringify({ firebaseToken, rememberMe }),
+                    })
+                    if (!res.success) {
+                      toast.error('Google login failed')
+                      setErrors({ general: 'Google login failed' })
+                      setIsSubmitting(false)
+                      return
+                    }
+                    const payload = res.payload as any
+                    const userData = {
+                      id: payload.user.id,
+                      name: payload.user.name || payload.user.username,
+                      email: payload.user.email || "",
+                      username: payload.user.username,
+                      usernameSet: payload.user.usernameSet,
+                      joinedDate: payload.user.createdAt ? new Date(payload.user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A",
+                      accountStatus: payload.user.status || "active",
+                      subscriptionPlan: payload.user.role || "free",
+                      role: payload.user.role || "free",
+                      avatar: payload.user.avatar,
+                      provider: payload.user.provider || "google",
+                    }
+                    localStorage.setItem('accessToken', payload.token.accessToken)
+                    localStorage.setItem('puzzroo_auth', 'true')
+                    localStorage.setItem('puzzroo_user', JSON.stringify(userData))
+                    window.dispatchEvent(new Event('auth-change'))
+                    toast.success('Welcome!')
+                    setIsSubmitting(false)
+                    setIsSuccess(true)
+                    setTimeout(() => {
+                      window.location.href = payload.user.usernameSet ? '/' : '/choose-username'
+                    }, 1500)
+                  } catch (err: any) {
+                    setIsSubmitting(false)
+                    if (err.code !== 'auth/popup-closed-by-user') {
+                      toast.error(err.message || 'Google login failed')
+                      setErrors({ general: err.message || 'Google login failed' })
+                    }
+                  }
                 }}
                 className="w-full h-[48px] rounded-full border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] hover:bg-[#F5F6FA] dark:hover:bg-[#35383F] bg-transparent text-[#212121] dark:text-white font-urbanist font-bold text-[15px] flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98]"
               >
@@ -232,6 +333,67 @@ export default function LoginPage() {
                 </svg>
                 <span>Continue with Google</span>
               </button>
+
+              {/* Facebook Login */}
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    if (!auth || !facebookProvider) return
+                    const result = await signInWithPopup(auth, facebookProvider)
+                    const firebaseToken = await result.user.getIdToken()
+                    setIsSubmitting(true)
+                    const res = await api('/api/v1/oauth/facebook', {
+                      method: 'POST',
+                      body: JSON.stringify({ firebaseToken, rememberMe }),
+                    })
+                    if (!res.success) {
+                      toast.error('Facebook login failed')
+                      setErrors({ general: 'Facebook login failed' })
+                      setIsSubmitting(false)
+                      return
+                    }
+                    const payload = res.payload as any
+                    const userData = {
+                      id: payload.user.id,
+                      name: payload.user.name || payload.user.username,
+                      email: payload.user.email || "",
+                      username: payload.user.username,
+                      usernameSet: payload.user.usernameSet,
+                      joinedDate: payload.user.createdAt ? new Date(payload.user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A",
+                      accountStatus: payload.user.status || "active",
+                      subscriptionPlan: payload.user.role || "free",
+                      role: payload.user.role || "free",
+                      avatar: payload.user.avatar,
+                      provider: payload.user.provider || "facebook",
+                    }
+                    localStorage.setItem('accessToken', payload.token.accessToken)
+                    localStorage.setItem('puzzroo_auth', 'true')
+                    localStorage.setItem('puzzroo_user', JSON.stringify(userData))
+                    window.dispatchEvent(new Event('auth-change'))
+                    toast.success('Welcome!')
+                    setIsSubmitting(false)
+                    setIsSuccess(true)
+                    setTimeout(() => {
+                      window.location.href = payload.user.usernameSet ? '/' : '/choose-username'
+                    }, 1500)
+                  } catch (err: any) {
+                    setIsSubmitting(false)
+                    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+                      toast.error(err.message || 'Facebook login failed')
+                      setErrors({ general: err.message || 'Facebook login failed' })
+                    }
+                  }
+                }}
+                className="w-full h-[48px] rounded-full border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] hover:bg-[#F5F6FA] dark:hover:bg-[#35383F] bg-transparent text-[#212121] dark:text-white font-urbanist font-bold text-[15px] flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98]"
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#1877F2"/>
+                </svg>
+                <span>Continue with Facebook</span>
+              </button>
+              </>
+              )}
 
               {/* Signup Redirect */}
               <div className="text-center pt-2">
@@ -250,5 +412,19 @@ export default function LoginPage() {
       
       <Footer />
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <RedirectIfAuthenticated>
+      <Suspense fallback={
+        <div className="min-h-screen bg-white dark:bg-[#181A20] flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-2 border-[#6949FF] border-t-transparent rounded-full" />
+        </div>
+      }>
+        <LoginPageContent />
+      </Suspense>
+    </RedirectIfAuthenticated>
   )
 }

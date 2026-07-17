@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Check, Zap } from 'lucide-react'
+import { Check, Zap, Loader2 } from 'lucide-react'
+import { api } from '@/lib/api/client'
+import { fetchSubscription } from '@/lib/auth/frontend-auth'
 
 const features = [
   'Unlimited access to all games and difficulty levels',
@@ -95,7 +97,36 @@ export default function SubscriptionPage() {
     detectCurrency()
   }, [])
 
+  const [loading, setLoading] = useState<string | null>(null)
+  const [currentSub, setCurrentSub] = useState<any>(null)
+
+  useEffect(() => {
+    fetchSubscription().then(setCurrentSub)
+  }, [])
+
   const currentPricing = pricing[currency]
+
+  const handleCheckout = async (plan: string, priceId: string) => {
+    setLoading(plan)
+    try {
+      const res = await api("/api/v1/subscriptions/checkout", {
+        method: "POST",
+        body: JSON.stringify({ planId: plan }),
+      })
+      if (res.success) {
+        const payload = res.payload as any
+        if (payload.url) {
+          window.location.href = payload.url
+        }
+      } else {
+        alert("Checkout failed. Please try again.")
+      }
+    } catch {
+      alert("Network error. Please try again.")
+    } finally {
+      setLoading(null)
+    }
+  }
 
   return (
     <div>
@@ -127,8 +158,13 @@ export default function SubscriptionPage() {
             </div>
           </div>
           <div>
-            <button className="w-full h-[40px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95 mb-2">
-              Choose Monthly
+            <button
+              onClick={() => handleCheckout("monthly", "price_monthly")}
+              disabled={loading !== null}
+              className="w-full h-[40px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95 mb-2 flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {loading === "monthly" ? <Loader2 size={16} className="animate-spin" /> : null}
+              {currentSub?.plan === "monthly" ? "Current Plan" : "Choose Monthly"}
             </button>
             <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] text-center">
               Billed monthly
@@ -164,8 +200,13 @@ export default function SubscriptionPage() {
             </div>
           </div>
           <div>
-            <button className="w-full h-[40px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95 mb-2">
-              Choose Yearly
+            <button
+              onClick={() => handleCheckout("yearly", "price_yearly")}
+              disabled={loading !== null}
+              className="w-full h-[40px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95 mb-2 flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {loading === "yearly" ? <Loader2 size={16} className="animate-spin" /> : null}
+              {currentSub?.plan === "yearly" ? "Current Plan" : "Choose Yearly"}
             </button>
             <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] text-center">
               Billed annually
@@ -189,8 +230,13 @@ export default function SubscriptionPage() {
             </div>
           </div>
           <div>
-            <button className="w-full h-[40px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95 mb-2">
-              Get Lifetime Access
+            <button
+              onClick={() => handleCheckout("lifetime", "price_lifetime")}
+              disabled={loading !== null}
+              className="w-full h-[40px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95 mb-2 flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {loading === "lifetime" ? <Loader2 size={16} className="animate-spin" /> : null}
+              {currentSub?.plan === "lifetime" ? "Current Plan" : "Get Lifetime Access"}
             </button>
             <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] text-center">
               Pay once, play forever

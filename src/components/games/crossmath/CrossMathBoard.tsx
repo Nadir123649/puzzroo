@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Cell } from '@/lib/crossmath/types'
+import { Cell } from '@shared/lib/crossmath/types'
 import { CrossMathCell } from './CrossMathCell'
 
 interface CrossMathBoardProps {

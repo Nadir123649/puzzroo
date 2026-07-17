@@ -1,6 +1,6 @@
 'use client'
 
-import { SudokuBoard as SudokuBoardType, Position } from '@/lib/sudoku/types'
+import { SudokuBoard as SudokuBoardType, Position } from '@shared/lib/sudoku/types'
 import { SudokuCell } from './SudokuCell'
 
 interface SudokuBoardProps {
