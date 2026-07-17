@@ -5,7 +5,12 @@ export function setOnRefresh(cb: RefreshCallback) {
   onRefresh = cb;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+const isClient = typeof window !== "undefined";
+const isLocalhost = isClient && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+const API_BASE = !isLocalhost && isClient 
+  ? "" 
+  : (process.env.NEXT_PUBLIC_API_BASE_URL || "");
 
 async function refreshAccessToken(): Promise<string | null> {
   try {
