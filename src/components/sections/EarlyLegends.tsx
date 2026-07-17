@@ -116,15 +116,15 @@ export function EarlyLegends() {
                         />
                       </div>
 
-                      {/* Rank Number - Top right */}
-                      <div className="flex justify-end mb-3 md:mb-4">
-                        <span className="font-urbanist font-bold text-[16px] md:text-[24px] text-[#6949FF]">
+                      {/* Rank Number - Top Right Corner (aligned with Star Icon) */}
+                      <div className="absolute top-1.5 right-2 md:top-2 md:right-3 z-10">
+                        <span className="font-urbanist font-bold text-[16px] md:text-[24px] text-[#6949FF] leading-none">
                           #{originalIndex + 1}
                         </span>
                       </div>
                       
                       {/* Player Name */}
-                      <div className="mb-1.5 md:mb-2">
+                      <div className="mb-1.5 md:mb-2 mt-4 md:mt-6">
                         <h3 className="font-urbanist font-bold text-[14px] md:text-[18px] lg:text-[20px] text-[#181A20] dark:text-white truncate">
                           {player.name}
                         </h3>

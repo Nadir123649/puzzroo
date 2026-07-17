@@ -5,7 +5,6 @@ module.exports = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
@@ -15,6 +14,8 @@ module.exports = {
         urbanist: ['var(--font-urbanist)', 'sans-serif'],
       },
       colors: {
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
         // Premium curated color palette
         brand: {
           50: '#f5f3ff',

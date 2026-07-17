@@ -155,7 +155,7 @@ export function OrbitalHelper({
         top: typeof y === 'number' ? `${y}px` : y,
         transform: 'translate(-50%, -50%)',
         pointerEvents: 'none',
-        zIndex: 45,
+        zIndex: 99999,
         touchAction: 'none',
       }}
     >
@@ -185,19 +185,20 @@ export function OrbitalHelper({
             ref={circleRef}
             cx={orbitRadius}
             cy={orbitRadius}
-            r={orbitRadius - 4}
-            fill="transparent"
+            r={orbitRadius - 12}
+            fill="none"
             stroke="transparent"
-            strokeWidth="8"
+            strokeWidth="24"
             style={{
-              cursor: isDraggingRef.current ? 'grabbing' : 'grab',
-              pointerEvents: 'all',
+              cursor: isDraggingRef.current ? 'grabbing' : 'pointer',
+              pointerEvents: 'stroke',
               touchAction: 'none',
             }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerCancel}
+            onClick={(e) => e.stopPropagation()}
           />
         </svg>
 
@@ -230,6 +231,8 @@ export function OrbitalHelper({
         {/* TOP BADGE - Purple with < > arrows - FIXED position */}
         <div
           className="absolute"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
           style={{
             left: '50%',
             top: '-5px',

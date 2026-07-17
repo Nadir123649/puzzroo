@@ -213,11 +213,12 @@ export function PolygonPiece({
               strokeWidth={isSelected ? '2' : '1'}
               style={{
                 pointerEvents: disabled ? 'none' : 'auto',
-                cursor: disabled ? 'default' : isDraggingRef.current ? 'grabbing' : 'grab',
+                cursor: disabled ? 'default' : isDraggingRef.current ? 'grabbing' : 'crosshair',
                 filter: isSelected ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15))' : 'none',
                 touchAction: 'none',
               }}
               onPointerDown={disabled ? undefined : handlePointerDown}
+              onClick={(e) => e.stopPropagation()}
             />
 
             {showPulse && (
@@ -235,7 +236,7 @@ export function PolygonPiece({
         </g>
       </svg>
 
-      {/* Orbital helper positioned at STABLE center - hidden when disabled */}
+      {/* Orbital helper positioned at STABLE center */}
       {isSelected && !disabled && (
         <div
           className="absolute"
@@ -244,7 +245,7 @@ export function PolygonPiece({
             top: `${topPercent}%`,
             transform: 'translate(-50%, -50%)',
             transition: positionTransition,
-            zIndex: 45,
+            zIndex: 99999,
             pointerEvents: 'none',
           }}
         >

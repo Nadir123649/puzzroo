@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Trophy, History, Gamepad2 } from 'lucide-react'
 import { images } from '@/lib/utils'
 import { GameLoader } from '@/components/ui/GameLoader'
 
@@ -13,9 +13,72 @@ interface TangramHeroProps {
 
 export function TangramHero({ backTo }: TangramHeroProps = {}) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname() || ''
   const [isNavigating, setIsNavigating] = useState(false)
 
   const tangramImage = images.gameCards.tangram
+
+  const dateParam = searchParams?.get('date')
+  const hasDate = !!dateParam
+
+  const isDailyChallenge = pathname.includes('/daily-challenge/')
+  const isPastPuzzle = hasDate
+
+  const diffParam = searchParams?.get('difficulty') || 'easy'
+  const diffLabel = diffParam.charAt(0).toUpperCase() + diffParam.slice(1) + ' Mode'
+
+  let modeLabel = diffLabel
+  let ModeIcon = Gamepad2
+  let modeColorClass = 'text-[#22C55E]'
+  let modeBgClass = 'bg-[#DCFCE7] dark:bg-[#166534]/30 border-[#BBF7D0] dark:border-[#166534]'
+
+  if (isDailyChallenge) {
+    modeLabel = 'Daily Challenge'
+    ModeIcon = Trophy
+    modeColorClass = 'text-[#EAB308]'
+    modeBgClass = 'bg-[#FEF08A] dark:bg-[#854D0E]/30 border-[#FEF08A] dark:border-[#854D0E]'
+  } else if (isPastPuzzle) {
+    modeLabel = 'Past Puzzle'
+    ModeIcon = History
+    modeColorClass = 'text-[#3B82F6]'
+    modeBgClass = 'bg-[#DBEAFE] dark:bg-[#1E3A8A]/30 border-[#BFDBFE] dark:border-[#1E3A8A]'
+  }
+
+  const getAdjacentDates = (dateStr: string) => {
+    const [m, d, y] = dateStr.split('-').map(Number)
+    const currentDate = new Date(2000 + y, m - 1, d)
+    currentDate.setHours(0, 0, 0, 0)
+    
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const diffTime = today.getTime() - currentDate.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    
+    const hasPrev = diffDays > 0 // Can go to newer puzzle (closer to today)
+    const hasNext = diffDays < 23 // Can go to older puzzle (further in past)
+    
+    const prevDate = new Date(currentDate)
+    prevDate.setDate(currentDate.getDate() + 1)
+    
+    const nextDate = new Date(currentDate)
+    nextDate.setDate(currentDate.getDate() - 1)
+    
+    const formatDateStr = (date: Date) => {
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const year = String(date.getFullYear()).slice(-2)
+      return `${month}-${day}-${year}`
+    }
+    
+    return {
+      hasPrev,
+      hasNext,
+      prevDateStr: formatDateStr(prevDate),
+      nextDateStr: formatDateStr(nextDate),
+    }
+  }
 
   useEffect(() => {
     if (isNavigating) {
@@ -77,6 +140,48 @@ export function TangramHero({ backTo }: TangramHeroProps = {}) {
             <h1 className="font-urbanist font-bold text-[30px] md:text-[48px] leading-[120%] text-center text-[#212121] dark:text-[#FAFAFA] transition-colors duration-300">
               TANGRAM
             </h1>
+
+            {/* Mode Indicator */}
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[13px] font-urbanist font-bold ${modeBgClass} ${modeColorClass} transition-all duration-300 mt-2`}>
+              <ModeIcon size={14} />
+              <span>{modeLabel}</span>
+            </div>
+
+            {/* Puzzle Navigation Buttons */}
+            {dateParam && (
+              <div className="flex items-center gap-4 mt-2">
+                <button
+                  onClick={() => {
+                    const { hasPrev, prevDateStr } = getAdjacentDates(dateParam)
+                    if (hasPrev) {
+                      router.push(`${pathname}?date=${prevDateStr}`)
+                    }
+                  }}
+                  disabled={!getAdjacentDates(dateParam).hasPrev}
+                  className="px-3 py-1.5 rounded-full border border-[#6949FF] text-[#6949FF] hover:bg-[#6949FF] hover:text-white dark:hover:bg-[#6949FF] dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed text-[12px] font-urbanist font-bold transition-all duration-200 active:scale-95 flex items-center gap-1"
+                >
+                  &larr; Prev Puzzle
+                </button>
+                
+                <span className="font-urbanist text-[13px] font-bold text-[#757575] dark:text-[#BDBDBD]">
+                  {dateParam}
+                </span>
+
+                <button
+                  onClick={() => {
+                    const { hasNext, nextDateStr } = getAdjacentDates(dateParam)
+                    if (hasNext) {
+                      router.push(`${pathname}?date=${nextDateStr}`)
+                    }
+                  }}
+                  disabled={!getAdjacentDates(dateParam).hasNext}
+                  className="px-3 py-1.5 rounded-full border border-[#6949FF] text-[#6949FF] hover:bg-[#6949FF] hover:text-white dark:hover:bg-[#6949FF] dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed text-[12px] font-urbanist font-bold transition-all duration-200 active:scale-95 flex items-center gap-1"
+                >
+                  Next Puzzle &rarr;
+                </button>
+              </div>
+            )}
+
           </div>
         </div>
       </section>

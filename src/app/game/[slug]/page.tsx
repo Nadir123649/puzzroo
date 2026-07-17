@@ -8,13 +8,20 @@ import { GamePromo } from '@/components/game-lobby/GamePromo'
 import { GameLobbyProvider } from '@/contexts/GameLobbyContext'
 
 export async function generateStaticParams() {
-  return games.map((game) => ({
-    slug: game.slug,
-  }))
+  return games
+    .filter((game) => game.slug !== 'tangram')
+    .map((game) => ({
+      slug: game.slug,
+    }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  if (slug === 'tangram') {
+    return {
+      title: 'Game Not Found | Puzzroo',
+    }
+  }
   const game = getGameBySlug(slug)
   
   if (!game) {
@@ -31,6 +38,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function GameLobbyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  if (slug === 'tangram') {
+    notFound()
+  }
   const game = getGameBySlug(slug)
 
   if (!game) {

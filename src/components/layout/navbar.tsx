@@ -73,7 +73,19 @@ export function Navbar() {
 
           {/* LEFT: Logo + Brand */}
           <div className="flex items-center gap-[clamp(8px,1vw,12px)] select-none">
-            <Link href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] cursor-pointer">
+            <Link 
+              href="/" 
+              className="flex items-center gap-[clamp(8px,1vw,12px)] cursor-pointer"
+              onClick={(e) => {
+                if (pathname === '/') {
+                  e.preventDefault()
+                  window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                  })
+                }
+              }}
+            >
               <Image
                 src={images.logo}
                 alt="Puzzroo Logo"

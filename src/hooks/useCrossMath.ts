@@ -246,6 +246,16 @@ export function useCrossMath() {
 
     if (!cell.isEditable) return
 
+    // Prevent entering a number if it is already used up elsewhere
+    const usedCount = usedNumbersCount.get(num) || 0
+    const requiredCount = requiredNumbersCount.get(num) || 0
+    const isOverwritingSelf = cell.type === 'number' && cell.value === num
+    const adjustedUsedCount = isOverwritingSelf ? usedCount - 1 : usedCount
+    
+    if (adjustedUsedCount >= requiredCount) {
+      return
+    }
+
     setIsTyping(false)
     
     // Save move in history stack for undo
@@ -437,7 +447,7 @@ export function useCrossMath() {
     const { row, col } = selectedCell
     const cell = board[row][col]
 
-    if (!cell.isEditable || cell.type === 'empty') return
+    if (!cell.isEditable || (cell.type === 'empty' && cell.value === undefined)) return
     
     // Save last move for undo
     pushToHistory(
@@ -449,11 +459,12 @@ export function useCrossMath() {
     )
 
     // Return number to unused pool - decrement usage count
-    if (typeof cell.value === 'number') {
+    const numVal = typeof cell.value === 'number' ? cell.value : (typeof cell.value === 'string' ? parseInt(cell.value, 10) : NaN)
+    if (!isNaN(numVal)) {
       const newUsedCount = new Map(usedNumbersCount)
-      const currentCount = newUsedCount.get(cell.value) || 0
+      const currentCount = newUsedCount.get(numVal) || 0
       if (currentCount > 0) {
-        newUsedCount.set(cell.value, currentCount - 1)
+        newUsedCount.set(numVal, currentCount - 1)
       }
       setUsedNumbersCount(newUsedCount)
     }
@@ -673,9 +684,29 @@ export function useCrossMath() {
 
     const correctValue = getCorrectValue(currentPuzzle.solution, row, col)
     const isCorrect = correctValue !== null && num === correctValue
+    const isPrefix = correctValue !== null && String(correctValue).startsWith(newValueStr)
 
-    // Auto-commit if correct OR if maximum length is reached
-    if (isCorrect || newValueStr.length === maxLen) {
+    // Auto-commit if correct, not a prefix, or if maximum length is reached
+    if (isCorrect || !isPrefix || newValueStr.length === maxLen) {
+      // Validate that the number is not already fully used elsewhere
+      const requiredCount = requiredNumbersCount.get(num) || 0
+      const adjustedUsedCount = newUsedCount.get(num) || 0
+      
+      if (adjustedUsedCount >= requiredCount) {
+        // Prevent placing a number that is already used
+        const newBoard = board.map(r => r.map(c => ({ ...c })))
+        newBoard[row][col] = {
+          ...cell,
+          type: 'empty',
+          value: undefined,
+          isCorrect: undefined,
+          isError: undefined,
+        }
+        setBoard(newBoard)
+        setIsTyping(false)
+        return
+      }
+
       setIsTyping(false)
 
       const newBoard = board.map(r => r.map(c => ({ ...c })))
@@ -688,8 +719,8 @@ export function useCrossMath() {
       }
       setBoard(newBoard)
 
-      // Track usage count
-      const updatedUsedCount = new Map(usedNumbersCount)
+      // Track usage count - use newUsedCount as base to preserve overwriting decrement
+      const updatedUsedCount = new Map(newUsedCount)
       const currentCount = updatedUsedCount.get(num) || 0
       updatedUsedCount.set(num, currentCount + 1)
       setUsedNumbersCount(updatedUsedCount)

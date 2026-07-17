@@ -48,6 +48,7 @@ export function CrossMathNumberPad({
                 <button
                   key={num}
                   onClick={() => onNumberSelect(num)}
+                  disabled={isUsed}
                   className={`
                     ${mobile ? 'h-[46px]' : 'h-[46px]'}
                     rounded-[8px]
@@ -55,7 +56,7 @@ export function CrossMathNumberPad({
                     transition-all duration-200
                     ${
                       isUsed
-                        ? 'bg-[#F0EDFF] dark:bg-[#1F222A] text-[#BDBDBD] dark:text-[#616161] opacity-50 hover:bg-[#E8DFFF] dark:hover:bg-[#2D2640] active:scale-95 cursor-pointer'
+                        ? 'bg-[#F0EDFF] dark:bg-[#1F222A] text-[#BDBDBD] dark:text-[#616161] opacity-50 cursor-not-allowed'
                         : 'bg-[#F0EDFF] dark:bg-[#1F222A] text-[#212121] dark:text-[#FAFAFA] hover:bg-[#E8DFFF] dark:hover:bg-[#2D2640] active:scale-95 cursor-pointer'
                     }
                   `}

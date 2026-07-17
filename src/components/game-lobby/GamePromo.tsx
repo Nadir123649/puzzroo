@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { isLoggedIn } from '@/lib/auth/frontend-auth'
 
 // Countdown Timer Hook
 function useCountdownToMidnight() {
@@ -50,6 +51,11 @@ function useCurrentDate() {
 export function GamePromo() {
   const timeLeft = useCountdownToMidnight()
   const currentDate = useCurrentDate()
+  const [userLoggedIn, setUserLoggedIn] = useState(false)
+
+  useEffect(() => {
+    setUserLoggedIn(isLoggedIn())
+  }, [])
 
   return (
     <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-8 md:pt-8">
@@ -69,11 +75,13 @@ export function GamePromo() {
           </Link>
 
           {/* Log In Button - Full Width */}
-          <Link href="/login" className="w-full">
-            <button className="w-full h-[46px] rounded-full border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] hover:text-white text-[#6949FF] font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
-              Log In
-            </button>
-          </Link>
+          {!userLoggedIn && (
+            <Link href="/login" className="w-full">
+              <button className="w-full h-[46px] rounded-full border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] hover:text-white text-[#6949FF] font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
+                Log In
+              </button>
+            </Link>
+          )}
 
           {/* Date and Countdown */}
           <div className="w-full flex flex-col gap-2 p-4 md:mt-7 bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F]">

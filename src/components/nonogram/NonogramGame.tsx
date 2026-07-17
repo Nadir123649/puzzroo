@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Lightbulb, Flag, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Lightbulb, Flag, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNonogram } from '@/hooks/useNonogram'
 import { NonogramModal } from './NonogramModal'
 import { GameLoader } from '@/components/ui/GameLoader'
@@ -629,7 +629,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                             }}
                             onMouseEnter={() => setHoveredCell(position)}
                             onMouseLeave={() => setHoveredCell(null)}
-                            disabled={gameStatus !== 'playing' || isCellNonClickable}
+                            disabled={gameStatus !== 'playing'}
                             className={`group relative flex items-center justify-center border-[1px] border-[#D0D3DC] dark:border-[#616161] ${bgClass} ${borderClass} ${
                               hasThickRight ? 'border-r-[3px] border-r-[#2B2F3A] dark:border-r-[#FAFAFA]' : ''
                             } ${hasThickBottom ? 'border-b-[3px] border-b-[#2B2F3A] dark:border-b-[#FAFAFA]' : ''} ${
@@ -641,7 +641,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                               touchAction: 'none',
                               transformStyle: 'preserve-3d',
                               perspective: '1000px',
-                              pointerEvents: isCellNonClickable ? 'none' : 'auto',
+                              pointerEvents: 'auto',
                             }}
                             aria-label={`Cell row ${rowIdx + 1}, column ${colIdx + 1}, ${cellState}`}
                           >
