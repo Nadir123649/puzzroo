@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
 import { login, resendVerificationEmail } from '@/lib/auth/frontend-auth'
-import { auth, googleProvider, facebookProvider } from '@/lib/config/firebase-client'
+import { auth, googleProvider, facebookProvider, isFirebaseConfigured } from '@/lib/config/firebase-client'
 import { signInWithPopup } from 'firebase/auth'
 import { api } from '@/lib/api/client'
 
@@ -263,6 +263,8 @@ function LoginPageContent() {
                 Log In
               </Button>
 
+              {isFirebaseConfigured && (
+              <>
               {/* Divider */}
               <div className="flex items-center gap-3 my-4">
                 <div className="h-[1px] flex-grow bg-[#E0E0E0] dark:bg-[#35383F]" />
@@ -275,6 +277,7 @@ function LoginPageContent() {
                 type="button"
                 onClick={async () => {
                   try {
+                    if (!auth || !googleProvider) return
                     const result = await signInWithPopup(auth, googleProvider)
                     const firebaseToken = await result.user.getIdToken()
                     setIsSubmitting(true)
@@ -336,6 +339,7 @@ function LoginPageContent() {
                 type="button"
                 onClick={async () => {
                   try {
+                    if (!auth || !facebookProvider) return
                     const result = await signInWithPopup(auth, facebookProvider)
                     const firebaseToken = await result.user.getIdToken()
                     setIsSubmitting(true)
@@ -388,6 +392,8 @@ function LoginPageContent() {
                 </svg>
                 <span>Continue with Facebook</span>
               </button>
+              </>
+              )}
 
               {/* Signup Redirect */}
               <div className="text-center pt-2">

@@ -50,7 +50,7 @@ export async function logout(): Promise<void> {
       import("@/lib/config/firebase-client"),
       import("firebase/auth"),
     ]);
-    await signOut(auth);
+    if (auth) await signOut(auth);
   } catch {}
   localStorage.removeItem("accessToken");
   localStorage.removeItem("puzzroo_auth");

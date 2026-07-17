@@ -1,5 +1,5 @@
-import { initializeApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, FacebookAuthProvider, type Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -10,14 +10,21 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-// Always show the Google account chooser instead of silently reusing the
-// currently signed-in session, so users can pick an account on every sign-in.
-googleProvider.setCustomParameters({ prompt: "select_account" });
-const facebookProvider = new FacebookAuthProvider();
-facebookProvider.addScope("email");
-facebookProvider.setCustomParameters({ display: "popup" });
+const isFirebaseConfigured = !!firebaseConfig.apiKey;
 
-export { auth, googleProvider, facebookProvider };
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let googleProvider: GoogleAuthProvider | null = null;
+let facebookProvider: FacebookAuthProvider | null = null;
+
+if (isFirebaseConfigured) {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  auth = getAuth(app);
+  googleProvider = new GoogleAuthProvider();
+  googleProvider.setCustomParameters({ prompt: "select_account" });
+  facebookProvider = new FacebookAuthProvider();
+  facebookProvider.addScope("email");
+  facebookProvider.setCustomParameters({ display: "popup" });
+}
+
+export { auth, googleProvider, facebookProvider, isFirebaseConfigured };
