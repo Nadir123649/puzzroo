@@ -26,7 +26,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (text) body = JSON.parse(text);
   } catch {}
 
-  await connectDB();
+  try {
+    await connectDB();
+  } catch (e: any) {
+    console.error("DB connection failed:", e.message);
+    return errorResponse(500, "db_error", "Database connection failed");
+  }
 
   try {
     // ──── POST /api/v1/auth/register ────
@@ -198,7 +203,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const slug = (await params).slug;
   const action = slug?.[0];
 
-  await connectDB();
+  try {
+    await connectDB();
+  } catch (e: any) {
+    console.error("DB connection failed:", e.message);
+    return errorResponse(500, "db_error", "Database connection failed");
+  }
 
   try {
     // ──── GET /api/v1/auth/me ────
