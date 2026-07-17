@@ -2,23 +2,23 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Cell, Difficulty, CrossMathPuzzle } from '@/lib/crossmath/types'
-import { getRandomPuzzle } from '@/data/crossmath'
-import { generateRandomPatternPuzzle } from '@/lib/crossmath/puzzleGenerator'
-import { SCORING } from '@/lib/crossmath/constants'
+import { Cell, Difficulty, CrossMathPuzzle } from '@shared/lib/crossmath/types'
+import { getRandomPuzzle } from '@shared/data/crossmath'
+import { generateRandomPatternPuzzle } from '@shared/lib/crossmath/puzzleGenerator'
+import { SCORING } from '@shared/lib/crossmath/constants'
 import {
   isBoardComplete,
   getCorrectValue,
   validateBoard,
   findEmptyCell,
   calculateAvailableHints,
-} from '@/lib/crossmath/helpers'
+} from '@shared/lib/crossmath/helpers'
 import {
   saveGameState,
   loadGameState,
   clearGameState,
-} from '@/lib/crossmath/storage'
-import { markPuzzleCompleted } from '@/lib/completion/universal'
+} from '@shared/lib/crossmath/storage'
+import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 
 function getDailyCrossMathPuzzle(date: Date, diff: Difficulty): CrossMathPuzzle {
   const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()

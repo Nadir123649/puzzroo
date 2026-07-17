@@ -10,7 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Undo, RotateCcw, Lightbulb, Loader2, Redo, ArrowLeft } from 'lucide-react'
 import { images } from '@/lib/utils'
 import { GameLoader } from '@/components/ui/GameLoader'
-import { polygonToSVGPath } from '@/lib/tangram/polygon-renderer'
+import { polygonToSVGPath } from '@shared/lib/tangram/polygon-renderer'
 import { usePolygonTangram } from '@/hooks/usePolygonTangram'
 import { TangramBoard } from '@/components/games/tangram/TangramBoard'
 import { PolygonPiece } from '@/components/games/tangram/PolygonPiece'
@@ -19,8 +19,8 @@ import { CountdownTimer } from '@/components/games/tangram/CountdownTimer'
 import { HintButton } from '@/components/games/tangram/HintButton'
 import { PolygonHintGhost } from '@/components/games/tangram/PolygonHintGhost'
 
-import { TangramPieceId } from '@/types/tangram-polygon'
-import { TangramDifficulty } from '@/data/tangram'
+import { TangramPieceId } from '@shared/types/tangram-polygon'
+import { TangramDifficulty } from '@shared/data/tangram'
 
 const MAX_HINTS = 3
 

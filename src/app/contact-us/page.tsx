@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { InfoPageLayout } from '@/components/layout/InfoPageLayout'
 import { Button } from '@/components/ui/button'
 import { Mail, Clock, ShieldCheck, Send } from 'lucide-react'
+import { submitContact } from '@/lib/auth/frontend-auth'
 
 export default function ContactUsPage() {
   const [name, setName] = useState('')
@@ -42,10 +43,13 @@ export default function ContactUsPage() {
     if (!validate()) return
 
     setIsSubmitting(true)
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    const result = await submitContact(name, email, message)
     setIsSubmitting(false)
-    setIsSubmitted(true)
+    if (result.success) {
+      setIsSubmitted(true)
+    } else {
+      setErrors({ email: result.error })
+    }
   }
 
   const handleReset = () => {

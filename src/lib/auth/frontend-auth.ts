@@ -1,212 +1,348 @@
-/**
- * Frontend-only Authentication System
- * 
- * This is NOT real authentication - for presentation and testing only.
- * Uses localStorage to persist login state.
- */
+import { api } from "@/lib/api/client";
 
 export interface User {
   id: string
+  publicId?: string
   name: string
   email: string
   username: string
+  usernameSet?: boolean
+  role?: string
   joinedDate: string
-  accountStatus: 'active' | 'inactive'
-  subscriptionPlan: 'free' | 'monthly' | 'yearly' | 'lifetime'
+  accountStatus: string
+  subscriptionPlan: string
   avatar?: string
-}  
-
-// Mock user data
-const MOCK_USER: User = {
-  id: '69f9e8eaacc567cc2a27db28',
-  name: 'Abdul Raheem',
-  email: 'abdulraheem55jutt@gmail.com',
-  username: 'abdulraheem',
-  joinedDate: '5 May 2026',
-  accountStatus: 'active',
-  subscriptionPlan: 'free',
+  provider?: string
+  hasPassword?: boolean
 }
 
-// Development credentials
-const DEV_CREDENTIALS = {
-  email: 'abdulraheem55jutt@gmail.com',
-  password: 'Password123',
-}
-
-const AUTH_PASSWORD_KEY = 'puzzroo_dev_password'
-const AUTH_STORAGE_KEY = 'puzzroo_auth'
-const USER_STORAGE_KEY = 'puzzroo_user'
-
-/**
- * Get current stored password
- */
 export function getStoredPassword(): string {
-  if (typeof window === 'undefined') return DEV_CREDENTIALS.password
-  return localStorage.getItem(AUTH_PASSWORD_KEY) || DEV_CREDENTIALS.password
+  if (typeof window === "undefined") return ""
+  return localStorage.getItem("puzzroo_dev_password") || ""
 }
 
-/**
- * Validate login credentials
- */
-export function validateLogin(email: string, password: string): boolean {
-  return email === DEV_CREDENTIALS.email && password === getStoredPassword()
-}
-
-/**
- * Change user password
- */
-export function changePassword(oldPassword: string, newPassword: string): { success: boolean; error?: string } {
-  if (oldPassword !== getStoredPassword()) {
-    return {
-      success: false,
-      error: 'Incorrect current password',
+export async function login(identifier: string, password: string, rememberMe: boolean = false): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ identifier, password, rememberMe }),
+    });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Invalid email or password" };
     }
-  }
-
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(AUTH_PASSWORD_KEY, newPassword)
-  }
-  return { success: true }
-}
-
-/**
- * Login user and store session
- */
-export function login(email: string, password: string): { success: boolean; error?: string } {
-  if (!validateLogin(email, password)) {
-    return {
-      success: false,
-      error: 'Invalid email or password',
-    }
-  }
-
-  // Store auth state
-  localStorage.setItem(AUTH_STORAGE_KEY, 'true')
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(MOCK_USER))
-
-  // Store last login info
-  const loginInfo = {
-    lastLogin: new Date().toISOString(),
-    device: getDeviceInfo(),
-    location: 'PK', // Mock location
-  }
-  localStorage.setItem('puzzroo_login_info', JSON.stringify(loginInfo))
-
-  // Dispatch auth-change event
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('auth-change'))
-  }
-
-  return { success: true }
-}
-
-/**
- * Logout user and clear session
- */
-export function logout(): void {
-  localStorage.removeItem(AUTH_STORAGE_KEY)
-  localStorage.removeItem(USER_STORAGE_KEY)
-  localStorage.removeItem('puzzroo_login_info')
-
-  // Dispatch auth-change event
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('auth-change'))
+    const payload = res.payload as any;
+    localStorage.setItem("accessToken", payload.token.accessToken);
+    localStorage.setItem("puzzroo_auth", "true");
+    localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
+    window.dispatchEvent(new Event("auth-change"));
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error. Please try again." };
   }
 }
 
-/**
- * Check if user is logged in
- */
+export async function logout(): Promise<void> {
+  try {
+    await api("/api/v1/auth/logout", { method: "POST" });
+  } catch {}
+  // Also clear the Firebase client session so the next Google/Facebook sign-in
+  // starts fresh and shows the account chooser instead of silently reusing the
+  // previously signed-in account. Dynamically imported to keep Firebase out of
+  // bundles that only need basic auth helpers.
+  try {
+    const [{ auth }, { signOut }] = await Promise.all([
+      import("@/lib/config/firebase-client"),
+      import("firebase/auth"),
+    ]);
+    await signOut(auth);
+  } catch {}
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("puzzroo_auth");
+  localStorage.removeItem("puzzroo_user");
+  window.dispatchEvent(new Event("auth-change"));
+}
+
 export function isLoggedIn(): boolean {
-  if (typeof window === 'undefined') return false
-  return localStorage.getItem(AUTH_STORAGE_KEY) === 'true'
+  if (typeof window === "undefined") return false;
+  return !!localStorage.getItem("accessToken");
 }
 
-/**
- * Get current user data
- */
 export function getCurrentUser(): User | null {
-  if (typeof window === 'undefined') return null
-  
-  const userStr = localStorage.getItem(USER_STORAGE_KEY)
-  if (!userStr) return null
+  if (typeof window === "undefined") return null;
+  const str = localStorage.getItem("puzzroo_user");
+  if (!str) return null;
+  try { return JSON.parse(str); } catch { return null; }
+}
 
+export async function getLastLoginInfo(): Promise<{ lastLogin: string; device: string; location: string } | null> {
   try {
-    return JSON.parse(userStr)
-  } catch {
-    return null
-  }
-}
-
-/**
- * Update user data
- */
-export function updateUser(updates: Partial<User>): boolean {
-  const currentUser = getCurrentUser()
-  if (!currentUser) return false
-
-  const updatedUser = { ...currentUser, ...updates }
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser))
-  return true
-}
-
-/**
- * Get device info for login tracking
- */
-function getDeviceInfo(): string {
-  const ua = navigator.userAgent
-  let browser = 'Unknown'
-  let version = ''
-
-  if (ua.indexOf('Chrome') > -1) {
-    browser = 'Chrome'
-    version = ua.match(/Chrome\/(\d+)/)?.[1] || ''
-  } else if (ua.indexOf('Firefox') > -1) {
-    browser = 'Firefox'
-    version = ua.match(/Firefox\/(\d+)/)?.[1] || ''
-  } else if (ua.indexOf('Safari') > -1) {
-    browser = 'Safari'
-    version = ua.match(/Version\/(\d+)/)?.[1] || ''
-  } else if (ua.indexOf('Edge') > -1) {
-    browser = 'Edge'
-    version = ua.match(/Edge\/(\d+)/)?.[1] || ''
-  }
-
-  const os = ua.indexOf('Windows') > -1 ? 'Windows' : 
-             ua.indexOf('Mac') > -1 ? 'Mac' : 
-             ua.indexOf('Linux') > -1 ? 'Linux' : 'Unknown'
-
-  return `${browser}${version ? ' ' + version : ''} - ${os}`
-}
-
-/**
- * Get last login information
- */
-export function getLastLoginInfo(): { lastLogin: string; device: string; location: string } | null {
-  if (typeof window === 'undefined') return null
-  
-  const infoStr = localStorage.getItem('puzzroo_login_info')
-  if (!infoStr) return null
-
-  try {
-    const info = JSON.parse(infoStr)
-    return {
-      lastLogin: formatDate(info.lastLogin),
-      device: info.device,
-      location: info.location,
+    const res = await api("/api/v1/users/me");
+    if (!res.success) return null;
+    const user = (res.payload as any);
+    if (user.lastLoginAt) {
+      return { lastLogin: formatDate(user.lastLoginAt), device: "Web", location: "" };
     }
+    return null;
   } catch {
-    return null
+    return null;
   }
 }
 
-/**
- * Format date for display
- */
-function formatDate(isoDate: string): string {
-  const date = new Date(isoDate)
-  const day = date.getDate()
-  const month = date.toLocaleString('en', { month: 'short' })
-  const year = date.getFullYear()
-  return `${day} ${month} ${year}`
+export async function changePassword(oldPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api("/api/v1/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword: oldPassword, newPassword }),
+    });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Failed to change password" };
+    }
+    const payload = res.payload as any;
+    if (payload.token?.accessToken) {
+      localStorage.setItem("accessToken", payload.token.accessToken);
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error" };
+  }
+}
+
+export async function updateUser(updates: Partial<User>): Promise<boolean> {
+  try {
+    const body: Record<string, any> = {};
+    if (updates.name !== undefined) body.name = updates.name;
+    if (Object.keys(body).length === 0) return false;
+    const res = await api("/api/v1/users/me", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+    if (!res.success) return false;
+    const payload = res.payload as any;
+    const current = getCurrentUser();
+    if (current) {
+      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload)));
+      window.dispatchEvent(new Event("auth-change"));
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function setUsername(username: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api("/api/v1/auth/set-username", {
+      method: "POST",
+      body: JSON.stringify({ username }),
+    });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Failed to set username" };
+    }
+    const payload = res.payload as any;
+    if (payload.token?.accessToken) {
+      localStorage.setItem("accessToken", payload.token.accessToken);
+    }
+    localStorage.setItem("puzzroo_auth", "true");
+    localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
+    window.dispatchEvent(new Event("auth-change"));
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error" };
+  }
+}
+
+// Bootstraps a client session from an httpOnly refresh cookie (used after the
+// email-verification auto-login redirect). Returns the mapped user on success.
+export async function bootstrapSession(): Promise<User | null> {
+  try {
+    const refreshRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/auth/refresh`, { method: "POST", credentials: "include" });
+    if (!refreshRes.ok) return null;
+    const refreshData = await refreshRes.json();
+    const accessToken = refreshData?.payload?.token?.accessToken;
+    if (!accessToken) return null;
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("puzzroo_auth", "true");
+    const meRes = await api("/api/v1/users/me");
+    if (!meRes.success) return null;
+    const user = mapUser(meRes.payload as any);
+    localStorage.setItem("puzzroo_user", JSON.stringify(user));
+    window.dispatchEvent(new Event("auth-change"));
+    return user;
+  } catch {
+    return null;
+  }
+}
+
+export async function register(name: string, username: string, email: string, password: string): Promise<{ success: boolean; error?: string; code?: string }> {
+  try {
+    const res = await api("/api/v1/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ name, username, email, password }),
+    });
+    if (!res.success) {
+      const err = (res.payload as any)?.error;
+      return { success: false, error: err?.message || "Registration failed", code: err?.code };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error" };
+  }
+}
+
+export async function resetPassword(token: string, password: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api(`/api/v1/passwords/reset`, {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Failed to reset password" };
+    }
+    const payload = res.payload as any;
+    if (payload.token?.accessToken) {
+      localStorage.setItem("accessToken", payload.token.accessToken);
+      localStorage.setItem("puzzroo_auth", "true");
+      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
+      window.dispatchEvent(new Event("auth-change"));
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error" };
+  }
+}
+
+export async function forgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api("/api/v1/passwords/forgot", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Failed to send reset email" };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error" };
+  }
+}
+
+export async function deleteAccount(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api("/api/v1/users/me", { method: "DELETE" });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Failed to delete account" };
+    }
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("puzzroo_auth");
+    localStorage.removeItem("puzzroo_user");
+    window.dispatchEvent(new Event("auth-change"));
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error. Please try again." };
+  }
+}
+
+export async function fetchSessions(): Promise<any[]> {
+  try {
+    const res = await api("/api/v1/sessions");
+    if (!res.success) return [];
+    return (res.payload as any) || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function revokeSession(sessionId: string): Promise<boolean> {
+  try {
+    const res = await api(`/api/v1/sessions/${sessionId}`, { method: "DELETE" });
+    return res.success;
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchUserProfile(): Promise<any> {
+  const res = await api("/api/v1/users/me");
+  if (!res.success) return null;
+  return res.payload;
+}
+
+export async function fetchBillingHistory(): Promise<any> {
+  const res = await api("/api/v1/billing/history");
+  if (!res.success) return null;
+  return res.payload;
+}
+
+export async function fetchGameStats(): Promise<any> {
+  const res = await api("/api/v1/games/stats");
+  if (!res.success) return null;
+  return res.payload;
+}
+
+export async function fetchSubscription(): Promise<any> {
+  const res = await api("/api/v1/subscriptions/me");
+  if (!res.success) return null;
+  return res.payload;
+}
+
+export async function fetchActivity(limit: number = 15): Promise<any[]> {
+  try {
+    const res = await api(`/api/v1/users/me/activity?limit=${limit}`);
+    if (!res.success) return [];
+    return ((res.payload as any)?.events as any[]) || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function submitContact(name: string, email: string, message: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api("/api/v1/contact", {
+      method: "POST",
+      body: JSON.stringify({ name, email, message }),
+    });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Failed to submit" };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error" };
+  }
+}
+
+export async function fetchEmailPreferences(): Promise<any> {
+  const res = await api("/api/v1/preferences");
+  if (!res.success) return null;
+  return res.payload;
+}
+
+export async function updateEmailPreferences(prefs: Record<string, boolean>): Promise<boolean> {
+  const res = await api("/api/v1/preferences", {
+    method: "PATCH",
+    body: JSON.stringify(prefs),
+  });
+  return res.success;
+}
+
+function mapUser(u: any): User {
+  return {
+    id: u.id,
+    publicId: u.publicId,
+    name: u.name || u.username,
+    email: u.email || "",
+    username: u.username,
+    usernameSet: u.usernameSet,
+    role: u.role || "free",
+    joinedDate: u.createdAt ? formatDate(u.createdAt) : "N/A",
+    accountStatus: u.status || "active",
+    subscriptionPlan: u.role || "free",
+    avatar: u.avatar,
+    provider: u.provider || "email",
+    hasPassword: u.hasPassword,
+  };
+}
+
+function formatDate(iso: string): string {
+  const date = new Date(iso);
+  return `${date.getDate()} ${date.toLocaleString("en", { month: "short" })} ${date.getFullYear()}`;
 }

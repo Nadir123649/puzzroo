@@ -5,27 +5,33 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { images } from '@/lib/utils'
+import { RedirectIfAuthenticated } from '@/components/auth/RedirectIfAuthenticated'
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
+import { register } from '@/lib/auth/frontend-auth'
+import { auth, googleProvider, facebookProvider } from '@/lib/config/firebase-client'
+import { signInWithPopup } from 'firebase/auth'
+import { api } from '@/lib/api/client'
 
 export default function SignupPage() {
   const router = useRouter()
   
   const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [usernameHint, setUsernameHint] = useState(false)
   
   // Validation errors
   const [errors, setErrors] = useState<{
     name?: string
+    username?: string
     email?: string
     password?: string
-    confirmPassword?: string
   }>({})
   
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -35,7 +41,15 @@ export default function SignupPage() {
     const newErrors: typeof errors = {}
     
     if (!name.trim()) {
-      newErrors.name = 'Name is required'
+      newErrors.name = 'Full name is required'
+    } else if (name.trim().length > 50) {
+      newErrors.name = 'Full name must be at most 50 characters'
+    }
+
+    if (!username.trim()) {
+      newErrors.username = 'Username is required'
+    } else if (!/^[a-z0-9._-]{3,20}$/.test(username)) {
+      newErrors.username = 'Username must be 3-20 characters: lowercase letters, numbers, . _ or -'
     }
     
     if (!email.trim()) {
@@ -48,12 +62,8 @@ export default function SignupPage() {
       newErrors.password = 'Password is required'
     } else if (password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters'
-    }
-    
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Confirm password is required'
-    } else if (confirmPassword !== password) {
-      newErrors.confirmPassword = 'Passwords do not match'
+    } else if (password.length > 16) {
+      newErrors.password = 'Password must be at most 16 characters'
     }
     
     setErrors(newErrors)
@@ -65,19 +75,24 @@ export default function SignupPage() {
     if (!validate()) return
 
     setIsSubmitting(true)
-    // Simulate signup API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    const result = await register(name, username, email, password)
     setIsSubmitting(false)
-    setIsSuccess(true)
 
-    // Redirect to login after showing success message
-    setTimeout(() => {
-      router.push('/login')
-    }, 2000)
+    if (result.success) {
+      toast.success('Account created! Check your email for verification.')
+      setIsSuccess(true)
+    } else {
+      toast.error(result.error || 'Registration failed')
+      if (result.code === 'username_taken') {
+        setErrors({ username: result.error })
+      } else {
+        setErrors({ email: result.error })
+      }
+    }
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
+    <RedirectIfAuthenticated><div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
       <Navbar />
       
       <main className="flex-grow flex items-center justify-center px-[20px] py-[40px] md:py-[60px]">
@@ -104,15 +119,62 @@ export default function SignupPage() {
 
           {isSuccess ? (
             <div className="text-center py-6 flex flex-col items-center gap-4">
-              <div className="w-12 h-12 bg-[#22C55E] rounded-full flex items-center justify-center text-white text-2xl font-bold animate-bounce">
-                ✓
+              <div className="w-12 h-12 bg-[#6949FF] rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                ✉
               </div>
-              <p className="font-urbanist font-semibold text-[16px] text-[#22C55E]">
-                Registration Successful! Redirecting to login...
-              </p>
+              <div className="flex flex-col gap-1">
+                <p className="font-urbanist font-semibold text-[16px] text-[#6949FF]">
+                  Check your email
+                </p>
+                <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] max-w-[280px]">
+                  We sent a verification link to <strong>{email}</strong>. Click it to activate your account.
+                </p>
+              </div>
+              <Link href="/login" className="mt-2 font-urbanist text-[14px] text-[#6949FF] hover:underline font-semibold">
+                Go to Login
+              </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Username Input */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="username" className="font-urbanist font-bold text-[14px] text-[#424242] dark:text-[#E0E0E0]">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  maxLength={20}
+                  onChange={(e) => {
+                    const lowered = e.target.value.toLowerCase()
+                    const hasInvalid = /[^a-z0-9._-]/.test(lowered)
+                    setUsername(lowered.replace(/[^a-z0-9._-]/g, ''))
+                    if (hasInvalid) {
+                      setUsernameHint(true)
+                      toast.error('Username can only use lowercase letters, numbers, . _ or -', { id: 'username-invalid' })
+                    } else {
+                      setUsernameHint(false)
+                    }
+                    if (errors.username) setErrors(prev => ({ ...prev, username: undefined }))
+                  }}
+                  className={`w-full h-[48px] px-4 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
+                    errors.username || usernameHint ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
+                  }`}
+                  placeholder="john_doe"
+                  autoComplete="username"
+                />
+                {errors.username ? (
+                  <span className="font-urbanist font-semibold text-[12px] text-red-500">
+                    {errors.username}
+                  </span>
+                ) : usernameHint ? (
+                  <span className="font-urbanist font-semibold text-[12px] text-red-500">
+                    Lowercase letters, numbers, . _ or - . Cannot be changed later.
+                  </span>
+                ) : null}
+              </div>
+
               {/* Name Input */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="name" className="font-urbanist font-bold text-[14px] text-[#424242] dark:text-[#E0E0E0]">
@@ -175,6 +237,7 @@ export default function SignupPage() {
                     type={showPassword ? "text" : "password"}
                     id="password"
                     value={password}
+                    maxLength={16}
                     onChange={(e) => {
                       setPassword(e.target.value)
                       if (errors.password) setErrors(prev => ({ ...prev, password: undefined }))
@@ -182,7 +245,7 @@ export default function SignupPage() {
                     className={`w-full h-[48px] pl-4 pr-11 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                       errors.password ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                     }`}
-                    placeholder="At least 6 characters"
+                    placeholder="6-16 characters"
                     autoComplete="new-password"
                   />
                   <button
@@ -196,41 +259,6 @@ export default function SignupPage() {
                 {errors.password && (
                   <span className="font-urbanist font-semibold text-[12px] text-red-500">
                     {errors.password}
-                  </span>
-                )}
-              </div>
-
-              {/* Confirm Password Input */}
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="confirmPassword" className="font-urbanist font-bold text-[14px] text-[#424242] dark:text-[#E0E0E0]">
-                  Confirm Password
-                </label>
-                <div className="relative flex items-center">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value)
-                      if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: undefined }))
-                    }}
-                    className={`w-full h-[48px] pl-4 pr-11 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
-                      errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
-                    }`}
-                    placeholder="Repeat your password"
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 text-[#9E9E9E] hover:text-[#212121] dark:hover:text-white transition-colors"
-                  >
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                {errors.confirmPassword && (
-                  <span className="font-urbanist font-semibold text-[12px] text-red-500">
-                    {errors.confirmPassword}
                   </span>
                 )}
               </div>
@@ -255,13 +283,51 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={async () => {
-                  setIsSubmitting(true)
-                  await new Promise(resolve => setTimeout(resolve, 1000))
-                  setIsSubmitting(false)
-                  setIsSuccess(true)
-                  setTimeout(() => {
-                    router.push('/login')
-                  }, 2000)
+                  try {
+                    const result = await signInWithPopup(auth, googleProvider)
+                    const firebaseToken = await result.user.getIdToken()
+                    setIsSubmitting(true)
+                    const res = await api('/api/v1/oauth/google', {
+                      method: 'POST',
+                      body: JSON.stringify({ firebaseToken }),
+                    })
+                    if (!res.success) {
+                      toast.error('Google signup failed')
+                      setErrors({ email: 'Google signup failed' })
+                      setIsSubmitting(false)
+                      return
+                    }
+                    const payload = res.payload as any
+                    const userData = {
+                      id: payload.user.id,
+                      name: payload.user.name || payload.user.username,
+                      email: payload.user.email || "",
+                      username: payload.user.username,
+                      usernameSet: payload.user.usernameSet,
+                      joinedDate: payload.user.createdAt ? new Date(payload.user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A",
+                      accountStatus: payload.user.status || "active",
+                      subscriptionPlan: payload.user.role || "free",
+                      role: payload.user.role || "free",
+                      avatar: payload.user.avatar,
+                      provider: payload.user.provider || "google",
+                    }
+                    localStorage.setItem('accessToken', payload.token.accessToken)
+                    localStorage.setItem('puzzroo_auth', 'true')
+                    localStorage.setItem('puzzroo_user', JSON.stringify(userData))
+                    window.dispatchEvent(new Event('auth-change'))
+                    toast.success('Welcome!')
+                    setIsSubmitting(false)
+                    setIsSuccess(true)
+                    setTimeout(() => {
+                      window.location.href = payload.user.usernameSet ? '/' : '/choose-username'
+                    }, 1500)
+                  } catch (err: any) {
+                    setIsSubmitting(false)
+                    if (err.code !== 'auth/popup-closed-by-user') {
+                      toast.error(err.message || 'Google signup failed')
+                      setErrors({ email: err.message || 'Google signup failed' })
+                    }
+                  }
                 }}
                 className="w-full h-[48px] rounded-full border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] hover:bg-[#F5F6FA] dark:hover:bg-[#35383F] bg-transparent text-[#212121] dark:text-white font-urbanist font-bold text-[15px] flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98]"
               >
@@ -272,6 +338,64 @@ export default function SignupPage() {
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
                 <span>Sign up with Google</span>
+              </button>
+
+              {/* Facebook Signup */}
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const result = await signInWithPopup(auth, facebookProvider)
+                    const firebaseToken = await result.user.getIdToken()
+                    setIsSubmitting(true)
+                    const res = await api('/api/v1/oauth/facebook', {
+                      method: 'POST',
+                      body: JSON.stringify({ firebaseToken }),
+                    })
+                    if (!res.success) {
+                      toast.error('Facebook signup failed')
+                      setErrors({ email: 'Facebook signup failed' })
+                      setIsSubmitting(false)
+                      return
+                    }
+                    const payload = res.payload as any
+                    const userData = {
+                      id: payload.user.id,
+                      name: payload.user.name || payload.user.username,
+                      email: payload.user.email || "",
+                      username: payload.user.username,
+                      usernameSet: payload.user.usernameSet,
+                      joinedDate: payload.user.createdAt ? new Date(payload.user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A",
+                      accountStatus: payload.user.status || "active",
+                      subscriptionPlan: payload.user.role || "free",
+                      role: payload.user.role || "free",
+                      avatar: payload.user.avatar,
+                      provider: payload.user.provider || "facebook",
+                    }
+                    localStorage.setItem('accessToken', payload.token.accessToken)
+                    localStorage.setItem('puzzroo_auth', 'true')
+                    localStorage.setItem('puzzroo_user', JSON.stringify(userData))
+                    window.dispatchEvent(new Event('auth-change'))
+                    toast.success('Welcome!')
+                    setIsSubmitting(false)
+                    setIsSuccess(true)
+                    setTimeout(() => {
+                      window.location.href = payload.user.usernameSet ? '/' : '/choose-username'
+                    }, 1500)
+                  } catch (err: any) {
+                    setIsSubmitting(false)
+                    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+                      toast.error(err.message || 'Facebook signup failed')
+                      setErrors({ email: err.message || 'Facebook signup failed' })
+                    }
+                  }
+                }}
+                className="w-full h-[48px] rounded-full border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] hover:bg-[#F5F6FA] dark:hover:bg-[#35383F] bg-transparent text-[#212121] dark:text-white font-urbanist font-bold text-[15px] flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98]"
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#1877F2"/>
+                </svg>
+                <span>Sign up with Facebook</span>
               </button>
 
               {/* Login Redirect */}
@@ -290,6 +414,6 @@ export default function SignupPage() {
       </main>
       
       <Footer />
-    </div>
+    </div></RedirectIfAuthenticated>
   )
 }

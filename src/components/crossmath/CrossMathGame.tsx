@@ -13,7 +13,7 @@ import { SudokuStats } from '@/components/games/sudoku/SudokuStats'
 import { SudokuModal } from '@/components/games/sudoku/SudokuModal'
 import { FloatingScoreFeedback } from '@/components/games/sudoku/FloatingScoreFeedback'
 import { images } from '@/lib/utils'
-import { Difficulty } from '@/lib/crossmath/types'
+import { Difficulty } from '@shared/lib/crossmath/types'
 
 export function CrossMathGame() {
   const router = useRouter()

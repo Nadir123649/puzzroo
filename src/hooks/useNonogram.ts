@@ -17,7 +17,7 @@ import {
   GameProgress,
   InputMode,
   ValidationMode,
-} from '@/lib/nonogram/types'
+} from '@shared/lib/nonogram/types'
 
 // Drag state types
 type DragDirection = 'horizontal' | 'vertical' | null
@@ -29,18 +29,18 @@ import {
   calculateProgress,
   isCellMistake,
   findHintPosition,
-} from '@/lib/nonogram/helpers'
-import { getRandomPuzzle, getPuzzleById } from '@/data/nonogram'
+} from '@shared/lib/nonogram/helpers'
+import { getRandomPuzzle, getPuzzleById } from '@shared/data/nonogram'
 import { 
   saveGameState, 
   loadGameState, 
   clearGameState,
   updateStatsOnCompletion,
   getHintLimits,
-} from '@/lib/nonogram/storage'
-import { markPuzzleCompleted } from '@/lib/completion/universal'
+} from '@shared/lib/nonogram/storage'
+import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 
-import { dailyPuzzles } from '@/data/nonogram'
+import { dailyPuzzles } from '@shared/data/nonogram'
 
 function getDailyNonogramPuzzle(date: Date): PuzzleData {
   const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000)

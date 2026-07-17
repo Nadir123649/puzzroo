@@ -10,8 +10,8 @@ import { DifficultyTabs } from './DifficultyTabs'
 import { useTheme } from '@/hooks/use-theme'
 import { useGameLobby } from '@/contexts/GameLobbyContext'
 import { images } from '@/lib/utils'
-import type { Difficulty } from '@/data/sudoku/types'
-import { saveDifficultyPreference } from '@/lib/sudoku/storage'
+import type { Difficulty } from '@shared/data/sudoku/types'
+import { saveDifficultyPreference } from '@shared/lib/sudoku/storage'
 
 interface GameHeroProps {
   name: string

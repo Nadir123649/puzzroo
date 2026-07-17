@@ -65,25 +65,31 @@ const getIcon = (iconName: string) => {
 }
 
 export default function EmailPreferencesPage() {
-  const [preferences, setPreferences] = useState<EmailPreference[]>(defaultPreferences)
+  const [preferences, setPreferences] = useState<EmailPreference[]>([])
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-    const savedPreferences = localStorage.getItem('puzzroo_email_preferences')
-    if (savedPreferences) {
-      setPreferences(JSON.parse(savedPreferences))
-    }
+    import('@/lib/auth/frontend-auth').then(({ fetchEmailPreferences }) =>
+      fetchEmailPreferences().then((data: any) => {
+        if (data?.preferences) {
+          setPreferences(data.preferences)
+        } else {
+          setPreferences(defaultPreferences)
+        }
+      })
+    )
   }, [])
 
-  const togglePreference = (id: string) => {
+  const togglePreference = async (id: string) => {
     const updated = preferences.map(pref =>
       pref.id === id ? { ...pref, enabled: !pref.enabled } : pref
     )
     setPreferences(updated)
-    if (mounted) {
-      localStorage.setItem('puzzroo_email_preferences', JSON.stringify(updated))
-    }
+    const { updateEmailPreferences } = await import('@/lib/auth/frontend-auth')
+    const prefsMap: Record<string, boolean> = {}
+    updated.forEach(p => { prefsMap[p.id] = p.enabled })
+    updateEmailPreferences(prefsMap)
   }
 
   return (

@@ -5,18 +5,19 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Lock, Calendar, Loader2, X, Check, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { generatePastPuzzles } from '@/lib/dailyChallenge/generator'
-import { getChallengeStatus, getAccessiblePastChallenges } from '@/lib/dailyChallenge/storage'
-import { DailyChallenge, DailyChallengeStatus } from '@/lib/dailyChallenge/types'
+import { generatePastPuzzles } from '@shared/lib/dailyChallenge/generator'
+import { getChallengeStatus, getAccessiblePastChallenges } from '@shared/lib/dailyChallenge/storage'
+import { DailyChallenge, DailyChallengeStatus } from '@shared/lib/dailyChallenge/types'
 import { AccessModal } from './AccessModal'
 import { FilterDropdown } from './FilterDropdown'
 import { CalendarModal } from './CalendarModal'
 import { images } from '@/lib/utils'
 import { useTheme } from '@/hooks/use-theme'
-import { getCompletedPuzzleIds } from '@/lib/completion/universal'
+import { getCompletedPuzzleIds } from '@shared/lib/completion/universal'
 import Navbar from '@/components/layout/navbar'
 import Footer from '@/components/layout/Footer'
 import { GameLoader } from '@/components/ui/GameLoader'
+import { isLoggedIn } from '@/lib/auth/frontend-auth'
 
 interface PastPuzzlesContentProps {
   gameId: 'sudoku' | 'cross-math' | 'nonogram' | 'tangram'
@@ -50,8 +51,13 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   const [showCalendarModal, setShowCalendarModal] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [completedPuzzles, setCompletedPuzzles] = useState<Set<string>>(new Set())
+  const [authed, setAuthed] = useState(false)
   const accessibleCount = getAccessiblePastChallenges()
   const { theme } = useTheme()
+
+  useEffect(() => {
+    setAuthed(isLoggedIn())
+  }, [])
 
   // Persist filter changes to sessionStorage
   const handleFilterChange = (newFilter: 'all' | 'not-started' | 'in-progress' | 'completed') => {
@@ -212,25 +218,27 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
                 )}
               </div>
 
-              {/* Access Info Modal (always visible) */}
-              <div className="bg-[#F0EDFF] dark:bg-[#35383F] rounded-xl p-4 flex flex-col md:flex-row items-center gap-4">
-                <div className="flex-1">
-                  <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
-                    <span className="font-bold text-[#6949FF]">Guest Access:</span> You can play the last 3 days of daily challenges
-                  </p>
-                  <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
-                    Register to unlock 7 days of daily challenges!
-                  </p>
+              {/* Access Info Modal - only for guests */}
+              {!authed && (
+                <div className="bg-[#F0EDFF] dark:bg-[#35383F] rounded-xl p-4 flex flex-col md:flex-row items-center gap-4">
+                  <div className="flex-1">
+                    <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                      <span className="font-bold text-[#6949FF]">Guest Access:</span> You can play the last 3 days of daily challenges
+                    </p>
+                    <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                      Register to unlock 7 days of daily challenges!
+                    </p>
+                  </div>
+                  
+                  <Link href="/signup">
+                    <button 
+                      className="px-6 py-2 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[14px] md:text-[16px] transition-all duration-200 active:scale-95 whitespace-nowrap"
+                    >
+                      Register Now
+                    </button>
+                  </Link>
                 </div>
-                
-                <Link href="/signup">
-                  <button 
-                    className="px-6 py-2 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[14px] md:text-[16px] transition-all duration-200 active:scale-95 whitespace-nowrap"
-                  >
-                    Register Now
-                  </button>
-                </Link>
-              </div>
+              )}
 
               {/* Past Puzzle Grid - 1 column mobile, 4 columns desktop */}
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-6 md:gap-7 lg:gap-[30px] pt-4 pb-0 md:px-0 md:py-0">

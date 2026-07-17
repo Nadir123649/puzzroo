@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, ReactNode } from 'react'
-import { Difficulty } from '@/lib/crossmath/types'
+import { Difficulty } from '@shared/lib/crossmath/types'
 
 interface CrossMathContextType {
   difficulty: Difficulty

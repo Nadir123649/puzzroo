@@ -7,8 +7,8 @@ import { useNonogram } from '@/hooks/useNonogram'
 import { NonogramModal } from './NonogramModal'
 import { GameLoader } from '@/components/ui/GameLoader'
 import { InputModeToolbar } from '@/components/games/nonogram/InputModeToolbar'
-import { formatTime } from '@/lib/nonogram/helpers'
-import type { CellPosition } from '@/lib/nonogram/types'
+import { formatTime } from '@shared/lib/nonogram/helpers'
+import type { CellPosition } from '@shared/lib/nonogram/types'
 
 export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: string; onBackToSelection?: () => void }) {
   const router = useRouter()

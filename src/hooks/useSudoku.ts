@@ -14,8 +14,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { SudokuBoard, Position, GameStatus, Difficulty } from '@/lib/sudoku/types'
-import { getRandomPuzzle, puzzleDataset } from '@/data/sudoku'
+import { SudokuBoard, Position, GameStatus, Difficulty } from '@shared/lib/sudoku/types'
+import { getRandomPuzzle, puzzleDataset } from '@shared/data/sudoku'
 import type { ScoreFeedback } from '@/components/games/sudoku/FloatingScoreFeedback'
 import {
   getCellAt,
@@ -31,16 +31,16 @@ import {
   convertToSudokuBoard,
   isValidMove,
   isValidCompletedBoard,
-} from '@/lib/sudoku/helpers'
-import { KEYBOARD_KEYS, INITIAL_GAME_STATE } from '@/lib/sudoku/constants'
+} from '@shared/lib/sudoku/helpers'
+import { KEYBOARD_KEYS, INITIAL_GAME_STATE } from '@shared/lib/sudoku/constants'
 import {
   saveGameState,
   loadGameState,
   clearGameState,
   saveDifficultyPreference,
   loadDifficultyPreference,
-} from '@/lib/sudoku/storage'
-import { markPuzzleCompleted } from '@/lib/completion/universal'
+} from '@shared/lib/sudoku/storage'
+import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 
 function getDailySudokuPuzzle(date: Date, diff: Difficulty) {
   const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
