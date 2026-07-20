@@ -107,6 +107,23 @@ export const games: Game[] = [
       'At least one empty cell must exist between groups'
     ],
     keyboardControls: 'Left-click to fill cells. Right-click to mark cells as empty. Use ARROW KEYS to navigate. Press SPACE to toggle between fill and mark modes. Press U to undo.'
+  },
+  {
+    id: 'tangram',
+    slug: 'tangram',
+    name: 'Tangram',
+    image: images.gameCards.tangram,
+    difficulty: ['Easy', 'Medium', 'Hard'],
+    about: 'Tangram is an ancient Chinese dissection puzzle consisting of seven flat pieces called tans. The objective is to form a specific shape using all seven pieces without overlapping. This classic game enhances spatial awareness, problem-solving skills, and geometric understanding.',
+    howToPlay: 'Select a piece from the tray and drag it onto the board. Double-click the border of the orbital helper and drag to rotate the piece. Align all pieces with the target silhouette to solve the puzzle.',
+    bulletPoints: [
+      'Use all seven tangram pieces',
+      'Pieces cannot overlap',
+      'All pieces must be used to form the target shape',
+      'Rotate pieces to fit the pattern',
+      'Complete the puzzle with precision'
+    ],
+    keyboardControls: 'No keyboard controls needed. Use your mouse or touch screen to drag and rotate pieces.'
   }
 ]
 

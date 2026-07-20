@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { generateDailyChallenge } from '@shared/lib/dailyChallenge/generator'
@@ -18,6 +18,9 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>('')
+  
+  // Keyboard navigation, mouse wheel / touchpad, and mobile swipe handlers
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -54,10 +57,39 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
     }
   }, [isOpen])
 
-  if (!isOpen) return null
-
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
+
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1))
+    setErrorMessage('')
+  }
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1))
+    setErrorMessage('')
+  }
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        handlePrevMonth()
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        handleNextMonth()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, currentDate])
+
+  if (!isOpen) return null
 
   // Get first day of month and total days
   const firstDayOfMonth = new Date(year, month, 1)
@@ -78,6 +110,11 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
     calendarDays.push(day)
   }
 
+  // Always pad to exactly 42 cells (6 rows of 7 days) to maintain stable card height
+  while (calendarDays.length < 42) {
+    calendarDays.push(null)
+  }
+
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -85,14 +122,45 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1))
-    setErrorMessage('')
+  const handleWheel = (e: React.WheelEvent) => {
+    if (Math.abs(e.deltaX) > 20) {
+      if (e.deltaX > 20) {
+        handleNextMonth()
+      } else {
+        handlePrevMonth()
+      }
+    } else if (Math.abs(e.deltaY) > 20) {
+      if (e.deltaY > 20) {
+        handleNextMonth()
+      } else {
+        handlePrevMonth()
+      }
+    }
   }
 
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1))
-    setErrorMessage('')
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      }
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || e.touches.length !== 1) return
+
+    const deltaX = e.touches[0].clientX - touchStartRef.current.x
+    const deltaY = e.touches[0].clientY - touchStartRef.current.y
+
+    if (Math.abs(deltaX) > 50 && Math.abs(deltaY) < 30) {
+      if (deltaX > 50) {
+        handlePrevMonth()
+      } else {
+        handleNextMonth()
+      }
+      touchStartRef.current = null
+    }
   }
 
   const handleDateClick = (day: number) => {
@@ -157,15 +225,43 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
 
   return (
     <>
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[99999]"
         onClick={onClose}
+        onDoubleClick={onClose}
       />
 
       {/* Modal Container */}
-      <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-[#1F222A] rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
+      <div 
+        className="fixed inset-0 z-[100000] flex items-center justify-center p-4 overflow-y-auto overscroll-contain no-scrollbar"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            onClose()
+          }
+        }}
+        onDoubleClick={(e) => {
+          if (e.target === e.currentTarget) {
+            onClose()
+          }
+        }}
+      >
+        <div 
+          className="bg-white dark:bg-[#1F222A] rounded-2xl shadow-2xl max-w-md w-full p-6 relative my-auto scroll-smooth"
+          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+        >
         {/* Close Button */}
         <button
           onClick={onClose}

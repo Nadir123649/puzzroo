@@ -40,7 +40,7 @@ export function Features() {
               height={18}
               className="w-[18px] h-[18px] select-none flex-shrink-0"
             />
-            <h2 className="font-urbanist font-bold text-[16px] leading-[120%] tracking-[-0.02em] text-[#212121] dark:text-white transition-colors duration-300 text-center whitespace-nowrap">
+            <h2 className="font-urbanist font-bold text-[22px] leading-[120%] tracking-[-0.02em] text-[#212121] dark:text-white transition-colors duration-300 text-center whitespace-nowrap">
               Upgrade To Get Exclusive Access.
             </h2>
           </div>
@@ -154,7 +154,7 @@ export function Features() {
 
                 {/* Tablet Feature Right Image */}
                 <div className="flex justify-center md:flex lg:hidden">
-                  <div className="relative w-full max-w-[359px] aspect-[359/559] rounded-[12px] overflow-hidden">
+                  <div className="relative w-full aspect-[359/559] rounded-[12px] overflow-hidden">
                     <Image
                       src={images.featureStars}
                       alt="Premium Features"

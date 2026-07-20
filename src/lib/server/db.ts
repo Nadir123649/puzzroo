@@ -4,11 +4,7 @@ import { promisify } from "util";
 
 const resolveSrv = promisify(dns.resolveSrv);
 
-const MONGODB_URI = process.env.MONGO_URI!;
-
-if (!MONGODB_URI) {
-  throw new Error("Please define MONGO_URI in .env.local");
-}
+const MONGODB_URI = process.env.MONGO_URI;
 
 let cached = (global as any)._mongooseConnection;
 
@@ -29,6 +25,10 @@ async function resolveSRVHosts(srv: string): Promise<string> {
 }
 
 export async function connectDB() {
+  if (!MONGODB_URI) {
+    throw new Error("Please define MONGO_URI in .env.local");
+  }
+
   if (cached) return cached;
 
   let uri = MONGODB_URI;

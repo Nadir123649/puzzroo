@@ -11,8 +11,8 @@ import { RedirectIfAuthenticated } from '@/components/auth/RedirectIfAuthenticat
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
-import { login } from '@/lib/auth/frontend-auth'
-import { auth, googleProvider, facebookProvider } from '@/lib/config/firebase-client'
+import { login, resendVerificationEmail } from '@/lib/auth/frontend-auth'
+import { auth, googleProvider, facebookProvider, isFirebaseConfigured } from '@/lib/config/firebase-client'
 import { signInWithPopup } from 'firebase/auth'
 import { api } from '@/lib/api/client'
 
@@ -30,6 +30,8 @@ function LoginPageContent() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
   const [verifiedBanner, setVerifiedBanner] = useState<'success' | 'error' | null>(verified === 'true' ? 'success' : verified === 'false' ? 'error' : null)
+  const [emailNotVerified, setEmailNotVerified] = useState(false)
+  const [resendingVerification, setResendingVerification] = useState(false)
 
   useEffect(() => {
     if (verified === 'true') notify.successKey('AUTH_EMAIL_VERIFIED', undefined, { duration: 5000 })
@@ -134,6 +136,27 @@ function LoginPageContent() {
                   <p className="font-urbanist font-semibold text-[14px] text-red-600 dark:text-red-400 text-center">
                     {errors.general}
                   </p>
+                  {emailNotVerified && identifier && (
+                    <div className="mt-2 text-center">
+                      <button
+                        type="button"
+                        disabled={resendingVerification}
+                        onClick={async () => {
+                          setResendingVerification(true)
+                          const result = await resendVerificationEmail(identifier.trim())
+                          setResendingVerification(false)
+                          if (result.success) {
+                            toast.success('Verification email sent! Check your inbox.')
+                          } else {
+                            toast.error(result.error || 'Failed to resend verification email')
+                          }
+                        }}
+                        className="font-urbanist font-semibold text-[13px] text-[#6949FF] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {resendingVerification ? 'Sending...' : 'Resend verification email'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -239,6 +262,8 @@ function LoginPageContent() {
                 Log In
               </Button>
 
+              {isFirebaseConfigured && (
+              <>
               {/* Divider */}
               <div className="flex items-center gap-3 my-4">
                 <div className="h-[1px] flex-grow bg-[#E0E0E0] dark:bg-[#35383F]" />
@@ -251,6 +276,7 @@ function LoginPageContent() {
                 type="button"
                 onClick={async () => {
                   try {
+                    if (!auth || !googleProvider) return
                     const result = await signInWithPopup(auth, googleProvider)
                     const firebaseToken = await result.user.getIdToken()
                     setIsSubmitting(true)
@@ -313,6 +339,7 @@ function LoginPageContent() {
                 type="button"
                 onClick={async () => {
                   try {
+                    if (!auth || !facebookProvider) return
                     const result = await signInWithPopup(auth, facebookProvider)
                     const firebaseToken = await result.user.getIdToken()
                     setIsSubmitting(true)
@@ -365,6 +392,8 @@ function LoginPageContent() {
                 </svg>
                 <span>Continue with Facebook</span>
               </button>
+              </>
+              )}
 
               {/* Signup Redirect */}
               <div className="text-center pt-2">

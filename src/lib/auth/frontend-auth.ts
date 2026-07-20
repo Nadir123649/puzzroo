@@ -17,19 +17,15 @@ export interface User {
   hasPassword?: boolean
 }
 
-export function getStoredPassword(): string {
-  if (typeof window === "undefined") return ""
-  return localStorage.getItem("puzzroo_dev_password") || ""
-}
-
-export async function login(identifier: string, password: string, rememberMe: boolean = false): Promise<{ success: boolean; error?: string }> {
+export async function login(identifier: string, password: string, rememberMe: boolean = false): Promise<{ success: boolean; error?: string; code?: string }> {
   try {
     const res = await api("/api/v1/auth/login", {
       method: "POST",
       body: JSON.stringify({ identifier, password, rememberMe }),
     });
     if (!res.success) {
-      return { success: false, error: (res.payload as any)?.error?.message || "Invalid email or password" };
+      const err = (res.payload as any)?.error;
+      return { success: false, error: err?.message || "Invalid email or password", code: err?.code };
     }
     const payload = res.payload as any;
     localStorage.setItem("accessToken", payload.token.accessToken);
@@ -55,7 +51,7 @@ export async function logout(): Promise<void> {
       import("@/lib/config/firebase-client"),
       import("firebase/auth"),
     ]);
-    await signOut(auth);
+    if (auth) await signOut(auth);
   } catch {}
   localStorage.removeItem("accessToken");
   localStorage.removeItem("puzzroo_auth");
@@ -251,6 +247,21 @@ export async function forgotPassword(email: string): Promise<{ success: boolean;
     });
     if (!res.success) {
       return { success: false, error: (res.payload as any)?.error?.message || "Failed to send reset email" };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error" };
+  }
+}
+
+export async function resendVerificationEmail(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api("/api/v1/verification/email/resend", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Failed to resend verification email" };
     }
     return { success: true };
   } catch {

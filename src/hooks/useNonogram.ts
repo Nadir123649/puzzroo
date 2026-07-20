@@ -56,6 +56,7 @@ export function useNonogram(initialPuzzleId?: string) {
   const [currentPuzzle, setCurrentPuzzle] = useState<PuzzleData | null>(null)
   const [grid, setGrid] = useState<CellState[][]>([])
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null)
+  const [selectionHistory, setSelectionHistory] = useState<CellPosition[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
   
   // Check if this is from daily challenge
@@ -169,6 +170,7 @@ export function useNonogram(initialPuzzleId?: string) {
     setCurrentPuzzle(puzzle)
     setGrid(createEmptyGrid(puzzle.size))
     setMistakeCount(0)
+    setSelectionHistory([])
     
     // Set initial countdown time based on estimatedTime
     setElapsedSeconds(puzzle.estimatedTime || (diff === 'hard' ? 900 : diff === 'medium' ? 600 : 300))
@@ -287,6 +289,19 @@ export function useNonogram(initialPuzzleId?: string) {
       clearGameState()
     }
   }, [grid, currentPuzzle, gameStatus, elapsedSeconds])
+
+  // Track selection history for reverse navigation/deletion
+  useEffect(() => {
+    if (selectedCell) {
+      setSelectionHistory((prev) => {
+        const last = prev[prev.length - 1]
+        if (last && last.row === selectedCell.row && last.col === selectedCell.col) {
+          return prev
+        }
+        return [...prev, selectedCell]
+      })
+    }
+  }, [selectedCell])
 
   /**
    * Apply cell action based on input mode
@@ -560,7 +575,9 @@ export function useNonogram(initialPuzzleId?: string) {
       const emptyGrid = createEmptyGrid(currentPuzzle.size)
       setGrid(emptyGrid)
       setSelectedCell(null)
-      setElapsedSeconds(0)
+      setSelectionHistory([])
+      const initialSeconds = currentPuzzle.estimatedTime || (difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300)
+      setElapsedSeconds(initialSeconds)
       setHintsUsed(0)
       setMistakeCount(0)
       setGameStatus('playing')
@@ -570,7 +587,7 @@ export function useNonogram(initialPuzzleId?: string) {
       startTimeRef.current = null
       clearGameState()
     }
-  }, [currentPuzzle])
+  }, [currentPuzzle, difficulty])
 
   /**
    * Start a new puzzle
@@ -698,17 +715,39 @@ export function useNonogram(initialPuzzleId?: string) {
       // Backspace or Delete to clear cell
       if (selectedCell && (e.key === 'Backspace' || e.key === 'Delete')) {
         e.preventDefault()
-        setGrid((prevGrid) => {
-          const newGrid = prevGrid.map((row) => [...row])
-          newGrid[selectedCell.row][selectedCell.col] = 'empty'
-          return newGrid
-        })
+        const currentCellState = grid[selectedCell.row][selectedCell.col]
+        if (currentCellState !== 'empty') {
+          setGrid((prevGrid) => {
+            const newGrid = prevGrid.map((row) => [...row])
+            newGrid[selectedCell.row][selectedCell.col] = 'empty'
+            return newGrid
+          })
+        } else {
+          setSelectionHistory((prev) => {
+            if (prev.length < 2) return prev
+            const historyCopy = [...prev]
+            historyCopy.pop() // Remove current cell
+            const prevCell = historyCopy[historyCopy.length - 1]
+            
+            // Move selection/hover back to previous cell
+            setSelectedCell(prevCell)
+            setHoveredCell(prevCell)
+            
+            // Clear previous cell
+            setGrid((prevGrid) => {
+              const newGrid = prevGrid.map((row) => [...row])
+              newGrid[prevCell.row][prevCell.col] = 'empty'
+              return newGrid
+            })
+            return historyCopy
+          })
+        }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedCell, hoveredCell, gameStatus, currentPuzzle, handleCellClick])
+  }, [selectedCell, hoveredCell, gameStatus, currentPuzzle, handleCellClick, grid])
 
   return {
     // State

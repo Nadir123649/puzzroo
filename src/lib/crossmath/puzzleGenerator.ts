@@ -76,6 +76,9 @@ function solvePattern(
     for (const eq of pattern.equations) {
       const values: number[] = []
       const operators: string[] = []
+      
+      const lastCell = eq.cells[eq.cells.length - 1]
+      const lastCellKey = `${lastCell[0]}-${lastCell[1]}`
 
       for (const [r, c] of eq.cells) {
         const cell = grid[r][c]
@@ -83,13 +86,16 @@ function solvePattern(
           operators.push(String(cell.value))
         } else {
           const key = `${r}-${c}`
+          if (key === lastCellKey) continue
           if (solution[key] !== undefined) {
             values.push(solution[key])
           }
         }
       }
 
-      if (values.length < 1) {
+      const expectedOperands = eq.cells.filter(([r, c]) => grid[r][c].type === 'number').length - 1
+
+      if (values.length !== expectedOperands) {
         allValid = false
         break
       }
@@ -109,8 +115,7 @@ function solvePattern(
         break
       }
 
-      const lastCell = eq.cells[eq.cells.length - 1]
-      solution[`${lastCell[0]}-${lastCell[1]}`] = current
+      solution[lastCellKey] = current
     }
 
     if (allValid) {

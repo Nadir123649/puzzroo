@@ -21,7 +21,7 @@ export const registerSchema = z.object({
   password: z
     .string()
     .min(6, "Password must be at least 6 characters")
-    .max(16, "Password must be at most 16 characters"),
+    .max(128, "Password must be at most 128 characters"),
 });
 
 export const loginSchema = z.object({
@@ -37,7 +37,7 @@ export const resetPasswordSchema = z.object({
   password: z
     .string()
     .min(6, "Password must be at least 6 characters")
-    .max(16, "Password must be at most 16 characters"),
+    .max(128, "Password must be at most 128 characters"),
 });
 
 export const changePasswordSchema = z.object({
@@ -45,7 +45,7 @@ export const changePasswordSchema = z.object({
   newPassword: z
     .string()
     .min(6, "New password must be at least 6 characters")
-    .max(16, "New password must be at most 16 characters"),
+    .max(128, "New password must be at most 128 characters"),
 });
 
 export const chooseUsernameSchema = z.object({

@@ -8,7 +8,7 @@ import { images } from '@/lib/utils'
 import { useTheme } from '@/hooks/use-theme'
 
 interface GameCard {
-  id: string
+  id: string 
   title: string
   status: string
   image: string
@@ -186,9 +186,6 @@ function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
             <h3 className="font-urbanist font-bold text-[9px] md:text-[clamp(1rem,3vw,1.28rem)] leading-[120%] text-[#212121] dark:text-[#FAFAFA]">
               {game.title}
             </h3>
-            <span className="font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#9E9E9E] dark:text-[#757575]">
-              {displayStatus}
-            </span>
           </div>
 
           {/* Button Group - Disabled */}
@@ -245,11 +242,11 @@ function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
           <h3 className="font-urbanist font-bold text-[9px] md:text-[clamp(1rem,3vw,1.28rem)] leading-[120%] text-[#212121] dark:text-[#FAFAFA]">
             {game.title}
           </h3>
-          <span className={`font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] ${
-            isPlayed ? 'text-[#22C55E]' : 'text-[#212121] dark:text-[#FAFAFA]'
-          }`}>
-            {displayStatus}
-          </span>
+          {isPlayed && (
+            <span className="font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#22C55E]">
+              Recently Played
+            </span>
+          )}
         </div>
 
         {/* Button Group */}

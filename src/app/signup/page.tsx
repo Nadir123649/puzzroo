@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
 import { register } from '@/lib/auth/frontend-auth'
-import { auth, googleProvider, facebookProvider } from '@/lib/config/firebase-client'
+import { auth, googleProvider, facebookProvider, isFirebaseConfigured } from '@/lib/config/firebase-client'
 import { signInWithPopup } from 'firebase/auth'
 import { api } from '@/lib/api/client'
 
@@ -32,6 +32,7 @@ export default function SignupPage() {
     username?: string
     email?: string
     password?: string
+    general?: string
   }>({})
   
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -62,8 +63,8 @@ export default function SignupPage() {
       newErrors.password = 'Password is required'
     } else if (password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters'
-    } else if (password.length > 16) {
-      newErrors.password = 'Password must be at most 16 characters'
+    } else if (password.length > 128) {
+      newErrors.password = 'Password must be at most 128 characters'
     }
     
     setErrors(newErrors)
@@ -85,15 +86,18 @@ export default function SignupPage() {
       notify.errorFromResult(result, 'AUTH_SIGNUP_FAILED')
       if (result.code === 'username_taken') {
         setErrors({ username: result.error })
-      } else {
+      } else if (result.code === 'email_taken') {
         setErrors({ email: result.error })
+      } else {
+        setErrors({ general: result.error || 'Registration failed' })
       }
     }
   }
 
   return (
-    <RedirectIfAuthenticated><div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-      <Navbar />
+    <RedirectIfAuthenticated>
+      <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
+        <Navbar />
       
       <main className="flex-grow flex items-center justify-center px-[20px] py-[40px] md:py-[60px]">
         <div className="w-full max-w-[420px] bg-white dark:bg-[#1F222A] rounded-[24px] p-4 sm:p-5 border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-lg shadow-purple-500/5 transition-all duration-300">
@@ -136,6 +140,14 @@ export default function SignupPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* General Error Message */}
+              {errors.general && (
+                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                  <p className="font-urbanist font-semibold text-[14px] text-red-600 dark:text-red-400 text-center">
+                    {errors.general}
+                  </p>
+                </div>
+              )}
               {/* Username Input */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="username" className="font-urbanist font-bold text-[14px] text-[#424242] dark:text-[#E0E0E0]">
@@ -237,7 +249,7 @@ export default function SignupPage() {
                     type={showPassword ? "text" : "password"}
                     id="password"
                     value={password}
-                    maxLength={16}
+                    maxLength={128}
                     onChange={(e) => {
                       setPassword(e.target.value)
                       if (errors.password) setErrors(prev => ({ ...prev, password: undefined }))
@@ -272,6 +284,8 @@ export default function SignupPage() {
                 Sign Up
               </Button>
 
+              {isFirebaseConfigured && (
+              <>
               {/* Divider */}
               <div className="flex items-center gap-3 my-4">
                 <div className="h-[1px] flex-grow bg-[#E0E0E0] dark:bg-[#35383F]" />
@@ -284,6 +298,7 @@ export default function SignupPage() {
                 type="button"
                 onClick={async () => {
                   try {
+                    if (!auth || !googleProvider) return
                     const result = await signInWithPopup(auth, googleProvider)
                     const firebaseToken = await result.user.getIdToken()
                     setIsSubmitting(true)
@@ -346,6 +361,7 @@ export default function SignupPage() {
                 type="button"
                 onClick={async () => {
                   try {
+                    if (!auth || !facebookProvider) return
                     const result = await signInWithPopup(auth, facebookProvider)
                     const firebaseToken = await result.user.getIdToken()
                     setIsSubmitting(true)
@@ -398,6 +414,8 @@ export default function SignupPage() {
                 </svg>
                 <span>Sign up with Facebook</span>
               </button>
+              </>
+              )}
 
               {/* Login Redirect */}
               <div className="text-center pt-2">
@@ -415,6 +433,7 @@ export default function SignupPage() {
       </main>
       
       <Footer />
-    </div></RedirectIfAuthenticated>
+      </div>
+    </RedirectIfAuthenticated>
   )
 }

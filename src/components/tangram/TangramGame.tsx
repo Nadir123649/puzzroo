@@ -7,8 +7,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Undo, RotateCcw, Lightbulb, Loader2, Redo, ArrowLeft } from 'lucide-react'
-import { images } from '@/lib/utils'
+import { Undo, RotateCcw, Lightbulb, Redo } from 'lucide-react'
 import { GameLoader } from '@/components/ui/GameLoader'
 import { polygonToSVGPath } from '@shared/lib/tangram/polygon-renderer'
 import { usePolygonTangram } from '@/hooks/usePolygonTangram'
@@ -16,21 +15,18 @@ import { TangramBoard } from '@/components/games/tangram/TangramBoard'
 import { PolygonPiece } from '@/components/games/tangram/PolygonPiece'
 import { TangramModal } from '@/components/games/tangram/TangramModal'
 import { CountdownTimer } from '@/components/games/tangram/CountdownTimer'
-import { HintButton } from '@/components/games/tangram/HintButton'
 import { PolygonHintGhost } from '@/components/games/tangram/PolygonHintGhost'
 import { notify } from '@/lib/toast'
 
 import { TangramPieceId } from '@shared/types/tangram-polygon'
 import { TangramDifficulty } from '@shared/data/tangram'
 
-const MAX_HINTS = 3
-
 interface TangramGameProps {
   mode?: 'normal' | 'daily' | 'past'
   puzzleId?: string
 }
 
-export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}) {
+export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGameProps = {}) {
   const searchParams = useSearchParams()
   const difficulty = (searchParams?.get('difficulty') as TangramDifficulty) || 'easy'
   
@@ -48,11 +44,9 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
     selectedPiece,
     gameStatus,
     timeRemaining,
-    score,
     hintsUsed,
     hintPiece,
     availableHints,
-    isSolved,
     scaledData,
     selectPiece,
     movePiece,
@@ -60,7 +54,6 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
     rotateRight,
     requestHint,
     autoFill,
-    resetGame,
     newGame,
     replayPuzzle,
     undoMove,
@@ -177,8 +170,10 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
   // Get silhouette path from scaled polygon data
   const silhouettePath = scaledData ? polygonToSVGPath(scaledData.polygon) : undefined
 
-  // Check if any pieces are placed for undo functionality
-  const hasPlacedPieces = pieces.some(p => p.isPlaced)
+  // Progress: snapped pieces / total pieces
+  const snappedCount = pieces.filter(p => p.isSnapped).length
+  const totalPieces = pieces.length
+  const progressPercent = totalPieces > 0 ? Math.round((snappedCount / totalPieces) * 100) : 0
 
   return (
     <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative">
@@ -206,7 +201,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
 
             {/* LEFT SIDE - BOARD */}
             <div ref={desktopBoardRef} className="flex-1 max-w-[700px] min-w-[320px] overflow-visible">
-              <TangramBoard silhouette={silhouettePath}>
+              <TangramBoard silhouette={silhouettePath} onBoardClick={() => selectPiece(null)}>
                 {/* Hint Ghost */}
                 {hintPiece && hintPieceData && (
                   <PolygonHintGhost
@@ -238,14 +233,14 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
 
             {/* RIGHT SIDE - CONTROLS PANEL */}
             <div 
-              className="flex-shrink-0 w-[360px] flex flex-col justify-between sticky top-[100px]"
-              style={{ height: `${(desktopBoardWidth * 493) / 750}px` }}
+              className="flex-shrink-0 w-[360px] flex flex-col gap-4 sticky top-[100px]"
+              style={{ minHeight: `${(desktopBoardWidth * 493) / 750}px` }}
             >
               {/* Premium Controls Card - fills space but doesn't push buttons down */}
               <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 shadow-lg shadow-purple-500/5 flex flex-col gap-5 flex-1 mb-3">
                 {/* Difficulty Heading - centered, bold, larger */}
                 {puzzle && (
-                  <div className="text-center pb-3">
+                  <div className="text-center">
                     <span className="font-urbanist text-[11px] text-[#757575] dark:text-[#9E9E9E] uppercase tracking-wider font-bold">
                       Difficulty
                     </span>
@@ -255,25 +250,38 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
                   </div>
                 )}
 
-                {/* Score and Time Row */}
-                <div className="grid grid-cols-2 gap-2 text-center">
-                  {/* Score */}
-                  <div className="bg-white dark:bg-[#181A20] rounded-xl p-2 border border-[#E0E0E0] dark:border-[#35383F]">
+                {/* Time and Progress Row */}
+                <div className="flex flex-col gap-3">
+                  {/* Time */}
+                  <div className="bg-white dark:bg-[#181A20] rounded-xl p-2 border border-[#E0E0E0] dark:border-[#35383F] text-center">
                     <span className="font-urbanist text-[10px] font-semibold text-[#757575] dark:text-[#9E9E9E] uppercase tracking-wide">
-                      Score
-                    </span>
-                    <span className="font-urbanist text-lg font-bold text-[var(--color-primary)] block mt-0.5" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                      {score}
-                    </span>
-                  </div>
-
-                  {/* Time Remaining */}
-                  <div className="bg-white dark:bg-[#181A20] rounded-xl p-2 border border-[#E0E0E0] dark:border-[#35383F]">
-                    <span className="font-urbanist text-[10px] font-semibold text-[#757575] dark:text-[#9E9E9E] uppercase tracking-wide">
-                      Time
+                      Time Remaining
                     </span>
                     <div className="block mt-0.5">
                       <CountdownTimer timeRemaining={timeRemaining} className="text-lg" />
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="bg-white dark:bg-[#181A20] rounded-xl p-3 border border-[#E0E0E0] dark:border-[#35383F]">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-urbanist text-[10px] font-semibold text-[#757575] dark:text-[#9E9E9E] uppercase tracking-wide">
+                        Progress
+                      </span>
+                      <span className="font-urbanist text-[10px] font-bold text-[var(--color-primary)]">
+                        {snappedCount}/{totalPieces} pieces
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 bg-[#F0EDFF] dark:bg-[#35383F] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#6949FF] to-[#8B6EFF] rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                    <div className="text-right mt-1">
+                      <span className="font-urbanist text-[10px] font-bold text-[var(--color-primary)]">
+                        {progressPercent}%
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -340,7 +348,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
                 {process.env.NODE_ENV === 'development' && (
                   <button
                     onClick={handleAutoFill}
-                    disabled={isResetting || isSolved}
+                    disabled={isResetting}
                     className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Auto Fill
@@ -361,27 +369,36 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
 
           {/* Mobile Layout */}
           <div className="md:hidden flex flex-col gap-[16px] items-center pb-[50px]">
-            {/* Timer & Score Row */}
-            <div className="w-full grid grid-cols-2 gap-3">
+            {/* Timer & Progress Row */}
+            <div className="w-full flex flex-col gap-2">
               <div className="bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl p-3 flex flex-col items-center gap-1">
                 <span className="font-urbanist text-xs font-medium text-[#757575] dark:text-[#9E9E9E]">
-                  Time
+                  Time Remaining
                 </span>
                 <CountdownTimer timeRemaining={timeRemaining} className="text-xl" />
               </div>
-              <div className="bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl p-3 flex flex-col items-center gap-1">
-                <span className="font-urbanist text-xs font-medium text-[#757575] dark:text-[#9E9E9E]">
-                  Score
-                </span>
-                <span className="font-urbanist text-xl font-bold text-[var(--color-primary)]">
-                  {score}
-                </span>
+              {/* Progress Bar Mobile */}
+              <div className="bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-urbanist text-xs font-medium text-[#757575] dark:text-[#9E9E9E]">
+                    Progress
+                  </span>
+                  <span className="font-urbanist text-xs font-bold text-[var(--color-primary)]">
+                    {snappedCount}/{totalPieces}
+                  </span>
+                </div>
+                <div className="w-full h-2.5 bg-white dark:bg-[#35383F] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#6949FF] to-[#8B6EFF] rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
               </div>
             </div>
 
             {/* Board */}
             <div ref={mobileBoardRef} className="w-full">
-              <TangramBoard mobile silhouette={silhouettePath}>
+              <TangramBoard mobile silhouette={silhouettePath} onBoardClick={() => selectPiece(null)}>
                 {/* Hint Ghost */}
                 {hintPiece && hintPieceData && (
                   <PolygonHintGhost
@@ -470,7 +487,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
             {process.env.NODE_ENV === 'development' && (
               <button
                 onClick={handleAutoFill}
-                disabled={isResetting || isSolved}
+                disabled={isResetting}
                 className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Auto Fill
@@ -510,7 +527,7 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
         })()}
         mistakes={0}
         hintsUsed={hintsUsed}
-        score={score}
+        score={0}
         difficulty={puzzle?.difficulty || 'easy'}
         timeRemaining={timeRemaining}
         isTimeUp={gameStatus === 'lost'}

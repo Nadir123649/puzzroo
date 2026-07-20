@@ -16,9 +16,10 @@ interface TangramBoardProps {
   children: React.ReactNode
   mobile?: boolean
   silhouette?: string // SVG path data for the puzzle shape
+  onBoardClick?: () => void
 }
 
-export function TangramBoard({ children, mobile = false, silhouette }: TangramBoardProps) {
+export function TangramBoard({ children, mobile = false, silhouette, onBoardClick }: TangramBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export function TangramBoard({ children, mobile = false, silhouette }: TangramBo
 
   return (
     <div
+      onClick={onBoardClick}
       className={`relative tangram-board-container overflow-visible w-full aspect-[750/493] ${mobile
           ? 'max-w-[450px] mx-auto'
           : 'max-w-[700px]'

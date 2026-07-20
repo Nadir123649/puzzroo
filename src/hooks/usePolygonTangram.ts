@@ -379,7 +379,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   }, [pieces, gameStatus, hasWonOnce, timeRemaining, hintsUsed, searchParams, puzzle, difficulty])
 
 
-  const selectPiece = useCallback((pieceId: TangramPieceId) => {
+  const selectPiece = useCallback((pieceId: TangramPieceId | null) => {
     setSelectedPiece(pieceId)
   }, [])
 
@@ -558,11 +558,14 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setHintsUsed(h => h + 1)
     setHintPiece(chosenPieceId)
     
+    // Hard mode: 1 second hint. Easy/Medium: 5 seconds
+    const hintDuration = difficulty === 'hard' ? 1000 : 5000
+    
     hintTimeoutRef.current = setTimeout(() => {
       setHintPiece(null)
       hintTimeoutRef.current = null
-    }, 5000)
-  }, [hintsUsed, pieces])
+    }, hintDuration)
+  }, [hintsUsed, pieces, difficulty])
 
   const autoFill = useCallback(() => {
     setPieces(prev => {

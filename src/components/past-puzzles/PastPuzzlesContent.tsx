@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Lock, Calendar, Loader2, X, Check, ArrowLeft } from 'lucide-react'
+import { Lock, Calendar, Loader2, X, Check, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { generatePastPuzzles } from '@shared/lib/dailyChallenge/generator'
 import { getChallengeStatus, getAccessiblePastChallenges } from '@shared/lib/dailyChallenge/storage'
@@ -52,8 +52,15 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [completedPuzzles, setCompletedPuzzles] = useState<Set<string>>(new Set())
   const [authed, setAuthed] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 8
   const accessibleCount = getAccessiblePastChallenges()
   const { theme } = useTheme()
+  const [userLoggedIn, setUserLoggedIn] = useState(false)
+
+  useEffect(() => {
+    setUserLoggedIn(isLoggedIn())
+  }, [])
 
   useEffect(() => {
     setAuthed(isLoggedIn())
@@ -108,8 +115,8 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   }, [gameId])
 
   useEffect(() => {
-    // Generate 8 past puzzles
-    const generated = generatePastPuzzles(8, gameId)
+    // Generate 24 past puzzles
+    const generated = generatePastPuzzles(24, gameId)
     
     // Update status from localStorage and apply lock
     const withStatus = generated.map((puzzle, index) => {
@@ -156,6 +163,24 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     // Otherwise, match the exact status
     return p.status === filter
   })
+
+  const totalPages = Math.max(1, Math.ceil(filteredPuzzles.length / ITEMS_PER_PAGE))
+  
+  // Adjust currentPage if it exceeds totalPages due to filtering
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [filteredPuzzles.length, totalPages, currentPage])
+
+  // Reset to first page when filter or selectedDate changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filter, selectedDate])
+
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedPuzzles = filteredPuzzles.slice(startIndex, endIndex)
 
   const handleDateSelected = (dateString: string) => {
     setSelectedDate(dateString)
@@ -242,7 +267,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
 
               {/* Past Puzzle Grid - 1 column mobile, 4 columns desktop */}
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-6 md:gap-7 lg:gap-[30px] pt-4 pb-0 md:px-0 md:py-0">
-                {filteredPuzzles.map((puzzle) => (
+                {paginatedPuzzles.map((puzzle) => (
                   <PuzzleCard
                     key={puzzle.id}
                     puzzle={puzzle}
@@ -261,6 +286,36 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
                   <p className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD]">
                     No puzzles match this filter
                   </p>
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-6 mt-6 md:mt-8">
+                  {/* Left Arrow Button */}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1F222A] disabled:border-[#BDBDBD] dark:disabled:border-[#616161] disabled:text-[#757575] dark:disabled:text-[#9E9E9E]"
+                    aria-label="Previous Page"
+                  >
+                    <ChevronLeft size={24} strokeWidth={2.5} />
+                  </button>
+
+                  {/* Page Indicator */}
+                  <span className="font-urbanist font-bold text-[16px] text-[#212121] dark:text-[#FAFAFA]">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  {/* Right Arrow Button */}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1F222A] disabled:border-[#BDBDBD] dark:disabled:border-[#616161] disabled:text-[#757575] dark:disabled:text-[#9E9E9E]"
+                    aria-label="Next Page"
+                  >
+                    <ChevronRight size={24} strokeWidth={2.5} />
+                  </button>
                 </div>
               )}
 
