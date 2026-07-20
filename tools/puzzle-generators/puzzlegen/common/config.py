@@ -7,7 +7,17 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 DEFAULT_COUNT = 100
-DIFFICULTIES = ("easy", "medium", "hard")
+DIFFICULTIES = ("easy", "medium", "hard", "expert")
+
+# Sudoku difficulty -> required technique tier (see puzzlegen/sudoku/rating.py).
+#   1 easy   : naked/hidden singles
+#   2 medium : + pairs, pointing, box-line reduction
+#   3 hard   : + triples, X-Wing, XY/XYZ-Wing
+#   4 expert : + swordfish, coloring, or requires brute force
+SUDOKU_TIERS = {"easy": 1, "medium": 2, "hard": 3, "expert": 4}
+
+# Minimum givens guard so expert puzzles are not degenerate low-clue boards.
+SUDOKU_MIN_GIVENS = {"easy": 36, "medium": 30, "hard": 26, "expert": 22}
 
 
 @dataclass(frozen=True)
@@ -19,11 +29,19 @@ class Bucket:
     params: dict = field(default_factory=dict)
 
 
-# ── Sudoku: both sizes × 3 difficulties. size = board dimension. ──────────────
-# givens = (min, max) number of pre-filled cells kept.
+# ── Sudoku: 9x9 only (the Puzzroo frontend renders a single 9x9 board). ───────
+# Difficulty is now driven by TECHNIQUE TIER (see rating.py), not clue count.
+# `givens_max` caps how many clues we keep while digging (lower => harder to
+# reach); `givens_min` is the floor we never dig below. The generator keeps
+# removing clues (preserving a unique solution) until either the target tier is
+# reached or givens_min is hit.
 SUDOKU_GIVENS = {
-    9: {"easy": (40, 45), "medium": (32, 36), "hard": (26, 30)},
-    6: {"easy": (22, 24), "medium": (18, 20), "hard": (14, 16)},
+    9: {
+        "easy": (38, 45),
+        "medium": (32, 38),
+        "hard": (27, 33),
+        "expert": (22, 29),
+    },
 }
 
 # ── CrossMath: difficulty → operand grid dimension N. ────────────────────────

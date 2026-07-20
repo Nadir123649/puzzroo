@@ -2,6 +2,7 @@ import { notify } from '@/lib/toast'
 
 type RefreshCallback = (token: string) => void;
 let onRefresh: RefreshCallback | null = null;
+let sessionExpiredNotified = false;
 
 export function setOnRefresh(cb: RefreshCallback) {
   onRefresh = cb;

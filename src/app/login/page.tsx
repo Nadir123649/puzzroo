@@ -146,9 +146,9 @@ function LoginPageContent() {
                           const result = await resendVerificationEmail(identifier.trim())
                           setResendingVerification(false)
                           if (result.success) {
-                            toast.success('Verification email sent! Check your inbox.')
+                            notify.success('Verification email sent! Check your inbox.')
                           } else {
-                            toast.error(result.error || 'Failed to resend verification email')
+                            notify.error(result.error || 'Failed to resend verification email')
                           }
                         }}
                         className="font-urbanist font-semibold text-[13px] text-[#6949FF] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
