@@ -63,10 +63,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       try {
         await sendVerificationEmail(user.email, verifyUrl);
       } catch {
-        user.emailVerificationToken = undefined;
-        user.emailVerificationTokenExpire = undefined;
-        await user.save({ validateBeforeSave: false });
-        return errorResponse(500, "email_failed", "Failed to send verification email. Try again later.");
+        // Don't revert the token on a transient email failure — let the user
+        // retry the resend. In dev, SMTP may be unavailable; ignore the error.
+        if (process.env.NODE_ENV === "production") {
+          return errorResponse(500, "email_failed", "Failed to send verification email. Try again later.");
+        }
       }
       return successResponse({ message: "Verification email sent. Check your inbox." });
     }
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
       user.lastLoginAt = new Date();
       await user.save({ validateBeforeSave: false });
-      await createSession(request, user._id.toString());
+      await createSession(request, user._id.toString(), "phone");
       await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "phone" }, request });
       const res = NextResponse.json({ success: true, payload: authPayload(user), timestamp: Date.now() }, { status: 200 });
       res.cookies.set("refreshToken", buildTokenPayload(user).refreshToken, cookieOptions);

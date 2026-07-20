@@ -1,29 +1,32 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { isLoggedIn } from '@/lib/auth/frontend-auth'
+import { isLoggedIn, ensureSession } from '@/lib/auth/frontend-auth'
 
 export function RedirectIfAuthenticated({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
+  const [validated, setValidated] = useState(false)
 
   useEffect(() => {
     setMounted(true)
 
-    // Hard redirect when authenticated. window.location.replace guarantees the
-    // navigation happens even when this page is restored from the browser's
-    // back-forward cache (bfcache), which is where the previous `return null`
-    // rendered a blank/black screen.
-    const redirectIfAuthed = () => {
+    // Validate the session first: a stale/expired accessToken must be cleared
+    // (so we don't bounce a logged-OUT user away from /login), while a live
+    // session is refreshed. Only then decide whether to redirect.
+    const run = async () => {
+      await ensureSession()
       if (isLoggedIn()) {
         window.location.replace('/')
+      } else {
+        // Session was stale/expired and cleared — reveal the login form.
+        setValidated(true)
       }
     }
-
-    redirectIfAuthed()
+    run()
 
     // bfcache restores (e.g. pressing Back after an OAuth login) do not re-run
     // the effect body, so re-check on pageshow to avoid a stuck blank screen.
-    const onPageShow = () => redirectIfAuthed()
+    const onPageShow = () => run()
     window.addEventListener('pageshow', onPageShow)
     return () => window.removeEventListener('pageshow', onPageShow)
   }, [])
@@ -34,10 +37,9 @@ export function RedirectIfAuthenticated({ children }: { children: React.ReactNod
     </div>
   )
 
-  if (!mounted) return spinner
-
-  // Authenticated: show the spinner (never null) while the redirect completes.
-  if (isLoggedIn()) return spinner
+  // Hold the spinner until mounted AND session-validated, so a stale token is
+  // cleared before we decide to show the form or bounce to home.
+  if (!mounted || !validated) return spinner
 
   return <>{children}</>
 }

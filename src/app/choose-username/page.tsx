@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import toast from 'react-hot-toast'
+import { notify } from '@/lib/toast'
 import { images } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
@@ -46,7 +46,7 @@ export default function ChooseUsernamePage() {
     setIsSubmitting(false)
 
     if (result.success) {
-      toast.success('Username set! Welcome to Puzzroo.')
+      notify.successKey('AUTH_USERNAME_SET')
       window.location.replace('/')
     } else {
       setError(result.error || 'Failed to set username')
@@ -115,7 +115,7 @@ export default function ChooseUsernamePage() {
                 className={`w-full h-[48px] px-4 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                   error ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                 }`}
-                placeholder="john_doe"
+                placeholder="Enter your username"
                 autoComplete="username"
                 autoFocus
               />

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Check, Zap, Loader2 } from 'lucide-react'
 import { api } from '@/lib/api/client'
 import { fetchSubscription } from '@/lib/auth/frontend-auth'
+import { notify } from '@/lib/toast'
 
 const features = [
   'Unlimited access to all games and difficulty levels',
@@ -108,21 +109,26 @@ export default function SubscriptionPage() {
 
   const handleCheckout = async (plan: string, priceId: string) => {
     setLoading(plan)
+    const loadingId = notify.loading('Redirecting to checkout…')
     try {
       const res = await api("/api/v1/subscriptions/checkout", {
         method: "POST",
         body: JSON.stringify({ planId: plan }),
       })
+      notify.dismiss(loadingId ?? undefined)
       if (res.success) {
         const payload = res.payload as any
         if (payload.url) {
           window.location.href = payload.url
+          return
         }
+        notify.successKey('BILLING_ACTIVATED')
       } else {
-        alert("Checkout failed. Please try again.")
+        notify.errorFromResult(res, 'BILLING_FAILED')
       }
     } catch {
-      alert("Network error. Please try again.")
+      notify.dismiss(loadingId ?? undefined)
+      notify.errorKey('BILLING_FAILED')
     } finally {
       setLoading(null)
     }

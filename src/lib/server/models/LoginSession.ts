@@ -10,6 +10,7 @@ const loginSessionSchema = new mongoose.Schema(
     deviceType: { type: String, enum: ["desktop", "mobile", "tablet", "unknown"], default: "unknown" },
     location: { type: String, default: null },
     isCurrent: { type: Boolean, default: true },
+    provider: { type: String, default: null },
     lastSeenAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

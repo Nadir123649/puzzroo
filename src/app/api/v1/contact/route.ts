@@ -7,7 +7,12 @@ import { validate } from "@/lib/server/middleware/validate";
 import { contactSchema } from "@/lib/server/validators/contactValidator";
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  let body: any = {};
+  try {
+    body = await request.json();
+  } catch {
+    body = {};
+  }
 
   const val = validate(contactSchema, body);
   if (val.error) return val.error;

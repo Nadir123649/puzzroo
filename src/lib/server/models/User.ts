@@ -14,11 +14,13 @@ const userSchema = new mongoose.Schema(
     password: { type: String, default: null },
     phone: { type: String, default: null },
     firebaseUid: { type: String, default: null },
+    firebaseProvider: { type: String, default: null },
     provider: {
       type: String,
       enum: ["email", "google", "facebook", "phone", "guest"],
       default: "email",
     },
+    linkedProviders: { type: [String], default: [] },
     avatar: { type: String, default: null },
     role: {
       type: String,

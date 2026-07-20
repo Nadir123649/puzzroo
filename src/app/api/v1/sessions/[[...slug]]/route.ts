@@ -20,6 +20,7 @@ function mapSession(s: any) {
     loginTime: s.createdAt,
     lastSeen: s.lastSeenAt,
     isCurrent: s.isCurrent,
+    provider: s.provider,
   };
 }
 

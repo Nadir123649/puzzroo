@@ -80,8 +80,46 @@ export function markPuzzleCompleted(
     completed.push(record)
     const key = STORAGE_KEYS[gameType]
     localStorage.setItem(key, JSON.stringify(completed))
+
+    // Best-effort server-side persistence so /api/v1/games/stats populates.
+    // Fire-and-forget: failures (e.g. not logged in) are silently ignored.
+    syncProgressToBackend(gameType, puzzleId, true, metadata)
   } catch (error) {
     console.error('Failed to mark puzzle completed:', error)
+  }
+}
+
+const PROGRESS_DIFFICULTIES = ['easy', 'medium', 'hard'] as const
+
+function syncProgressToBackend(
+  gameType: GameType,
+  puzzleId: string,
+  completed: boolean,
+  metadata: { time?: number; hintsUsed?: number; score?: number; difficulty?: string }
+): void {
+  try {
+    if (typeof window === 'undefined') return
+    const token = localStorage.getItem('accessToken')
+    if (!token) return
+    if (!PROGRESS_DIFFICULTIES.includes(metadata.difficulty as any)) return
+    fetch('/api/v1/games/progress', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        gameId: gameType,
+        puzzleId,
+        difficulty: metadata.difficulty,
+        completed,
+        score: metadata.score || 0,
+        time: metadata.time || 0,
+      }),
+      credentials: 'include',
+    }).catch(() => {})
+  } catch {
+    // ignore — progress sync must never break gameplay
   }
 }
 

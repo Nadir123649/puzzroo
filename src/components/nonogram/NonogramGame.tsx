@@ -9,6 +9,7 @@ import { GameLoader } from '@/components/ui/GameLoader'
 import { InputModeToolbar } from '@/components/games/nonogram/InputModeToolbar'
 import { formatTime } from '@shared/lib/nonogram/helpers'
 import type { CellPosition } from '@shared/lib/nonogram/types'
+import { notify } from '@/lib/toast'
 
 export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: string; onBackToSelection?: () => void }) {
   const router = useRouter()
@@ -56,6 +57,10 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
 
   // Show modal automatically when game is won or lost
   useEffect(() => {
+    if (gameStatus === 'won') {
+      const isDaily = typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/')
+      notify.successKey(isDaily ? 'GAME_SOLVED_DAILY' : 'GAME_SOLVED')
+    }
     if (gameStatus === 'won' || gameStatus === 'lost') {
       setShowCompletionModal(true)
     } else {

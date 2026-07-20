@@ -34,6 +34,7 @@ export async function trackServer({
       const ctx = await buildRequestContext(request);
       context = {
         source: "server",
+        path: request.nextUrl?.pathname ?? undefined,
         ip: ctx.ip,
         userAgent: ctx.userAgent,
         browser: ctx.browser,

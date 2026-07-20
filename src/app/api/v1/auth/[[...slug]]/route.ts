@@ -42,14 +42,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const hashedPassword = await bcrypt.hash(password, 10);
       const verificationToken = crypto.randomBytes(32).toString("hex");
       const hashedVerificationToken = crypto.createHash("sha256").update(verificationToken).digest("hex");
+      const isDev = process.env.NODE_ENV !== "production";
       const user = await User.create({
         name, username, usernameSet: true, email, password: hashedPassword,
         role: "free", publicId: await generatePublicId(),
-        emailVerificationToken: hashedVerificationToken,
-        emailVerificationTokenExpire: Date.now() + 24 * 60 * 60 * 1000,
+        linkedProviders: ["email"],
+        isVerified: isDev,
+        ...(isDev
+          ? {}
+          : {
+              emailVerificationToken: hashedVerificationToken,
+              emailVerificationTokenExpire: Date.now() + 24 * 60 * 60 * 1000,
+            }),
       });
       const verifyUrl = `${process.env.FRONTEND_URL}/api/v1/verification/email/verify/${verificationToken}`;
-      try { await sendVerificationEmail(user.email, verifyUrl); } catch {}
+      try { if (!isDev) await sendVerificationEmail(user.email, verifyUrl); } catch {}
       await trackServer({ userId: user._id.toString(), event: "signup_completed", properties: { method: "email" }, request });
       return successResponse({ message: "Registration successful. Please check your email to verify your account." }, 201);
     }
@@ -66,10 +73,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!user) return errorResponse(401, looksLikeEmail ? "invalid_email" : "invalid_credentials", looksLikeEmail ? "Invalid email" : "Invalid email or password");
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) return errorResponse(401, "invalid_credentials", "Invalid email or password");
-      if (user.password && !user.isVerified) return errorResponse(403, "email_not_verified", "Please verify your email before logging in.");
+      if (user.password && !user.isVerified && process.env.NODE_ENV === "production") return errorResponse(403, "email_not_verified", "Please verify your email before logging in.");
       user.lastLoginAt = new Date();
+      if (!user.linkedProviders) user.linkedProviders = [];
+      if (!user.linkedProviders.includes("email")) user.linkedProviders.push("email");
       await user.save({ validateBeforeSave: false });
-      const session = await createSession(request, user._id.toString());
+      const session = await createSession(request, user._id.toString(), "email");
       await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "password" }, request });
       const res = NextResponse.json({ success: true, payload: { ...authPayload(user), sessionId: session._id.toString() }, timestamp: Date.now() }, { status: 200 });
       const loginCookieOptions = {
@@ -180,8 +189,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (password) user.password = await bcrypt.hash(password, 10);
       user.role = "free";
       if (!user.publicId) user.publicId = await generatePublicId();
+      if (!user.linkedProviders) user.linkedProviders = [];
+      if (!user.linkedProviders.includes("email")) user.linkedProviders.push("email");
       await user.save();
-      await createSession(request, user._id.toString());
+      await createSession(request, user._id.toString(), "email");
       const res = NextResponse.json({ success: true, payload: authPayload(user), timestamp: Date.now() }, { status: 200 });
       res.cookies.set("refreshToken", buildTokenPayload(user).refreshToken, cookieOptions);
       return res;

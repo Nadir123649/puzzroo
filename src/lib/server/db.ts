@@ -40,7 +40,15 @@ export async function connectDB() {
     }
   }
 
-  cached = mongoose.connect(uri, { autoIndex: false });
-  (global as any)._mongooseConnection = cached;
+  (global as any)._mongooseConnection = mongoose.connect(uri, { autoIndex: false });
+  cached = (global as any)._mongooseConnection;
+  try {
+    await cached;
+  } catch (e) {
+    // Reset so a transient connect failure doesn't permanently poison the cache.
+    cached = null;
+    (global as any)._mongooseConnection = null;
+    throw e;
+  }
   return cached;
 }

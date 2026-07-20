@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     // GET /api/v1/users/me
     if (!action || action === "me") {
-      const user = await User.findById(userResult.userId).select("-password");
+      const user = await User.findById(userResult.userId);
       if (!user) return errorResponse(404, "user_not_found", "User not found");
       // Backfill a public account id for real accounts created before the field
       // existed, so the UI always has the friendly 10-digit id to show.
@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (val.data!.phone !== undefined) updates.phone = val.data!.phone;
       const user = await User.findByIdAndUpdate(userResult.userId, updates, {
         new: true, runValidators: true,
-      }).select("-password");
+      });
       if (!user) return errorResponse(404, "user_not_found", "User not found");
       await trackServer({ userId: userResult.userId, event: "profile_updated", properties: { fields: Object.keys(updates) }, request });
       return successResponse(formatUser(user));

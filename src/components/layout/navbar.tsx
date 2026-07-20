@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from '../../hooks/use-theme'
 import { images } from '@/lib/utils'
 import { isLoggedIn, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
+import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
 
 export function Navbar() {
@@ -190,6 +191,7 @@ export function Navbar() {
               <button
                 onClick={() => {
                   logout()
+                  notify.successKey('AUTH_LOGOUT_SUCCESS')
                   setIsMenuOpen(false)
                   router.push('/login')
                   router.refresh()

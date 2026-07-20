@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { ensureSession } from '@/lib/auth/frontend-auth'
 
 type Theme = 'light' | 'dark'
 
@@ -17,6 +18,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    // Validate/repair the session on load so navbar + guards reflect reality.
+    ensureSession().catch(() => {})
+
     // When the component mounts on the client, we check what class is active on the HTML tag.
     // The HTML tag is pre-configured by an inline block script in layout.tsx to avoid FOUC.
     const isDark = document.documentElement.classList.contains('dark')

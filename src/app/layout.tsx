@@ -6,6 +6,7 @@ import { images, imageDimensions } from "@/lib/utils";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { Toaster } from "react-hot-toast";
+import { NetworkToastListener } from "@/lib/toast";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -94,6 +95,7 @@ export default function RootLayout({
           <ScrollToTop />
           <AnalyticsProvider />
           {children}
+          <NetworkToastListener />
           <Toaster
             position="top-right"
             toastOptions={{
