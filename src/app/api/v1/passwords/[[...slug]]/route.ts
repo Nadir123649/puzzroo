@@ -16,7 +16,7 @@ import { createSession } from "@/lib/server/utils/createSession";
 // Reset links are short-lived for security.
 const RESET_TOKEN_MINUTES = 15;
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
   const action = slug?.[0];
   let body: any = {};

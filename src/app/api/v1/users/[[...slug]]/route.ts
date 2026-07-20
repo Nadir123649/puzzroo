@@ -16,7 +16,7 @@ function getUserId(request: NextRequest) {
   return { userId: result.user.id };
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
   const action = slug?.[0];
 
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
   const action = slug?.[0];
 
@@ -79,7 +79,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   await connectDB();
 
   const userResult = getUserId(request);

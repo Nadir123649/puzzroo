@@ -15,7 +15,7 @@ const PROVIDER_MAP: Record<string, string> = {
   facebook: "facebook.com",
 };
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
   const provider = slug?.[0];
   let body: any = {};
