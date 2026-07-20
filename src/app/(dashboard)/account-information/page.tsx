@@ -24,6 +24,7 @@ interface SessionDevice {
   loginTime: string
   lastSeen: string
   isCurrent: boolean
+  provider?: string
 }
 
 function formatSessionTime(dateStr: string) {
@@ -50,7 +51,10 @@ export default function AccountInformationPage() {
   const [sessions, setSessions] = useState<SessionDevice[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
   const [provider, setProvider] = useState<string | null>(localUser?.provider || null)
+  const [linkedProviders, setLinkedProviders] = useState<string[]>(localUser?.linkedProviders || [])
   const canChangePassword = !!localUser?.hasPassword
+
+  const currentSessionProvider = sessions.find(s => s.isCurrent)?.provider || provider
 
   const handleNameChanged = (newName: string) => {
     const stored = localStorage.getItem('puzzroo_user')
@@ -72,6 +76,7 @@ export default function AccountInformationPage() {
     fetchUserProfile().then(profile => {
       if (!profile) return
       if (profile.provider) setProvider(profile.provider)
+      if (profile.linkedProviders?.length) setLinkedProviders(profile.linkedProviders)
       // Sync freshly-fetched fields (e.g. the backfilled publicId) into local
       // state and the cached user so the Account ID shows the friendly id.
       if (profile.publicId) {
@@ -239,31 +244,41 @@ export default function AccountInformationPage() {
             <h3 className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white mb-2">
               Connected Accounts
             </h3>
-            {(() => {
-              const meta = PROVIDER_META[provider || ''] || PROVIDER_META['email']
-              return (
-                <div className="flex items-center gap-3 p-2.5 bg-gray-50 dark:bg-[#181A20] rounded-xl max-w-sm">
-                  <div className="w-8 h-8 bg-white dark:bg-[#1F222A] rounded-lg flex items-center justify-center border border-gray-100 dark:border-gray-800">
-                    {meta.badge === 'mail' ? (
-                      <Mail size={16} className={meta.badgeClass} strokeWidth={2.5} />
-                    ) : meta.badge === 'phone' ? (
-                      <Phone size={16} className={meta.badgeClass} strokeWidth={2.5} />
-                    ) : (
-                      <span className={`text-[16px] font-extrabold ${meta.badgeClass}`}>{meta.badge}</span>
-                    )}
+            <div className="space-y-2">
+              {(linkedProviders.length > 0 ? linkedProviders : (provider ? [provider] : ['email'])).map(p => {
+                const meta = PROVIDER_META[p] || PROVIDER_META.email
+                const isCurrent = currentSessionProvider === p
+                return (
+                  <div key={p} className="flex items-center gap-3 p-2.5 bg-gray-50 dark:bg-[#181A20] rounded-xl max-w-sm">
+                    <div className="w-8 h-8 bg-white dark:bg-[#1F222A] rounded-lg flex items-center justify-center border border-gray-100 dark:border-gray-800">
+                      {meta.badge === 'mail' ? (
+                        <Mail size={16} className={meta.badgeClass} strokeWidth={2.5} />
+                      ) : meta.badge === 'phone' ? (
+                        <Phone size={16} className={meta.badgeClass} strokeWidth={2.5} />
+                      ) : (
+                        <span className={`text-[16px] font-extrabold ${meta.badgeClass}`}>{meta.badge}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+                        {meta.label}
+                      </span>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <Check size={12} className="text-green-600 dark:text-green-400" strokeWidth={3} />
+                        <span className="font-urbanist text-[11px] text-green-600 dark:text-green-400 font-semibold">
+                          Connected
+                        </span>
+                        {isCurrent && (
+                          <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 rounded font-urbanist font-bold text-[9px] text-green-600 dark:text-green-400 uppercase tracking-wide">
+                            Current Session
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
-                    {meta.label}
-                  </span>
-                  <div className="flex items-center gap-1 ml-auto">
-                    <Check size={12} className="text-green-600 dark:text-green-400" strokeWidth={3} />
-                    <span className="font-urbanist text-[11px] text-green-600 dark:text-green-400 font-semibold">
-                      Connected
-                    </span>
-                  </div>
-                </div>
-              )
-            })()}
+                )
+              })}
+            </div>
           </div>
 
           {/* Delete Account */}

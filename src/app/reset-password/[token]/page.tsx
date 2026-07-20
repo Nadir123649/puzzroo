@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { notify } from '@/lib/toast'
 import { images } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
     setIsSubmitting(false)
 
     if (result.success) {
-      toast.success('Password reset successful!')
+      notify.successKey('AUTH_RESET_SUCCESS')
       setIsSuccess(true)
       setTimeout(() => {
         router.push('/')
@@ -71,8 +71,8 @@ export default function ResetPasswordPage() {
       if (isTokenInvalid) {
         setTokenError(true)
       }
-      toast.error(result.error || 'Failed to reset password')
-      setErrors({ general: result.error || 'Failed to reset password' })
+      notify.errorFromResult(result, 'AUTH_RESET_FAILED')
+      setErrors({ general: notify.fromResult(result, 'AUTH_RESET_FAILED') })
     }
   }
 
@@ -190,7 +190,7 @@ export default function ResetPasswordPage() {
                     className={`w-full h-[48px] pl-4 pr-11 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                       errors.password ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                     }`}
-                    placeholder="••••••••"
+                    placeholder="Enter your password"
                     autoComplete="new-password"
                   />
                   <button
@@ -226,7 +226,7 @@ export default function ResetPasswordPage() {
                     className={`w-full h-[48px] pl-4 pr-11 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                       errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                     }`}
-                    placeholder="••••••••"
+                    placeholder="Confirm your password"
                     autoComplete="new-password"
                   />
                   <button

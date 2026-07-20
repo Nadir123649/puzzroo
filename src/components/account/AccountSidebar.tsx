@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { User, CreditCard, Bell, History, LogOut, X, Menu, Activity, type LucideIcon } from 'lucide-react'
 import { logout, getCurrentUser } from '@/lib/auth/frontend-auth'
+import { notify } from '@/lib/toast'
 
 interface MenuItem {
   href: string
@@ -56,6 +57,7 @@ export function AccountSidebar() {
 
   const handleLogout = () => {
     logout()
+    notify.successKey('AUTH_LOGOUT_SUCCESS')
     router.push('/login')
     router.refresh()
   }

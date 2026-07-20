@@ -13,6 +13,7 @@ export interface User {
   subscriptionPlan: string
   avatar?: string
   provider?: string
+  linkedProviders?: string[]
   hasPassword?: boolean
 }
 
@@ -65,6 +66,37 @@ export async function logout(): Promise<void> {
 export function isLoggedIn(): boolean {
   if (typeof window === "undefined") return false;
   return !!localStorage.getItem("accessToken");
+}
+
+/**
+ * Validates (and repairs) the client session on app load.
+ * - No token at all → nothing to do (user is logged out).
+ * - Token present → attempt to refresh via the httpOnly refresh cookie.
+ *   On success we store the fresh access token; on failure the session is
+ *   stale/expired, so we clear localStorage and let the UI reflect logged-out.
+ * This prevents a dead/expired accessToken from permanently bouncing users
+ * away from /login (the RedirectIfAuthenticated guard keys off isLoggedIn()).
+ */
+export async function ensureSession(): Promise<void> {
+  if (typeof window === "undefined") return;
+  if (!localStorage.getItem("accessToken")) return;
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("refresh_failed");
+    const data = await res.json();
+    const accessToken = data?.payload?.token?.accessToken;
+    if (!accessToken) throw new Error("no_token");
+    localStorage.setItem("accessToken", accessToken);
+    window.dispatchEvent(new Event("auth-change"));
+  } catch {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("puzzroo_auth");
+    localStorage.removeItem("puzzroo_user");
+    window.dispatchEvent(new Event("auth-change"));
+  }
 }
 
 export function getCurrentUser(): User | null {
@@ -338,6 +370,7 @@ function mapUser(u: any): User {
     subscriptionPlan: u.role || "free",
     avatar: u.avatar,
     provider: u.provider || "email",
+    linkedProviders: u.linkedProviders || [],
     hasPassword: u.hasPassword,
   };
 }

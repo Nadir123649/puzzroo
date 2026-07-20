@@ -44,10 +44,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       try {
         await sendResetPasswordEmail(user.email, resetUrl, RESET_TOKEN_MINUTES);
       } catch {
-        user.resetPasswordToken = undefined;
-        user.resetPasswordTokenExpire = undefined;
-        await user.save({ validateBeforeSave: false });
-        return errorResponse(500, "email_failed", "Failed to send reset email. Try again later.");
+        // Don't revert the token on a transient email failure — let the user
+        // retry forgot-password. In dev, SMTP may be unavailable; ignore it.
+        if (process.env.NODE_ENV === "production") {
+          return errorResponse(500, "email_failed", "Failed to send reset email. Try again later.");
+        }
       }
       await trackServer({ userId: user._id.toString(), event: "password_reset_requested", request });
       return successResponse({ message: "If an account with that email exists, a reset link has been sent." });
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.resetPasswordTokenExpire = undefined;
       user.lastLoginAt = new Date();
       await user.save({ validateBeforeSave: false });
-      const session = await createSession(request, user._id.toString());
+      const session = await createSession(request, user._id.toString(), "email");
       await trackServer({ userId: user._id.toString(), event: "password_reset_completed", request });
       const res = NextResponse.json(
         { success: true, payload: { ...authPayload(user), sessionId: session._id.toString() }, timestamp: Date.now() },

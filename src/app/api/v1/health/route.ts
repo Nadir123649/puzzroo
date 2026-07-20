@@ -18,11 +18,14 @@ export async function GET() {
 
   return NextResponse.json(
     {
-      status: healthy ? "healthy" : "degraded",
-      database,
-      uptime: Math.floor((Date.now() - startedAt) / 1000),
-      version: process.env.npm_package_version || "1.0.0",
-      timestamp: Date.now(),
+      success: healthy,
+      payload: {
+        status: healthy ? "healthy" : "degraded",
+        database,
+        uptime: Math.floor((Date.now() - startedAt) / 1000),
+        version: process.env.npm_package_version || "1.0.0",
+        timestamp: Date.now(),
+      },
     },
     { status: healthy ? 200 : 503 }
   );

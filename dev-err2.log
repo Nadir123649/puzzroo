@@ -1,0 +1,41 @@
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] IP-based currency detection failed, falling back to timezone: Error: Network error
+    at SubscriptionPage.useEffect.detectCurrency (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/_0nzrjv3._.js:112:93) (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] IP-based currency detection failed, falling back to timezone: Error: Network error
+    at SubscriptionPage.useEffect.detectCurrency (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/_0nzrjv3._.js:112:93) (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] IP-based currency detection failed, falling back to timezone: Error: Network error
+    at SubscriptionPage.useEffect.detectCurrency (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/_0nzrjv3._.js:112:93) (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] IP-based currency detection failed, falling back to timezone: Error: Network error
+    at SubscriptionPage.useEffect.detectCurrency (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/_0nzrjv3._.js:112:93) (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] Uncaught Error: Objects are not valid as a React child (found: object with keys {code, message}). If you meant to render a collection of children, use an array instead.
+    at throwOnInvalidObjectTypeImpl (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:3922:15)
+    at throwOnInvalidObjectType (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:3926:110)
+    at reconcileChildFibersImpl (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4249:17)
+    at <unknown> (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4261:39)
+    at reconcileChildren (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:5898:51)
+    at beginWork (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:6758:1573)
+    at runWithFiberInDEV (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
+    at performUnitOfWork (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9555:97)
+    at workLoopSync (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9449:40)
+    at renderRootSync (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9433:13)
+    at performWorkOnRoot (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64)
+    at <unknown> (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_06zlv2q._.js:845:187)
+    at <unknown> (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_06zlv2q._.js:943:237)
+    at Array.map (<anonymous>)
+    at Fe (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_06zlv2q._.js:931:10)
+    at RootLayout (src\app\layout.tsx:99:11)
+   97 |           {children}
+   98 |           <NetworkToastListener />
+>  99 |           <Toaster
+      |           ^
+  100 |             position="top-right"
+  101 |             toastOptions={{
+  102 |               duration: 4000,
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)

@@ -48,7 +48,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         const currentUserId = !("error" in who) ? who.user.id : undefined;
         const result = await handleOAuth(firebaseProvider, firebaseToken, currentUserId);
         if (!result) return errorResponse(500, "firebase_not_configured", "Firebase is not configured");
-        await createSession(request, result.payload.user.id);
+        await createSession(request, result.payload.user.id, provider);
         if (result.converted) {
           await trackServer({ userId: result.payload.user.id, event: "guest_converted", properties: { method: provider }, request });
         }

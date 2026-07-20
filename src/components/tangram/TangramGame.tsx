@@ -18,6 +18,7 @@ import { TangramModal } from '@/components/games/tangram/TangramModal'
 import { CountdownTimer } from '@/components/games/tangram/CountdownTimer'
 import { HintButton } from '@/components/games/tangram/HintButton'
 import { PolygonHintGhost } from '@/components/games/tangram/PolygonHintGhost'
+import { notify } from '@/lib/toast'
 
 import { TangramPieceId } from '@shared/types/tangram-polygon'
 import { TangramDifficulty } from '@shared/data/tangram'
@@ -73,6 +74,10 @@ export function TangramGame({ mode = 'normal', puzzleId }: TangramGameProps = {}
 
   // Show modal automatically when game is won or lost
   useEffect(() => {
+    if (gameStatus === 'won') {
+      const isDaily = typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/')
+      notify.successKey(isDaily ? 'GAME_SOLVED_DAILY' : 'GAME_SOLVED')
+    }
     if (gameStatus === 'won' || gameStatus === 'lost') {
       setIsModalVisible(true)
     } else {

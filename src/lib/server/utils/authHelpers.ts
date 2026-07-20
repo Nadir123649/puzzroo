@@ -11,6 +11,13 @@ export const isFirebaseReady = Boolean(
     process.env.FIREBASE_PRIVATE_KEY
 );
 
+// Safely append a provider to a user's linkedProviders array, tolerating the
+// field being undefined on documents created before it existed.
+function addLinkedProvider(user: any, provider: string) {
+  if (!user.linkedProviders) user.linkedProviders = [];
+  if (!user.linkedProviders.includes(provider)) user.linkedProviders.push(provider);
+}
+
 export function authPayload(user: any) {
   return {
     user: formatUser(user),
@@ -52,7 +59,10 @@ export async function handleOAuth(
       user = await User.findOne({ email: normalizedEmail });
       if (user) {
         user.firebaseUid = uid;
+        user.firebaseProvider = mappedProvider;
         user.provider = mappedProvider;
+        addLinkedProvider(user, mappedProvider);
+        if (user.password) addLinkedProvider(user, "email");
         if (picture && !user.avatar) user.avatar = picture;
         if (name && !user.name) user.name = name;
       }
@@ -67,6 +77,7 @@ export async function handleOAuth(
     const guest = await User.findById(currentUserId);
     if (guest && guest.role === "guest") {
       guest.firebaseUid = uid;
+      guest.firebaseProvider = mappedProvider;
       guest.provider = mappedProvider;
       if (normalizedEmail) guest.email = normalizedEmail;
       if (name) guest.name = name;
@@ -76,6 +87,7 @@ export async function handleOAuth(
       guest.usernameSet = false;
       guest.username = await generateUniqueUsername(name || normalizedEmail?.split("@")[0] || `user${uid.slice(-6)}`);
       if (!guest.publicId) guest.publicId = await generatePublicId();
+      addLinkedProvider(guest, mappedProvider);
       user = guest;
       converted = true;
     }
@@ -87,13 +99,20 @@ export async function handleOAuth(
     user = await User.create({
       username, usernameSet: false, name: name || null,
       email: normalizedEmail || null, firebaseUid: uid, publicId: await generatePublicId(),
-      provider: mappedProvider, avatar: picture || null, role: "free", isVerified: true,
+      provider: mappedProvider, firebaseProvider: mappedProvider, avatar: picture || null,
+      role: "free", isVerified: true, linkedProviders: [mappedProvider],
     });
   } else if (user.role !== "guest" && !user.publicId) {
     // Backfill a publicId for pre-existing real accounts that never had one.
     // publicId is ONLY ever set when missing — it is permanent and never changes.
     user.publicId = await generatePublicId();
   }
+  // Always make sure the provider used for THIS login is recorded as linked.
+  // This covers the firebaseUid fast-path above, which skips the email-merge
+  // block, so subsequent Google/Facebook logins aren't silently dropped from
+  // the linked-providers list. Email is linked whenever a password exists.
+  addLinkedProvider(user, mappedProvider);
+  if (user.password) addLinkedProvider(user, "email");
   user.lastLoginAt = new Date();
   await user.save({ validateBeforeSave: false });
   return { payload: authPayload(user), refreshToken: buildTokenPayload(user).refreshToken, converted };

@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import { Eye, EyeOff, X, Lock } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { notify } from '@/lib/toast'
 import { images } from '@/lib/utils'
 import { changePassword, forgotPassword, getCurrentUser } from '@/lib/auth/frontend-auth'
 
@@ -39,14 +39,14 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
       const res = await forgotPassword(user.email)
       if (res.success) {
         setForgotSent(true)
-        toast.success('Password reset link sent to your email')
+        notify.successKey('ACCOUNT_RESET_LINK_SENT')
       } else {
         setError(res.error || 'Failed to send reset email')
-        toast.error(res.error || 'Failed to send reset email')
+        notify.errorFromResult(res, 'ACCOUNT_RESET_EMAIL_FAILED')
       }
     } catch {
       setError('Failed to send reset email. Please try again.')
-      toast.error('Failed to send reset email. Please try again.')
+      notify.errorKey('ACCOUNT_RESET_EMAIL_FAILED_RETRY')
     } finally {
       setForgotLoading(false)
     }

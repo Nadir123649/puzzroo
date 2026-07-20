@@ -1,9 +1,13 @@
+import { notify } from '@/lib/toast'
+
 type RefreshCallback = (token: string) => void;
 let onRefresh: RefreshCallback | null = null;
 
 export function setOnRefresh(cb: RefreshCallback) {
   onRefresh = cb;
 }
+
+let sessionExpiredNotified = false;
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -43,19 +47,35 @@ export async function api<T = any>(
     headers["Content-Type"] = "application/json";
   }
 
-  let res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });
+  try {
+    let res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });
 
-  // Auto-refresh on 401
-  if (res.status === 401 && accessToken) {
-    const newToken = await refreshAccessToken();
-    if (newToken) {
-      localStorage.setItem("accessToken", newToken);
-      if (onRefresh) onRefresh(newToken);
-      headers["Authorization"] = `Bearer ${newToken}`;
-      res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });
+    // Auto-refresh on 401
+    if (res.status === 401 && accessToken) {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        localStorage.setItem("accessToken", newToken);
+        if (onRefresh) onRefresh(newToken);
+        headers["Authorization"] = `Bearer ${newToken}`;
+        res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });
+      } else if (!sessionExpiredNotified) {
+        sessionExpiredNotified = true;
+        notify.errorKey("SYSTEM_SESSION_EXPIRED");
+      }
     }
-  }
 
-  const json = await res.json();
-  return json;
+    if (res.status === 429 && !sessionExpiredNotified) {
+      notify.errorKey("SYSTEM_RATE_LIMITED");
+    }
+
+    const json = await res.json();
+    return json;
+  } catch {
+    // Network-level failure (offline / unreachable). Avoid duplicating the
+    // offline banner; only toast when we believe we're actually online.
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      notify.errorKey("SYSTEM_GENERIC_ERROR");
+    }
+    throw new Error("Network request failed");
+  }
 }

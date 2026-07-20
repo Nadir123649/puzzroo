@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Mail, Shield, Bell, BookOpen } from 'lucide-react'
+import { notify } from '@/lib/toast'
 
 interface EmailPreference {
   id: string
@@ -89,7 +90,16 @@ export default function EmailPreferencesPage() {
     const { updateEmailPreferences } = await import('@/lib/auth/frontend-auth')
     const prefsMap: Record<string, boolean> = {}
     updated.forEach(p => { prefsMap[p.id] = p.enabled })
-    updateEmailPreferences(prefsMap)
+    try {
+      const res = await updateEmailPreferences(prefsMap)
+      if (res) {
+        notify.successKey('ACCOUNT_PREFS_SAVED')
+      } else {
+        notify.errorKey('SYSTEM_GENERIC_ERROR')
+      }
+    } catch {
+      notify.errorKey('SYSTEM_GENERIC_ERROR')
+    }
   }
 
   return (

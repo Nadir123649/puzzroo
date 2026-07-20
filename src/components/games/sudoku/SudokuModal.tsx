@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { notify } from '@/lib/toast'
 
 interface SudokuModalProps {
   isOpen: boolean
@@ -41,7 +42,12 @@ export function SudokuModal({
     return () => window.removeEventListener('keydown', handleEsc)
   }, [isOpen, onPlayAgain])
 
-  // Lock body scroll when modal is open
+  // Fire a success toast when the win modal opens
+  useEffect(() => {
+    if (isOpen && type === 'win') {
+      notify.successKey('GAME_SOLVED')
+    }
+  }, [isOpen, type])
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'

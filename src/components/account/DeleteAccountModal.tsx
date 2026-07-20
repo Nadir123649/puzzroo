@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { X, AlertTriangle } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { notify } from '@/lib/toast'
 import { deleteAccount } from '@/lib/auth/frontend-auth'
 
 interface DeleteAccountModalProps {
@@ -29,17 +29,17 @@ export function DeleteAccountModal({ isOpen, onClose, onDeleted }: DeleteAccount
     try {
       const res = await deleteAccount()
       if (!res.success) {
-        toast.error(res.error || 'Failed to delete account')
+        notify.errorFromResult(res, 'ACCOUNT_DELETE_FAILED')
         setIsLoading(false)
         return
       }
-      toast.success('Your account has been deleted')
+      notify.successKey('ACCOUNT_DELETED')
       setIsLoading(false)
       setConfirmed(false)
       if (onDeleted) onDeleted()
       else handleClose()
     } catch {
-      toast.error('Failed to delete account. Please try again.')
+      notify.errorKey('ACCOUNT_DELETE_FAILED_RETRY')
       setIsLoading(false)
     }
   }

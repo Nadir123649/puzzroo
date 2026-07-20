@@ -1,0 +1,79 @@
+
+> puzzroo@0.1.0 dev
+> next dev -p 3000
+
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.18.185:3000
+- Environments: .env.local
+✓ Ready in 1621ms
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+ GET / 200 in 1679ms (next.js: 542ms, proxy.ts: 194ms, application-code: 943ms)
+ GET / 200 in 386ms (next.js: 58ms, proxy.ts: 29ms, application-code: 298ms)
+ GET /manifest.webmanifest 200 in 212ms (next.js: 182ms, application-code: 30ms)
+ GET /login 200 in 708ms (next.js: 114ms, proxy.ts: 26ms, application-code: 568ms)
+ GET /signup 200 in 357ms (next.js: 124ms, proxy.ts: 27ms, application-code: 206ms)
+ GET /login 200 in 176ms (next.js: 14ms, proxy.ts: 20ms, application-code: 143ms)
+ GET /login 200 in 162ms (next.js: 19ms, proxy.ts: 19ms, application-code: 125ms)
+ GET / 200 in 48ms (next.js: 15ms, proxy.ts: 9ms, application-code: 24ms)
+ GET / 200 in 89ms (next.js: 24ms, proxy.ts: 13ms, application-code: 52ms)
+ GET / 200 in 67ms (next.js: 11ms, proxy.ts: 32ms, application-code: 24ms)
+ GET / 200 in 29ms (next.js: 8ms, proxy.ts: 7ms, application-code: 15ms)
+ POST /api/v1/track 202 in 2.9s (next.js: 1205ms, application-code: 1673ms)
+ GET / 200 in 26ms (next.js: 6ms, proxy.ts: 3ms, application-code: 18ms)
+ GET / 200 in 66ms (next.js: 36ms, proxy.ts: 7ms, application-code: 24ms)
+ GET / 200 in 26ms (next.js: 8ms, proxy.ts: 4ms, application-code: 14ms)
+ GET / 200 in 27ms (next.js: 11ms, proxy.ts: 4ms, application-code: 13ms)
+ POST /api/v1/track 202 in 132ms (next.js: 6ms, application-code: 126ms)
+ GET / 200 in 30ms (next.js: 11ms, proxy.ts: 4ms, application-code: 15ms)
+ GET / 200 in 32ms (next.js: 11ms, proxy.ts: 5ms, application-code: 15ms)
+ GET / 200 in 25ms (next.js: 10ms, proxy.ts: 3ms, application-code: 12ms)
+ GET / 200 in 27ms (next.js: 7ms, proxy.ts: 5ms, application-code: 15ms)
+ GET / 200 in 33ms (next.js: 10ms, proxy.ts: 5ms, application-code: 17ms)
+ GET / 200 in 35ms (next.js: 6ms, proxy.ts: 5ms, application-code: 24ms)
+ GET / 200 in 19ms (next.js: 6ms, proxy.ts: 3ms, application-code: 10ms)
+ GET / 200 in 17ms (next.js: 5ms, proxy.ts: 3ms, application-code: 9ms)
+ GET / 200 in 22ms (next.js: 8ms, proxy.ts: 3ms, application-code: 11ms)
+ GET / 200 in 19ms (next.js: 6ms, proxy.ts: 3ms, application-code: 9ms)
+ GET / 200 in 21ms (next.js: 8ms, proxy.ts: 4ms, application-code: 10ms)
+ GET / 200 in 18ms (next.js: 6ms, proxy.ts: 3ms, application-code: 10ms)
+ GET / 200 in 20ms (next.js: 10ms, proxy.ts: 3ms, application-code: 7ms)
+ GET / 200 in 19ms (next.js: 6ms, proxy.ts: 3ms, application-code: 10ms)
+ GET / 200 in 17ms (next.js: 5ms, proxy.ts: 3ms, application-code: 9ms)
+ POST /api/v1/track 202 in 121ms (next.js: 3ms, application-code: 118ms)
+ GET / 200 in 17ms (next.js: 5ms, proxy.ts: 3ms, application-code: 8ms)
+ GET / 200 in 19ms (next.js: 7ms, proxy.ts: 3ms, application-code: 9ms)
+ GET / 200 in 22ms (next.js: 5ms, proxy.ts: 8ms, application-code: 9ms)
+ POST /api/v1/track 202 in 155ms (next.js: 15ms, application-code: 139ms)
+ GET /api/v1/health 200 in 86ms (next.js: 68ms, application-code: 18ms)
+ GET /api/v1/users/me 401 in 3.7s (next.js: 3.7s, application-code: 27ms)
+ GET /api/v1/games 404 in 1642ms (next.js: 1520ms, application-code: 121ms)
+ GET /api/v1/auth/refresh 404 in 6.1s (next.js: 6.1s, application-code: 15ms)
+ GET /api/v1/subscriptions 404 in 111ms (next.js: 20ms, application-code: 92ms)
+ GET /api/v1/preferences 401 in 586ms (next.js: 566ms, application-code: 20ms)
+ GET /api/v1/daily-challenge 404 in 175ms (next.js: 22ms, application-code: 153ms)
+ POST /api/v1/auth/refresh 401 in 48ms (next.js: 20ms, application-code: 28ms)
+ POST /api/v1/auth/login 401 in 139ms (next.js: 17ms, application-code: 122ms)
+ POST /api/v1/auth/register 201 in 9.4s (next.js: 6ms, application-code: 9.4s)
+ POST /api/v1/subscriptions/checkout 401 in 2.7s (next.js: 2.7s, application-code: 23ms)
+ GET /api/v1/games/sudoku 401 in 3.1s (next.js: 3.1s, application-code: 12ms)
+ GET /api/v1/health 200 in 18ms (next.js: 8ms, application-code: 10ms)
+ POST /api/v1/auth/register 201 in 3.8s (next.js: 11ms, application-code: 3.7s)
+ POST /api/v1/auth/login 403 in 228ms (next.js: 12ms, application-code: 215ms)
+ GET /api/v1/games 404 in 92ms (next.js: 12ms, application-code: 80ms)
+ GET /api/v1/games/stats 401 in 28ms (next.js: 16ms, application-code: 12ms)
+ GET /api/v1/subscriptions/plans 200 in 33ms (next.js: 20ms, application-code: 13ms)
+ GET /api/v1/daily-challenge 404 in 116ms (next.js: 18ms, application-code: 98ms)
+ POST /api/v1/contact 400 in 587ms (next.js: 563ms, application-code: 24ms)
+ GET /api/v1/preferences 401 in 18ms (next.js: 5ms, application-code: 13ms)
+  Reload env: .env.local
+⚠ Found a change in next.config.js. Restarting the server to apply the changes...
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.18.185:3000
+- Environments: .env.local
+✓ Ready in 1677ms
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+[?25h

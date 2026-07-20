@@ -12,6 +12,14 @@ function getUserId(request: NextRequest) {
   return { userId: result.user.id };
 }
 
+function sanitizePrefs(p: any) {
+  const o = p && typeof p.toObject === "function" ? p.toObject() : { ...(p || {}) };
+  delete o._id;
+  delete o.__v;
+  delete o.userId;
+  return o;
+}
+
 export async function GET(request: NextRequest) {
   await connectDB();
 
@@ -23,7 +31,7 @@ export async function GET(request: NextRequest) {
     if (!prefs) {
       prefs = await EmailPreference.create({ userId: userResult.userId });
     }
-    return successResponse(prefs);
+    return successResponse(sanitizePrefs(prefs));
   } catch (error: any) {
     console.error(error);
     return errorResponse(500, "internal_error", "Internal Server Error");
@@ -56,7 +64,7 @@ export async function PATCH(request: NextRequest) {
       { $set: updates },
       { new: true, upsert: true, runValidators: true }
     );
-    return successResponse(prefs);
+    return successResponse(sanitizePrefs(prefs));
   } catch (error: any) {
     console.error(error);
     return errorResponse(500, "internal_error", "Internal Server Error");

@@ -101,3 +101,12 @@
 [track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
  POST /api/v1/track 202 in 15ms (next.js: 4ms, application-code: 11ms)
  GET /login 200 in 124ms (next.js: 52ms, proxy.ts: 3ms, application-code: 70ms)
+ GET / 200 in 157ms (next.js: 10ms, proxy.ts: 4ms, application-code: 144ms)
+ GET /manifest.webmanifest 200 in 20ms (next.js: 7ms, application-code: 13ms)
+ GET / 200 in 15ms (next.js: 5ms, proxy.ts: 3ms, application-code: 8ms)
+ GET / 200 in 17ms (next.js: 5ms, proxy.ts: 2ms, application-code: 10ms)
+ GET / 200 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
+ GET / 200 in 16ms (next.js: 6ms, proxy.ts: 2ms, application-code: 8ms)
+ GET / 200 in 15ms (next.js: 5ms, proxy.ts: 2ms, application-code: 8ms)
+[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+ POST /api/v1/track 202 in 16ms (next.js: 4ms, application-code: 11ms)

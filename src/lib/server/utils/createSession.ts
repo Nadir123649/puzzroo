@@ -13,7 +13,7 @@ function getClientIp(request: NextRequest): string | null {
   return null;
 }
 
-export async function createSession(request: NextRequest, userId: string, markOthersInactive = true) {
+export async function createSession(request: NextRequest, userId: string, provider?: string, markOthersInactive = true) {
   const ip = getClientIp(request);
   const ua = request.headers.get("user-agent");
   const parsed = parseUserAgent(ua);
@@ -34,6 +34,7 @@ export async function createSession(request: NextRequest, userId: string, markOt
     deviceType: parsed.deviceType,
     location,
     isCurrent: true,
+    provider: provider || null,
     lastSeenAt: new Date(),
   });
 

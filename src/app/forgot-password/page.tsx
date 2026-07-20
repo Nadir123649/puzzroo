@@ -108,7 +108,7 @@ export default function ForgotPasswordPage() {
                   className={`w-full h-[48px] px-4 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                     error ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                   }`}
-                  placeholder="name@example.com"
+                  placeholder="Enter your email"
                   autoComplete="email"
                 />
                 {error && (

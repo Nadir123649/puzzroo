@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { notify, ToastMessages } from '@/lib/toast'
 import { images } from '@/lib/utils'
 import { RedirectIfAuthenticated } from '@/components/auth/RedirectIfAuthenticated'
 import { Button } from '@/components/ui/button'
@@ -79,10 +79,10 @@ export default function SignupPage() {
     setIsSubmitting(false)
 
     if (result.success) {
-      toast.success('Account created! Check your email for verification.')
+      notify.successKey('AUTH_SIGNUP_SUCCESS')
       setIsSuccess(true)
     } else {
-      toast.error(result.error || 'Registration failed')
+      notify.errorFromResult(result, 'AUTH_SIGNUP_FAILED')
       if (result.code === 'username_taken') {
         setErrors({ username: result.error })
       } else {
@@ -152,7 +152,7 @@ export default function SignupPage() {
                     setUsername(lowered.replace(/[^a-z0-9._-]/g, ''))
                     if (hasInvalid) {
                       setUsernameHint(true)
-                      toast.error('Username can only use lowercase letters, numbers, . _ or -', { id: 'username-invalid' })
+                      notify.errorKey('AUTH_USERNAME_INVALID', undefined, { id: 'username-invalid' })
                     } else {
                       setUsernameHint(false)
                     }
@@ -161,7 +161,7 @@ export default function SignupPage() {
                   className={`w-full h-[48px] px-4 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                     errors.username || usernameHint ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                   }`}
-                  placeholder="john_doe"
+                  placeholder="Enter your username"
                   autoComplete="username"
                 />
                 {errors.username ? (
@@ -191,7 +191,7 @@ export default function SignupPage() {
                   className={`w-full h-[48px] px-4 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                     errors.name ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                   }`}
-                  placeholder="John Doe"
+                  placeholder="Enter your name"
                   autoComplete="name"
                 />
                 {errors.name && (
@@ -217,7 +217,7 @@ export default function SignupPage() {
                   className={`w-full h-[48px] px-4 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                     errors.email ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                   }`}
-                  placeholder="name@example.com"
+                  placeholder="Enter your email"
                   autoComplete="email"
                 />
                 {errors.email && (
@@ -245,7 +245,7 @@ export default function SignupPage() {
                     className={`w-full h-[48px] pl-4 pr-11 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                       errors.password ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                     }`}
-                    placeholder="6-16 characters"
+                    placeholder="Enter your password"
                     autoComplete="new-password"
                   />
                   <button
@@ -292,8 +292,8 @@ export default function SignupPage() {
                       body: JSON.stringify({ firebaseToken }),
                     })
                     if (!res.success) {
-                      toast.error('Google signup failed')
-                      setErrors({ email: 'Google signup failed' })
+                      notify.errorKey('AUTH_OAUTH_FAILED')
+                      setErrors({ email: ToastMessages.AUTH_OAUTH_FAILED })
                       setIsSubmitting(false)
                       return
                     }
@@ -310,12 +310,13 @@ export default function SignupPage() {
                       role: payload.user.role || "free",
                       avatar: payload.user.avatar,
                       provider: payload.user.provider || "google",
+                      linkedProviders: payload.user.linkedProviders || [],
                     }
                     localStorage.setItem('accessToken', payload.token.accessToken)
                     localStorage.setItem('puzzroo_auth', 'true')
                     localStorage.setItem('puzzroo_user', JSON.stringify(userData))
                     window.dispatchEvent(new Event('auth-change'))
-                    toast.success('Welcome!')
+                    notify.successKey('AUTH_WELCOME_OAUTH')
                     setIsSubmitting(false)
                     setIsSuccess(true)
                     setTimeout(() => {
@@ -324,8 +325,8 @@ export default function SignupPage() {
                   } catch (err: any) {
                     setIsSubmitting(false)
                     if (err.code !== 'auth/popup-closed-by-user') {
-                      toast.error(err.message || 'Google signup failed')
-                      setErrors({ email: err.message || 'Google signup failed' })
+                      notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
+                      setErrors({ email: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }
                   }
                 }}
@@ -353,8 +354,8 @@ export default function SignupPage() {
                       body: JSON.stringify({ firebaseToken }),
                     })
                     if (!res.success) {
-                      toast.error('Facebook signup failed')
-                      setErrors({ email: 'Facebook signup failed' })
+                      notify.errorKey('AUTH_OAUTH_FAILED')
+                      setErrors({ email: ToastMessages.AUTH_OAUTH_FAILED })
                       setIsSubmitting(false)
                       return
                     }
@@ -376,7 +377,7 @@ export default function SignupPage() {
                     localStorage.setItem('puzzroo_auth', 'true')
                     localStorage.setItem('puzzroo_user', JSON.stringify(userData))
                     window.dispatchEvent(new Event('auth-change'))
-                    toast.success('Welcome!')
+                    notify.successKey('AUTH_WELCOME_OAUTH')
                     setIsSubmitting(false)
                     setIsSuccess(true)
                     setTimeout(() => {
@@ -385,8 +386,8 @@ export default function SignupPage() {
                   } catch (err: any) {
                     setIsSubmitting(false)
                     if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-                      toast.error(err.message || 'Facebook signup failed')
-                      setErrors({ email: err.message || 'Facebook signup failed' })
+                      notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
+                      setErrors({ email: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }
                   }
                 }}

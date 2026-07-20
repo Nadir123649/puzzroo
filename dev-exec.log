@@ -1,0 +1,406 @@
+
+> puzzroo@0.1.0 dev
+> next dev -p 3000
+
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.18.185:3000
+- Environments: .env.local
+✓ Ready in 865ms
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+ GET / 200 in 828ms (next.js: 300ms, proxy.ts: 127ms, application-code: 401ms)
+ GET /manifest.webmanifest 200 in 207ms (next.js: 185ms, application-code: 22ms)
+ GET / 200 in 24ms (next.js: 6ms, proxy.ts: 4ms, application-code: 15ms)
+ GET / 200 in 20ms (next.js: 6ms, proxy.ts: 4ms, application-code: 10ms)
+ GET / 200 in 21ms (next.js: 7ms, proxy.ts: 3ms, application-code: 10ms)
+ GET / 200 in 31ms (next.js: 8ms, proxy.ts: 10ms, application-code: 14ms)
+ GET / 200 in 18ms (next.js: 5ms, proxy.ts: 3ms, application-code: 9ms)
+ GET / 200 in 18ms (next.js: 8ms, proxy.ts: 3ms, application-code: 8ms)
+ POST /api/v1/track 202 in 3.1s (next.js: 890ms, application-code: 2.2s)
+ GET / 200 in 25ms (next.js: 7ms, proxy.ts: 3ms, application-code: 15ms)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+ POST /api/v1/track 202 in 143ms (next.js: 4ms, application-code: 138ms)
+ GET /api/v1/health 200 in 78ms (next.js: 59ms, application-code: 19ms)
+ GET / 200 in 621ms (next.js: 154ms, proxy.ts: 85ms, application-code: 382ms)
+ GET / 200 in 305ms (next.js: 9ms, proxy.ts: 4ms, application-code: 292ms)
+ GET / 200 in 263ms (next.js: 77ms, proxy.ts: 22ms, application-code: 164ms)
+ GET / 200 in 268ms (next.js: 20ms, proxy.ts: 21ms, application-code: 227ms)
+ GET / 200 in 261ms (next.js: 146ms, proxy.ts: 19ms, application-code: 96ms)
+ GET /manifest.webmanifest 200 in 64ms (next.js: 51ms, application-code: 13ms)
+ POST /api/v1/track 202 in 225ms (next.js: 88ms, application-code: 136ms)
+ POST /api/v1/auth/register 201 in 4.5s (next.js: 3.8s, application-code: 652ms)
+ POST /api/v1/auth/login 200 in 724ms (next.js: 71ms, application-code: 653ms)
+ GET /api/v1/games 401 in 2.8s (next.js: 2.7s, application-code: 18ms)
+ GET / 200 in 283ms (next.js: 169ms, proxy.ts: 28ms, application-code: 86ms)
+ GET /manifest.webmanifest 200 in 66ms (next.js: 53ms, application-code: 14ms)
+ POST /api/v1/track 202 in 259ms (next.js: 94ms, application-code: 166ms)
+ GET /api/v1/subscriptions/plans 200 in 2.8s (next.js: 2.8s, application-code: 9ms)
+ GET /api/v1/daily-challenge 404 in 255ms (next.js: 51ms, application-code: 204ms)
+ GET / 200 in 2.9s (next.js: 2.5s, proxy.ts: 37ms, application-code: 328ms)
+ GET / 200 in 273ms (next.js: 15ms, proxy.ts: 8ms, application-code: 250ms)
+ GET / 200 in 212ms (next.js: 117ms, proxy.ts: 15ms, application-code: 80ms)
+ GET / 200 in 223ms (next.js: 24ms, proxy.ts: 14ms, application-code: 185ms)
+ GET / 200 in 221ms (next.js: 59ms, proxy.ts: 12ms, application-code: 150ms)
+ GET / 200 in 219ms (next.js: 91ms, proxy.ts: 12ms, application-code: 116ms)
+ GET / 200 in 51ms (next.js: 11ms, proxy.ts: 4ms, application-code: 36ms)
+ GET /manifest.webmanifest 200 in 65ms (next.js: 55ms, application-code: 10ms)
+ POST /api/v1/track 202 in 265ms (next.js: 128ms, application-code: 137ms)
+ GET / 200 in 391ms (next.js: 227ms, proxy.ts: 29ms, application-code: 134ms)
+ GET / 200 in 87ms (next.js: 11ms, proxy.ts: 4ms, application-code: 73ms)
+ GET / 200 in 48ms (next.js: 7ms, proxy.ts: 6ms, application-code: 35ms)
+ GET /manifest.webmanifest 200 in 39ms (next.js: 31ms, application-code: 8ms)
+ GET / 200 in 817ms (next.js: 496ms, proxy.ts: 34ms, application-code: 286ms)
+ GET /manifest.webmanifest 200 in 47ms (next.js: 37ms, application-code: 10ms)
+ POST /api/v1/track 202 in 306ms (next.js: 154ms, application-code: 152ms)
+ GET / 200 in 533ms (next.js: 400ms, proxy.ts: 32ms, application-code: 101ms)
+ GET /manifest.webmanifest 200 in 51ms (next.js: 41ms, application-code: 10ms)
+ GET / 200 in 527ms (next.js: 416ms, proxy.ts: 31ms, application-code: 80ms)
+ GET /manifest.webmanifest 200 in 58ms (next.js: 40ms, application-code: 18ms)
+ GET / 200 in 586ms (next.js: 464ms, proxy.ts: 32ms, application-code: 90ms)
+ GET /manifest.webmanifest 200 in 52ms (next.js: 40ms, application-code: 12ms)
+ POST /api/v1/track 202 in 278ms (next.js: 92ms, application-code: 187ms)
+ GET / 200 in 473ms (next.js: 374ms, proxy.ts: 38ms, application-code: 61ms)
+ GET /manifest.webmanifest 200 in 72ms (next.js: 63ms, application-code: 9ms)
+⨯ The file "./src\proxy.ts" must export a function, either as a default export or as a named "proxy" export.
+This function is what Next.js runs for every request handled by this proxy (previously called middleware).
+
+Why this happens:
+- You are migrating from `middleware` to `proxy`, but haven't updated the exported function.
+- The file exists but doesn't export a function.
+- The export is not a function (e.g., an object or constant).
+- There's a syntax error preventing the export from being recognized.
+
+To fix it:
+- Ensure this file has either a default or "proxy" function export.
+
+Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+⨯ [Error: The Proxy file "/proxy" must export a function named `proxy` or a default function.]
+ POST /api/v1/track 500 in 1553ms (next.js: 852ms, application-code: 701ms)
+ GET / 404 in 1316ms (next.js: -54346µs, proxy.ts: 1300ms, application-code: 70ms)
+⨯ [Error: The Proxy file "/proxy" must export a function named `proxy` or a default function.]
+ GET / 404 in 166ms (next.js: -64799µs, proxy.ts: 135ms, application-code: 95ms)
+⨯ [Error: The Proxy file "/proxy" must export a function named `proxy` or a default function.]
+⨯ [Error: The Proxy file "/proxy" must export a function named `proxy` or a default function.]
+ GET / 404 in 162ms (next.js: -41751µs, proxy.ts: 145ms, application-code: 59ms)
+ GET / 404 in 288ms (next.js: -65080µs, proxy.ts: 260ms, application-code: 92ms)
+⨯ [Error: The Proxy file "/proxy" must export a function named `proxy` or a default function.]
+[browser] Uncaught Error: ./src/proxy.ts
+Proxy is missing expected function export name
+This function is what Next.js runs for every request handled by this proxy (previously called middleware).
+
+Why this happens:
+- You are migrating from `middleware` to `proxy`, but haven't updated the exported function.
+- The file exists but doesn't export a function.
+- The export is not a function (e.g., an object or constant).
+- There's a syntax error preventing the export from being recognized.
+
+To fix it:
+- Ensure this file has either a default or "proxy" function export.
+
+Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+
+✓ Compiled in 632ms
+ GET /manifest.webmanifest 200 in 114ms (next.js: 96ms, application-code: 18ms)
+ GET / 200 in 1631ms (next.js: 614ms, proxy.ts: 89ms, application-code: 929ms)
+ POST /api/v1/track 202 in 229ms (next.js: 82ms, application-code: 148ms)
+ GET /api/v1/health 200 in 71ms (next.js: 60ms, application-code: 11ms)
+ POST /api/v1/contact 201 in 201ms (next.js: 81ms, application-code: 120ms)
+ POST /api/v1/auth/register 201 in 884ms (next.js: 198ms, application-code: 685ms)
+ POST /api/v1/auth/login 200 in 649ms (next.js: 7ms, application-code: 641ms)
+ POST /api/v1/games/progress 401 in 149ms (next.js: 122ms, application-code: 27ms)
+ GET /api/v1/games/stats 401 in 15ms (next.js: 6ms, application-code: 9ms)
+ POST /api/v1/auth/register 201 in 635ms (next.js: 12ms, application-code: 624ms)
+ POST /api/v1/auth/login 200 in 640ms (next.js: 6ms, application-code: 634ms)
+ POST /api/v1/auth/register 201 in 751ms (next.js: 18ms, application-code: 733ms)
+ POST /api/v1/auth/login 200 in 667ms (next.js: 4ms, application-code: 662ms)
+(node:5764) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ POST /api/v1/games/progress 200 in 376ms (next.js: 15ms, application-code: 361ms)
+ GET /api/v1/games/stats 200 in 234ms (next.js: 8ms, application-code: 226ms)
+ GET /api/v1/subscriptions/me 200 in 461ms (next.js: 211ms, application-code: 250ms)
+ GET /api/v1/users/me 200 in 3.1s (next.js: 3.0s, application-code: 106ms)
+ GET / 200 in 444ms (next.js: 246ms, proxy.ts: 127ms, application-code: 71ms)
+ GET /manifest.webmanifest 200 in 108ms (next.js: 95ms, application-code: 13ms)
+ GET / 200 in 730ms (next.js: 379ms, proxy.ts: 41ms, application-code: 309ms)
+ GET /manifest.webmanifest 200 in 78ms (next.js: 62ms, application-code: 16ms)
+ POST /api/v1/track 202 in 367ms (next.js: 152ms, application-code: 215ms)
+ POST /api/v1/track 202 in 133ms (next.js: 8ms, application-code: 125ms)
+ POST /api/v1/auth/register 201 in 836ms (next.js: 124ms, application-code: 712ms)
+ POST /api/v1/auth/login 200 in 666ms (next.js: 5ms, application-code: 661ms)
+⨯ SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+    at JSON.parse (<anonymous>)
+    at async POST (src\app\api\v1\subscriptions\[[...slug]]\route.ts:54:16)
+  52 |   const slug = (await params).slug;
+  53 |   const action = slug?.[0];
+> 54 |   const body = await request.json();
+     |                ^
+  55 |
+  56 |   await connectDB();
+  57 |
+ POST /api/v1/subscriptions/checkout 500 in 388ms (next.js: 77ms, application-code: 311ms)
+⨯ SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+    at JSON.parse (<anonymous>)
+    at async POST (src\app\api\v1\subscriptions\[[...slug]]\route.ts:54:16)
+  52 |   const slug = (await params).slug;
+  53 |   const action = slug?.[0];
+> 54 |   const body = await request.json();
+     |                ^
+  55 |
+  56 |   await connectDB();
+  57 |
+ POST /api/v1/subscriptions/checkout 500 in 182ms (next.js: 14ms, application-code: 168ms)
+⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at async POST (src\app\api\v1\subscriptions\[[...slug]]\route.ts:54:16)
+  52 |   const slug = (await params).slug;
+  53 |   const action = slug?.[0];
+> 54 |   const body = await request.json();
+     |                ^
+  55 |
+  56 |   await connectDB();
+  57 |
+ POST /api/v1/subscriptions/cancel 500 in 149ms (next.js: 7ms, application-code: 142ms)
+ POST /api/v1/auth/refresh 200 in 118ms (next.js: 8ms, application-code: 110ms)
+ GET /api/v1/oauth/google 405 in 3.0s (next.js: 2.9s, application-code: 14ms)
+ GET / 200 in 424ms (next.js: 283ms, proxy.ts: 54ms, application-code: 87ms)
+ GET /manifest.webmanifest 200 in 161ms (next.js: 132ms, application-code: 29ms)
+ POST /api/v1/track 202 in 403ms (next.js: 187ms, application-code: 216ms)
+ POST /api/v1/auth/register 201 in 808ms (next.js: 164ms, application-code: 645ms)
+ POST /api/v1/auth/login 200 in 676ms (next.js: 10ms, application-code: 667ms)
+(node:5764) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ POST /api/v1/subscriptions/checkout 200 in 765ms (next.js: 180ms, application-code: 585ms)
+ POST /api/v1/subscriptions/checkout 500 in 174ms (next.js: 10ms, application-code: 164ms)
+ POST /api/v1/subscriptions/cancel 200 in 344ms (next.js: 7ms, application-code: 337ms)
+ GET /api/v1/subscriptions/me 200 in 205ms (next.js: 7ms, application-code: 198ms)
+ POST /api/v1/auth/register 201 in 597ms (next.js: 16ms, application-code: 580ms)
+ POST /api/v1/auth/login 200 in 618ms (next.js: 8ms, application-code: 610ms)
+ GET /api/v1/preferences 200 in 305ms (next.js: 84ms, application-code: 221ms)
+(node:5764) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ PATCH /api/v1/preferences 200 in 123ms (next.js: 6ms, application-code: 117ms)
+ GET /api/v1/users/me/activity 200 in 545ms (next.js: 377ms, application-code: 168ms)
+ GET /api/v1/users/me 200 in 355ms (next.js: 233ms, application-code: 123ms)
+ GET /api/v1/billing/history 200 in 3.8s (next.js: 3.7s, application-code: 124ms)
+ GET /api/v1/sessions 200 in 3.1s (next.js: 3.0s, application-code: 125ms)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+ POST /api/v1/track 202 in 183ms (next.js: 5ms, application-code: 178ms)
+ GET / 200 in 321ms (next.js: 10ms, proxy.ts: 8ms, application-code: 304ms)
+ GET /manifest.webmanifest 200 in 27ms (next.js: 15ms, application-code: 12ms)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+ GET / 200 in 22ms (next.js: 8ms, proxy.ts: 5ms, application-code: 10ms)
+ POST /api/v1/track 202 in 884ms (next.js: 4ms, application-code: 880ms)
+ GET / 200 in 135ms (next.js: 6ms, proxy.ts: 14ms, application-code: 115ms)
+ GET /manifest.webmanifest 200 in 12ms (next.js: 6ms, application-code: 6ms)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+ GET / 200 in 20ms (next.js: 7ms, proxy.ts: 4ms, application-code: 9ms)
+ GET / 200 in 21ms (next.js: 7ms, proxy.ts: 5ms, application-code: 10ms)
+ GET / 200 in 20ms (next.js: 6ms, proxy.ts: 5ms, application-code: 9ms)
+ GET / 200 in 21ms (next.js: 6ms, proxy.ts: 4ms, application-code: 10ms)
+ POST /api/v1/track 202 in 156ms (next.js: 15ms, application-code: 141ms)
+ GET /daily-challenge/tangram 200 in 1030ms (next.js: 983ms, proxy.ts: 4ms, application-code: 43ms)
+ GET /manifest.webmanifest 200 in 26ms (next.js: 11ms, application-code: 16ms)
+ POST /api/v1/track 202 in 115ms (next.js: 5ms, application-code: 110ms)
+ GET /manifest.webmanifest 200 in 18ms (next.js: 10ms, application-code: 9ms)
+ GET /game/tangram 200 in 537ms (next.js: 488ms, proxy.ts: 4ms, application-code: 45ms)
+ GET /manifest.webmanifest 200 in 27ms (next.js: 18ms, application-code: 9ms)
+ POST /api/v1/track 202 in 106ms (next.js: 5ms, application-code: 101ms)
+ GET / 200 in 31ms (next.js: 6ms, proxy.ts: 4ms, application-code: 21ms)
+ GET /manifest.webmanifest 200 in 25ms (next.js: 8ms, application-code: 17ms)
+ POST /api/v1/track 202 in 191ms (next.js: 13ms, application-code: 178ms)
+ GET / 200 in 28ms (next.js: 9ms, proxy.ts: 7ms, application-code: 12ms)
+ GET / 200 in 31ms (next.js: 11ms, proxy.ts: 10ms, application-code: 11ms)
+ GET / 200 in 37ms (next.js: 9ms, proxy.ts: 12ms, application-code: 16ms)
+ GET / 200 in 26ms (next.js: 6ms, proxy.ts: 8ms, application-code: 12ms)
+ POST /api/v1/track 202 in 206ms (next.js: 15ms, application-code: 191ms)
+ GET /login 200 in 2.2s (next.js: 483ms, proxy.ts: 203ms, application-code: 1513ms)
+ GET / 200 in 2.5s (next.js: 436ms, proxy.ts: 26ms, application-code: 2.0s)
+ GET /login 200 in 3.2s (next.js: 819ms, proxy.ts: 487ms, application-code: 1861ms)
+ GET /signup 200 in 864ms (next.js: 147ms, proxy.ts: 50ms, application-code: 667ms)
+ POST /api/v1/auth/register 201 in 2.3s (next.js: 564ms, application-code: 1766ms)
+ POST /api/v1/auth/login 200 in 1245ms (next.js: 40ms, application-code: 1205ms)
+ POST /api/v1/auth/refresh 200 in 155ms (next.js: 11ms, application-code: 144ms)
+ GET /api/v1/users/me 200 in 506ms (next.js: 227ms, application-code: 279ms)
+ GET /manifest.webmanifest 200 in 185ms (next.js: 163ms, application-code: 23ms)
+ GET / 200 in 2.7s (next.js: 80ms, proxy.ts: 39ms, application-code: 2.5s)
+ POST /api/v1/track 202 in 836ms (next.js: 148ms, application-code: 687ms)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+ GET /manifest.webmanifest 200 in 31ms (next.js: 17ms, application-code: 14ms)
+ GET / 200 in 2.2s (next.js: 315ms, proxy.ts: 738ms, application-code: 1160ms)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+ GET / 200 in 145ms (next.js: 31ms, proxy.ts: 39ms, application-code: 75ms)
+ GET / 200 in 147ms (next.js: 31ms, proxy.ts: 38ms, application-code: 78ms)
+ POST /api/v1/track 202 in 770ms (next.js: 17ms, application-code: 752ms)
+ GET /manifest.webmanifest 200 in 76ms (next.js: 49ms, application-code: 28ms)
+ GET / 200 in 1344ms (next.js: 52ms, proxy.ts: 67ms, application-code: 1225ms)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+ GET /signup 200 in 289ms (next.js: 46ms, proxy.ts: 26ms, application-code: 216ms)
+ GET /manifest.webmanifest 200 in 43ms (next.js: 22ms, application-code: 21ms)
+ POST /api/v1/track 200 in 11.6s (next.js: 25ms, application-code: 11.6s)
+ GET /manifest.webmanifest 200 in 76ms (next.js: 40ms, application-code: 36ms)
+ GET /manifest.webmanifest 200 in 37ms (next.js: 18ms, application-code: 19ms)
+ GET / 200 in 1417ms (next.js: 27ms, proxy.ts: 56ms, application-code: 1334ms)
+ GET /signup 200 in 280ms (next.js: 26ms, proxy.ts: 23ms, application-code: 231ms)
+ GET /manifest.webmanifest 200 in 61ms (next.js: 40ms, application-code: 21ms)
+ POST /api/v1/track 202 in 239ms (next.js: 11ms, application-code: 228ms)
+ POST /api/v1/oauth/google 200 in 1580ms (next.js: 121ms, application-code: 1458ms)
+ POST /api/v1/track 202 in 1282ms (next.js: 10ms, application-code: 1272ms)
+ GET /manifest.webmanifest 200 in 96ms (next.js: 62ms, application-code: 34ms)
+ GET / 200 in 1699ms (next.js: 37ms, proxy.ts: 20ms, application-code: 1642ms)
+ POST /api/v1/auth/refresh 200 in 190ms (next.js: 43ms, application-code: 147ms)
+ POST /api/v1/track 202 in 490ms (next.js: 37ms, application-code: 453ms)
+ POST /api/v1/auth/logout 200 in 179ms (next.js: 29ms, application-code: 150ms)
+ GET / 200 in 281ms (next.js: 75ms, proxy.ts: 89ms, application-code: 117ms)
+ GET / 200 in 498ms (next.js: 61ms, proxy.ts: 79ms, application-code: 358ms)
+ POST /api/v1/track 202 in 147ms (next.js: 16ms, application-code: 132ms)
+ GET /manifest.webmanifest 200 in 59ms (next.js: 41ms, application-code: 18ms)
+ GET /login 200 in 380ms (next.js: 58ms, proxy.ts: 29ms, application-code: 294ms)
+ GET /manifest.webmanifest 200 in 46ms (next.js: 28ms, application-code: 19ms)
+ POST /api/v1/track 202 in 153ms (next.js: 15ms, application-code: 138ms)
+ POST /api/v1/oauth/google 200 in 761ms (next.js: 32ms, application-code: 729ms)
+ POST /api/v1/track 202 in 416ms (next.js: 20ms, application-code: 396ms)
+ GET /manifest.webmanifest 200 in 66ms (next.js: 48ms, application-code: 18ms)
+ GET / 200 in 1881ms (next.js: 55ms, proxy.ts: 75ms, application-code: 1750ms)
+ POST /api/v1/auth/refresh 200 in 222ms (next.js: 58ms, application-code: 164ms)
+[browser] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+ POST /api/v1/track 202 in 14.4s (next.js: 48ms, application-code: 14.4s)
+ POST /api/v1/track 202 in 695ms (next.js: 208ms, application-code: 487ms)
+ GET /account-information 200 in 3.2s (next.js: 1915ms, proxy.ts: 722ms, application-code: 567ms)
+ GET /manifest.webmanifest 200 in 90ms (next.js: 38ms, application-code: 52ms)
+ GET /api/v1/games/stats 200 in 1037ms (next.js: 153ms, application-code: 885ms)
+ GET /api/v1/users/me 200 in 763ms (next.js: 391ms, application-code: 372ms)
+ GET /api/v1/games/stats 200 in 462ms (next.js: 32ms, application-code: 430ms)
+ GET /api/v1/sessions 200 in 2.2s (next.js: 292ms, application-code: 1918ms)
+ GET /api/v1/sessions 200 in 176ms (next.js: 18ms, application-code: 157ms)
+ GET /api/v1/users/me 200 in 1257ms (next.js: 79ms, application-code: 1178ms)
+ POST /api/v1/track 202 in 565ms (next.js: 19ms, application-code: 547ms)
+(node:5764) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ PATCH /api/v1/users/me 200 in 242ms (next.js: 23ms, application-code: 218ms)
+ POST /api/v1/auth/logout 200 in 356ms (next.js: 39ms, application-code: 316ms)
+ GET / 200 in 709ms (next.js: 71ms, proxy.ts: 133ms, application-code: 505ms)
+ POST /api/v1/track 202 in 167ms (next.js: 22ms, application-code: 145ms)
+ GET / 200 in 795ms (next.js: 94ms, proxy.ts: 58ms, application-code: 643ms)
+ GET /manifest.webmanifest 200 in 31ms (next.js: 15ms, application-code: 16ms)
+ POST /api/v1/track 202 in 159ms (next.js: 20ms, application-code: 139ms)
+ GET /login 200 in 552ms (next.js: 68ms, proxy.ts: 52ms, application-code: 433ms)
+ GET /manifest.webmanifest 200 in 43ms (next.js: 20ms, application-code: 22ms)
+ POST /api/v1/auth/login 200 in 1249ms (next.js: 10ms, application-code: 1239ms)
+ POST /api/v1/track 202 in 590ms (next.js: 12ms, application-code: 578ms)
+ GET /manifest.webmanifest 200 in 76ms (next.js: 56ms, application-code: 21ms)
+ GET / 200 in 1928ms (next.js: 33ms, proxy.ts: 52ms, application-code: 1842ms)
+ POST /api/v1/auth/refresh 200 in 267ms (next.js: 75ms, application-code: 192ms)
+ POST /api/v1/track 202 in 549ms (next.js: 26ms, application-code: 523ms)
+ GET /account-information 200 in 970ms (next.js: 72ms, proxy.ts: 33ms, application-code: 865ms)
+ GET /api/v1/users/me 200 in 491ms (next.js: 45ms, application-code: 445ms)
+ GET /api/v1/sessions 200 in 501ms (next.js: 175ms, application-code: 326ms)
+ GET /api/v1/games/stats 200 in 711ms (next.js: 79ms, application-code: 632ms)
+ GET /manifest.webmanifest 200 in 183ms (next.js: 156ms, application-code: 27ms)
+ POST /api/v1/track 202 in 1118ms (next.js: 135ms, application-code: 983ms)
+ GET /api/v1/sessions 200 in 722ms (next.js: 249ms, application-code: 473ms)
+ GET /api/v1/users/me 200 in 768ms (next.js: 212ms, application-code: 556ms)
+ GET /api/v1/games/stats 200 in 885ms (next.js: 265ms, application-code: 620ms)
+ GET /manifest.webmanifest 200 in 93ms (next.js: 70ms, application-code: 24ms)
+ GET / 200 in 1134ms (next.js: 62ms, proxy.ts: 26ms, application-code: 1045ms)
+ POST /api/v1/auth/refresh 200 in 534ms (next.js: 63ms, application-code: 471ms)
+ POST /api/v1/track 202 in 736ms (next.js: 22ms, application-code: 714ms)
+ GET /account-information 200 in 476ms (next.js: 51ms, proxy.ts: 48ms, application-code: 377ms)
+ GET /api/v1/sessions 200 in 453ms (next.js: 90ms, application-code: 363ms)
+ GET /api/v1/users/me 200 in 474ms (next.js: 147ms, application-code: 326ms)
+ GET /api/v1/games/stats 200 in 752ms (next.js: 41ms, application-code: 711ms)
+ GET /manifest.webmanifest 200 in 107ms (next.js: 80ms, application-code: 27ms)
+ GET /api/v1/sessions 200 in 347ms (next.js: 63ms, application-code: 284ms)
+ GET /api/v1/users/me 200 in 433ms (next.js: 119ms, application-code: 314ms)
+ POST /api/v1/track 202 in 1042ms (next.js: 83ms, application-code: 960ms)
+ GET /api/v1/games/stats 200 in 417ms (next.js: 77ms, application-code: 341ms)
+ POST /api/v1/auth/change-password 200 in 1969ms (next.js: 27ms, application-code: 1942ms)
+ POST /api/v1/auth/logout 200 in 197ms (next.js: 56ms, application-code: 141ms)
+ POST /api/v1/track 202 in 269ms (next.js: 61ms, application-code: 208ms)
+ GET / 200 in 954ms (next.js: 126ms, proxy.ts: 141ms, application-code: 687ms)
+ GET / 200 in 696ms (next.js: 97ms, proxy.ts: 90ms, application-code: 509ms)
+ GET /manifest.webmanifest 200 in 46ms (next.js: 29ms, application-code: 17ms)
+ POST /api/v1/track 202 in 201ms (next.js: 17ms, application-code: 184ms)
+ GET /login 200 in 583ms (next.js: 61ms, proxy.ts: 53ms, application-code: 469ms)
+ GET /manifest.webmanifest 200 in 56ms (next.js: 32ms, application-code: 24ms)
+ POST /api/v1/auth/login 401 in 632ms (next.js: 48ms, application-code: 585ms)
+ POST /api/v1/track 202 in 155ms (next.js: 16ms, application-code: 139ms)
+ POST /api/v1/auth/login 200 in 2.3s (next.js: 45ms, application-code: 2.2s)
+ POST /api/v1/track 202 in 2.1s (next.js: 21ms, application-code: 2.1s)
+ GET /manifest.webmanifest 200 in 61ms (next.js: 34ms, application-code: 27ms)
+ GET / 200 in 1731ms (next.js: 40ms, proxy.ts: 76ms, application-code: 1615ms)
+ POST /api/v1/auth/refresh 200 in 174ms (next.js: 36ms, application-code: 138ms)
+ POST /api/v1/track 202 in 403ms (next.js: 19ms, application-code: 385ms)
+ GET /account-information 200 in 632ms (next.js: 60ms, proxy.ts: 40ms, application-code: 531ms)
+ GET /api/v1/sessions 200 in 539ms (next.js: 116ms, application-code: 423ms)
+ GET /api/v1/users/me 200 in 735ms (next.js: 237ms, application-code: 498ms)
+ GET /api/v1/games/stats 200 in 776ms (next.js: 51ms, application-code: 725ms)
+ GET /manifest.webmanifest 200 in 107ms (next.js: 67ms, application-code: 40ms)
+ GET /api/v1/sessions 200 in 649ms (next.js: 184ms, application-code: 465ms)
+ GET /api/v1/users/me 200 in 492ms (next.js: 175ms, application-code: 317ms)
+ GET /api/v1/games/stats 200 in 820ms (next.js: 229ms, application-code: 591ms)
+ POST /api/v1/track 202 in 537ms (next.js: 33ms, application-code: 504ms)
+(node:5764) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ PATCH /api/v1/users/me 200 in 1048ms (next.js: 216ms, application-code: 832ms)
+ GET /admin/tracking 200 in 2.7s (next.js: 1511ms, proxy.ts: 577ms, application-code: 628ms)
+ GET /admin/tracking 200 in 410ms (next.js: 63ms, proxy.ts: 71ms, application-code: 276ms)
+ GET /manifest.webmanifest 200 in 37ms (next.js: 24ms, application-code: 13ms)
+ POST /api/v1/track 202 in 345ms (next.js: 11ms, application-code: 334ms)
+ GET /api/v1/analytics/user?q=smoke_98081&page=1&limit=50 200 in 12.9s (next.js: 10.7s, application-code: 2.3s)
+ POST /api/v1/track 202 in 503ms (next.js: 75ms, application-code: 427ms)
+ GET /api/v1/analytics/user?q=927-575-812-8&page=1&limit=50 200 in 1278ms (next.js: 34ms, application-code: 1244ms)
+ GET /api/v1/analytics/user?q=valkyrie&page=1&limit=50 200 in 452ms (next.js: 32ms, application-code: 420ms)
+ GET /api/v1/analytics/user?q=valkyrie&page=2&limit=50 200 in 1169ms (next.js: 65ms, application-code: 1104ms)
+ GET /api/v1/analytics/user?q=hi.03004500%40gmail.com&page=1&limit=50 200 in 407ms (next.js: 29ms, application-code: 378ms)
+ GET /api/v1/analytics/user?q=hassan_hereee&page=1&limit=50 200 in 709ms (next.js: 30ms, application-code: 680ms)
+ GET /api/v1/analytics/user?q=hassan_hereee&page=2&limit=50 200 in 418ms (next.js: 55ms, application-code: 363ms)
+ POST /api/v1/track 202 in 336ms (next.js: 7ms, application-code: 328ms)
+ GET /billing-history 200 in 2.4s (next.js: 1719ms, proxy.ts: 68ms, application-code: 595ms)
+ GET /manifest.webmanifest 200 in 34ms (next.js: 19ms, application-code: 15ms)
+ GET /api/v1/billing/history 200 in 506ms (next.js: 198ms, application-code: 309ms)
+ GET /api/v1/billing/history 200 in 140ms (next.js: 20ms, application-code: 120ms)
+ POST /api/v1/track 202 in 411ms (next.js: 13ms, application-code: 398ms)
+ GET /email-preferences 200 in 2.0s (next.js: 1599ms, proxy.ts: 30ms, application-code: 410ms)
+ GET /manifest.webmanifest 200 in 42ms (next.js: 20ms, application-code: 21ms)
+ GET /api/v1/preferences 200 in 545ms (next.js: 139ms, application-code: 406ms)
+ GET /api/v1/preferences 200 in 158ms (next.js: 30ms, application-code: 128ms)
+ POST /api/v1/track 202 in 374ms (next.js: 21ms, application-code: 352ms)
+ GET /subscription 200 in 2.5s (next.js: 1996ms, proxy.ts: 38ms, application-code: 428ms)
+ GET /api/v1/subscriptions/me 200 in 625ms (next.js: 256ms, application-code: 369ms)
+ GET /manifest.webmanifest 200 in 41ms (next.js: 21ms, application-code: 20ms)
+ GET /api/v1/subscriptions/me 200 in 315ms (next.js: 19ms, application-code: 295ms)
+[browser] IP-based currency detection failed, falling back to timezone: Error: Network error
+    at SubscriptionPage.useEffect.detectCurrency (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/_0nzrjv3._.js:112:93) (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+[browser] IP-based currency detection failed, falling back to timezone: Error: Network error
+    at SubscriptionPage.useEffect.detectCurrency (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/_0nzrjv3._.js:112:93) (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477:13)
+ POST /api/v1/subscriptions/checkout 500 in 281ms (next.js: 32ms, application-code: 249ms)
+ POST /api/v1/track 202 in 706ms (next.js: 74ms, application-code: 632ms)
+[browser] Uncaught Error: Objects are not valid as a React child (found: object with keys {code, message}). If you meant to render a collection of children, use an array instead.
+    at throwOnInvalidObjectTypeImpl (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:3922:15)
+    at throwOnInvalidObjectType (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:3926:110)
+    at reconcileChildFibersImpl (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4249:17)
+    at <unknown> (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4261:39)
+    at reconcileChildren (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:5898:51)
+    at beginWork (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:6758:1573)
+    at runWithFiberInDEV (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
+    at performUnitOfWork (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9555:97)
+    at workLoopSync (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9449:40)
+    at renderRootSync (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9433:13)
+    at performWorkOnRoot (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64)
+    at <unknown> (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_06zlv2q._.js:845:187)
+    at <unknown> (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_06zlv2q._.js:943:237)
+    at Array.map (<anonymous>)
+    at Fe (file://C:/Users/Hassan Irfan/Music/puzzroo/.next/dev/static/chunks/node_modules_06zlv2q._.js:931:10)
+    at RootLayout (src\app\layout.tsx:99:11)
+   97 |           {children}
+   98 |           <NetworkToastListener />
+>  99 |           <Toaster
+      |           ^
+  100 |             position="top-right"
+  101 |             toastOptions={{
+  102 |               duration: 4000,
+ GET /manifest.webmanifest 200 in 33ms (next.js: 15ms, application-code: 18ms)
+ GET / 200 in 2.1s (next.js: 90ms, proxy.ts: 966ms, application-code: 1093ms)
+ POST /api/v1/auth/refresh 200 in 247ms (next.js: 36ms, application-code: 211ms)
+ POST /api/v1/track 202 in 745ms (next.js: 58ms, application-code: 687ms)
+ POST /api/v1/track 202 in 394ms (next.js: 10ms, application-code: 384ms)

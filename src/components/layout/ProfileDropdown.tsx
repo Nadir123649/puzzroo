@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { User, CreditCard, Bell, History, LogOut, Activity } from 'lucide-react'
 import { logout, getCurrentUser } from '@/lib/auth/frontend-auth'
+import { notify } from '@/lib/toast'
 
 interface ProfileDropdownProps {
   userName: string
@@ -43,6 +44,7 @@ export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
 
   const handleLogout = () => {
     logout()
+    notify.successKey('AUTH_LOGOUT_SUCCESS')
     setIsOpen(false)
     router.push('/login')
     router.refresh()

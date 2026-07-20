@@ -51,7 +51,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
   const slug = (await params).slug;
   const action = slug?.[0];
-  const body = await request.json();
+  let body: any = {};
+  try {
+    body = await request.json();
+  } catch {}
 
   await connectDB();
 

@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { X, User } from 'lucide-react'
 import { updateUser } from '@/lib/auth/frontend-auth'
+import { notify } from '@/lib/toast'
 
 interface ChangeNameModalProps {
   isOpen: boolean
@@ -44,11 +45,13 @@ export function ChangeNameModal({ isOpen, onClose, currentName, onNameChanged }:
       const res = await updateUser({ name: trimmed })
       if (!res) {
         setError('Failed to update name. Please try again.')
+        notify.errorKey('SYSTEM_GENERIC_ERROR')
         setIsLoading(false)
         return
       }
 
       setSuccess(true)
+      notify.successKey('ACCOUNT_NAME_UPDATED')
       onNameChanged(trimmed)
       setTimeout(() => {
         onClose()
@@ -56,6 +59,7 @@ export function ChangeNameModal({ isOpen, onClose, currentName, onNameChanged }:
       }, 2000)
     } catch {
       setError('Failed to update name. Please try again.')
+      notify.errorKey('SYSTEM_GENERIC_ERROR')
     } finally {
       setIsLoading(false)
     }

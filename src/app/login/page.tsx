@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import toast from 'react-hot-toast'
+import { notify, ToastMessages } from '@/lib/toast'
 import { Eye, EyeOff } from 'lucide-react'
 import { images } from '@/lib/utils'
 import { RedirectIfAuthenticated } from '@/components/auth/RedirectIfAuthenticated'
@@ -32,8 +32,8 @@ function LoginPageContent() {
   const [verifiedBanner, setVerifiedBanner] = useState<'success' | 'error' | null>(verified === 'true' ? 'success' : verified === 'false' ? 'error' : null)
 
   useEffect(() => {
-    if (verified === 'true') toast.success('Email verified! You can now log in.', { duration: 5000 })
-    if (verified === 'false') toast.error('Verification link invalid or expired.', { duration: 5000 })
+    if (verified === 'true') notify.successKey('AUTH_EMAIL_VERIFIED', undefined, { duration: 5000 })
+    if (verified === 'false') notify.errorKey('AUTH_VERIFY_INVALID', undefined, { duration: 5000 })
   }, [verified])
 
   const validate = () => {
@@ -64,15 +64,15 @@ function LoginPageContent() {
     setIsSubmitting(false)
 
     if (result.success) {
-      toast.success('Welcome back!')
+      notify.successKey('AUTH_WELCOME_BACK')
       setIsSuccess(true)
       // Redirect to home after showing success message
       setTimeout(() => {
         window.location.href = '/'
       }, 1500)
     } else {
-      toast.error(result.error || 'Invalid email or password')
-      setErrors({ general: result.error || 'Invalid email or password' })
+      notify.errorFromResult(result, 'AUTH_INVALID_CREDENTIALS')
+      setErrors({ general: notify.fromResult(result, 'AUTH_INVALID_CREDENTIALS') })
     }
   }
 
@@ -153,7 +153,7 @@ function LoginPageContent() {
                   className={`w-full h-[48px] px-4 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                     errors.identifier ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                   }`}
-                  placeholder="name@example.com or username"
+                  placeholder="Enter your email or username"
                   autoComplete="username"
                 />
                 {errors.identifier && (
@@ -188,7 +188,7 @@ function LoginPageContent() {
                     className={`w-full h-[48px] pl-4 pr-11 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
                       errors.password ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                     }`}
-                    placeholder="••••••••"
+                    placeholder="Enter your password"
                     autoComplete="current-password"
                   />
                   <button
@@ -259,8 +259,8 @@ function LoginPageContent() {
                       body: JSON.stringify({ firebaseToken, rememberMe }),
                     })
                     if (!res.success) {
-                      toast.error('Google login failed')
-                      setErrors({ general: 'Google login failed' })
+                      notify.errorKey('AUTH_OAUTH_FAILED')
+                      setErrors({ general: ToastMessages.AUTH_OAUTH_FAILED })
                       setIsSubmitting(false)
                       return
                     }
@@ -277,12 +277,13 @@ function LoginPageContent() {
                       role: payload.user.role || "free",
                       avatar: payload.user.avatar,
                       provider: payload.user.provider || "google",
+                      linkedProviders: payload.user.linkedProviders || [],
                     }
                     localStorage.setItem('accessToken', payload.token.accessToken)
                     localStorage.setItem('puzzroo_auth', 'true')
                     localStorage.setItem('puzzroo_user', JSON.stringify(userData))
                     window.dispatchEvent(new Event('auth-change'))
-                    toast.success('Welcome!')
+                    notify.successKey('AUTH_WELCOME_OAUTH')
                     setIsSubmitting(false)
                     setIsSuccess(true)
                     setTimeout(() => {
@@ -291,8 +292,8 @@ function LoginPageContent() {
                   } catch (err: any) {
                     setIsSubmitting(false)
                     if (err.code !== 'auth/popup-closed-by-user') {
-                      toast.error(err.message || 'Google login failed')
-                      setErrors({ general: err.message || 'Google login failed' })
+                      notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
+                      setErrors({ general: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }
                   }
                 }}
@@ -320,8 +321,8 @@ function LoginPageContent() {
                       body: JSON.stringify({ firebaseToken, rememberMe }),
                     })
                     if (!res.success) {
-                      toast.error('Facebook login failed')
-                      setErrors({ general: 'Facebook login failed' })
+                      notify.errorKey('AUTH_OAUTH_FAILED')
+                      setErrors({ general: ToastMessages.AUTH_OAUTH_FAILED })
                       setIsSubmitting(false)
                       return
                     }
@@ -343,7 +344,7 @@ function LoginPageContent() {
                     localStorage.setItem('puzzroo_auth', 'true')
                     localStorage.setItem('puzzroo_user', JSON.stringify(userData))
                     window.dispatchEvent(new Event('auth-change'))
-                    toast.success('Welcome!')
+                    notify.successKey('AUTH_WELCOME_OAUTH')
                     setIsSubmitting(false)
                     setIsSuccess(true)
                     setTimeout(() => {
@@ -352,8 +353,8 @@ function LoginPageContent() {
                   } catch (err: any) {
                     setIsSubmitting(false)
                     if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-                      toast.error(err.message || 'Facebook login failed')
-                      setErrors({ general: err.message || 'Facebook login failed' })
+                      notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
+                      setErrors({ general: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }
                   }
                 }}
