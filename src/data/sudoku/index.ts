@@ -142,6 +142,7 @@ export const puzzleDataset: PuzzleDataset = {
   easy: easyPuzzles,
   medium: mediumPuzzles,
   hard: hardPuzzles,
+  expert: [],
 }
 
 /**

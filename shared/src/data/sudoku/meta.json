@@ -3,10 +3,16 @@
   "generatorVersion": 1,
   "size": 9,
   "difficulties": [
-    "hard"
+    "easy",
+    "medium",
+    "hard",
+    "expert"
   ],
   "counts": {
-    "hard": 1000
+    "easy": 1000,
+    "medium": 1000,
+    "hard": 1000,
+    "expert": 1000
   },
   "encoding": "puzzle/solution are 81-char strings, 0 = empty cell"
 }

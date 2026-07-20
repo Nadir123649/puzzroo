@@ -20,6 +20,19 @@ const nextConfig = {
   },
   reactStrictMode: true,
   serverExternalPackages: ['firebase-admin'],
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          // Allow OAuth popups to keep a window reference and avoid the
+          // storage-partitioning that breaks Firebase's redirect state on
+          // mobile (Vercel/Next apply Cross-Origin-Opener-Policy: same-origin).
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
+        ],
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
