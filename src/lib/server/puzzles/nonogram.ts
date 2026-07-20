@@ -1,4 +1,5 @@
 import type { NonogramPuzzleResponse, Clue } from "./types";
+import { sanityCheckNonogram } from "@shared/data/nonogram";
 
 interface NonogramDoc {
   puzzleId: string;
@@ -17,7 +18,7 @@ function toClues(grid: number[][]): Clue[] {
 }
 
 export function nonogramToResponse(doc: NonogramDoc): NonogramPuzzleResponse {
-  return {
+  const response: NonogramPuzzleResponse = {
     id: doc.puzzleId,
     title: doc.title,
     difficulty: doc.difficulty,
@@ -28,4 +29,9 @@ export function nonogramToResponse(doc: NonogramDoc): NonogramPuzzleResponse {
     rowClues: toClues(doc.rowClues),
     columnClues: toClues(doc.columnClues),
   };
+  const errors = sanityCheckNonogram(response as any);
+  if (errors.length) {
+    throw new Error(`serve-time sanity failed for nonogram ${doc.puzzleId}: ${errors.join("; ")}`);
+  }
+  return response;
 }

@@ -76,6 +76,10 @@ export async function api<T = any>(
       notify.errorKey("SYSTEM_RATE_LIMITED");
     }
 
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: { message: `HTTP ${res.status}` } }));
+      throw new Error(error?.error?.message || `HTTP ${res.status}`);
+    }
     const json = await res.json();
     return json;
   } catch {

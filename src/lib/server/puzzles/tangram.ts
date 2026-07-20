@@ -1,4 +1,5 @@
 import type { TangramPuzzleResponse } from "./types";
+import { validatePuzzle } from "@shared/data/tangram/tangramValidation";
 
 interface TangramDoc {
   puzzleId: string;
@@ -11,7 +12,7 @@ interface TangramDoc {
 }
 
 export function tangramToResponse(doc: TangramDoc): TangramPuzzleResponse {
-  return {
+  const response: TangramPuzzleResponse = {
     id: doc.puzzleId,
     sourceId: doc.sourceId,
     difficulty: doc.difficulty,
@@ -21,4 +22,9 @@ export function tangramToResponse(doc: TangramDoc): TangramPuzzleResponse {
     gameType: "tangram",
     active: doc.active,
   };
+  const result = validatePuzzle(response as any);
+  if (!result.valid) {
+    throw new Error(`serve-time sanity failed for tangram ${doc.puzzleId}: ${result.errors.join("; ")}`);
+  }
+  return response;
 }

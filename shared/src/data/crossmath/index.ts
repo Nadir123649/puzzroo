@@ -78,9 +78,64 @@ function toPuzzle(rec: RawRecord): CrossMathPuzzle {
   }
 }
 
+/**
+ * Structural sanity check for a reconstructed CrossMath puzzle. Verifies the
+ * pattern exists, every NUMBER cell has a solution value, blanks reference
+ * real number cells (when supplied), and the rebuilt grid matches the pattern
+ * dimensions.
+ */
+export function sanityCheckCrossMath(p: CrossMathPuzzle, blanks?: string[]): string[] {
+  const errors: string[] = []
+  const pid = p.patternId
+  if (pid === undefined) {
+    errors.push('missing patternId')
+    return errors
+  }
+  const pattern = getPatternById(pid)
+  if (!pattern) {
+    errors.push(`unknown patternId ${pid}`)
+    return errors
+  }
+  const numberKeys = pattern.cells
+    .filter((c) => c.type === 'NUMBER')
+    .map((c) => `${c.row}-${c.col}`)
+  const numSet = new Set(numberKeys)
+  for (const k of numberKeys) {
+    if (typeof p.solution[k] !== 'number') {
+      errors.push(`solution missing value for ${k}`)
+    }
+  }
+  if (blanks) {
+    for (const b of blanks) {
+      if (!numSet.has(b)) errors.push(`blank ${b} is not a NUMBER cell`)
+    }
+  }
+  if (p.grid.length !== p.rows) {
+    errors.push(`grid rows ${p.grid.length} != declared ${p.rows}`)
+  }
+  if (p.grid[0]?.length !== p.columns) {
+    errors.push(`grid cols ${p.grid[0]?.length} != declared ${p.columns}`)
+  }
+  return errors
+}
+
 function buildPool(raw: unknown): CrossMathPuzzle[] {
   const records = raw as RawRecord[]
-  return records.map(toPuzzle)
+  const out: CrossMathPuzzle[] = []
+  for (const rec of records) {
+    try {
+      const p = toPuzzle(rec)
+      const errs = sanityCheckCrossMath(p, rec.blanks)
+      if (errs.length) {
+        console.error(`[crossmath] skipping invalid puzzle ${p.id}: ${errs.join('; ')}`)
+        continue
+      }
+      out.push(p)
+    } catch (e) {
+      console.error(`[crossmath] skipping puzzle ${rec.id}: ${(e as Error).message}`)
+    }
+  }
+  return out
 }
 
 export const puzzleDataset: Record<Difficulty, CrossMathPuzzle[]> = {
@@ -94,9 +149,15 @@ export const puzzleDataset: Record<Difficulty, CrossMathPuzzle[]> = {
  * a real board shape and a single solution.
  */
 export function getRandomPuzzle(difficulty: Difficulty): CrossMathPuzzle {
-  const pool = puzzleDataset[difficulty]
+  let pool = puzzleDataset[difficulty]
   if (pool.length === 0) {
-    throw new Error(`No CrossMath puzzles available for difficulty: ${difficulty}`)
+    for (const d of ['easy', 'medium', 'hard'] as Difficulty[]) {
+      const fb = puzzleDataset[d]
+      if (fb.length > 0) { pool = fb; break }
+    }
+  }
+  if (pool.length === 0) {
+    throw new Error(`No puzzles available for difficulty: ${difficulty}`)
   }
   const idx = Math.floor(Math.random() * pool.length)
   return pool[idx]
@@ -122,9 +183,15 @@ export function getRandomPatternPuzzle(difficulty: Difficulty): CrossMathPuzzle 
  * challenges so they are stable and uniqueness-guaranteed).
  */
 export function getDailyPatternPuzzle(difficulty: Difficulty, seed: number): CrossMathPuzzle {
-  const pool = puzzleDataset[difficulty]
+  let pool = puzzleDataset[difficulty]
   if (pool.length === 0) {
-    throw new Error(`No CrossMath puzzles available for difficulty: ${difficulty}`)
+    for (const d of ['easy', 'medium', 'hard'] as Difficulty[]) {
+      const fb = puzzleDataset[d]
+      if (fb.length > 0) { pool = fb; break }
+    }
+  }
+  if (pool.length === 0) {
+    throw new Error(`No puzzles available for difficulty: ${difficulty}`)
   }
   const idx = ((seed % pool.length) + pool.length) % pool.length
   return pool[idx]

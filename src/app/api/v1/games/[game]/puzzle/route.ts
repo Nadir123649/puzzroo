@@ -25,8 +25,8 @@ export async function GET(
   const q = validate(getPuzzleQuerySchema, Object.fromEntries(new URL(request.url).searchParams));
   if (q.error) return q.error;
 
-  await connectDB();
   try {
+    await connectDB();
     const { difficulty, exclude } = q.data;
     const diff =
       difficulty ||
