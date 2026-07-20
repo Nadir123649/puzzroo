@@ -36,7 +36,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // ──── POST /api/v1/oauth/google | /api/v1/oauth/facebook ────
-    const firebaseProvider = PROVIDER_MAP[provider];
+    const firebaseProvider = provider ? PROVIDER_MAP[provider] : undefined;
     if (firebaseProvider) {
       const { firebaseToken, rememberMe } = body;
       if (!firebaseToken) return errorResponse(400, "validation_error", "Firebase token is required");
