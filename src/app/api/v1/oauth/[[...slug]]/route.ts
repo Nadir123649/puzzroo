@@ -68,7 +68,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return errorResponse(404, "not_found", "Route not found");
   } catch (error: any) {
-    console.error(error);
-    return errorResponse(500, "internal_error", "Internal Server Error");
+    console.error("[oauth] error:", error);
+    const message =
+      error?.code && String(error.code).startsWith("auth/")
+        ? `Firebase auth error: ${error.code}`
+        : error?.message || "Internal Server Error";
+    return errorResponse(500, "internal_error", message);
   }
 }

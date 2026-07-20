@@ -9,38 +9,40 @@ from dataclasses import dataclass, field
 DEFAULT_COUNT = 100
 DIFFICULTIES = ("easy", "medium", "hard", "expert")
 
-# Sudoku difficulty -> required technique tier (see puzzlegen/sudoku/rating.py).
+# Sudoku difficulty -> EXPECTED technique tier (see puzzlegen/sudoku/rating.py).
+# Used only as a labelling/validation reference, not as a strict gate (see note
+# on difficulty below).
 #   1 easy   : naked/hidden singles
 #   2 medium : + pairs, pointing, box-line reduction
 #   3 hard   : + triples, X-Wing, XY/XYZ-Wing
 #   4 expert : + swordfish, coloring, or requires brute force
 SUDOKU_TIERS = {"easy": 1, "medium": 2, "hard": 3, "expert": 4}
 
-# Minimum givens guard so expert puzzles are not degenerate low-clue boards.
-SUDOKU_MIN_GIVENS = {"easy": 36, "medium": 30, "hard": 26, "expert": 22}
-
 
 @dataclass(frozen=True)
 class Bucket:
     game: str
     difficulty: str
-    size: int          # sudoku: 6|9 ; nonogram: 5..30 ; crossmath: N operand dim (2|3|6)
-    size_label: str    # e.g. "9x9", "10x10", "2x2"
+    size: int          # sudoku: 9 (Puzzroo frontend is 9x9 only)
+    size_label: str    # e.g. "9x9"
     params: dict = field(default_factory=dict)
 
 
 # ── Sudoku: 9x9 only (the Puzzroo frontend renders a single 9x9 board). ───────
-# Difficulty is now driven by TECHNIQUE TIER (see rating.py), not clue count.
-# `givens_max` caps how many clues we keep while digging (lower => harder to
-# reach); `givens_min` is the floor we never dig below. The generator keeps
-# removing clues (preserving a unique solution) until either the target tier is
-# reached or givens_min is hit.
+# Difficulty is determined by the GIVENS BAND (clue count), which is the
+# industry-standard lever for Sudoku difficulty and reliably yields balanced,
+# high-volume datasets. Every puzzle is additionally GUARANTEED to have a
+# unique solution (solver) and is TECHNIQUE-RATED (rating.py) so each record
+# carries a `tier` + `techniques` tag for UI hints/analytics. A puzzle is
+# rejected only if its rated tier is more than one above the band's expected
+# tier (i.e. grossly mislabelled as too easy).
+#   givens = (min, max) pre-filled cells kept.
 SUDOKU_GIVENS = {
     9: {
         "easy": (38, 45),
-        "medium": (32, 38),
-        "hard": (27, 33),
-        "expert": (22, 29),
+        "medium": (30, 37),
+        "hard": (25, 32),
+        "expert": (22, 28),
     },
 }
 
@@ -62,7 +64,7 @@ NONOGRAM_DENSITY = {"easy": 0.55, "medium": 0.60, "hard": 0.66}
 def all_buckets() -> list[Bucket]:
     buckets: list[Bucket] = []
 
-    for size in (6, 9):
+    for size in SUDOKU_GIVENS:
         for diff in DIFFICULTIES:
             lo, hi = SUDOKU_GIVENS[size][diff]
             buckets.append(Bucket(
@@ -71,7 +73,7 @@ def all_buckets() -> list[Bucket]:
                 params={"givens_min": lo, "givens_max": hi},
             ))
 
-    for diff in DIFFICULTIES:
+    for diff in ("easy", "medium", "hard"):
         n = CROSSMATH_N[diff]
         buckets.append(Bucket(
             game="crossmath", difficulty=diff, size=n,
@@ -84,7 +86,7 @@ def all_buckets() -> list[Bucket]:
             },
         ))
 
-    for diff in DIFFICULTIES:
+    for diff in ("easy", "medium", "hard"):
         for size in NONOGRAM_SIZES[diff]:
             buckets.append(Bucket(
                 game="nonogram", difficulty=diff, size=size,
