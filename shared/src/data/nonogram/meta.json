@@ -1,0 +1,32 @@
+{
+  "game": "nonogram",
+  "generatorVersion": 1,
+  "difficulties": [
+    "easy",
+    "medium",
+    "hard",
+    "expert"
+  ],
+  "counts": {
+    "easy": 1000,
+    "medium": 1000,
+    "hard": 1000,
+    "expert": 1000
+  },
+  "sizesByDifficulty": {
+    "easy": [
+      10
+    ],
+    "medium": [
+      15
+    ],
+    "hard": [
+      20
+    ],
+    "expert": [
+      25,
+      30
+    ]
+  },
+  "encoding": "sol is a size*size string of '0'/'1' (row-major); rowClues/columnClues are number[][]; empty line is []; every puzzle has a unique solution (line-solver verified)."
+}

@@ -9,7 +9,7 @@ import { auth } from "@/lib/server/middleware/auth";
 // GET /api/v1/analytics/summary  (admin only)
 // Lightweight first-party analytics dashboard data.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
-  const authResult = auth(request);
+  const authResult = await auth(request);
   if ("error" in authResult) return authResult.error;
   if (authResult.user.role !== "admin") {
     return errorResponse(403, "forbidden", "Admin access required");

@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Optional auth: attach a verified userId when a valid token is present.
     let userId: string | null = null;
-    const authResult = auth(request);
+    const authResult = await auth(request);
     if (!("error" in authResult)) userId = authResult.user.id;
 
     await connectDB();

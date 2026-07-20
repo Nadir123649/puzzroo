@@ -3,7 +3,7 @@
  * Centralized state management with:
  * - Multiple puzzle datasets
  * - Difficulty system
- * - Random puzzle loading
+ * - Random puzzle loading (API-backed, static fallback)
  * - Notes/Pencil mode
  * - Hint system with currency
  * - Score system
@@ -15,7 +15,9 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SudokuBoard, Position, GameStatus, Difficulty } from '@shared/lib/sudoku/types'
-import { getRandomPuzzle, puzzleDataset } from '@shared/data/sudoku'
+import { getRandomPuzzle, getPuzzleById, puzzleDataset } from '@shared/data/sudoku'
+import type { SudokuPuzzleData } from '@shared/data/sudoku/types'
+import { gameApi } from '@/lib/api/gameApi'
 import type { ScoreFeedback } from '@/components/games/sudoku/FloatingScoreFeedback'
 import {
   getCellAt,
@@ -29,8 +31,8 @@ import {
   getCorrectValue,
   calculateAvailableHints,
   convertToSudokuBoard,
-  isValidMove,
   isValidCompletedBoard,
+  isValidMove,
 } from '@shared/lib/sudoku/helpers'
 import { KEYBOARD_KEYS, INITIAL_GAME_STATE } from '@shared/lib/sudoku/constants'
 import {
@@ -42,6 +44,32 @@ import {
 } from '@shared/lib/sudoku/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 
+const CACHE_KEY = 'puzzroo_sudoku_cache_by_id'
+
+function readCache(id: string): SudokuPuzzleData | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    const map = JSON.parse(raw) as Record<string, SudokuPuzzleData>
+    return map[id] ?? null
+  } catch {
+    return null
+  }
+}
+
+function writeCache(id: string, puzzle: SudokuPuzzleData) {
+  if (typeof window === 'undefined') return
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    const map = raw ? (JSON.parse(raw) as Record<string, SudokuPuzzleData>) : {}
+    map[id] = puzzle
+    localStorage.setItem(CACHE_KEY, JSON.stringify(map))
+  } catch {
+    /* ignore */
+  }
+}
+
 function getDailySudokuPuzzle(date: Date, diff: Difficulty) {
   const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
   const pool = puzzleDataset[diff as 'easy' | 'medium' | 'hard'] || puzzleDataset['easy']
@@ -51,19 +79,85 @@ function getDailySudokuPuzzle(date: Date, diff: Difficulty) {
   return pool[index]
 }
 
+type PuzzleSource =
+  | { kind: 'random'; difficulty: Difficulty; exclude?: string }
+  | { kind: 'byId'; id: string }
+  | { kind: 'daily'; date?: string; difficulty: Difficulty }
+
+/**
+ * Fetch a puzzle from the API with a static fallback. Caches successful
+ * fetches by puzzle id so offline replay works.
+ */
+async function loadSudokuPuzzle(source: PuzzleSource): Promise<SudokuPuzzleData> {
+  try {
+    let raw
+    if (source.kind === 'random') {
+      raw = await gameApi.getPuzzle('sudoku', {
+        difficulty: source.difficulty,
+        exclude: source.exclude,
+      })
+    } else if (source.kind === 'byId') {
+      const cached = readCache(source.id)
+      if (cached) return cached
+      raw = await gameApi.getPuzzleById('sudoku', source.id)
+    } else {
+      raw = await gameApi.getDailyPuzzle('sudoku', source.date)
+    }
+    const puzzle = raw as unknown as SudokuPuzzleData
+    writeCache(puzzle.id, puzzle)
+    return puzzle
+  } catch {
+    if (source.kind === 'random') {
+      return getRandomPuzzle(source.difficulty, source.exclude)
+    }
+    if (source.kind === 'byId') {
+      return getPuzzleById(source.id) ?? getRandomPuzzle('easy')
+    }
+    let dailyDate = new Date()
+    if (source.date) {
+      const [y, m, d] = source.date.split('-')
+      if (y && m && d) dailyDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d))
+    }
+    return getDailySudokuPuzzle(dailyDate, source.difficulty)
+  }
+}
+
+function transformPuzzle(
+  puzzle: SudokuPuzzleData,
+  isDaily: boolean,
+  dateParam?: string | null
+) {
+  const currentBoard = convertToSudokuBoard(puzzle.puzzle)
+  const initialBoard = cloneBoard(currentBoard)
+  const solution = convertToSudokuBoard(puzzle.solution)
+
+  return {
+    currentBoard,
+    initialBoard,
+    solution,
+    puzzleId: isDaily && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id,
+    mistakes: 0,
+    score: 0,
+    time: 0,
+    gameStatus: 'playing' as GameStatus,
+  }
+}
+
 export function useSudoku() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlDifficulty = (searchParams.get('difficulty') || 'easy') as Difficulty
-  
+  const urlId = searchParams.get('id')
+
   // Check if this is from daily challenge
   const dateParam = searchParams.get('date')
   const isDailyChallenge = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
-  
+
   // Load difficulty preference
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [isInitialized, setIsInitialized] = useState(false)
-  
+  const [loading, setLoading] = useState(false)
+
   // Initialize game state
   const initializeGame = useCallback((diff: Difficulty, loadSaved = true) => {
     // Try to load saved game first (client-side only)
@@ -83,107 +177,95 @@ export function useSudoku() {
       }
     }
 
-    // Load new puzzle
-    let puzzle
-    if (isDailyChallenge) {
-      let dailyDate = new Date()
-      if (dateParam) {
-        const [month, day, year] = dateParam.split('-')
-        const fullYear = 2000 + parseInt(year)
-        dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
-      }
-      puzzle = getDailySudokuPuzzle(dailyDate, diff)
-    } else {
-      puzzle = getRandomPuzzle(diff)
-    }
+    // Load new puzzle (static fallback for synchronous SSR render)
+    const puzzle = isDailyChallenge
+      ? getDailySudokuPuzzle(new Date(), diff)
+      : getRandomPuzzle(diff)
 
-    const currentBoard = convertToSudokuBoard(puzzle.puzzle)
-    const initialBoard = cloneBoard(currentBoard)
-    const solution = convertToSudokuBoard(puzzle.solution)
-
-    return {
-      currentBoard,
-      initialBoard,
-      solution,
-      puzzleId: isDailyChallenge && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id,
-      mistakes: 0,
-      score: 0,
-      time: 0,
-      gameStatus: 'playing' as GameStatus,
-    }
+    return transformPuzzle(puzzle, isDailyChallenge, dateParam)
   }, [isDailyChallenge, dateParam])
 
   const [gameState, setGameState] = useState(() => {
     // Fallback initializer for initial server render
     return initializeGame('easy', false)
   })
-  
+
+  // Refs
+  const puzzleIdRef = useRef(gameState.puzzleId)
+  const hintsUsedRef = useRef(0)
+
+  useEffect(() => {
+    puzzleIdRef.current = gameState.puzzleId
+  }, [gameState.puzzleId])
+
   // Sync with URL difficulty on mount/change
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const valid = ['easy', 'medium', 'hard', 'expert']
-      const currentDiff = valid.includes(urlDifficulty) ? urlDifficulty : 'easy'
-      
-      setDifficulty(currentDiff)
-      saveDifficultyPreference(currentDiff)
-      
-      setGameState((prev) => {
-        // Only re-initialize if the loaded game is for a different difficulty
-        if (isInitialized && prev.puzzleId && prev.currentBoard.length > 0) {
-          const saved = loadGameState()
+    if (typeof window === 'undefined') return
+
+    const valid = ['easy', 'medium', 'hard', 'expert']
+    const currentDiff = valid.includes(urlDifficulty) ? urlDifficulty : 'easy'
+
+    setDifficulty(currentDiff)
+    saveDifficultyPreference(currentDiff)
+
+    let cancelled = false
+    ;(async () => {
+      setLoading(true)
+      try {
+        // Resume a saved in-progress game if it matches the requested difficulty
+        const saved = loadGameState()
+        if (!cancelled && (!isInitialized || !gameState.puzzleId || gameState.currentBoard.length === 0 || saved?.difficulty === currentDiff)) {
           if (saved && saved.difficulty === currentDiff) {
-            return saved
+            setGameState({
+              currentBoard: saved.currentBoard,
+              initialBoard: saved.initialBoard,
+              solution: saved.solution,
+              puzzleId: saved.puzzleId,
+              mistakes: saved.mistakes,
+              score: saved.score,
+              time: saved.time,
+              gameStatus: saved.gameStatus as GameStatus,
+            })
+            puzzleIdRef.current = saved.puzzleId
+            setIsInitialized(true)
+            return
           }
         }
 
-        // Try to load saved game first
-        const saved = loadGameState()
-        if (saved && saved.difficulty === currentDiff) {
-          return {
-            currentBoard: saved.currentBoard,
-            initialBoard: saved.initialBoard,
-            solution: saved.solution,
-            puzzleId: saved.puzzleId,
-            mistakes: saved.mistakes,
-            score: saved.score,
-            time: saved.time,
-            gameStatus: saved.gameStatus as GameStatus,
-          }
+        // Start fresh — fetch from API (static fallback on failure)
+        const puzzle = urlId
+          ? await loadSudokuPuzzle({ kind: 'byId', id: urlId })
+          : isDailyChallenge
+            ? await loadSudokuPuzzle({ kind: 'daily', date: dateParam ?? undefined, difficulty: currentDiff })
+            : await loadSudokuPuzzle({ kind: 'random', difficulty: currentDiff, exclude: gameState.puzzleId })
+
+        if (cancelled) return
+        const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
+        setGameState(next)
+        puzzleIdRef.current = next.puzzleId
+        setIsInitialized(true)
+      } catch {
+        /* fall through to static fallback below */
+        if (!cancelled) {
+          const puzzle = isDailyChallenge
+            ? getDailySudokuPuzzle(new Date(), currentDiff)
+            : getRandomPuzzle(currentDiff)
+          const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
+          setGameState(next)
+          puzzleIdRef.current = next.puzzleId
+          setIsInitialized(true)
         }
-        
-        // Start fresh
-        let puzzle
-        if (isDailyChallenge) {
-          let dailyDate = new Date()
-          if (dateParam) {
-            const [month, day, year] = dateParam.split('-')
-            const fullYear = 2000 + parseInt(year)
-            dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
-          }
-          puzzle = getDailySudokuPuzzle(dailyDate, currentDiff)
-        } else {
-          puzzle = getRandomPuzzle(currentDiff)
-        }
-        
-        const currentBoard = convertToSudokuBoard(puzzle.puzzle)
-        const initialBoard = cloneBoard(currentBoard)
-        const solution = convertToSudokuBoard(puzzle.solution)
-        return {
-          currentBoard,
-          initialBoard,
-          solution,
-          puzzleId: isDailyChallenge && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id,
-          mistakes: 0,
-          score: 0,
-          time: 0,
-          gameStatus: 'playing' as GameStatus,
-        }
-      })
-      
-      setIsInitialized(true)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
     }
-  }, [urlDifficulty])
-  
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlDifficulty, urlId, isDailyChallenge, dateParam])
+
   // UI state
   const [selectedCell, setSelectedCell] = useState<Position | null>(null)
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null)
@@ -289,6 +371,36 @@ export function useSudoku() {
   }, [addScoreFeedback])
 
   /**
+   * Report a win to the universal completion system and (when authenticated)
+   * the API. Never blocks gameplay.
+   */
+  const reportWin = useCallback((puzzleId: string, finalScore: number) => {
+    markPuzzleCompleted('sudoku', puzzleId, {
+      time: gameState.time,
+      score: finalScore,
+      difficulty,
+    })
+
+    const token =
+      typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+    if (token) {
+      gameApi
+        .complete('sudoku', {
+          puzzleId,
+          difficulty: difficulty as 'easy' | 'medium' | 'hard',
+          score: finalScore,
+          time: gameState.time,
+          hintsUsed: hintsUsedRef.current,
+          mistakes: gameState.mistakes,
+          moves: undefined,
+        })
+        .catch(() => {
+          /* fire-and-forget: never block */
+        })
+    }
+  }, [gameState.time, gameState.mistakes, difficulty])
+
+  /**
    * Select cell
    */
   const selectCell = useCallback((position: Position | null) => {
@@ -305,6 +417,9 @@ export function useSudoku() {
       const cell = getCellAt(gameState.currentBoard, selectedCell)
       if (!cell || cell.fixed) return
 
+      // No-op if the same value is already in the cell (avoid double-scoring).
+      if (cell.value === num) return
+
       // Notes mode - toggle note
       if (notesMode) {
         const newBoard = updateCellNote(gameState.currentBoard, selectedCell, num)
@@ -314,27 +429,31 @@ export function useSudoku() {
 
       // Normal mode - enter final number
       let newBoard = updateCellValue(gameState.currentBoard, selectedCell, num)
-      
+
       // Clear notes when entering final number
       newBoard[selectedCell.row][selectedCell.col] = clearNotes(
         newBoard[selectedCell.row][selectedCell.col]
       )
 
-      // Validate using Sudoku rules (no duplicates in row/column/box)
-      const isValid = isValidMove(gameState.currentBoard, selectedCell, num)
+      // A move is correct ONLY when it matches the puzzle's unique solution.
+      const solutionCell = gameState.solution?.[selectedCell.row]?.[selectedCell.col]
+      const solutionValue =
+        solutionCell && typeof solutionCell === "object"
+          ? (solutionCell as { value?: number }).value
+          : (solutionCell as number | undefined)
+      const isCorrectValue = num === solutionValue
 
-      // Validate based on Sudoku rules
-      if (!isValid) {
-        // Invalid move - violates Sudoku rules (duplicate in row/column/box)
+      if (!isCorrectValue) {
+        // Wrong value (even if it doesn't immediately break Sudoku rules).
         newBoard[selectedCell.row][selectedCell.col].isError = true
         newBoard[selectedCell.row][selectedCell.col].isCorrect = false
-        
+
         setGameState((prev) => ({
           ...prev,
           currentBoard: newBoard,
           mistakes: prev.mistakes + 1,
         }))
-        
+
         updateScore(-5) // -5 for wrong answer
 
         // Check game over
@@ -343,26 +462,22 @@ export function useSudoku() {
           clearGameState()
         }
       } else {
-        // Valid move - follows Sudoku rules
+        // Correct value - matches the solution.
         newBoard[selectedCell.row][selectedCell.col].isError = false
         newBoard[selectedCell.row][selectedCell.col].isCorrect = true
         updateScore(10) // +10 for correct answer
-        
+
         setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
 
         // Check for win - validate entire board using Sudoku rules
         if (isBoardComplete(newBoard) && isValidCompletedBoard(newBoard)) {
           setIsWinAnimating(true)
-          
+
           // Mark puzzle as completed in universal completion system
           const dateParam = searchParams.get('date')
           const puzzleId = dateParam ? `daily-sudoku-${dateParam}` : gameState.puzzleId
-          markPuzzleCompleted('sudoku', puzzleId, {
-            time: gameState.time,
-            score: gameState.score + 10,
-            difficulty: difficulty,
-          })
-          
+          reportWin(puzzleId, gameState.score + 10)
+
           setTimeout(() => {
             setGameState((prev) => ({ ...prev, gameStatus: 'won' }))
             setIsWinAnimating(false)
@@ -373,7 +488,7 @@ export function useSudoku() {
 
       setSelectedNumber(num)
     },
-    [selectedCell, gameState, notesMode, updateScore, difficulty]
+    [selectedCell, gameState, notesMode, updateScore, difficulty, reportWin]
   )
 
   /**
@@ -405,7 +520,7 @@ export function useSudoku() {
     )
     newBoard[selectedCell.row][selectedCell.col].isCorrect = false
     newBoard[selectedCell.row][selectedCell.col].isError = false
-    
+
     setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
   }, [selectedCell, gameState])
 
@@ -486,30 +601,27 @@ export function useSudoku() {
     newBoard[targetCell.row][targetCell.col].isCorrect = true
     newBoard[targetCell.row][targetCell.col].isError = false
 
+    hintsUsedRef.current += 1
     updateScore(-20) // -20 for hint
     setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
 
     // Check for win - validate entire board using Sudoku rules
     if (isBoardComplete(newBoard) && isValidCompletedBoard(newBoard)) {
       setIsWinAnimating(true)
-      
+
       // Mark puzzle as completed in universal completion system
       const dateParam = searchParams.get('date')
       // Convert date to full puzzle ID format: daily-sudoku-MM-DD-YY
       const puzzleId = dateParam ? `daily-sudoku-${dateParam}` : gameState.puzzleId
-      markPuzzleCompleted('sudoku', puzzleId, {
-        time: gameState.time,
-        score: gameState.score - 20,
-        difficulty: difficulty,
-      })
-      
+      reportWin(puzzleId, gameState.score - 20)
+
       setTimeout(() => {
         setGameState((prev) => ({ ...prev, gameStatus: 'won' }))
         setIsWinAnimating(false)
         clearGameState()
       }, 1500)
     }
-  }, [selectedCell, gameState, updateScore])
+  }, [selectedCell, gameState, updateScore, reportWin])
 
   /**
    * Change difficulty
@@ -521,18 +633,40 @@ export function useSudoku() {
   }, [difficulty, router])
 
   /**
-   * Reset board / New game
+   * Reset board / New game (async fetch from API)
    */
-  const resetBoard = useCallback(() => {
-    const newGame = initializeGame(difficulty, false)
-    setGameState(newGame)
+  const resetBoard = useCallback(async () => {
     setSelectedCell(null)
     setSelectedNumber(null)
     setNotesMode(false)
     setIsWinAnimating(false)
     setScoreFeedbacks([])
     startTimeRef.current = null
-  }, [difficulty, initializeGame])
+    hintsUsedRef.current = 0
+
+    setLoading(true)
+    let cancelled = false
+    try {
+      const puzzle = await loadSudokuPuzzle({
+        kind: 'random',
+        difficulty,
+        exclude: puzzleIdRef.current,
+      })
+      if (!cancelled) {
+        const next = transformPuzzle(puzzle, false)
+        setGameState(next)
+        puzzleIdRef.current = next.puzzleId
+      }
+    } catch {
+      if (!cancelled) {
+        const next = transformPuzzle(getRandomPuzzle(difficulty), false)
+        setGameState(next)
+        puzzleIdRef.current = next.puzzleId
+      }
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
+  }, [difficulty])
 
   /**
    * Toggle notes mode
@@ -591,6 +725,7 @@ export function useSudoku() {
     selectedCell,
     selectedNumber,
     notesMode,
+    loading,
     mistakes: gameState.mistakes,
     maxMistakes: INITIAL_GAME_STATE.maxMistakes,
     score: gameState.score,

@@ -9,6 +9,7 @@ export interface User {
   usernameSet?: boolean
   role?: string
   joinedDate: string
+  createdAt?: string
   accountStatus: string
   subscriptionPlan: string
   avatar?: string
@@ -387,6 +388,7 @@ function mapUser(u: any): User {
     usernameSet: u.usernameSet,
     role: u.role || "free",
     joinedDate: u.createdAt ? formatDate(u.createdAt) : "N/A",
+    createdAt: u.createdAt,
     accountStatus: u.status || "active",
     subscriptionPlan: u.role || "free",
     avatar: u.avatar,

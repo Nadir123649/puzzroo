@@ -264,7 +264,7 @@ export default function SignupPage() {
                     type={showPassword ? "text" : "password"}
                     id="password"
                     value={password}
-                    maxLength={128}
+                    maxLength={20}
                     onChange={(e) => {
                       setPassword(e.target.value)
                       if (errors.password) setErrors(prev => ({ ...prev, password: undefined }))

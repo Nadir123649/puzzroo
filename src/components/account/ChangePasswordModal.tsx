@@ -213,7 +213,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
                 <input
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
-                  maxLength={16}
+                  maxLength={20}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
                   required
@@ -238,7 +238,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
-                  maxLength={16}
+                  maxLength={20}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
                   required

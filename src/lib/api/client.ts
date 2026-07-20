@@ -28,13 +28,17 @@ async function refreshAccessToken(): Promise<string | null> {
 
 export async function api<T = any>(
   path: string,
-  options: RequestInit & { params?: Record<string, string> } = {}
+  options: RequestInit & { params?: Record<string, string | number | boolean | undefined> } = {}
 ): Promise<{ success: boolean; payload: T; timestamp?: number }> {
   const { params, ...fetchOptions } = options;
   let url = path.startsWith("/api") ? `${API_BASE}${path}` : path;
 
   if (params) {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(
+      Object.entries(params)
+        .filter(([, v]) => v !== undefined && v !== null)
+        .map(([k, v]) => [k, String(v)])
+    ).toString();
     url += `?${qs}`;
   }
 

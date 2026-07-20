@@ -4,6 +4,7 @@ import { formatUser } from "@/lib/server/utils/formatUser";
 import { getFirebaseAuth } from "@/lib/server/config/firebase";
 import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { generatePublicId } from "@/lib/server/utils/publicId";
+import { createSession } from "@/lib/server/utils/createSession";
 
 export const isFirebaseReady = Boolean(
   process.env.FIREBASE_PROJECT_ID &&
@@ -18,22 +19,36 @@ function addLinkedProvider(user: any, provider: string) {
   if (!user.linkedProviders.includes(provider)) user.linkedProviders.push(provider);
 }
 
-export function authPayload(user: any) {
+// Builds the auth payload returned to the client. When `sessionId` is provided
+// the issued tokens are bound to that login session (via the JWT `jti` claim),
+// so deleting the session invalidates the tokens — making logout real.
+export function authPayload(user: any, sessionId?: string) {
   return {
     user: formatUser(user),
-    token: buildTokenPayload(user),
+    token: buildTokenPayload(user, sessionId),
     access: {
       additionalPermissions: [],
       roles: user.role === "admin" ? ["admin"] : [],
     },
+    ...(sessionId ? { sessionId } : {}),
   };
+}
+
+// Creates a fresh login session for `user` and returns a payload whose tokens
+// are bound to that session. Use this for every "log the user in" flow so the
+// issued access/refresh tokens carry a `jti` that maps back to a LoginSession.
+export async function issueSession(request: any, user: any, provider?: string) {
+  const session = await createSession(request, user._id.toString(), provider);
+  const sessionId = session._id.toString();
+  return { sessionId, payload: authPayload(user, sessionId) };
 }
 
 export async function handleOAuth(
   provider: string,
   firebaseToken: string,
-  currentUserId?: string
-): Promise<{ payload: any; refreshToken: string; converted: boolean } | undefined> {
+  currentUserId?: string,
+  request?: any
+): Promise<{ payload: any; refreshToken: string; converted: boolean; sessionId?: string } | undefined> {
   if (!isFirebaseReady) {
     return undefined;
   }
@@ -116,5 +131,10 @@ export async function handleOAuth(
   if (user.password) addLinkedProvider(user, "email");
   user.lastLoginAt = new Date();
   await user.save({ validateBeforeSave: false });
-  return { payload: authPayload(user), refreshToken: buildTokenPayload(user).refreshToken, converted };
+  let sessionId: string | undefined;
+  if (request) {
+    const session = await createSession(request, user._id.toString(), mappedProvider);
+    sessionId = session._id.toString();
+  }
+  return { payload: authPayload(user, sessionId), refreshToken: buildTokenPayload(user, sessionId).refreshToken, converted, sessionId };
 }

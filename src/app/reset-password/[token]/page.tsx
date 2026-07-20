@@ -182,7 +182,7 @@ export default function ResetPasswordPage() {
                     type={showPassword ? "text" : "password"}
                     id="password"
                     value={password}
-                    maxLength={16}
+                    maxLength={20}
                     onChange={(e) => {
                       setPassword(e.target.value)
                       if (errors.password) setErrors(prev => ({ ...prev, password: undefined }))
@@ -218,7 +218,7 @@ export default function ResetPasswordPage() {
                     type={showConfirm ? "text" : "password"}
                     id="confirmPassword"
                     value={confirmPassword}
-                    maxLength={16}
+                    maxLength={20}
                     onChange={(e) => {
                       setConfirmPassword(e.target.value)
                       if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: undefined }))

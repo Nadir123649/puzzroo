@@ -7,7 +7,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const type = slug?.[0] || "image";
 
   // Require authentication for uploads
-  const userResult = auth(request);
+  const userResult = await auth(request);
   if ("error" in userResult) return userResult.error;
 
   try {
