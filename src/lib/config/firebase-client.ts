@@ -24,7 +24,6 @@ if (isFirebaseConfigured) {
   googleProvider.setCustomParameters({ prompt: "select_account" });
   facebookProvider = new FacebookAuthProvider();
   facebookProvider.addScope("email");
-  facebookProvider.setCustomParameters({ display: "popup" });
 }
 
 export { auth, googleProvider, facebookProvider, isFirebaseConfigured };
