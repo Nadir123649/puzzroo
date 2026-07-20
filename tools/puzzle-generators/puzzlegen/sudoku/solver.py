@@ -31,20 +31,51 @@ def _candidates(grid: list[list[int]], size: int, br: int, bc: int, r: int, c: i
 
 
 def count_solutions(grid: list[list[int]], size: int, limit: int = 2) -> int:
-    """Count solutions up to `limit` (early-exits once `limit` reached)."""
+    """Count solutions up to `limit` (early-exits once `limit` reached).
+
+    Uses MRV (minimum-remaining-values) cell selection to prune the search
+    tree aggressively, which is critical when checking uniqueness on sparse
+    (low-given) boards during hole-digging.
+    """
     br, bc = box_dims(size)
     work = [row[:] for row in grid]
 
     def backtrack() -> int:
-        spot = _find_empty(work, size)
-        if spot is None:
-            return 1
-        r, c = spot
+        # MRV: pick the empty cell with the fewest candidate values.
+        best_r = best_c = -1
+        best_cands: list[int] = []
+        best_n = size + 1
+        for r in range(size):
+            for c in range(size):
+                if work[r][c] != 0:
+                    continue
+                used = set()
+                for i in range(size):
+                    used.add(work[r][i])
+                    used.add(work[i][c])
+                box_r = (r // br) * br
+                box_c = (c // bc) * bc
+                for i in range(box_r, box_r + br):
+                    for j in range(box_c, box_c + bc):
+                        used.add(work[i][j])
+                cands = [n for n in range(1, size + 1) if n not in used]
+                if len(cands) < best_n:
+                    best_n = len(cands)
+                    best_r, best_c = r, c
+                    best_cands = cands
+                    if best_n <= 1:
+                        break
+            if best_n <= 1:
+                break
+
+        if best_r == -1:
+            return 1  # no empty cell -> solved
+
         total = 0
-        for n in _candidates(work, size, br, bc, r, c):
-            work[r][c] = n
+        for n in best_cands:
+            work[best_r][best_c] = n
             total += backtrack()
-            work[r][c] = 0
+            work[best_r][best_c] = 0
             if total >= limit:
                 return total
         return total

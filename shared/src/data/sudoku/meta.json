@@ -1,0 +1,12 @@
+{
+  "game": "sudoku",
+  "generatorVersion": 1,
+  "size": 9,
+  "difficulties": [
+    "medium"
+  ],
+  "counts": {
+    "medium": 1000
+  },
+  "encoding": "puzzle/solution are 81-char strings, 0 = empty cell"
+}
