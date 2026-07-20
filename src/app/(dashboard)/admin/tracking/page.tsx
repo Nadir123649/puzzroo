@@ -115,6 +115,8 @@ export default function AdminTrackingPage() {
   const [data, setData] = useState<TrackingResult | null>(null)
   const [page, setPage] = useState(1)
   const [activeQuery, setActiveQuery] = useState('')
+  const [promoting, setPromoting] = useState(false)
+  const [promoteMsg, setPromoteMsg] = useState('')
 
   useEffect(() => {
     const u = getCurrentUser()
@@ -159,6 +161,28 @@ export default function AdminTrackingPage() {
     setPage(p)
     runSearch(activeQuery, p)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const promoteUser = async () => {
+    if (!data) return
+    setPromoting(true)
+    setPromoteMsg('')
+    try {
+      const res = await api(`/api/v1/admin/promote`, {
+        method: 'POST',
+        body: JSON.stringify({ identifier: data.user.id }),
+      })
+      if (!res.success) {
+        setPromoteMsg((res.payload as any)?.error?.message || 'Failed to promote user')
+        return
+      }
+      setData({ ...data, user: { ...data.user, role: 'admin' } })
+      setPromoteMsg('User promoted to admin.')
+    } catch {
+      setPromoteMsg('Network error. Please try again.')
+    } finally {
+      setPromoting(false)
+    }
   }
 
   if (!authChecked || !isAdmin) {
@@ -240,7 +264,21 @@ export default function AdminTrackingPage() {
                   <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#35383F] text-[#616161] dark:text-[#BDBDBD] text-[11px] font-semibold capitalize">
                     {data.user.provider}
                   </span>
+                  {data.user.role !== 'admin' && (
+                    <button
+                      onClick={promoteUser}
+                      disabled={promoting}
+                      className="px-3 py-1 rounded-full bg-[#6949FF] hover:bg-[#5536E6] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[11px] font-semibold transition-colors active:scale-95"
+                    >
+                      {promoting ? 'Promoting…' : 'Make Admin'}
+                    </button>
+                  )}
                 </div>
+                {promoteMsg && (
+                  <p className={`font-urbanist text-[12px] mt-2 ${promoteMsg.includes('promoted') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {promoteMsg}
+                  </p>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mt-3">
                   <InfoRow icon={Fingerprint} label="Account ID" value={data.user.publicId || data.user.id} mono />
                   <InfoRow icon={UserIcon} label="Username" value={data.user.username} />
