@@ -10,7 +10,7 @@ import { auth } from "@/lib/server/middleware/auth";
 // publicId / _id) to the `admin` role. Mirrors the matching logic in the
 // analytics/user lookup so any identifier the tracking page accepts works here.
 export async function POST(request: NextRequest) {
-  const authResult = auth(request);
+  const authResult = await auth(request);
   if ("error" in authResult) return authResult.error;
   if (authResult.user.role !== "admin") {
     return errorResponse(403, "forbidden", "Admin access required");

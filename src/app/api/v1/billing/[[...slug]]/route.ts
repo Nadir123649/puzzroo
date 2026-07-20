@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   await connectDB();
 
-  const userResult = auth(request);
+  const userResult = await auth(request);
   if ("error" in userResult) return userResult.error;
 
   try {

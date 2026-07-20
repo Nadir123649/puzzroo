@@ -25,8 +25,8 @@ function calculateCluesFromLine(line: number[]): number[] {
     clues.push(count)
   }
   
-  // If no filled cells, return [0]
-  return clues.length > 0 ? clues : [0]
+  // If no filled cells, return [] (canonical; matches helpers + app data)
+  return clues
 }
 
 /**

@@ -39,8 +39,35 @@ import {
   getHintLimits,
 } from '@shared/lib/nonogram/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
+import { gameApi } from '@/lib/api/gameApi'
 
 import { dailyPuzzles } from '@shared/data/nonogram'
+
+const NONOGRAM_CACHE_KEY = 'puzzroo_nonogram_cache_by_id'
+
+function readCache(id: string): PuzzleData | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(NONOGRAM_CACHE_KEY)
+    if (!raw) return null
+    const map = JSON.parse(raw) as Record<string, PuzzleData>
+    return map[id] || null
+  } catch {
+    return null
+  }
+}
+
+function writeCache(id: string, puzzle: PuzzleData): void {
+  if (typeof window === 'undefined') return
+  try {
+    const raw = localStorage.getItem(NONOGRAM_CACHE_KEY)
+    const map = raw ? (JSON.parse(raw) as Record<string, PuzzleData>) : {}
+    map[id] = puzzle
+    localStorage.setItem(NONOGRAM_CACHE_KEY, JSON.stringify(map))
+  } catch {
+    // ignore cache write failures
+  }
+}
 
 function getDailyNonogramPuzzle(date: Date): PuzzleData {
   const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000)
@@ -58,6 +85,8 @@ export function useNonogram(initialPuzzleId?: string) {
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null)
   const [selectionHistory, setSelectionHistory] = useState<CellPosition[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const initTokenRef = useRef(0)
   
   // Check if this is from daily challenge
   const dateParam = searchParams.get('date')
@@ -106,7 +135,7 @@ export function useNonogram(initialPuzzleId?: string) {
   /**
    * Initialize a new puzzle
    */
-  const initializePuzzle = useCallback((diff: Difficulty, loadSaved = true, puzzleId?: string) => {
+  const initializePuzzle = useCallback(async (diff: Difficulty, loadSaved = true, puzzleId?: string) => {
     // Try to load saved game first - but only if difficulty matches
     if (loadSaved && typeof window !== 'undefined') {
       const saved = loadGameState()
@@ -144,51 +173,85 @@ export function useNonogram(initialPuzzleId?: string) {
       }
     }
 
-    // Load new puzzle
-    let puzzle: PuzzleData
-    
-    if (puzzleId) {
-      const foundPuzzle = getPuzzleById(puzzleId)
-      if (foundPuzzle) {
-        puzzle = foundPuzzle
-      } else {
-        console.warn(`Puzzle ${puzzleId} not found, using random puzzle`)
-        puzzle = getRandomPuzzle(diff)
-      }
-    } else if (isDailyChallenge) {
-      let dailyDate = new Date()
-      if (dateParam) {
-        const [month, day, year] = dateParam.split('-')
-        const fullYear = 2000 + parseInt(year)
-        dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
-      }
-      puzzle = getDailyNonogramPuzzle(dailyDate)
-    } else {
-      puzzle = getRandomPuzzle(diff)
+    // Load new puzzle (async fetch from API with static fallback + cache)
+    const token = ++initTokenRef.current
+    let cancelled = false
+
+    const applyPuzzle = (puzzle: PuzzleData) => {
+      if (token !== initTokenRef.current) return
+      setCurrentPuzzle(puzzle)
+      setGrid(createEmptyGrid(puzzle.size))
+      setMistakeCount(0)
+      setSelectionHistory([])
+      
+      // Set initial countdown time based on estimatedTime
+      setElapsedSeconds(puzzle.estimatedTime || (diff === 'expert' ? 1200 : diff === 'hard' ? 900 : diff === 'medium' ? 600 : 300))
+      
+      setHintsUsed(0)
+      setMaxHints(getHintLimits(diff))
+      setGameStatus('playing')
+      setRowValidation(Array(puzzle.size).fill('incomplete'))
+      setColumnValidation(Array(puzzle.size).fill('incomplete'))
+      setProgress({
+        totalCellsRequired: 0,
+        correctCellsFilled: 0,
+        percentComplete: 0,
+      })
+      setInputMode('fill')
+      startTimeRef.current = null
+      setMistakeCount(0)
+      setDifficulty(diff)
     }
-    
-    setCurrentPuzzle(puzzle)
-    setGrid(createEmptyGrid(puzzle.size))
-    setMistakeCount(0)
-    setSelectionHistory([])
-    
-    // Set initial countdown time based on estimatedTime
-    setElapsedSeconds(puzzle.estimatedTime || (diff === 'hard' ? 900 : diff === 'medium' ? 600 : 300))
-    
-    setHintsUsed(0)
-    setMaxHints(getHintLimits(diff))
-    setGameStatus('playing')
-    setRowValidation(Array(puzzle.size).fill('incomplete'))
-    setColumnValidation(Array(puzzle.size).fill('incomplete'))
-    setProgress({
-      totalCellsRequired: 0,
-      correctCellsFilled: 0,
-      percentComplete: 0,
-    })
-    setInputMode('fill')
-    startTimeRef.current = null
-    setMistakeCount(0)
-    setDifficulty(diff)
+
+    setLoading(true)
+    try {
+      let puzzle: PuzzleData
+      try {
+        if (puzzleId) {
+          const cached = readCache(puzzleId)
+          if (cached) {
+            puzzle = cached
+          } else {
+            const res = await gameApi.getPuzzleById('nonogram', puzzleId)
+            puzzle = res as unknown as PuzzleData
+            writeCache(puzzle.id, puzzle)
+          }
+        } else if (isDailyChallenge) {
+          const res = await gameApi.getDailyPuzzle('nonogram', dateParam || undefined)
+          puzzle = res as unknown as PuzzleData
+          writeCache(puzzle.id, puzzle)
+        } else {
+          const res = await gameApi.getPuzzle('nonogram', { difficulty: diff })
+          puzzle = res as unknown as PuzzleData
+          writeCache(puzzle.id, puzzle)
+        }
+      } catch {
+        // Static fallback
+        if (puzzleId) {
+          const foundPuzzle = getPuzzleById(puzzleId)
+          if (foundPuzzle) {
+            puzzle = foundPuzzle
+          } else {
+            console.warn(`Puzzle ${puzzleId} not found, using random puzzle`)
+            puzzle = getRandomPuzzle(diff)
+          }
+        } else if (isDailyChallenge) {
+          let dailyDate = new Date()
+          if (dateParam) {
+            const [month, day, year] = dateParam.split('-')
+            const fullYear = 2000 + parseInt(year)
+            dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
+          }
+          puzzle = getDailyNonogramPuzzle(dailyDate)
+        } else {
+          puzzle = getRandomPuzzle(diff)
+        }
+      }
+      if (cancelled) return
+      applyPuzzle(puzzle)
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
   }, [isDailyChallenge, dateParam])
 
   /**
@@ -196,7 +259,7 @@ export function useNonogram(initialPuzzleId?: string) {
    */
   useEffect(() => {
     if (typeof window !== 'undefined' && !isInitialized) {
-      const valid = ['easy', 'medium', 'hard']
+      const valid = ['easy', 'medium', 'hard', 'expert']
       const currentDiff = valid.includes(urlDifficulty) ? urlDifficulty : 'easy'
       
       setDifficulty(currentDiff)
@@ -285,6 +348,21 @@ export function useNonogram(initialPuzzleId?: string) {
         hintsUsed: hintsUsed,
         difficulty: currentPuzzle.difficulty,
       })
+
+      // Also report completion to the API when logged in (fire-and-forget)
+      if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
+        void gameApi.complete('nonogram', {
+          puzzleId: currentPuzzle.id,
+          difficulty: currentPuzzle.difficulty as 'easy' | 'medium' | 'hard',
+          score: undefined,
+          time: elapsedSeconds,
+          hintsUsed: hintsUsed,
+          mistakes: mistakeCount,
+          moves: undefined,
+        }).catch(() => {
+          // best-effort; ignore failures
+        })
+      }
       
       clearGameState()
     }
@@ -576,7 +654,7 @@ export function useNonogram(initialPuzzleId?: string) {
       setGrid(emptyGrid)
       setSelectedCell(null)
       setSelectionHistory([])
-      const initialSeconds = currentPuzzle.estimatedTime || (difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300)
+      const initialSeconds = currentPuzzle.estimatedTime || (difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300)
       setElapsedSeconds(initialSeconds)
       setHintsUsed(0)
       setMistakeCount(0)
@@ -758,6 +836,7 @@ export function useNonogram(initialPuzzleId?: string) {
     difficulty,
     currentPuzzle,
     isInitialized,
+    loading,
     gameStatus,
     elapsedSeconds,
     rowValidation,

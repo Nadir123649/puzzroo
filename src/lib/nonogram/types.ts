@@ -7,9 +7,9 @@ export type CellState = 'empty' | 'filled' | 'marked' | 'error'
 
 export type InputMode = 'fill' | 'mark'
 
-export type GridSize = 10 | 15 | 20
+export type GridSize = 10 | 15 | 20 | 25 | 30
 
-export type Difficulty = 'easy' | 'medium' | 'hard'
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
 
 export type ValidationStatus = 'incomplete' | 'completed' | 'invalid'
 

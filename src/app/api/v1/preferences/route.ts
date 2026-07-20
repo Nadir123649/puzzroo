@@ -6,8 +6,8 @@ import { auth } from "@/lib/server/middleware/auth";
 import { validate } from "@/lib/server/middleware/validate";
 import { updateEmailPreferenceSchema } from "@/lib/server/validators/emailPreferenceValidator";
 
-function getUserId(request: NextRequest) {
-  const result = auth(request);
+async function getUserId(request: NextRequest) {
+  const result = await auth(request);
   if ("error" in result) return { error: result.error };
   return { userId: result.user.id };
 }
@@ -23,7 +23,7 @@ function sanitizePrefs(p: any) {
 export async function GET(request: NextRequest) {
   await connectDB();
 
-  const userResult = getUserId(request);
+  const userResult = await getUserId(request);
   if ("error" in userResult) return userResult.error;
 
   try {
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   await connectDB();
 
-  const userResult = getUserId(request);
+  const userResult = await getUserId(request);
   if ("error" in userResult) return userResult.error;
 
   try {

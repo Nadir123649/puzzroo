@@ -21,7 +21,7 @@ function mapEvent(e: any) {
 
 // GET /api/v1/users/me/activity?limit=20&page=1
 export async function GET(request: NextRequest) {
-  const authResult = auth(request);
+  const authResult = await auth(request);
   if ("error" in authResult) return authResult.error;
 
   await connectDB();

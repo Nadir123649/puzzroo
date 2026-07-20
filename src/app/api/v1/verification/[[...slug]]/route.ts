@@ -3,7 +3,6 @@ import crypto from "crypto";
 import User from "@/lib/server/models/User";
 import { connectDB } from "@/lib/server/db";
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
-import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
 import { cookieOptions } from "@/lib/server/utils/cookieOptions";
 import { sendVerificationEmail } from "@/lib/server/services/emailService";
 import { getFirebaseAuth } from "@/lib/server/config/firebase";
@@ -11,8 +10,7 @@ import { auth } from "@/lib/server/middleware/auth";
 import { validate } from "@/lib/server/middleware/validate";
 import { forgotPasswordSchema } from "@/lib/server/validators/authValidator";
 import { formatUser } from "@/lib/server/utils/formatUser";
-import { createSession } from "@/lib/server/utils/createSession";
-import { isFirebaseReady, authPayload } from "@/lib/server/utils/authHelpers";
+import { isFirebaseReady, issueSession } from "@/lib/server/utils/authHelpers";
 import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
 
@@ -81,7 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const decoded = await firebaseAuth.verifyIdToken(firebaseToken);
       const phoneNumber = decoded.phone_number;
       if (!phoneNumber) return errorResponse(400, "no_phone", "No phone number in Firebase token");
-      const userResult = auth(request);
+      const userResult = await auth(request);
       if (!("error" in userResult)) {
         const existingUser = await User.findOne({ phone: phoneNumber, _id: { $ne: userResult.user.id } });
         if (existingUser) return errorResponse(409, "phone_taken", "Phone number already linked to another account");
@@ -105,10 +103,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
       user.lastLoginAt = new Date();
       await user.save({ validateBeforeSave: false });
-      await createSession(request, user._id.toString(), "phone");
+      const { payload } = await issueSession(request, user, "phone");
       await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "phone" }, request });
-      const res = NextResponse.json({ success: true, payload: authPayload(user), timestamp: Date.now() }, { status: 200 });
-      res.cookies.set("refreshToken", buildTokenPayload(user).refreshToken, cookieOptions);
+      const res = NextResponse.json({ success: true, payload, timestamp: Date.now() }, { status: 200 });
+      res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
       return res;
     }
 
@@ -142,14 +140,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       user.emailVerificationTokenExpire = undefined;
       user.lastLoginAt = new Date();
       await user.save();
-      // Auto-login: create a session and set the refresh cookie, then send the
-      // user to a client interstitial that bootstraps the session and lands
-      // them straight in the app (no manual login step).
-      await createSession(request, user._id.toString());
+      const { payload } = await issueSession(request, user);
       await trackServer({ userId: user._id.toString(), event: "email_verified", request });
       await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "email_verify_autologin" }, request });
       const res = NextResponse.redirect(new URL("/auth/complete", process.env.FRONTEND_URL));
-      res.cookies.set("refreshToken", buildTokenPayload(user).refreshToken, cookieOptions);
+      res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
       return res;
     }
 

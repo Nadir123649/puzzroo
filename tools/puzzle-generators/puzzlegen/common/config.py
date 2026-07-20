@@ -46,19 +46,27 @@ SUDOKU_GIVENS = {
     },
 }
 
-# ── CrossMath: difficulty → operand grid dimension N. ────────────────────────
-CROSSMATH_N = {"easy": 2, "medium": 3, "hard": 6}
-# how many operand cells to blank (make editable), by difficulty.
-CROSSMATH_BLANKS = {"easy": 2, "medium": 5, "hard": 12}
+# ── CrossMath: pattern-shaped boards (see puzzlegen/crossmath/patterns.py). ──
+# Difficulty is set by the PATTERN BAND (easy/medium/hard patterns) combined with
+# the BLANK RATIO of inner operand cells that are made editable:
+#   easy ~45%, medium ~60%, hard ~75%.
+# Every puzzle is GUARANTEED to have a unique solution (pattern-aware solver:
+# given the shown operators + result cells, exactly one fill of the blanks).
+CROSSMATH_BLANK_RATIO = {"easy": 0.45, "medium": 0.60, "hard": 0.60}
 CROSSMATH_MAX_MISTAKES = {"easy": 5, "medium": 4, "hard": 3}
-CROSSMATH_MAX_RESULT = 99
+# Result-cell cap for parity with the app's solvePattern (caps at 30).
+CROSSMATH_MAX_RESULT = 30
 
 # ── Nonogram: difficulty → list of sizes. Density = target fill ratio. ───────
 # Densities chosen so every size reliably yields UNIQUE, fully line-solvable
 # puzzles (no guessing). Large grids need higher fill because line-solving
 # relies on overlap deductions from large blocks; difficulty comes from size.
-NONOGRAM_SIZES = {"easy": [5, 10], "medium": [15, 20], "hard": [25, 30]}
-NONOGRAM_DENSITY = {"easy": 0.55, "medium": 0.60, "hard": 0.66}
+#   easy   -> 10x10   (recognizable curated pictures + procedural fill)
+#   medium -> 15x15   (recognizable curated pictures + procedural fill)
+#   hard   -> 20x20   (procedural, large board)
+#   expert -> 25x25 + 30x30 (procedural, industry-standard largest boards)
+NONOGRAM_SIZES = {"easy": [10], "medium": [15], "hard": [20], "expert": [25, 30]}
+NONOGRAM_DENSITY = {"easy": 0.55, "medium": 0.60, "hard": 0.64, "expert": 0.66}
 
 
 def all_buckets() -> list[Bucket]:
@@ -74,19 +82,19 @@ def all_buckets() -> list[Bucket]:
             ))
 
     for diff in ("easy", "medium", "hard"):
-        n = CROSSMATH_N[diff]
+        # size_label = grid side (7 for easy, 11 for medium/hard).
+        side = 7 if diff == "easy" else 11
         buckets.append(Bucket(
-            game="crossmath", difficulty=diff, size=n,
-            size_label=f"{n}x{n}",
+            game="crossmath", difficulty=diff, size=side,
+            size_label=f"{side}x{side}",
             params={
-                "n": n,
-                "blanks": CROSSMATH_BLANKS[diff],
+                "blank_ratio": CROSSMATH_BLANK_RATIO[diff],
                 "max_mistakes": CROSSMATH_MAX_MISTAKES[diff],
                 "max_result": CROSSMATH_MAX_RESULT,
             },
         ))
 
-    for diff in ("easy", "medium", "hard"):
+    for diff in DIFFICULTIES:
         for size in NONOGRAM_SIZES[diff]:
             buckets.append(Bucket(
                 game="nonogram", difficulty=diff, size=size,
