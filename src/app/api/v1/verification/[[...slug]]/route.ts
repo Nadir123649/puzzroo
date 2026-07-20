@@ -16,7 +16,7 @@ import { isFirebaseReady, authPayload } from "@/lib/server/utils/authHelpers";
 import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug || [];
   const resource = slug[0]; // "email" | "phone"
   const action = slug[1]; // "verify" | "resend"
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug || [];
   const resource = slug[0]; // "email"
   const action = slug[1]; // "verify"

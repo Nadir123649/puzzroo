@@ -15,7 +15,7 @@ const PLANS = [
   { id: "lifetime", name: "Lifetime", price: 29.90, currency: "usd", interval: "one-time", description: "Pay once, play forever" },
 ];
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
   const action = slug?.[0];
 
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
   const action = slug?.[0];
   let body: any = {};

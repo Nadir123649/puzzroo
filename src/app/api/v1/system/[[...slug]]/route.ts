@@ -3,7 +3,7 @@ import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
 
 const VERSION = process.env.npm_package_version || "1.0.0";
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
   const action = slug?.[0];
 

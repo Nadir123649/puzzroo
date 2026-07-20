@@ -17,7 +17,7 @@ import { authPayload } from "@/lib/server/utils/authHelpers";
 import { generatePublicId } from "@/lib/server/utils/publicId";
 import { trackServer } from "@/lib/server/utils/trackEvent";
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
   const action = slug?.[0];
   let body: any = {};
@@ -205,7 +205,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
   const action = slug?.[0];
 
