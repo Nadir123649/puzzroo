@@ -1,192 +1,184 @@
 /**
- * Sudoku Puzzle Dataset Index
- * Centralized export for all puzzle data
+ * Sudoku Puzzle Dataset (generated)
+ *
+ * Source of truth: tools/puzzle-generators/export_sudoku.py writes
+ *   shared/src/data/sudoku/{easy,medium,hard,expert}.json
+ * Each JSON record stores `puzzle`/`solution` as 81-character strings
+ * (0 = empty cell); this module decodes them into number[][] to keep the
+ * rest of the app (useSudoku, etc.) unchanged.
+ *
+ * Every puzzle is uniqueness-guaranteed and technique-rated at generation
+ * time (see puzzlegen/sudoku/rating.py). Runtime validation here is limited
+ * to cheap structural checks; full uniqueness/rating checks run in the
+ * dataset validator (tools/scripts) and a vitest test.
  */
 
-import { easyPuzzles } from './easy'
-import { mediumPuzzles } from './medium'
-import { hardPuzzles } from './hard'
+import easyJson from './easy.json'
+import mediumJson from './medium.json'
+import hardJson from './hard.json'
+import expertJson from './expert.json'
 import type { Difficulty, SudokuPuzzleData, PuzzleDataset } from './types'
 
+interface RawRecord {
+  id: string
+  difficulty: Difficulty
+  puzzle: string
+  solution: string
+  givens?: number
+  tier?: number
+  techniques?: string[]
+  solvableByLogic?: boolean
+}
+
+function decode81(s: string): number[][] {
+  const board: number[][] = []
+  for (let r = 0; r < 9; r++) {
+    const row: number[] = []
+    for (let c = 0; c < 9; c++) {
+      row.push(Number(s[r * 9 + c]))
+    }
+    board.push(row)
+  }
+  return board
+}
+
+function toPuzzle(r: RawRecord): SudokuPuzzleData {
+  return {
+    id: r.id,
+    difficulty: r.difficulty,
+    puzzle: decode81(r.puzzle),
+    solution: decode81(r.solution),
+    givens: r.givens,
+    tier: r.tier,
+    techniques: r.techniques,
+  }
+}
+
 /**
- * Validate puzzle structure and quality
+ * Cheap structural + correctness sanity check for a decoded sudoku puzzle.
+ * Runs at dataset-load time and at serve time so a corrupt record is caught
+ * before it reaches a player. Returns a list of human-readable errors.
  */
-function validatePuzzleStructure(puzzle: SudokuPuzzleData): boolean {
-  if (!puzzle.puzzle || !puzzle.solution) {
-    console.error(`❌ Puzzle ${puzzle.id}: Missing puzzle or solution`)
-    return false
+export function sanityCheckSudoku(p: SudokuPuzzleData): string[] {
+  const errors: string[] = []
+  const g = p.puzzle
+  const s = p.solution
+  if (!Array.isArray(g) || g.length !== 9) {
+    errors.push('puzzle is not 9 rows')
+    return errors
   }
-  
-  if (puzzle.puzzle.length !== 9) {
-    console.error(`❌ Puzzle ${puzzle.id}: puzzle has ${puzzle.puzzle.length} rows, expected 9`)
-    return false
+  if (!Array.isArray(s) || s.length !== 9) {
+    errors.push('solution is not 9 rows')
+    return errors
   }
-  
-  if (puzzle.solution.length !== 9) {
-    console.error(`❌ Puzzle ${puzzle.id}: solution has ${puzzle.solution.length} rows, expected 9`)
-    return false
-  }
-  
-  // Check for 9x9 structure
-  for (let i = 0; i < 9; i++) {
-    if (!puzzle.puzzle[i] || puzzle.puzzle[i].length !== 9) {
-      console.error(`❌ Puzzle ${puzzle.id}: puzzle row ${i} has ${puzzle.puzzle[i]?.length || 0} columns, expected 9`)
-      return false
+  for (let r = 0; r < 9; r++) {
+    if (!Array.isArray(g[r]) || g[r].length !== 9) {
+      errors.push(`puzzle row ${r} has ${g[r]?.length ?? 'no'} columns`)
+      continue
     }
-    if (!puzzle.solution[i] || puzzle.solution[i].length !== 9) {
-      console.error(`❌ Puzzle ${puzzle.id}: solution row ${i} has ${puzzle.solution[i]?.length || 0} columns, expected 9`)
-      return false
+    if (!Array.isArray(s[r]) || s[r].length !== 9) {
+      errors.push(`solution row ${r} has ${s[r]?.length ?? 'no'} columns`)
+      continue
     }
-  }
-  
-  // Validate fixed values match solution
-  for (let row = 0; row < 9; row++) {
-    for (let col = 0; col < 9; col++) {
-      if (puzzle.puzzle[row][col] !== 0) {
-        if (puzzle.puzzle[row][col] !== puzzle.solution[row][col]) {
-          console.error(`❌ Puzzle ${puzzle.id}: Mismatch at [${row},${col}]: puzzle has ${puzzle.puzzle[row][col]}, solution has ${puzzle.solution[row][col]}`)
-          return false
-        }
+    for (let c = 0; c < 9; c++) {
+      const pv = g[r][c]
+      const sv = s[r][c]
+      if (!Number.isInteger(pv) || pv < 0 || pv > 9) {
+        errors.push(`puzzle[${r}][${c}]=${pv} out of range`)
+      }
+      if (!Number.isInteger(sv) || sv < 1 || sv > 9) {
+        errors.push(`solution[${r}][${c}]=${sv} out of range`)
+      } else if (pv !== 0 && pv !== sv) {
+        errors.push(`puzzle[${r}][${c}]=${pv} != solution ${sv}`)
       }
     }
   }
-  
-  // Check for completely empty rows (quality check)
-  const emptyRows = puzzle.puzzle.filter(row => row.every(cell => cell === 0))
-  if (emptyRows.length > 0) {
-    console.warn(`⚠️  Puzzle ${puzzle.id}: Contains ${emptyRows.length} completely empty row(s)`)
-  }
-  
-  // Check for completely empty columns (quality check)
-  let emptyColCount = 0
-  for (let col = 0; col < 9; col++) {
-    const isEmpty = puzzle.puzzle.every(row => row[col] === 0)
-    if (isEmpty) emptyColCount++
-  }
-  if (emptyColCount > 0) {
-    console.warn(`⚠️  Puzzle ${puzzle.id}: Contains ${emptyColCount} completely empty column(s)`)
-  }
-  
-  // Count total clues for quality assessment
-  const clueCount = puzzle.puzzle.flat().filter(cell => cell !== 0).length
-  console.log(`✅ Puzzle ${puzzle.id} validated: 9x9 structure correct, ${clueCount} clues`)
-  
-  return true
-}
-
-/**
- * Check for duplicate puzzles
- */
-function checkForDuplicates(puzzles: SudokuPuzzleData[]): void {
-  const puzzleStrings = new Map<string, string>()
-  const duplicates: string[] = []
-  
-  puzzles.forEach(puzzle => {
-    const puzzleStr = JSON.stringify(puzzle.puzzle)
-    const existing = puzzleStrings.get(puzzleStr)
-    
-    if (existing) {
-      duplicates.push(`${existing} and ${puzzle.id}`)
-      console.error(`❌ Duplicate puzzle detected: ${existing} === ${puzzle.id}`)
-    } else {
-      puzzleStrings.set(puzzleStr, puzzle.id)
-    }
+  if (errors.length > 0) return errors
+  const ok = (lines: number[][]) =>
+    lines.every((line) => {
+      if (line.length !== 9) return false
+      const set = new Set(line)
+      return set.size === 9 && !set.has(0)
+    })
+  const cols = Array.from({ length: 9 }, (_, c) => s.map((row) => row[c]))
+  const boxes = Array.from({ length: 9 }, (_, b) => {
+    const br = Math.floor(b / 3) * 3
+    const bc = (b % 3) * 3
+    const out: number[] = []
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) out.push(s[br + i][bc + j])
+    return out
   })
-  
-  if (duplicates.length > 0) {
-    throw new Error(`Duplicate puzzles found: ${duplicates.join(', ')}`)
+  if (!ok(s) || !ok(cols) || !ok(boxes)) {
+    errors.push('solution is not a valid completed sudoku')
   }
+  return errors
 }
 
-/**
- * Check for duplicate IDs
- */
-function checkForDuplicateIds(puzzles: SudokuPuzzleData[]): void {
-  const ids = new Set<string>()
-  const duplicates: string[] = []
-  
-  puzzles.forEach(puzzle => {
-    if (ids.has(puzzle.id)) {
-      duplicates.push(puzzle.id)
-      console.error(`❌ Duplicate ID detected: ${puzzle.id}`)
-    } else {
-      ids.add(puzzle.id)
+function buildPool(raw: unknown): SudokuPuzzleData[] {
+  const records = raw as RawRecord[]
+  const out: SudokuPuzzleData[] = []
+  for (const r of records) {
+    const p = toPuzzle(r)
+    const errs = sanityCheckSudoku(p)
+    if (errs.length) {
+      console.error(`[sudoku] skipping invalid puzzle ${p.id}: ${errs.join('; ')}`)
+      continue
     }
-  })
-  
-  if (duplicates.length > 0) {
-    throw new Error(`Duplicate IDs found: ${duplicates.join(', ')}`)
+    out.push(p)
   }
+  return out
 }
-
-// Validate all puzzles at module load
-const allPuzzles = [...easyPuzzles, ...mediumPuzzles, ...hardPuzzles]
-
-// Check for duplicate IDs
-checkForDuplicateIds(allPuzzles)
-
-// Check for duplicate puzzles
-checkForDuplicates(allPuzzles)
-
-// Validate structure of each puzzle
-allPuzzles.forEach(puzzle => {
-  if (!validatePuzzleStructure(puzzle)) {
-    throw new Error(`Invalid puzzle detected: ${puzzle.id}`)
-  }
-})
-
-console.log(`✅ All ${allPuzzles.length} puzzles validated successfully (${easyPuzzles.length} easy, ${mediumPuzzles.length} medium, ${hardPuzzles.length} hard)`)
-console.log(`📊 Dataset quality: No empty rows/columns, all clues verified, no duplicates`)
 
 export const puzzleDataset: PuzzleDataset = {
-  easy: easyPuzzles,
-  medium: mediumPuzzles,
-  hard: hardPuzzles,
+  easy: buildPool(easyJson),
+  medium: buildPool(mediumJson),
+  hard: buildPool(hardJson),
+  expert: buildPool(expertJson),
 }
 
 /**
- * Get random puzzle from specified difficulty
- * Avoids immediate repeats using lastPuzzleId
+ * Get random puzzle from specified difficulty.
+ * Avoids immediate repeats using lastPuzzleId.
  */
 export function getRandomPuzzle(
   difficulty: Difficulty,
   lastPuzzleId?: string
 ): SudokuPuzzleData {
-  const puzzles = puzzleDataset[difficulty]
-  
+  let puzzles = puzzleDataset[difficulty]
+
+  if (puzzles.length === 0) {
+    for (const d of ['easy', 'medium', 'hard', 'expert'] as Difficulty[]) {
+      const fb = puzzleDataset[d]
+      if (fb.length > 0) { puzzles = fb; break }
+    }
+  }
+
   if (puzzles.length === 0) {
     throw new Error(`No puzzles available for difficulty: ${difficulty}`)
   }
 
-  // If only one puzzle, return it
   if (puzzles.length === 1) {
     return puzzles[0]
   }
 
-  // Filter out last puzzle if possible
-  const availablePuzzles = lastPuzzleId
+  const available = lastPuzzleId
     ? puzzles.filter((p) => p.id !== lastPuzzleId)
     : puzzles
+  const selectFrom = available.length > 0 ? available : puzzles
 
-  // If filtering removed all puzzles, use full list
-  const selectFrom = availablePuzzles.length > 0 ? availablePuzzles : puzzles
-
-  // Random selection
   const randomIndex = Math.floor(Math.random() * selectFrom.length)
   return selectFrom[randomIndex]
 }
 
 /**
- * Get puzzle by ID
+ * Get puzzle by ID (searches all difficulties).
  */
 export function getPuzzleById(id: string): SudokuPuzzleData | null {
-  const allPuzzles = [
-    ...puzzleDataset.easy,
-    ...puzzleDataset.medium,
-    ...puzzleDataset.hard,
-  ]
-  
-  return allPuzzles.find((p) => p.id === id) || null
+  for (const diff of ['easy', 'medium', 'hard', 'expert'] as Difficulty[]) {
+    const found = puzzleDataset[diff].find((p) => p.id === id)
+    if (found) return found
+  }
+  return null
 }
 
 export type { Difficulty, SudokuPuzzleData, PuzzleDataset }

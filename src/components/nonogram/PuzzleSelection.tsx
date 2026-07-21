@@ -21,7 +21,7 @@ export function PuzzleSelection({ onSelectPuzzle }: PuzzleSelectionProps) {
 
   // Sync difficulty tab with the ?difficulty= URL param set by the game lobby Play button
   const urlDifficulty = searchParams.get('difficulty') as Difficulty | null
-  const validDifficulties: Difficulty[] = ['easy', 'medium', 'hard']
+  const validDifficulties: Difficulty[] = ['easy', 'medium', 'hard', 'expert']
   const initialDifficulty: Difficulty =
     urlDifficulty && validDifficulties.includes(urlDifficulty) ? urlDifficulty : 'easy'
 
@@ -99,6 +99,16 @@ export function PuzzleSelection({ onSelectPuzzle }: PuzzleSelectionProps) {
               }`}
             >
               Hard ({puzzleCounts.hard})
+            </button>
+            <button
+              onClick={() => handleDifficultyChange('expert')}
+              className={`px-6 py-2.5 rounded-full font-urbanist text-[14px] font-semibold transition-all duration-200 ${
+                selectedDifficulty === 'expert'
+                  ? 'bg-[#6949FF] text-white shadow-lg shadow-purple-500/30'
+                  : 'text-[#616161] dark:text-[#A0A4B8] hover:text-[#6949FF] dark:hover:text-[#8B6EFF]'
+              }`}
+            >
+              Expert ({puzzleCounts.expert})
             </button>
           </div>
         </div>

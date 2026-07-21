@@ -17,6 +17,7 @@ export interface Cell {
 export interface CrossMathPuzzle {
   id: string
   difficulty: Difficulty
+  patternId?: number
   rows: number
   columns: number
   grid: Cell[][]

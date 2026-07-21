@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { name, email, message } = val.data!;
-    const userResult = auth(request);
+    const userResult = await auth(request);
     const contact = await ContactMessage.create({
       name, email, message,
       userId: "error" in userResult ? null : userResult.user.id,

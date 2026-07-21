@@ -9,6 +9,7 @@ export interface User {
   usernameSet?: boolean
   role?: string
   joinedDate: string
+  createdAt?: string
   accountStatus: string
   subscriptionPlan: string
   avatar?: string
@@ -86,6 +87,16 @@ export async function ensureSession(): Promise<void> {
     const accessToken = data?.payload?.token?.accessToken;
     if (!accessToken) throw new Error("no_token");
     localStorage.setItem("accessToken", accessToken);
+    // Re-read the profile so server-side changes (e.g. being promoted to
+    // admin, subscription upgrades) take effect without a full re-login.
+    try {
+      const meRes = await api("/api/v1/users/me");
+      if (meRes.success) {
+        const current = getCurrentUser();
+        const updated = mapUser(meRes.payload as any);
+        localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
+      }
+    } catch {}
     window.dispatchEvent(new Event("auth-change"));
   } catch {
     localStorage.removeItem("accessToken");
@@ -377,6 +388,7 @@ function mapUser(u: any): User {
     usernameSet: u.usernameSet,
     role: u.role || "free",
     joinedDate: u.createdAt ? formatDate(u.createdAt) : "N/A",
+    createdAt: u.createdAt,
     accountStatus: u.status || "active",
     subscriptionPlan: u.role || "free",
     avatar: u.avatar,

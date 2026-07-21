@@ -2,6 +2,7 @@ import { notify } from '@/lib/toast'
 
 type RefreshCallback = (token: string) => void;
 let onRefresh: RefreshCallback | null = null;
+let sessionExpiredNotified = false;
 
 export function setOnRefresh(cb: RefreshCallback) {
   onRefresh = cb;
@@ -27,13 +28,17 @@ async function refreshAccessToken(): Promise<string | null> {
 
 export async function api<T = any>(
   path: string,
-  options: RequestInit & { params?: Record<string, string> } = {}
+  options: RequestInit & { params?: Record<string, string | number | boolean | undefined> } = {}
 ): Promise<{ success: boolean; payload: T; timestamp?: number }> {
   const { params, ...fetchOptions } = options;
   let url = path.startsWith("/api") ? `${API_BASE}${path}` : path;
 
   if (params) {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(
+      Object.entries(params)
+        .filter(([, v]) => v !== undefined && v !== null)
+        .map(([k, v]) => [k, String(v)])
+    ).toString();
     url += `?${qs}`;
   }
 
@@ -71,6 +76,10 @@ export async function api<T = any>(
       notify.errorKey("SYSTEM_RATE_LIMITED");
     }
 
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: { message: `HTTP ${res.status}` } }));
+      throw new Error(error?.error?.message || `HTTP ${res.status}`);
+    }
     const json = await res.json();
     return json;
   } catch {

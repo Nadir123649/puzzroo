@@ -76,24 +76,41 @@ export function generateDailyChallenge(
 }
 
 /**
- * Generate past puzzles for the last N days
+ * Generate past puzzles.
+ *
+ * The window is anchored to the account's creation date (defaulting to "today"
+ * for guests/anonymous), starting TWO days before it, and always includes at
+ * least 3 puzzles. This keeps brand-new accounts from showing an empty list
+ * while never exposing puzzles dated before the user existed.
  */
 export function generatePastPuzzles(
   days: number,
-  gameId: 'sudoku' | 'cross-math' | 'nonogram' | 'tangram'
+  gameId: 'sudoku' | 'cross-math' | 'nonogram' | 'tangram',
+  accountCreatedAt?: Date
 ): DailyChallenge[] {
-  const puzzles: DailyChallenge[] = []
   const today = new Date()
-  
-  for (let i = 0; i < days; i++) {
-    const date = new Date(today)
-    date.setDate(date.getDate() - i)
-    
-    const puzzle = generateDailyChallenge(date, gameId)
-    puzzles.push(puzzle)
+  today.setHours(0, 0, 0, 0)
+
+  // Start two days before the account was created (or two days ago for guests).
+  const start = new Date(accountCreatedAt ?? today)
+  start.setHours(0, 0, 0, 0)
+  start.setDate(start.getDate() - 2)
+
+  const puzzles: DailyChallenge[] = []
+  const cursor = new Date(start)
+  while (cursor <= today) {
+    puzzles.push(generateDailyChallenge(new Date(cursor), gameId))
+    cursor.setDate(cursor.getDate() + 1)
   }
-  
-  return puzzles
+
+  // Guarantee a minimum of 3 puzzles (brand-new accounts).
+  while (puzzles.length < 3) {
+    start.setDate(start.getDate() - 1)
+    puzzles.unshift(generateDailyChallenge(new Date(start), gameId))
+  }
+
+  // Cap to the requested window size if it would otherwise be larger.
+  return puzzles.length > days ? puzzles.slice(puzzles.length - days) : puzzles
 }
 
 /**

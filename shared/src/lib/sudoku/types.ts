@@ -20,7 +20,7 @@ export interface Position {
 
 export type GameStatus = 'playing' | 'paused' | 'won' | 'lost'
 
-export type Difficulty = 'easy' | 'medium' | 'hard'
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
 
 export interface SudokuState {
   currentBoard: SudokuBoard      // Current game state

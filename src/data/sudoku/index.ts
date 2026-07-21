@@ -142,6 +142,7 @@ export const puzzleDataset: PuzzleDataset = {
   easy: easyPuzzles,
   medium: mediumPuzzles,
   hard: hardPuzzles,
+  expert: [],
 }
 
 /**
@@ -152,8 +153,15 @@ export function getRandomPuzzle(
   difficulty: Difficulty,
   lastPuzzleId?: string
 ): SudokuPuzzleData {
-  const puzzles = puzzleDataset[difficulty]
-  
+  let puzzles = puzzleDataset[difficulty]
+
+  if (puzzles.length === 0) {
+    for (const d of ['easy', 'medium', 'hard', 'expert'] as Difficulty[]) {
+      const fb = puzzleDataset[d]
+      if (fb.length > 0) { puzzles = fb; break }
+    }
+  }
+
   if (puzzles.length === 0) {
     throw new Error(`No puzzles available for difficulty: ${difficulty}`)
   }

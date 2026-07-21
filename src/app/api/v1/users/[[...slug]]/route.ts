@@ -10,8 +10,8 @@ import { validate } from "@/lib/server/middleware/validate";
 import { updateProfileSchema } from "@/lib/server/validators/authValidator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
 
-function getUserId(request: NextRequest) {
-  const result = auth(request);
+async function getUserId(request: NextRequest) {
+  const result = await auth(request);
   if ("error" in result) return { error: result.error };
   return { userId: result.user.id };
 }
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   await connectDB();
 
-  const userResult = getUserId(request);
+  const userResult = await getUserId(request);
   if ("error" in userResult) return userResult.error;
 
   try {
@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   await connectDB();
 
-  const userResult = getUserId(request);
+  const userResult = await getUserId(request);
   if ("error" in userResult) return userResult.error;
 
   try {
@@ -82,7 +82,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   await connectDB();
 
-  const userResult = getUserId(request);
+  const userResult = await getUserId(request);
   if ("error" in userResult) return userResult.error;
 
   const slug = (await params).slug;

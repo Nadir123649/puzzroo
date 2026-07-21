@@ -27,10 +27,13 @@ export interface SavedGameState {
   savedAt: number
 }
 
+const keyFor = (puzzleId?: string) =>
+  puzzleId ? `puzzroo_sudoku_game_${puzzleId}` : STORAGE_KEY
+
 /**
  * Save game state to localStorage
  */
-export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>): void {
+export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>, puzzleId?: string): void {
   if (!isBrowser) return
   
   try {
@@ -40,7 +43,7 @@ export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>
       savedAt: Date.now(),
     }
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave))
+    localStorage.setItem(keyFor(puzzleId), JSON.stringify(dataToSave))
   } catch (error) {
     console.error('Failed to save game state:', error)
   }
@@ -49,11 +52,11 @@ export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>
 /**
  * Load game state from localStorage
  */
-export function loadGameState(): SavedGameState | null {
+export function loadGameState(puzzleId?: string): SavedGameState | null {
   if (!isBrowser) return null
   
   try {
-    const data = localStorage.getItem(STORAGE_KEY)
+    const data = localStorage.getItem(keyFor(puzzleId))
     if (!data) return null
 
     const parsed = JSON.parse(data) as SavedGameState
@@ -61,20 +64,20 @@ export function loadGameState(): SavedGameState | null {
     // Version check
     if (parsed.version !== STORAGE_VERSION) {
       console.warn('Saved game version mismatch, clearing storage')
-      clearGameState()
+      clearGameState(puzzleId)
       return null
     }
 
     // Don't restore completed games
     if (parsed.gameStatus === 'won' || parsed.gameStatus === 'lost') {
-      clearGameState()
+      clearGameState(puzzleId)
       return null
     }
 
     return parsed
   } catch (error) {
     console.error('Failed to load game state:', error)
-    clearGameState()
+    clearGameState(puzzleId)
     return null
   }
 }
@@ -82,11 +85,11 @@ export function loadGameState(): SavedGameState | null {
 /**
  * Clear saved game state
  */
-export function clearGameState(): void {
+export function clearGameState(puzzleId?: string): void {
   if (!isBrowser) return
   
   try {
-    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(keyFor(puzzleId))
   } catch (error) {
     console.error('Failed to clear game state:', error)
   }

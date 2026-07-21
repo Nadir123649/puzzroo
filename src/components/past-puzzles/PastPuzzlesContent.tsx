@@ -17,7 +17,7 @@ import { getCompletedPuzzleIds } from '@shared/lib/completion/universal'
 import Navbar from '@/components/layout/navbar'
 import Footer from '@/components/layout/Footer'
 import { GameLoader } from '@/components/ui/GameLoader'
-import { isLoggedIn } from '@/lib/auth/frontend-auth'
+import { isLoggedIn, getCurrentUser } from '@/lib/auth/frontend-auth'
 
 interface PastPuzzlesContentProps {
   gameId: 'sudoku' | 'cross-math' | 'nonogram' | 'tangram'
@@ -54,7 +54,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   const [authed, setAuthed] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 8
-  const accessibleCount = getAccessiblePastChallenges()
+  const accessibleCount = getAccessiblePastChallenges(authed)
   const { theme } = useTheme()
   const [userLoggedIn, setUserLoggedIn] = useState(false)
 
@@ -115,8 +115,10 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   }, [gameId])
 
   useEffect(() => {
-    // Generate 24 past puzzles
-    const generated = generatePastPuzzles(24, gameId)
+    // Generate past puzzles anchored to account creation (min 3)
+    const user = getCurrentUser()
+    const accountCreatedAt = user?.createdAt ? new Date(user.createdAt) : undefined
+    const generated = generatePastPuzzles(24, gameId, accountCreatedAt)
     
     // Update status from localStorage and apply lock
     const withStatus = generated.map((puzzle, index) => {

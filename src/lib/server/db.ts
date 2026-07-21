@@ -24,6 +24,10 @@ async function resolveSRVHosts(srv: string): Promise<string> {
   return buildDirectURI(srv, hosts);
 }
 
+mongoose.connection.on("error", (err) => {
+  console.error("[db] mongoose connection error:", err);
+});
+
 export async function connectDB() {
   if (!MONGODB_URI) {
     throw new Error("Please define MONGO_URI in .env.local");
@@ -40,12 +44,15 @@ export async function connectDB() {
     }
   }
 
-  (global as any)._mongooseConnection = mongoose.connect(uri, { autoIndex: false });
+  (global as any)._mongooseConnection = mongoose.connect(uri, {
+    autoIndex: false,
+    serverSelectionTimeoutMS: 3000,
+    connectTimeoutMS: 3000,
+  });
   cached = (global as any)._mongooseConnection;
   try {
     await cached;
   } catch (e) {
-    // Reset so a transient connect failure doesn't permanently poison the cache.
     cached = null;
     (global as any)._mongooseConnection = null;
     throw e;
