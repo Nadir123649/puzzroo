@@ -103,7 +103,8 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
   const isCrossMath = name.toLowerCase() === 'cross math' || name.toLowerCase() === 'cross-math' || name.toLowerCase() === 'crossmath'
   const isNonogram = name.toLowerCase() === 'nonogram'
   const isTangram = name.toLowerCase() === 'tangram'
-  const playUrl = isSudoku ? '/sudoku' : isCrossMath ? '/cross-math' : isNonogram ? '/nonogram' : isTangram ? '/tangram' : '#'
+  const isChess = name.toLowerCase() === 'chess'
+  const playUrl = isSudoku ? '/sudoku' : isCrossMath ? '/cross-math' : isNonogram ? '/nonogram' : isTangram ? '/tangram' : isChess ? '/chess/setup' : '#'
 
   const handleDifficultyChange = (difficulty: Difficulty) => {
     setLocalDifficulty(difficulty)
@@ -112,7 +113,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
   }
 
   const handlePlayClick = async (e: React.MouseEvent) => {
-    if (isSudoku || isCrossMath || isNonogram || isTangram) {
+    if (isSudoku || isCrossMath || isNonogram || isTangram || isChess) {
       e.preventDefault()
       setIsLoading(true)
       // Show loading for 1 second
@@ -151,7 +152,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
             />
 
             {/* Play Button with Icon */}
-            {(isSudoku || isCrossMath || isNonogram || isTangram) ? (
+            {(isSudoku || isCrossMath || isNonogram || isTangram || isChess) ? (
               <button
                 onClick={handlePlayClick}
                 disabled={isLoading}

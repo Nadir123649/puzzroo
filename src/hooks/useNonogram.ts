@@ -388,9 +388,11 @@ export function useNonogram(initialPuzzleId?: string) {
     const currentState = grid[position.row][position.col]
     
     if (mode === 'fill') {
-      // Fill Mode: empty/error <-> filled
-      // Treat error cells like empty cells for toggling
-      return (currentState === 'filled') ? 'empty' : 'filled'
+      // Fill Mode: If already filled, keep filled so dragging over or touching does not hide/remove it
+      if (currentState === 'filled') {
+        return 'filled'
+      }
+      return 'filled'
     } else {
       // Mark Mode: empty <-> marked (no validation needed for flags)
       return currentState === 'marked' ? 'empty' : 'marked'

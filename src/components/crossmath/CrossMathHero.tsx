@@ -43,40 +43,6 @@ export function CrossMathHero({ backTo }: CrossMathHeroProps = {}) {
     modeBgClass = 'bg-[#DBEAFE] dark:bg-[#1E3A8A]/30 border-[#BFDBFE] dark:border-[#1E3A8A]'
   }
 
-  const getAdjacentDates = (dateStr: string) => {
-    const [m, d, y] = dateStr.split('-').map(Number)
-    const currentDate = new Date(2000 + y, m - 1, d)
-    currentDate.setHours(0, 0, 0, 0)
-    
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    const diffTime = today.getTime() - currentDate.getTime()
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-    
-    const hasPrev = diffDays > 0 // Can go to newer puzzle (closer to today)
-    const hasNext = diffDays < 23 // Can go to older puzzle (further in past)
-    
-    const prevDate = new Date(currentDate)
-    prevDate.setDate(currentDate.getDate() + 1)
-    
-    const nextDate = new Date(currentDate)
-    nextDate.setDate(currentDate.getDate() - 1)
-    
-    const formatDateStr = (date: Date) => {
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const year = String(date.getFullYear()).slice(-2)
-      return `${month}-${day}-${year}`
-    }
-    
-    return {
-      hasPrev,
-      hasNext,
-      prevDateStr: formatDateStr(prevDate),
-      nextDateStr: formatDateStr(nextDate),
-    }
-  }
 
   // Prevent scroll when loading overlay is active
   useEffect(() => {
@@ -114,14 +80,16 @@ export function CrossMathHero({ backTo }: CrossMathHeroProps = {}) {
       <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-[10px] md:py-[15px]">
         <div className="w-full px-[20px]">
           {/* Back Arrow */}
-          <button
-            onClick={handleBackClick}
-            disabled={isNavigating}
-            className="md:fixed md:left-4 md:top-[100px] z-[50] mb-2 w-12 h-12 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center p-2 hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
-            aria-label="Back to games"
-          >
-            <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
-          </button>
+          <div className="hidden sm:flex w-full items-center mb-2">
+            <button
+              onClick={handleBackClick}
+              disabled={isNavigating}
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center p-2 hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
+              aria-label="Back to games"
+            >
+              <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
+            </button>
+          </div>
 
           <div className="flex flex-col items-center gap-4 md:gap-5">
             
@@ -147,38 +115,12 @@ export function CrossMathHero({ backTo }: CrossMathHeroProps = {}) {
               <span>{modeLabel}</span>
             </div>
 
-            {/* Puzzle Navigation Buttons */}
+            {/* Date Display */}
             {dateParam && (
               <div className="flex items-center gap-4 mt-2">
-                <button
-                  onClick={() => {
-                    const { hasPrev, prevDateStr } = getAdjacentDates(dateParam)
-                    if (hasPrev) {
-                      router.push(`${pathname}?date=${prevDateStr}`)
-                    }
-                  }}
-                  disabled={!getAdjacentDates(dateParam).hasPrev}
-                  className="px-3 py-1.5 rounded-full border border-[#6949FF] text-[#6949FF] hover:bg-[#6949FF] hover:text-white dark:hover:bg-[#6949FF] dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed text-[12px] font-urbanist font-bold transition-all duration-200 active:scale-95 flex items-center gap-1"
-                >
-                  &larr; Prev Puzzle
-                </button>
-                
                 <span className="font-urbanist text-[13px] font-bold text-[#757575] dark:text-[#BDBDBD]">
                   {dateParam}
                 </span>
-
-                <button
-                  onClick={() => {
-                    const { hasNext, nextDateStr } = getAdjacentDates(dateParam)
-                    if (hasNext) {
-                      router.push(`${pathname}?date=${nextDateStr}`)
-                    }
-                  }}
-                  disabled={!getAdjacentDates(dateParam).hasNext}
-                  className="px-3 py-1.5 rounded-full border border-[#6949FF] text-[#6949FF] hover:bg-[#6949FF] hover:text-white dark:hover:bg-[#6949FF] dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed text-[12px] font-urbanist font-bold transition-all duration-200 active:scale-95 flex items-center gap-1"
-                >
-                  Next Puzzle &rarr;
-                </button>
               </div>
             )}
 

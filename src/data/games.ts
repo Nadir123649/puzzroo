@@ -124,6 +124,21 @@ export const games: Game[] = [
       'Complete the puzzle with precision'
     ],
     keyboardControls: 'No keyboard controls needed. Use your mouse or touch screen to drag and rotate pieces.'
+  },
+  {
+    id: 'chess',
+    slug: 'chess',
+    name: 'Chess',
+    image: images.gameCards.dotsMatch,
+    difficulty: ['Easy', 'Medium', 'Hard'],
+    about: 'Chess is the ultimate game of strategy, tactics, and foresight. Command your army of 16 pieces, control the center, outmaneuver your opponent, and checkmate the enemy king. Perfect for developing spatial reasoning, deep calculation, and tactical awareness.',
+    howToPlay: 'Command your pieces across an 8×8 board. Each piece type moves differently: Pawns advance forward, Rooks move in straight lines, Knights jump in L-shapes, Bishops slide diagonally, Queens combine Rook and Bishop moves, and Kings move one square in any direction. Outmaneuver your opponent and trap their King to achieve Checkmate.',
+    bulletPoints: [
+      'Command 16 pieces across an 8×8 board',
+      'Outmaneuver your opponent with tactical foresight',
+      'Protect your King while setting up Checkmate on the opponent\'s King'
+    ],
+    keyboardControls: 'Click or tap on pieces to view valid moves. Use mouse or touch controls to move pieces. Press F to flip board. Press N for a new game.'
   }
 ]
 

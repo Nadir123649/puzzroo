@@ -331,6 +331,11 @@ export function useCrossMath() {
 
     if (!cell.isEditable) return
 
+    // Protection: If cell is already correctly filled, ignore re-filling and re-scoring
+    if (cell.type === 'number' && cell.isCorrect && cell.value === num) {
+      return
+    }
+
     // Prevent entering a number if it is already used up elsewhere
     const usedCount = usedNumbersCount.get(num) || 0
     const requiredCount = requiredNumbersCount.get(num) || 0

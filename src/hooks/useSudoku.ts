@@ -525,69 +525,36 @@ export function useSudoku() {
   }, [selectedCell, gameState])
 
   /**
-   * Use hint - applies to selected cell, or random cell if none selected
+   * Use hint - applies to selected cell, or random empty/incorrect cell if none selected
    */
   const requestHint = useCallback(() => {
     if (gameState.gameStatus !== 'playing') return
 
-    const availableHints = calculateAvailableHints(gameState.score)
-    if (availableHints <= 0) return
-
-    // Helper: check if placing `value` at position conflicts with existing board values
-    const conflictsWithBoard = (board: typeof gameState.currentBoard, pos: Position, value: number): boolean => {
-      const { row, col } = pos
-      // Check row
-      for (let c = 0; c < 9; c++) {
-        if (c !== col && board[row][c].value === value) return true
-      }
-      // Check col
-      for (let r = 0; r < 9; r++) {
-        if (r !== row && board[r][col].value === value) return true
-      }
-      // Check 3x3 box
-      const boxRow = Math.floor(row / 3) * 3
-      const boxCol = Math.floor(col / 3) * 3
-      for (let r = boxRow; r < boxRow + 3; r++) {
-        for (let c = boxCol; c < boxCol + 3; c++) {
-          if ((r !== row || c !== col) && board[r][c].value === value) return true
-        }
-      }
-      return false
-    }
-
-    // Find best target cell — prefer selected cell if it's empty or has an error
+    // Find best target cell — prefer selected cell if it's not fixed and not already correctly filled
     let targetCell: Position | null = null
 
     if (selectedCell) {
       const cell = getCellAt(gameState.currentBoard, selectedCell)
-      // Allow hinting on empty cells OR cells with errors (wrong values)
-      if (cell && !cell.fixed && (!cell.value || cell.isError)) {
-        const correctValue = getCorrectValue(gameState.solution, selectedCell)
-        if (correctValue && !conflictsWithBoard(gameState.currentBoard, selectedCell, correctValue)) {
-          targetCell = selectedCell
-        }
+      if (cell && !cell.fixed && (!cell.value || cell.isError || !cell.isCorrect)) {
+        targetCell = selectedCell
       }
     }
 
-    // Fall back to finding any empty/error cell whose correct value doesn't conflict
+    // Fall back to finding any empty or incorrect cell on the board
     if (!targetCell) {
       for (let row = 0; row < 9; row++) {
         for (let col = 0; col < 9; col++) {
           const cell = gameState.currentBoard[row][col]
-          if (!cell.fixed && (!cell.value || cell.isError)) {
-            const pos = { row, col }
-            const correctValue = getCorrectValue(gameState.solution, pos)
-            if (correctValue && !conflictsWithBoard(gameState.currentBoard, pos, correctValue)) {
-              targetCell = pos
-              break
-            }
+          if (!cell.fixed && (!cell.value || cell.isError || !cell.isCorrect)) {
+            targetCell = { row, col }
+            break
           }
         }
         if (targetCell) break
       }
     }
 
-    // No valid cell available
+    // No valid target cell available
     if (!targetCell) return
 
     const correctValue = getCorrectValue(gameState.solution, targetCell)
@@ -611,7 +578,6 @@ export function useSudoku() {
 
       // Mark puzzle as completed in universal completion system
       const dateParam = searchParams.get('date')
-      // Convert date to full puzzle ID format: daily-sudoku-MM-DD-YY
       const puzzleId = dateParam ? `daily-sudoku-${dateParam}` : gameState.puzzleId
       reportWin(puzzleId, gameState.score - 20)
 
