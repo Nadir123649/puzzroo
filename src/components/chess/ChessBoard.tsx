@@ -229,13 +229,13 @@ export const ChessBoard = React.memo(function ChessBoard({
             <div
               className="fixed pointer-events-none z-[9999]"
               style={{
-                left: dragState.current.currentX - 30,
-                top: dragState.current.currentY - 30,
-                width: '60px',
-                height: '60px',
+                left: dragState.current.currentX - 32,
+                top: dragState.current.currentY - 48,
+                width: '64px',
+                height: '64px',
                 willChange: 'transform',
-                transform: 'translateZ(0)',
-                filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.45))',
+                transform: 'translateZ(0) scale(1.15)',
+                filter: 'drop-shadow(0 10px 28px rgba(0,0,0,0.5))',
               }}
             >
               <ChessPiece

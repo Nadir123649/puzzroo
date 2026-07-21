@@ -163,23 +163,6 @@ export function ChessGame({
         <div className="lg:col-span-6 flex flex-col items-center w-full">
           <div className="w-full max-w-[560px] flex flex-col items-center gap-2">
             
-            {/* Active Turn Indicator Banner */}
-            <div className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-[#F0EDFF] dark:bg-[#1F222A] border border-[#E0D9FF] dark:border-[#35383F]">
-              <div className="flex items-center gap-2">
-                <span className={`w-3 h-3 rounded-full ${turn === 'white' ? 'bg-white shadow border border-gray-400' : 'bg-gray-900 border border-gray-600'}`} />
-                <span className="font-urbanist font-extrabold text-xs sm:text-sm text-[#212121] dark:text-[#FAFAFA]">
-                  {mode === 'pve'
-                    ? (side === turn ? `Your Turn (${turn.toUpperCase()})` : `Computer's Turn (${turn.toUpperCase()})`)
-                    : `${turn.toUpperCase()} to Move`}
-                </span>
-              </div>
-              {isAiThinking && (
-                <span className="text-xs font-urbanist font-bold text-[#6949FF] dark:text-purple-400 animate-pulse">
-                  Computer Thinking...
-                </span>
-              )}
-            </div>
-
             {/* The 8x8 Interactive Chess Board */}
             <div ref={boardWrapperRef} className="w-full flex justify-center py-1 relative">
               <ChessBoard
@@ -225,6 +208,23 @@ export function ChessGame({
                   onSelect={handleSelectPromotion}
                   boardRef={boardWrapperRef}
                 />
+              )}
+            </div>
+
+            {/* Active Turn Indicator Banner (AFTER THE BOARD) */}
+            <div className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#F0EDFF] dark:bg-[#1F222A] border border-[#E0D9FF] dark:border-[#35383F] shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${turn === 'white' ? 'bg-white shadow border border-gray-400' : 'bg-gray-900 border border-gray-600'}`} />
+                <span className="font-urbanist font-extrabold text-xs sm:text-sm text-[#212121] dark:text-[#FAFAFA]">
+                  {mode === 'pve'
+                    ? (side === turn ? `Your Turn (${turn.toUpperCase()})` : `Computer's Turn (${turn.toUpperCase()})`)
+                    : `${turn.toUpperCase()} to Move`}
+                </span>
+              </div>
+              {isAiThinking && (
+                <span className="text-xs font-urbanist font-bold text-[#6949FF] dark:text-purple-400 animate-pulse">
+                  Computer Thinking...
+                </span>
               )}
             </div>
 

@@ -63,7 +63,7 @@ export const ChessSquare = memo(function ChessSquare({
       onPointerDown={disabled ? undefined : onPointerDown}
       style={{ backgroundColor: squareBgHex }}
       className={cn(
-        'relative aspect-square w-full h-full flex items-center justify-center transition-colors duration-150 group overflow-hidden select-none cursor-pointer',
+        'relative aspect-square w-full h-full flex items-center justify-center transition-colors duration-150 group overflow-hidden select-none cursor-pointer touch-none',
         disabled && 'cursor-not-allowed'
       )}
       data-square={squareName}

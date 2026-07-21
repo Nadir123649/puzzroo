@@ -35,9 +35,9 @@ export function PlayerCard({
   return (
     <div
       className={cn(
-        'w-full bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl sm:rounded-2xl p-2 sm:p-3 border-2 transition-all duration-300 flex items-center justify-between gap-3',
+        'w-full bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl sm:rounded-2xl p-2 sm:p-3 border-2 transition-colors duration-200 flex items-center justify-between gap-3',
         isActive
-          ? 'border-[#6949FF] shadow-lg shadow-[#6949FF]/15 dark:shadow-[#6949FF]/20 ring-2 ring-[#6949FF]/30'
+          ? 'border-[#6949FF] shadow-md'
           : 'border-transparent dark:border-[#35383F]',
         className
       )}
@@ -71,21 +71,21 @@ export function PlayerCard({
 
         {/* Name, Title, Rating */}
         <div className="flex flex-col min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-nowrap min-w-0">
             {title && (
-              <span className="bg-[#6949FF] text-white text-[10px] font-urbanist font-bold px-1.5 py-0.5 rounded">
+              <span className="bg-[#6949FF] text-white text-[10px] font-urbanist font-bold px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap">
                 {title}
               </span>
             )}
-            <h4 className="font-urbanist font-bold text-sm sm:text-base text-[#212121] dark:text-[#FAFAFA] truncate">
+            <h4 className="font-urbanist font-bold text-xs sm:text-sm md:text-base text-[#212121] dark:text-[#FAFAFA] truncate whitespace-nowrap">
               {name}
             </h4>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-urbanist text-[#757575] dark:text-[#BDBDBD] truncate">
-            {rating && <span>Rating: {rating}</span>}
+          <div className="flex items-center gap-2 text-[11px] sm:text-xs font-urbanist text-[#757575] dark:text-[#BDBDBD] truncate whitespace-nowrap">
+            {rating && <span className="whitespace-nowrap">Rating: {rating}</span>}
             {difficulty && (
-              <span className="bg-purple-100 dark:bg-purple-900/40 text-[#6949FF] dark:text-purple-300 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+              <span className="bg-purple-100 dark:bg-purple-900/40 text-[#6949FF] dark:text-purple-300 text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
                 {difficulty}
               </span>
             )}
@@ -95,13 +95,16 @@ export function PlayerCard({
 
       {/* Right: Active Indicator & Timer Placeholder */}
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-        {/* Active turn badge */}
-        {isActive && (
-          <span className="hidden sm:inline-flex items-center gap-1 bg-[#22C55E]/10 text-[#22C55E] text-xs font-urbanist font-semibold px-2.5 py-1 rounded-full animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
-            Turn
-          </span>
-        )}
+        {/* Active turn badge with fixed layout dimensions */}
+        <span
+          className={cn(
+            'hidden sm:inline-flex items-center gap-1 bg-[#22C55E]/15 text-[#22C55E] text-xs font-urbanist font-semibold px-2.5 py-1 rounded-full transition-opacity duration-200',
+            isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          )}
+        >
+          <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
+          Turn
+        </span>
 
         {/* Timer Placeholder */}
         <div className={cn(

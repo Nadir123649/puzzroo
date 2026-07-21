@@ -20,7 +20,7 @@ export function ChessHero({ selectedDifficulty }: ChessHeroProps) {
         {/* Title & Tagline */}
         <div className="flex items-center gap-2">
           <h1 className="font-urbanist font-extrabold text-lg sm:text-xl text-[#181A20] dark:text-white tracking-tight">
-            CHESS
+            PUZZROO CHESS
           </h1>
           <Image
             src={images.starIcon}
@@ -30,7 +30,7 @@ export function ChessHero({ selectedDifficulty }: ChessHeroProps) {
             className="w-4 h-4 select-none flex-shrink-0"
           />
           <span className="hidden md:inline-block text-xs font-urbanist text-[#757575] dark:text-[#BDBDBD] ml-2 border-l border-gray-300 dark:border-gray-700 pl-3">
-            Timeless Games. Modern Play.
+            Play, Learn & Master Chess
           </span>
         </div>
 
