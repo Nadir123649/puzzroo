@@ -15,7 +15,7 @@ export function ChessHero({ selectedDifficulty }: ChessHeroProps) {
   const diffLabel = selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1) + ' Mode'
 
   return (
-    <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 pt-2 pb-2 px-3">
+    <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 pt-2 pb-2 px-4 sm:px-6 md:px-8">
       <div className="w-full max-w-[1380px] mx-auto flex items-center justify-between gap-3 bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl px-4 py-2 border border-[#E0D9FF] dark:border-[#35383F]">
         {/* Title & Tagline */}
         <div className="flex items-center gap-2">

@@ -109,59 +109,71 @@ export function ChessGame({
   const bottomTimeFormatted = formatTime(bottomColor === 'white' ? whiteTime : blackTime)
 
   return (
-    <div className="w-full px-3 pb-4">
+    <div className="w-full px-4 sm:px-6 md:px-8 pb-6">
       {/* Main Game Grid Layout (3-Column Grandmaster Layout) */}
-      <div className="w-full max-w-[1380px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+      <div className="w-full max-w-[1380px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 xl:gap-6 items-start">
         
         {/* Left Column: Player Cards & Captured Pieces (Cols 1-3 on Desktop) */}
-        <div className="lg:col-span-3 flex flex-col gap-3 w-full">
+        <div className="lg:col-span-3 flex flex-col gap-4 sm:gap-5 w-full">
           {/* Top Player Card (Opponent / Black) */}
-          <PlayerCard
-            name={topPlayerName}
-            title={topPlayerTitle}
-            rating={topPlayerRating}
-            color={topColor}
-            difficulty={mode === 'pve' ? difficulty.toUpperCase() : undefined}
-            isActive={topIsActive}
-            timePlaceholder={isAiThinking ? 'Thinking...' : topTimeFormatted}
-            lowTime={topColor === 'white' ? isLowTimeWhite : isLowTimeBlack}
-          />
+          <div className="flex flex-col gap-2">
+            <PlayerCard
+              name={topPlayerName}
+              title={topPlayerTitle}
+              rating={topPlayerRating}
+              color={topColor}
+              difficulty={mode === 'pve' ? difficulty.toUpperCase() : undefined}
+              isActive={topIsActive}
+              timePlaceholder={isAiThinking ? 'Thinking...' : topTimeFormatted}
+              lowTime={topColor === 'white' ? isLowTimeWhite : isLowTimeBlack}
+            />
 
-          <CapturedPieces
-            pieces={capturedPieces.byWhite}
-            color="black"
-            pieceTheme={activePieceTheme}
-            customWhiteColor={initialCustomWhite}
-            customBlackColor={initialCustomBlack}
-            scoreAdvantage={capturedPieces.whiteScore > capturedPieces.blackScore ? capturedPieces.whiteScore - capturedPieces.blackScore : 0}
-            className="flex flex-col w-full"
-          />
-
-          <CapturedPieces
-            pieces={capturedPieces.byBlack}
-            color="white"
-            pieceTheme={activePieceTheme}
-            customWhiteColor={initialCustomWhite}
-            customBlackColor={initialCustomBlack}
-            scoreAdvantage={capturedPieces.blackScore > capturedPieces.whiteScore ? capturedPieces.blackScore - capturedPieces.whiteScore : 0}
-            className="flex flex-col w-full"
-          />
+            <CapturedPieces
+              pieces={topColor === 'black' ? capturedPieces.byWhite : capturedPieces.byBlack}
+              color={topColor === 'black' ? 'black' : 'white'}
+              pieceTheme={activePieceTheme}
+              customWhiteColor={initialCustomWhite}
+              customBlackColor={initialCustomBlack}
+              scoreAdvantage={
+                topColor === 'black'
+                  ? (capturedPieces.whiteScore > capturedPieces.blackScore ? capturedPieces.whiteScore - capturedPieces.blackScore : 0)
+                  : (capturedPieces.blackScore > capturedPieces.whiteScore ? capturedPieces.blackScore - capturedPieces.whiteScore : 0)
+              }
+              className="flex flex-col w-full"
+            />
+          </div>
 
           {/* Bottom Player Card (You / White) */}
-          <PlayerCard
-            name={bottomPlayerName}
-            title={bottomPlayerTitle}
-            rating={bottomPlayerRating}
-            color={bottomColor}
-            isActive={bottomIsActive}
-            timePlaceholder={bottomTimeFormatted}
-            lowTime={bottomColor === 'white' ? isLowTimeWhite : isLowTimeBlack}
-          />
+          <div className="flex flex-col gap-2">
+            <CapturedPieces
+              pieces={bottomColor === 'white' ? capturedPieces.byBlack : capturedPieces.byWhite}
+              color={bottomColor === 'white' ? 'white' : 'black'}
+              pieceTheme={activePieceTheme}
+              customWhiteColor={initialCustomWhite}
+              customBlackColor={initialCustomBlack}
+              scoreAdvantage={
+                bottomColor === 'white'
+                  ? (capturedPieces.blackScore > capturedPieces.whiteScore ? capturedPieces.blackScore - capturedPieces.whiteScore : 0)
+                  : (capturedPieces.whiteScore > capturedPieces.blackScore ? capturedPieces.whiteScore - capturedPieces.blackScore : 0)
+              }
+              className="flex flex-col w-full"
+            />
+
+            <PlayerCard
+              name={bottomPlayerName}
+              title={bottomPlayerTitle}
+              rating={bottomPlayerRating}
+              color={bottomColor}
+              isActive={bottomIsActive}
+              timePlaceholder={bottomTimeFormatted}
+              lowTime={bottomColor === 'white' ? isLowTimeWhite : isLowTimeBlack}
+            />
+          </div>
         </div>
 
         {/* Middle Column: Interactive Chess Board (Cols 4-9 on Desktop) */}
         <div className="lg:col-span-6 flex flex-col items-center w-full">
-          <div className="w-full max-w-[560px] flex flex-col items-center gap-2">
+          <div className="w-full max-w-[480px] sm:max-w-[500px] flex flex-col items-center gap-2">
             
             {/* The 8x8 Interactive Chess Board */}
             <div ref={boardWrapperRef} className="w-full flex justify-center py-1 relative">

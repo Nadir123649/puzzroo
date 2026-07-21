@@ -208,7 +208,7 @@ export const ChessBoard = React.memo(function ChessBoard({
     <div
       ref={boardRef}
       className={cn(
-        'w-full max-w-[620px] aspect-square mx-auto flex flex-col justify-center items-center select-none touch-none',
+        'w-full max-w-[500px] aspect-square mx-auto flex flex-col justify-center items-center select-none touch-none',
         className
       )}
       onPointerMove={disabled ? undefined : handlePointerMove}

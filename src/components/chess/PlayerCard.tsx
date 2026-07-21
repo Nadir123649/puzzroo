@@ -58,15 +58,6 @@ export function PlayerCard({
               {name.slice(0, 2).toUpperCase()}
             </span>
           )}
-
-          {/* Color Badge indicator */}
-          <span
-            className={cn(
-              'absolute bottom-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-white dark:border-[#1F222A]',
-              isWhite ? 'bg-white shadow-md' : 'bg-[#181A20]'
-            )}
-            title={`${color} pieces`}
-          />
         </div>
 
         {/* Name, Title, Rating */}
@@ -83,6 +74,7 @@ export function PlayerCard({
           </div>
 
           <div className="flex items-center gap-2 text-[11px] sm:text-xs font-urbanist text-[#757575] dark:text-[#BDBDBD] truncate whitespace-nowrap">
+            <span className={cn('inline-block w-2.5 h-2.5 rounded-full border border-gray-400 flex-shrink-0', isWhite ? 'bg-white shadow-sm' : 'bg-gray-900')} title={`${color} pieces`} />
             {rating && <span className="whitespace-nowrap">Rating: {rating}</span>}
             {difficulty && (
               <span className="bg-purple-100 dark:bg-purple-900/40 text-[#6949FF] dark:text-purple-300 text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
