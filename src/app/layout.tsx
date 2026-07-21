@@ -97,7 +97,8 @@ export default function RootLayout({
           {children}
           <NetworkToastListener />
           <Toaster
-            position="top-right"
+            position="top-center"
+            containerStyle={{ top: 0, left: 0, right: 0, bottom: 0 }}
             toastOptions={{
               duration: 4000,
               style: {
