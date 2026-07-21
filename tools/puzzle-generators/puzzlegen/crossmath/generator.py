@@ -141,6 +141,22 @@ def build_one(bucket: Bucket, rng: random.Random, pattern_idx: int = 0):
     if not best_blanks or len(best_blanks) < 1:
         return None, None
 
+    # Neutralize the dig-loop trap: best_blanks is "best effort" and may have been
+    # selected under TIME_BUDGET pressure. Re-verify uniqueness with a generous
+    # node budget at emit time so we never ship a puzzle whose solution is
+    # unverified (the export validator would also catch this, but we fail fast
+    # here instead of writing a non-unique record).
+    verify = count_solutions(
+        pattern,
+        solution,
+        best_blanks,
+        [solution[k] for k in best_blanks],
+        limit=2,
+        budget=BUDGET * 8,
+    )
+    if verify != 1:
+        return None, None
+
     blanks = best_blanks
     solution = best_solution
     blanks_sorted = sorted(blanks)

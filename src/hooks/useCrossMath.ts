@@ -163,7 +163,7 @@ export function useCrossMath() {
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const requiredNumbersCount = useMemo(() => {
-    if (!currentPuzzle) return new Map<number, number>()
+    if (!currentPuzzle || !currentPuzzle.solution) return new Map<number, number>()
     const counts = new Map<number, number>()
     const padSet = new Set(currentPuzzle.availableNumbers)
     Object.values(currentPuzzle.solution).forEach(val => {

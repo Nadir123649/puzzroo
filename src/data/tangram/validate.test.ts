@@ -6,7 +6,8 @@
 
 import { describe, it, expect } from 'vitest'
 import { POLYGON_DATASETS } from '@shared/data/tangram/polygon-datasets'
-import { validateAll } from '@shared/data/tangram/tangramValidation'
+import { validateAll, validatePuzzle } from '@shared/data/tangram/tangramValidation'
+import type { PolygonPuzzle } from '@shared/types/tangram-polygon'
 
 describe('tangram polygon dataset', () => {
   it('contains the flagship volume (40 easy / 40 medium / 40 hard)', () => {
@@ -36,5 +37,14 @@ describe('tangram polygon dataset', () => {
     }
     expect(report.invalid, `${report.invalid} puzzles failed validation`).toBe(0)
     expect(report.valid).toBe(120)
+  })
+
+  it('rejects a puzzle whose vertices drift off the 5-unit grid', () => {
+    const sample = JSON.parse(JSON.stringify(POLYGON_DATASETS[0])) as PolygonPuzzle
+    // nudge one outline vertex by 1px -> must trip the unit-5 assertion
+    sample.fullPolygon[0] = [sample.fullPolygon[0][0] + 1, sample.fullPolygon[0][1]]
+    const result = validatePuzzle(sample)
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('5-unit grid'))).toBe(true)
   })
 })

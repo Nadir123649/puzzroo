@@ -36,30 +36,6 @@ def eval_line(values: List[int], ops: List[str]) -> int | None:
     return current
 
 
-def _equation_cells(pattern: BoardPattern):
-    """Yield (operand_coords, op_coords, result_coord) for each equation."""
-    cell_type = {(c.row, c.col): c for c in pattern.cells}
-    for eq in pattern.equations:
-        operands: List[Coord] = []
-        operators: List[Coord] = []
-        result: Coord | None = None
-        for (r, c) in eq.cells:
-            t = cell_type[(r, c)].type
-            if t == "NUMBER":
-                if result is None:
-                    operands.append((r, c))
-                else:
-                    # safety: shouldn't happen (result is last)
-                    operands.append((r, c))
-            elif t == "OPERATOR":
-                operators.append((r, c))
-            elif t == "EQUALS":
-                result = (r, c)
-        # result is the trailing NUMBER cell
-        result = eq.cells[-1]
-        yield operands, operators, result
-
-
 def count_solutions(
     pattern: BoardPattern,
     solution: Dict[str, int],

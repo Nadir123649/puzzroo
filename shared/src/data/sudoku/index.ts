@@ -54,9 +54,79 @@ function toPuzzle(r: RawRecord): SudokuPuzzleData {
   }
 }
 
+/**
+ * Cheap structural + correctness sanity check for a decoded sudoku puzzle.
+ * Runs at dataset-load time and at serve time so a corrupt record is caught
+ * before it reaches a player. Returns a list of human-readable errors.
+ */
+export function sanityCheckSudoku(p: SudokuPuzzleData): string[] {
+  const errors: string[] = []
+  const g = p.puzzle
+  const s = p.solution
+  if (!Array.isArray(g) || g.length !== 9) {
+    errors.push('puzzle is not 9 rows')
+    return errors
+  }
+  if (!Array.isArray(s) || s.length !== 9) {
+    errors.push('solution is not 9 rows')
+    return errors
+  }
+  for (let r = 0; r < 9; r++) {
+    if (!Array.isArray(g[r]) || g[r].length !== 9) {
+      errors.push(`puzzle row ${r} has ${g[r]?.length ?? 'no'} columns`)
+      continue
+    }
+    if (!Array.isArray(s[r]) || s[r].length !== 9) {
+      errors.push(`solution row ${r} has ${s[r]?.length ?? 'no'} columns`)
+      continue
+    }
+    for (let c = 0; c < 9; c++) {
+      const pv = g[r][c]
+      const sv = s[r][c]
+      if (!Number.isInteger(pv) || pv < 0 || pv > 9) {
+        errors.push(`puzzle[${r}][${c}]=${pv} out of range`)
+      }
+      if (!Number.isInteger(sv) || sv < 1 || sv > 9) {
+        errors.push(`solution[${r}][${c}]=${sv} out of range`)
+      } else if (pv !== 0 && pv !== sv) {
+        errors.push(`puzzle[${r}][${c}]=${pv} != solution ${sv}`)
+      }
+    }
+  }
+  if (errors.length > 0) return errors
+  const ok = (lines: number[][]) =>
+    lines.every((line) => {
+      if (line.length !== 9) return false
+      const set = new Set(line)
+      return set.size === 9 && !set.has(0)
+    })
+  const cols = Array.from({ length: 9 }, (_, c) => s.map((row) => row[c]))
+  const boxes = Array.from({ length: 9 }, (_, b) => {
+    const br = Math.floor(b / 3) * 3
+    const bc = (b % 3) * 3
+    const out: number[] = []
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) out.push(s[br + i][bc + j])
+    return out
+  })
+  if (!ok(s) || !ok(cols) || !ok(boxes)) {
+    errors.push('solution is not a valid completed sudoku')
+  }
+  return errors
+}
+
 function buildPool(raw: unknown): SudokuPuzzleData[] {
   const records = raw as RawRecord[]
-  return records.map(toPuzzle)
+  const out: SudokuPuzzleData[] = []
+  for (const r of records) {
+    const p = toPuzzle(r)
+    const errs = sanityCheckSudoku(p)
+    if (errs.length) {
+      console.error(`[sudoku] skipping invalid puzzle ${p.id}: ${errs.join('; ')}`)
+      continue
+    }
+    out.push(p)
+  }
+  return out
 }
 
 export const puzzleDataset: PuzzleDataset = {
@@ -74,7 +144,14 @@ export function getRandomPuzzle(
   difficulty: Difficulty,
   lastPuzzleId?: string
 ): SudokuPuzzleData {
-  const puzzles = puzzleDataset[difficulty]
+  let puzzles = puzzleDataset[difficulty]
+
+  if (puzzles.length === 0) {
+    for (const d of ['easy', 'medium', 'hard', 'expert'] as Difficulty[]) {
+      const fb = puzzleDataset[d]
+      if (fb.length > 0) { puzzles = fb; break }
+    }
+  }
 
   if (puzzles.length === 0) {
     throw new Error(`No puzzles available for difficulty: ${difficulty}`)

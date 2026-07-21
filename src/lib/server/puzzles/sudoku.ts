@@ -1,4 +1,5 @@
 import type { SudokuPuzzleResponse } from "./types";
+import { sanityCheckSudoku } from "@shared/data/sudoku";
 
 /** Decode an 81-char string (0 = empty) into a 9x9 number grid. */
 export function decode81(s: string): number[][] {
@@ -35,7 +36,7 @@ interface SudokuDoc {
 }
 
 export function sudokuToResponse(doc: SudokuDoc): SudokuPuzzleResponse {
-  return {
+  const response: SudokuPuzzleResponse = {
     id: doc.puzzleId,
     difficulty: doc.difficulty,
     puzzle: decode81(doc.puzzle),
@@ -45,4 +46,9 @@ export function sudokuToResponse(doc: SudokuDoc): SudokuPuzzleResponse {
     techniques: doc.techniques,
     size: 9,
   };
+  const errors = sanityCheckSudoku(response);
+  if (errors.length) {
+    throw new Error(`serve-time sanity failed for sudoku ${doc.puzzleId}: ${errors.join("; ")}`);
+  }
+  return response;
 }

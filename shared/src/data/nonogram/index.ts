@@ -56,8 +56,76 @@ function decode(raw: RawRecord): PuzzleData {
   }
 }
 
+function computeLineClues(line: number[]): number[] {
+  const clues: number[] = []
+  let run = 0
+  for (const v of line) {
+    if (v === 1) {
+      run++
+    } else if (run > 0) {
+      clues.push(run)
+      run = 0
+    }
+  }
+  if (run > 0) clues.push(run)
+  return clues
+}
+
+/**
+ * Structural sanity check for a decoded nonogram puzzle: square solution of
+ * 0/1 cells, clue arrays sized to the grid, and clues that actually match the
+ * solution (so a broken dataset can't ship an unsolvable board).
+ */
+export function sanityCheckNonogram(p: PuzzleData): string[] {
+  const errors: string[] = []
+  const size = p.size
+  if (!Array.isArray(p.solution) || p.solution.length !== size) {
+    errors.push(`solution rows ${p.solution?.length ?? 'no'} != ${size}`)
+    return errors
+  }
+  for (let r = 0; r < size; r++) {
+    const row = p.solution[r]
+    if (!Array.isArray(row) || row.length !== size) {
+      errors.push(`solution[${r}] has ${row?.length ?? 'no'} columns`)
+      continue
+    }
+    for (const v of row) {
+      if (v !== 0 && v !== 1) {
+        errors.push(`solution[${r}] contains invalid cell ${v}`)
+        break
+      }
+    }
+  }
+  if (p.rowClues.length !== size) errors.push(`rowClues length ${p.rowClues.length} != ${size}`)
+  if (p.columnClues.length !== size) errors.push(`columnClues length ${p.columnClues.length} != ${size}`)
+  if (errors.length > 0) return errors
+
+  for (let r = 0; r < size; r++) {
+    const got = computeLineClues(p.solution[r]).join(',')
+    const exp = p.rowClues[r].values.join(',')
+    if (got !== exp) errors.push(`row ${r} clues [${exp}] != solution clues [${got}]`)
+  }
+  for (let c = 0; c < size; c++) {
+    const col = p.solution.map((row) => row[c])
+    const got = computeLineClues(col).join(',')
+    const exp = p.columnClues[c].values.join(',')
+    if (got !== exp) errors.push(`column ${c} clues [${exp}] != solution clues [${got}]`)
+  }
+  return errors
+}
+
 function buildPool(raw: unknown): PuzzleData[] {
-  return (raw as RawRecord[]).map(decode)
+  const out: PuzzleData[] = []
+  for (const r of raw as RawRecord[]) {
+    const p = decode(r)
+    const errs = sanityCheckNonogram(p)
+    if (errs.length) {
+      console.error(`[nonogram] skipping invalid puzzle ${p.id}: ${errs.join('; ')}`)
+      continue
+    }
+    out.push(p)
+  }
+  return out
 }
 
 export const easyPuzzles: PuzzleData[] = buildPool(easyJson)
@@ -96,7 +164,14 @@ export function getPuzzlesByDifficulty(difficulty: Difficulty): PuzzleData[] {
 
 // Get random puzzle by difficulty (for backward compatibility)
 export function getRandomPuzzle(difficulty: Difficulty): PuzzleData {
-  const puzzles = getPuzzlesByDifficulty(difficulty)
+  let puzzles = getPuzzlesByDifficulty(difficulty)
+  if (puzzles.length === 0) {
+    for (const d of ['easy', 'medium', 'hard', 'expert'] as Difficulty[]) {
+      const fb = getPuzzlesByDifficulty(d)
+      if (fb.length > 0) { puzzles = fb; break }
+    }
+  }
+  if (puzzles.length === 0) throw new Error(`No nonogram puzzles available`)
   const randomIndex = Math.floor(Math.random() * puzzles.length)
   return puzzles[randomIndex]
 }
