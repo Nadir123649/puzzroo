@@ -57,6 +57,7 @@ export function ChessGame({
     selectSquare,
     executeMove,
     handleSelectPromotion,
+    cancelPromotion,
     undoMove,
     restartGame,
     resignGame,
@@ -124,7 +125,7 @@ export function ChessGame({
               color={topColor}
               difficulty={mode === 'pve' ? difficulty.toUpperCase() : undefined}
               isActive={topIsActive}
-              timePlaceholder={isAiThinking ? 'Thinking...' : topTimeFormatted}
+              timePlaceholder={topTimeFormatted}
               lowTime={topColor === 'white' ? isLowTimeWhite : isLowTimeBlack}
             />
 
@@ -173,8 +174,25 @@ export function ChessGame({
 
         {/* Middle Column: Interactive Chess Board (Cols 4-9 on Desktop) */}
         <div className="lg:col-span-6 flex flex-col items-center w-full">
-          <div className="w-full max-w-[480px] sm:max-w-[500px] flex flex-col items-center gap-2">
+          <div className="w-full max-w-[500px] flex flex-col items-center gap-2">
             
+            {/* Active Turn Indicator Banner (ON TOP OF THE BOARD) */}
+            <div className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#F0EDFF] dark:bg-[#1F222A] border border-[#E0D9FF] dark:border-[#35383F] shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${turn === 'white' ? 'bg-white shadow border border-gray-400' : 'bg-gray-900 border border-gray-600'}`} />
+                <span className="font-urbanist font-extrabold text-xs sm:text-sm text-[#212121] dark:text-[#FAFAFA]">
+                  {mode === 'pve'
+                    ? (side === turn ? `Your Turn (${turn.toUpperCase()})` : `Computer's Turn (${turn.toUpperCase()})`)
+                    : (turn === 'white' ? "Player 1's Turn (WHITE)" : "Player 2's Turn (BLACK)")}
+                </span>
+              </div>
+              {isAiThinking && (
+                <span className="text-xs font-urbanist font-bold text-[#6949FF] dark:text-purple-400 animate-pulse">
+                  Computer Thinking...
+                </span>
+              )}
+            </div>
+
             {/* The 8x8 Interactive Chess Board */}
             <div ref={boardWrapperRef} className="w-full flex justify-center py-1 relative">
               <ChessBoard
@@ -217,34 +235,18 @@ export function ChessGame({
                   customWhiteColor={initialCustomWhite}
                   customBlackColor={initialCustomBlack}
                   isMounted={true}
+                  isFlipped={isFlipped}
                   onSelect={handleSelectPromotion}
-                  boardRef={boardWrapperRef}
+                  onCancel={cancelPromotion}
                 />
-              )}
-            </div>
-
-            {/* Active Turn Indicator Banner (AFTER THE BOARD) */}
-            <div className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#F0EDFF] dark:bg-[#1F222A] border border-[#E0D9FF] dark:border-[#35383F] shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className={`w-3 h-3 rounded-full ${turn === 'white' ? 'bg-white shadow border border-gray-400' : 'bg-gray-900 border border-gray-600'}`} />
-                <span className="font-urbanist font-extrabold text-xs sm:text-sm text-[#212121] dark:text-[#FAFAFA]">
-                  {mode === 'pve'
-                    ? (side === turn ? `Your Turn (${turn.toUpperCase()})` : `Computer's Turn (${turn.toUpperCase()})`)
-                    : `${turn.toUpperCase()} to Move`}
-                </span>
-              </div>
-              {isAiThinking && (
-                <span className="text-xs font-urbanist font-bold text-[#6949FF] dark:text-purple-400 animate-pulse">
-                  Computer Thinking...
-                </span>
               )}
             </div>
 
           </div>
         </div>
 
-        {/* Right Column: Move History & Controls (Cols 10-12 on Desktop) */}
-        <div className="lg:col-span-3 flex flex-col gap-3 w-full">
+        {/* Right Column: Match Notation & Controls (Cols 10-12 on Desktop) */}
+        <div className="lg:col-span-3 flex flex-col gap-4 sm:gap-5 w-full">
           {/* Move History Panel */}
           <MoveHistory
             moves={moveHistory}

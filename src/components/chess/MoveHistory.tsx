@@ -39,18 +39,18 @@ export function MoveHistory({ moves = [], reviewIndex = null, onReviewMove, clas
   return (
     <div
       className={cn(
-        'w-full bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl sm:rounded-2xl p-4 border border-[#E0D9FF] dark:border-[#35383F] flex flex-col gap-3 min-h-[220px] max-h-[300px] shadow-sm',
+        'w-full bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border border-[#E0D9FF] dark:border-[#35383F] flex flex-col gap-2.5 h-[220px] sm:h-[240px] overflow-hidden shadow-sm',
         className
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-2.5">
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-2 flex-shrink-0">
         <div className="flex items-center gap-2">
           <svg className="w-4 h-4 text-[#6949FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
           <h4 className="font-urbanist font-bold text-sm sm:text-base text-[#212121] dark:text-[#FAFAFA]">
-            Move History
+            Match Notation
           </h4>
         </div>
 

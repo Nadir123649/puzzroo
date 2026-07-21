@@ -25,12 +25,12 @@ export const ChessPiece = memo(function ChessPiece({
   return (
     <div
       className={cn(
-        'relative w-full h-full flex items-center justify-center p-1 sm:p-1.5 md:p-2 transition-transform duration-200 ease-out select-none cursor-pointer group-hover:scale-105 will-change-transform',
+        'relative w-full h-full flex items-center justify-center p-0 transition-transform duration-200 ease-out select-none cursor-pointer group-hover:scale-105 will-change-transform',
         animateIn && 'animate-piece-pop',
         className
       )}
     >
-      <div className="w-[82%] h-[82%] flex items-center justify-center drop-shadow-md transition-all duration-200 pointer-events-none">
+      <div className="w-full h-full flex items-center justify-center scale-105 sm:scale-110 drop-shadow-md transition-all duration-200 pointer-events-none p-0.5">
         <SvgChessPiece
           type={piece.type}
           color={piece.color}

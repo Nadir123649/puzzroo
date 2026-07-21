@@ -59,6 +59,7 @@ export const ChessSquare = memo(function ChessSquare({
 
   return (
     <div
+      suppressHydrationWarning
       onClick={disabled ? undefined : onClick}
       onPointerDown={disabled ? undefined : onPointerDown}
       style={{ backgroundColor: squareBgHex }}

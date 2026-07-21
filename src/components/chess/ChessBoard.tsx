@@ -207,6 +207,7 @@ export const ChessBoard = React.memo(function ChessBoard({
   return (
     <div
       ref={boardRef}
+      suppressHydrationWarning
       className={cn(
         'w-full max-w-[500px] aspect-square mx-auto flex flex-col justify-center items-center select-none touch-none',
         className
@@ -221,7 +222,7 @@ export const ChessBoard = React.memo(function ChessBoard({
           'w-full h-full aspect-square rounded-[16px] sm:rounded-[24px] overflow-hidden shadow-2xl transition-all duration-300 border-4 sm:border-8'
         )}
       >
-        <div className="chess-grid w-full h-full grid grid-cols-8 grid-rows-8 overflow-hidden shadow-inner relative">
+        <div className="chess-grid w-full h-full grid grid-cols-8 grid-rows-8 shadow-inner relative">
           {squares}
 
           {/* Floating dragged piece */}
