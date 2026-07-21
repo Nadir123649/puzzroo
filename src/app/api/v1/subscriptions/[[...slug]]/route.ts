@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // GET /api/v1/subscriptions/me
     if (action === "me") {
-      const userResult = auth(request);
+      const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
 
       const user = await User.findById(userResult.user.id);
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     // POST /api/v1/subscriptions/checkout
     if (action === "checkout") {
-      const userResult = auth(request);
+      const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
 
       const val = validate(createCheckoutSchema, body);
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // POST /api/v1/subscriptions/cancel
     if (action === "cancel") {
-      const userResult = auth(request);
+      const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
 
       const sub = await Subscription.findOne({ userId: userResult.user.id, status: "active" });

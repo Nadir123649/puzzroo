@@ -16,7 +16,9 @@ export async function getFirebaseAuth() {
   const { getAuth } = await import("firebase-admin/auth");
 
   if (getApps().length === 0) {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, "\n");
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY!
+      .replace(/^["']|["']$/g, "")
+      .replace(/\\n/g, "\n");
     initializeApp({
       credential: cert({
         projectId: process.env.FIREBASE_PROJECT_ID!,

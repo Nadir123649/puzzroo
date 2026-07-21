@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -12,9 +12,8 @@ import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
 import { register } from '@/lib/auth/frontend-auth'
-import { auth, googleProvider, facebookProvider, isFirebaseConfigured } from '@/lib/config/firebase-client'
-import { signInWithPopup } from 'firebase/auth'
-import { api } from '@/lib/api/client'
+import { auth, isFirebaseConfigured } from '@/lib/config/firebase-client'
+import { signInOAuthPopup, startOAuthRedirect, consumeOAuthRedirect, completeOAuthLogin } from '@/lib/auth/oauth'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -37,6 +36,22 @@ export default function SignupPage() {
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+
+  // Consume a Facebook (redirect) OAuth result when the provider bounces back.
+  useEffect(() => {
+    if (!isFirebaseConfigured) return
+    let cancelled = false
+    ;(async () => {
+      const result = await consumeOAuthRedirect()
+      if (cancelled || !result) return
+      await completeOAuthLogin(result.token, result.provider, false, {
+        setSubmitting: setIsSubmitting,
+        setErrors,
+        welcomeKey: 'AUTH_WELCOME_OAUTH',
+      })
+    })()
+    return () => { cancelled = true }
+  }, [])
 
   const validate = () => {
     const newErrors: typeof errors = {}
@@ -249,7 +264,7 @@ export default function SignupPage() {
                     type={showPassword ? "text" : "password"}
                     id="password"
                     value={password}
-                    maxLength={128}
+                    maxLength={20}
                     onChange={(e) => {
                       setPassword(e.target.value)
                       if (errors.password) setErrors(prev => ({ ...prev, password: undefined }))
@@ -298,48 +313,16 @@ export default function SignupPage() {
                 type="button"
                 onClick={async () => {
                   try {
-                    if (!auth || !googleProvider) return
-                    const result = await signInWithPopup(auth, googleProvider)
-                    const firebaseToken = await result.user.getIdToken()
-                    setIsSubmitting(true)
-                    const res = await api('/api/v1/oauth/google', {
-                      method: 'POST',
-                      body: JSON.stringify({ firebaseToken }),
+                    if (!auth) return
+                    const firebaseToken = await signInOAuthPopup('google')
+                    await completeOAuthLogin(firebaseToken, 'google', false, {
+                      setSubmitting: setIsSubmitting,
+                      setErrors,
+                      welcomeKey: 'AUTH_WELCOME_OAUTH',
                     })
-                    if (!res.success) {
-                      notify.errorKey('AUTH_OAUTH_FAILED')
-                      setErrors({ email: ToastMessages.AUTH_OAUTH_FAILED })
-                      setIsSubmitting(false)
-                      return
-                    }
-                    const payload = res.payload as any
-                    const userData = {
-                      id: payload.user.id,
-                      name: payload.user.name || payload.user.username,
-                      email: payload.user.email || "",
-                      username: payload.user.username,
-                      usernameSet: payload.user.usernameSet,
-                      joinedDate: payload.user.createdAt ? new Date(payload.user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A",
-                      accountStatus: payload.user.status || "active",
-                      subscriptionPlan: payload.user.role || "free",
-                      role: payload.user.role || "free",
-                      avatar: payload.user.avatar,
-                      provider: payload.user.provider || "google",
-                      linkedProviders: payload.user.linkedProviders || [],
-                    }
-                    localStorage.setItem('accessToken', payload.token.accessToken)
-                    localStorage.setItem('puzzroo_auth', 'true')
-                    localStorage.setItem('puzzroo_user', JSON.stringify(userData))
-                    window.dispatchEvent(new Event('auth-change'))
-                    notify.successKey('AUTH_WELCOME_OAUTH')
-                    setIsSubmitting(false)
-                    setIsSuccess(true)
-                    setTimeout(() => {
-                      window.location.href = payload.user.usernameSet ? '/' : '/choose-username'
-                    }, 1500)
                   } catch (err: any) {
                     setIsSubmitting(false)
-                    if (err.code !== 'auth/popup-closed-by-user') {
+                    if (err?.code !== 'auth/popup-closed-by-user') {
                       notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
                       setErrors({ email: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }
@@ -361,47 +344,11 @@ export default function SignupPage() {
                 type="button"
                 onClick={async () => {
                   try {
-                    if (!auth || !facebookProvider) return
-                    const result = await signInWithPopup(auth, facebookProvider)
-                    const firebaseToken = await result.user.getIdToken()
-                    setIsSubmitting(true)
-                    const res = await api('/api/v1/oauth/facebook', {
-                      method: 'POST',
-                      body: JSON.stringify({ firebaseToken }),
-                    })
-                    if (!res.success) {
-                      notify.errorKey('AUTH_OAUTH_FAILED')
-                      setErrors({ email: ToastMessages.AUTH_OAUTH_FAILED })
-                      setIsSubmitting(false)
-                      return
-                    }
-                    const payload = res.payload as any
-                    const userData = {
-                      id: payload.user.id,
-                      name: payload.user.name || payload.user.username,
-                      email: payload.user.email || "",
-                      username: payload.user.username,
-                      usernameSet: payload.user.usernameSet,
-                      joinedDate: payload.user.createdAt ? new Date(payload.user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A",
-                      accountStatus: payload.user.status || "active",
-                      subscriptionPlan: payload.user.role || "free",
-                      role: payload.user.role || "free",
-                      avatar: payload.user.avatar,
-                      provider: payload.user.provider || "facebook",
-                    }
-                    localStorage.setItem('accessToken', payload.token.accessToken)
-                    localStorage.setItem('puzzroo_auth', 'true')
-                    localStorage.setItem('puzzroo_user', JSON.stringify(userData))
-                    window.dispatchEvent(new Event('auth-change'))
-                    notify.successKey('AUTH_WELCOME_OAUTH')
-                    setIsSubmitting(false)
-                    setIsSuccess(true)
-                    setTimeout(() => {
-                      window.location.href = payload.user.usernameSet ? '/' : '/choose-username'
-                    }, 1500)
+                    if (!auth) return
+                    await startOAuthRedirect('facebook')
                   } catch (err: any) {
                     setIsSubmitting(false)
-                    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+                    if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
                       notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
                       setErrors({ email: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }

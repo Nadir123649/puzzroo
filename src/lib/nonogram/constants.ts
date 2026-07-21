@@ -41,4 +41,4 @@ export const GRID_CONFIG = {
 } as const
 
 // Supported grid sizes
-export const VALID_GRID_SIZES = [10, 15, 20] as const
+export const VALID_GRID_SIZES = [10, 15, 20, 25, 30] as const

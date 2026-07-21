@@ -8,10 +8,9 @@ import { sendResetPasswordEmail } from "@/lib/server/services/emailService";
 import { validate } from "@/lib/server/middleware/validate";
 import { forgotPasswordSchema, resetPasswordSchema } from "@/lib/server/validators/authValidator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
-import { authPayload } from "@/lib/server/utils/authHelpers";
+import { authPayload, issueSession } from "@/lib/server/utils/authHelpers";
 import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
 import { cookieOptions } from "@/lib/server/utils/cookieOptions";
-import { createSession } from "@/lib/server/utils/createSession";
 
 // Reset links are short-lived for security.
 const RESET_TOKEN_MINUTES = 15;
@@ -73,13 +72,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.resetPasswordTokenExpire = undefined;
       user.lastLoginAt = new Date();
       await user.save({ validateBeforeSave: false });
-      const session = await createSession(request, user._id.toString(), "email");
       await trackServer({ userId: user._id.toString(), event: "password_reset_completed", request });
-      const res = NextResponse.json(
-        { success: true, payload: { ...authPayload(user), sessionId: session._id.toString() }, timestamp: Date.now() },
-        { status: 200 }
-      );
-      res.cookies.set("refreshToken", buildTokenPayload(user).refreshToken, cookieOptions);
+      const { payload } = await issueSession(request, user, "email");
+      const res = NextResponse.json({ success: true, payload, timestamp: Date.now() }, { status: 200 });
+      res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
       return res;
     }
 

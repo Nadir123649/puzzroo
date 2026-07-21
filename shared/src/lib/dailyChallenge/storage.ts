@@ -62,17 +62,17 @@ export function getChallengeStatus(challengeId: string): DailyChallengeStatus {
 }
 
 /**
- * Check if user is guest (determines access level)
+ * Check if user is guest (determines access level).
+ * Pass the real auth state from the client — never hardcode.
  */
-export function isGuestUser(): boolean {
-  // In a real app, this would check authentication status
-  // For now, always return true (guest mode)
-  return true
+export function isGuestUser(authed = false): boolean {
+  return !authed
 }
 
 /**
- * Get number of accessible past challenges
+ * Get number of accessible past challenges.
+ * Registered users get a wider window; guests get the minimum 3.
  */
-export function getAccessiblePastChallenges(): number {
-  return isGuestUser() ? 3 : 7
+export function getAccessiblePastChallenges(authed = false): number {
+  return authed ? 7 : 3
 }
