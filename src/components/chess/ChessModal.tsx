@@ -1,10 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Trophy, ShieldAlert, RefreshCw, Sparkles, AlertCircle, X, Check } from 'lucide-react'
-import { PieceType, PieceColor } from '@/utils/chess'
-import { SvgChessPiece, PieceThemeConfig, PIECE_THEMES } from './SvgChessPiece'
+import { Trophy, ShieldAlert, RefreshCw, AlertCircle } from 'lucide-react'
+import { PieceColor } from '@/utils/chess'
 import { cn } from '@/lib/utils'
 
 export type ModalType = 'none' | 'promotion' | 'win' | 'lose' | 'draw' | 'restart_confirm' | 'resign_confirm'
@@ -12,14 +11,10 @@ export type ModalType = 'none' | 'promotion' | 'win' | 'lose' | 'draw' | 'restar
 interface ChessModalProps {
   isOpen: boolean
   modalType: ModalType
-  turn?: PieceColor
   winner?: PieceColor | null
   drawReason?: string | null
   difficulty?: string
-  pieceTheme?: PieceThemeConfig
-  customWhiteColor?: string
-  customBlackColor?: string
-  onSelectPromotion?: (piece: PieceType) => void
+  totalMoves?: number
   onRestartConfirm?: () => void
   onResignConfirm?: () => void
   onPlayAgain?: () => void
@@ -29,20 +24,28 @@ interface ChessModalProps {
 export function ChessModal({
   isOpen,
   modalType,
-  turn = 'white',
   winner,
   drawReason,
   difficulty = 'easy',
-  pieceTheme = PIECE_THEMES.classic,
-  customWhiteColor,
-  customBlackColor,
-  onSelectPromotion,
+  totalMoves = 0,
   onRestartConfirm,
   onResignConfirm,
   onPlayAgain,
   onClose,
 }: ChessModalProps) {
   const router = useRouter()
+
+  const isConfirm = modalType === 'restart_confirm' || modalType === 'resign_confirm'
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isConfirm) {
+        onClose?.()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [isConfirm, onClose])
 
   if (!isOpen || modalType === 'none') return null
 
@@ -55,58 +58,39 @@ export function ChessModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn">
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
+      onClick={isConfirm ? () => onClose?.() : undefined}
+    >
       
-      {/* Promotion Modal */}
-      {modalType === 'promotion' && (
-        <div className="w-full max-w-sm bg-white dark:bg-[#1F222A] rounded-2xl p-6 border border-[#6949FF]/30 shadow-2xl flex flex-col items-center gap-4 text-center">
-          <div className="flex items-center gap-2 text-[#6949FF] dark:text-purple-300">
-            <Sparkles size={22} />
-            <h3 className="font-urbanist font-extrabold text-xl">Pawn Promotion</h3>
-          </div>
-          <p className="text-xs font-urbanist text-[#757575] dark:text-[#BDBDBD]">
-            Choose a piece to replace your pawn:
-          </p>
-
-          <div className="grid grid-cols-4 gap-3 w-full my-2">
-            {(['queen', 'rook', 'bishop', 'knight'] as PieceType[]).map((pType) => (
-              <button
-                key={pType}
-                onClick={() => onSelectPromotion?.(pType)}
-                className="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-[#6949FF] bg-gray-50 dark:bg-[#262A34] transition-all duration-200 active:scale-95 cursor-pointer"
-              >
-                <div className="w-10 h-10">
-                  <SvgChessPiece
-                    type={pType}
-                    color={turn}
-                    theme={pieceTheme}
-                    customWhiteColor={customWhiteColor}
-                    customBlackColor={customBlackColor}
-                  />
-                </div>
-                <span className="text-[11px] font-urbanist font-bold capitalize mt-1 text-[#212121] dark:text-[#FAFAFA]">
-                  {pType}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Win Modal */}
       {modalType === 'win' && (
-        <div className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-3xl p-6 sm:p-8 border border-green-500/30 shadow-2xl flex flex-col items-center text-center gap-5">
-          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/40 text-green-600 flex items-center justify-center">
+        <div
+          className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-3xl p-6 sm:p-8 border border-green-500/30 shadow-2xl flex flex-col items-center text-center gap-5 animate-fadeIn scale-in"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/40 text-green-600 flex items-center justify-center animate-bounce-in">
             <Trophy size={36} />
           </div>
 
           <div className="flex flex-col gap-1">
             <h2 className="font-urbanist font-extrabold text-2xl sm:text-3xl text-[#212121] dark:text-white">
-              {winner ? `${winner.toUpperCase()} VICTORIOUS!` : 'MATCH WON!'}
+              {winner ? `${winner.toUpperCase()} WINS!` : 'MATCH WON!'}
             </h2>
             <p className="font-urbanist text-xs sm:text-sm text-[#757575] dark:text-[#BDBDBD]">
-              Checkmate! Spectacular tactical performance.
+              {winner ? `${winner === 'white' ? 'White' : 'Black'} wins by checkmate` : 'Victory!'}
             </p>
+          </div>
+
+          <div className="flex items-center gap-4 flex-wrap justify-center">
+            <div className="bg-[#F0EDFF] dark:bg-[#262A34] rounded-xl px-3 py-1.5 flex items-center gap-2">
+              <span className="text-xs font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD]">Moves</span>
+              <span className="font-urbanist font-extrabold text-sm text-[#212121] dark:text-white">{totalMoves}</span>
+            </div>
+            <div className="bg-[#F0EDFF] dark:bg-[#262A34] rounded-xl px-3 py-1.5 flex items-center gap-2">
+              <span className="text-xs font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD]">Difficulty</span>
+              <span className="bg-[#6949FF]/10 text-[#6949FF] dark:text-purple-300 text-xs font-extrabold px-2 py-0.5 rounded-full">{difficulty.toUpperCase()}</span>
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 w-full mt-2">
@@ -134,18 +118,32 @@ export function ChessModal({
 
       {/* Lose Modal */}
       {modalType === 'lose' && (
-        <div className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-3xl p-6 sm:p-8 border border-red-500/30 shadow-2xl flex flex-col items-center text-center gap-5">
+        <div
+          className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-3xl p-6 sm:p-8 border border-red-500/30 shadow-2xl flex flex-col items-center text-center gap-5 animate-fadeIn"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/40 text-red-500 flex items-center justify-center">
             <ShieldAlert size={36} />
           </div>
 
           <div className="flex flex-col gap-1">
             <h2 className="font-urbanist font-extrabold text-2xl sm:text-3xl text-[#212121] dark:text-white">
-              YOU WERE DEFEATED
+              YOU LOST
             </h2>
             <p className="font-urbanist text-xs sm:text-sm text-[#757575] dark:text-[#BDBDBD]">
-              The Computer ({difficulty.toUpperCase()} AI) claimed victory by checkmate.
+              {winner === 'black' ? 'Black' : 'White'} wins by checkmate
             </p>
+          </div>
+
+          <div className="flex items-center gap-4 flex-wrap justify-center">
+            <div className="bg-[#F0EDFF] dark:bg-[#262A34] rounded-xl px-3 py-1.5 flex items-center gap-2">
+              <span className="text-xs font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD]">Moves</span>
+              <span className="font-urbanist font-extrabold text-sm text-[#212121] dark:text-white">{totalMoves}</span>
+            </div>
+            <div className="bg-[#F0EDFF] dark:bg-[#262A34] rounded-xl px-3 py-1.5 flex items-center gap-2">
+              <span className="text-xs font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD]">Difficulty</span>
+              <span className="bg-[#6949FF]/10 text-[#6949FF] dark:text-purple-300 text-xs font-extrabold px-2 py-0.5 rounded-full">{difficulty.toUpperCase()}</span>
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 w-full mt-2">
@@ -153,7 +151,7 @@ export function ChessModal({
               onClick={onPlayAgain}
               className="w-full h-12 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-base transition-all duration-200 active:scale-95 shadow-md shadow-[#6949FF]/20"
             >
-              Replay Match
+              Play Again
             </button>
             <button
               onClick={handleNewGameSetup}
@@ -173,18 +171,28 @@ export function ChessModal({
 
       {/* Draw Modal */}
       {modalType === 'draw' && (
-        <div className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-3xl p-6 sm:p-8 border border-blue-500/30 shadow-2xl flex flex-col items-center text-center gap-5">
+        <div
+          className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-3xl p-6 sm:p-8 border border-blue-500/30 shadow-2xl flex flex-col items-center text-center gap-5 animate-fadeIn"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-500 flex items-center justify-center">
             <RefreshCw size={36} />
           </div>
 
           <div className="flex flex-col gap-1">
             <h2 className="font-urbanist font-extrabold text-2xl sm:text-3xl text-[#212121] dark:text-white">
-              MATCH DRAWN
+              DRAW
             </h2>
             <p className="font-urbanist text-xs sm:text-sm text-[#757575] dark:text-[#BDBDBD]">
-              Reason: <span className="font-bold text-[#6949FF] capitalize">{drawReason || 'Stalemate'}</span>
+              <span className="font-bold text-[#6949FF] capitalize">{drawReason || 'Stalemate'}</span>
             </p>
+          </div>
+
+          <div className="flex items-center gap-4 flex-wrap justify-center">
+            <div className="bg-[#F0EDFF] dark:bg-[#262A34] rounded-xl px-3 py-1.5 flex items-center gap-2">
+              <span className="text-xs font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD]">Moves</span>
+              <span className="font-urbanist font-extrabold text-sm text-[#212121] dark:text-white">{totalMoves}</span>
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 w-full mt-2">

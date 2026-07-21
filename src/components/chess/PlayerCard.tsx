@@ -14,6 +14,7 @@ interface PlayerCardProps {
   isActive?: boolean
   difficulty?: string
   timePlaceholder?: string
+  lowTime?: boolean
   className?: string
 }
 
@@ -26,6 +27,7 @@ export function PlayerCard({
   isActive = false,
   difficulty,
   timePlaceholder = '10:00',
+  lowTime = false,
   className,
 }: PlayerCardProps) {
   const isWhite = color === 'white'
@@ -33,7 +35,7 @@ export function PlayerCard({
   return (
     <div
       className={cn(
-        'w-full bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 transition-all duration-300 flex items-center justify-between gap-3',
+        'w-full bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl sm:rounded-2xl p-2 sm:p-3 border-2 transition-all duration-300 flex items-center justify-between gap-3',
         isActive
           ? 'border-[#6949FF] shadow-lg shadow-[#6949FF]/15 dark:shadow-[#6949FF]/20 ring-2 ring-[#6949FF]/30'
           : 'border-transparent dark:border-[#35383F]',
@@ -102,9 +104,14 @@ export function PlayerCard({
         )}
 
         {/* Timer Placeholder */}
-        <div className="bg-white dark:bg-[#262A34] px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-1.5">
+        <div className={cn(
+          'px-3 py-1.5 rounded-lg border shadow-sm flex items-center gap-1.5 transition-all duration-300',
+          lowTime
+            ? 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 animate-pulse'
+            : 'bg-white dark:bg-[#262A34] border-gray-200 dark:border-gray-700'
+        )}>
           <svg
-            className="w-4 h-4 text-[#757575] dark:text-[#BDBDBD]"
+            className={cn('w-4 h-4', lowTime ? 'text-red-500' : 'text-[#757575] dark:text-[#BDBDBD]')}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -116,7 +123,10 @@ export function PlayerCard({
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <span className="font-mono font-bold text-sm sm:text-base text-[#212121] dark:text-[#FAFAFA]">
+          <span className={cn(
+            'font-mono font-bold text-sm sm:text-base',
+            lowTime ? 'text-red-600 dark:text-red-400' : 'text-[#212121] dark:text-[#FAFAFA]'
+          )}>
             {timePlaceholder}
           </span>
         </div>

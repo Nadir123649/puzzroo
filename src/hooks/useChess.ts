@@ -70,6 +70,11 @@ export function useChess() {
   const boardThemeId = (searchParams.get('theme') || 'classic') as BoardThemeId
   const pieceThemeId = (searchParams.get('pieceTheme') || 'classic') as PieceThemeId
 
+  const timeParam = parseInt(searchParams.get('time') || '', 10)
+  const incrementParam = parseInt(searchParams.get('increment') || '', 10)
+  const initialTimeSeconds = Math.max(60, isNaN(timeParam) ? 600 : timeParam)
+  const incrementSeconds = Math.max(0, isNaN(incrementParam) ? 0 : incrementParam)
+
   // Store mode/side in refs so callbacks never go stale
   const modeRef = useRef(mode)
   const sideRef = useRef(side)
@@ -80,6 +85,9 @@ export function useChess() {
 
   // Single Chess engine instance
   const chessRef = useRef<Chess | null>(null)
+
+  // Board version counter — forces re-render after every board sync
+  const [boardVersion, setBoardVersion] = useState(0)
 
   // React state
   const [boardGrid, setBoardGrid] = useState<BoardGrid>([])
@@ -110,15 +118,19 @@ export function useChess() {
   const [activeModal, setActiveModal] = useState<ModalType>('none')
   const [pendingPromotion, setPendingPromotion] = useState<{ from: Square; to: Square } | null>(null)
 
+  // Ref to stabilize closure-dependent values (must be after state decls)
+  const isAiThinkingRef = useRef(isAiThinking)
+  useEffect(() => { isAiThinkingRef.current = isAiThinking }, [isAiThinking])
+
   // Countdown timers (seconds)
-  const [whiteTime, setWhiteTime] = useState(INITIAL_TIME_SECONDS)
-  const [blackTime, setBlackTime] = useState(INITIAL_TIME_SECONDS)
+  const [whiteTime, setWhiteTime] = useState(initialTimeSeconds)
+  const [blackTime, setBlackTime] = useState(initialTimeSeconds)
 
   // -------------------------------------------------------------------
   // Body scroll lock
   // -------------------------------------------------------------------
   useEffect(() => {
-    if (activeModal !== 'none') {
+    if (activeModal !== 'none' && activeModal !== 'promotion') {
       document.body.style.overflow = 'hidden'
       document.body.style.touchAction = 'none'
     } else {
@@ -132,20 +144,26 @@ export function useChess() {
   }, [activeModal])
 
   // -------------------------------------------------------------------
-  // Timer Interval Loop (10-minute clocks for White and Black)
+  // Timer Interval Loop (configurable clocks for White and Black)
   // -------------------------------------------------------------------
   useEffect(() => {
     if (gameStatus !== 'playing') return
 
-    const timer = setInterval(() => {
+    const tick = setInterval(() => {
       if (turn === 'white') {
-        setWhiteTime((prev) => (prev <= 1 ? 0 : prev - 1))
+        setWhiteTime((prev) => {
+          if (prev <= 30 && prev > 0) chessAudio.playTimerTick()
+          return prev <= 1 ? 0 : prev - 1
+        })
       } else {
-        setBlackTime((prev) => (prev <= 1 ? 0 : prev - 1))
+        setBlackTime((prev) => {
+          if (prev <= 30 && prev > 0) chessAudio.playTimerTick()
+          return prev <= 1 ? 0 : prev - 1
+        })
       }
     }, 1000)
 
-    return () => clearInterval(timer)
+    return () => clearInterval(tick)
   }, [turn, gameStatus])
 
   // -------------------------------------------------------------------
@@ -211,6 +229,7 @@ export function useChess() {
       }
     })
     setCapturedPieces({ byWhite: whiteCaptured, byBlack: blackCaptured, whiteScore: wScore, blackScore: bScore })
+    setBoardVersion(prev => prev + 1)
   }, [])
 
   // -------------------------------------------------------------------
@@ -281,13 +300,15 @@ export function useChess() {
     setMoveHistory([])
     setReviewIndex(null)
     setIsAiThinking(false)
-    setWhiteTime(INITIAL_TIME_SECONDS)
-    setBlackTime(INITIAL_TIME_SECONDS)
+    setWhiteTime(initialTimeSeconds)
+    setBlackTime(initialTimeSeconds)
 
     syncBoardState(chess)
 
     if (chess.history().length > 0) {
       checkGameOver(chess)
+    } else {
+      chessAudio.playGameStart()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -301,12 +322,14 @@ export function useChess() {
       if (!chess || gameStatus !== 'playing') return false
 
       // Human moves blocked during AI turn
-      if (isAiThinking && !isAiCall) return false
+      if (isAiThinkingRef.current && !isAiCall) return false
 
       // Pawn promotion interstitial
       const piece = chess.get(from)
       const toRank = to[1]
-      const isPawnPromotion = piece?.type === 'p' && (toRank === '8' || toRank === '1')
+      const isPawnPromotion =
+        piece?.type === 'p' &&
+        ((piece.color === 'w' && toRank === '8') || (piece.color === 'b' && toRank === '1'))
       if (isPawnPromotion && !promotionPiece) {
         setPendingPromotion({ from, to })
         setActiveModal('promotion')
@@ -316,6 +339,15 @@ export function useChess() {
       const enginePromotion = promotionPiece ? (promotionPiece[0] as EnginePieceType) : undefined
       const moveResult = chess.move({ from, to, promotion: enginePromotion })
       if (!moveResult) return false
+
+      // Fischer increment: add time after each move
+      if (incrementSeconds > 0) {
+        if (moveResult.color === 'w') {
+          setWhiteTime(prev => prev + incrementSeconds)
+        } else {
+          setBlackTime(prev => prev + incrementSeconds)
+        }
+      }
 
       // Audio feedback
       if (moveResult.captured) chessAudio.playCapture()
@@ -346,7 +378,7 @@ export function useChess() {
 
       return true
     },
-    [gameStatus, isAiThinking, syncBoardState, checkGameOver, saveState]
+    [gameStatus, syncBoardState, checkGameOver, saveState]
   )
 
   // -------------------------------------------------------------------
@@ -361,24 +393,46 @@ export function useChess() {
       (side === 'white' && currentTurnColor === 'w') ||
       (side === 'black' && currentTurnColor === 'b')
 
-    if (!isPlayerTurn && !isAiThinking) {
+    if (!isPlayerTurn && !isAiThinkingRef.current) {
+      let isRetry = false
       setIsAiThinking(true)
-      getBestAiMove(chessRef.current, difficulty).then((aiMove) => {
-        setTimeout(() => {
-          if (aiMove) {
-            // Pass isAiCall = true so executeMove is not blocked by isAiThinking
-            executeMove(
-              aiMove.from,
-              aiMove.to,
-              aiMove.promotion ? PIECE_TYPE_MAP[aiMove.promotion] : undefined,
-              true
-            )
-          }
-          setIsAiThinking(false)
-        }, 200)
-      })
+
+      const tryExecuteAiMove = () => {
+        if (!chessRef.current) return
+        getBestAiMove(chessRef.current, difficulty)
+          .then((aiMove) => {
+            setTimeout(() => {
+              if (aiMove) {
+                const moveSuccess = executeMove(
+                  aiMove.from,
+                  aiMove.to,
+                  aiMove.promotion ? PIECE_TYPE_MAP[aiMove.promotion] : undefined,
+                  true
+                )
+                if (!moveSuccess && !isRetry) {
+                  isRetry = true
+                  tryExecuteAiMove()
+                } else {
+                  setIsAiThinking(false)
+                }
+              } else {
+                setIsAiThinking(false)
+              }
+            }, 200)
+          })
+          .catch(() => {
+            if (!isRetry) {
+              isRetry = true
+              tryExecuteAiMove()
+            } else {
+              setIsAiThinking(false)
+            }
+          })
+      }
+
+      tryExecuteAiMove()
     }
-  }, [turn, mode, side, difficulty, gameStatus, isAiThinking, executeMove])
+  }, [turn, mode, side, difficulty, gameStatus])
 
   // -------------------------------------------------------------------
   // Square selection
@@ -386,10 +440,19 @@ export function useChess() {
   const selectSquare = useCallback(
     (square: Square) => {
       if (gameStatus !== 'playing' || isAiThinking) return
-      if (reviewIndex !== null) setReviewIndex(null)
 
       const chess = chessRef.current
       if (!chess) return
+
+      // Exiting history review mode safely
+      if (reviewIndex !== null) {
+        setReviewIndex(null)
+        syncBoardState(chess)
+        setSelectedSquare(null)
+        setLegalMoves([])
+        setCaptureMoves([])
+        return
+      }
 
       const currentTurnColor = chess.turn()
       const isPlayerTurn =
@@ -413,8 +476,14 @@ export function useChess() {
         const targets: Square[] = []
         const captures: Square[] = []
         verboseMoves.forEach((m: any) => {
-          targets.push(m.to)
-          if (m.captured) captures.push(m.to)
+          const destPiece = chess.get(m.to)
+          // Strict Rule: Never allow move or capture targets on friendly pieces!
+          if (!destPiece || destPiece.color !== currentTurnColor) {
+            targets.push(m.to)
+            if (m.captured || (destPiece && destPiece.color !== currentTurnColor)) {
+              captures.push(m.to)
+            }
+          }
         })
         setLegalMoves(targets)
         setCaptureMoves(captures)
@@ -424,7 +493,7 @@ export function useChess() {
         setCaptureMoves([])
       }
     },
-    [gameStatus, isAiThinking, reviewIndex, mode, side, selectedSquare, legalMoves, executeMove]
+    [gameStatus, isAiThinking, reviewIndex, mode, side, selectedSquare, legalMoves, executeMove, syncBoardState]
   )
 
   // -------------------------------------------------------------------
@@ -444,14 +513,29 @@ export function useChess() {
   // -------------------------------------------------------------------
   // Undo
   // -------------------------------------------------------------------
+  // -------------------------------------------------------------------
+  // Undo
+  // -------------------------------------------------------------------
   const undoMove = useCallback(() => {
     if (gameStatus !== 'playing' || isAiThinking) return
     const chess = chessRef.current
     if (!chess) return
 
+    setPendingPromotion(null)
+    setActiveModal('none')
+
+    const historyLen = chess.history().length
+    if (historyLen === 0) return
+
     if (mode === 'pve') {
-      chess.undo(); chess.undo()
-      setMoveHistory(prev => prev.slice(0, -2))
+      if (historyLen >= 2) {
+        chess.undo()
+        chess.undo()
+        setMoveHistory(prev => prev.slice(0, -2))
+      } else if (historyLen === 1) {
+        chess.undo()
+        setMoveHistory([])
+      }
     } else {
       chess.undo()
       setMoveHistory(prev => prev.slice(0, -1))
@@ -475,6 +559,7 @@ export function useChess() {
       sessionStorage.removeItem('puzzroo_chess_fen')
       localStorage.removeItem('puzzroo_chess_fen')
     }
+    setPendingPromotion(null)
     setSelectedSquare(null)
     setLegalMoves([])
     setCaptureMoves([])
@@ -486,10 +571,10 @@ export function useChess() {
     setDrawReason(null)
     setWinner(null)
     setActiveModal('none')
-    setWhiteTime(INITIAL_TIME_SECONDS)
-    setBlackTime(INITIAL_TIME_SECONDS)
+    setWhiteTime(initialTimeSeconds)
+    setBlackTime(initialTimeSeconds)
     syncBoardState(chess)
-  }, [syncBoardState])
+  }, [syncBoardState, initialTimeSeconds])
 
   // -------------------------------------------------------------------
   // Resign

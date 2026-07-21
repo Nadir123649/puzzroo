@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo } from 'react'
 import { PieceType, PieceColor } from '@/utils/chess/pieceAssets'
 
 export type PieceThemeId = 'classic' | 'gold' | 'neon' | 'emerald' | 'custom'
@@ -235,7 +235,7 @@ interface SvgChessPieceProps {
   customBlackColor?: string
 }
 
-export function SvgChessPiece({
+export const SvgChessPiece = memo(function SvgChessPiece({
   type,
   color,
   theme = PIECE_THEMES.classic,
@@ -288,6 +288,6 @@ export function SvgChessPiece({
   }
 
   return null
-}
+})
 
 export default SvgChessPiece
