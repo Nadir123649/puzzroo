@@ -32,11 +32,11 @@ export const metadata: Metadata = {
     title: 'Puzzroo',
   },
   title: {
-    default: "Puzzroo - SEO Optimized Landing Page",
-    template: "%s | Puzzroo",
+    default: "Puzzroo - Free Online Games, Chess & Brain Puzzles",
+    template: "%s | Puzzroo Games",
   },
-  description: "A production-ready, SEO-optimized landing page built with Next.js, TypeScript, and Tailwind CSS. Mobile-first responsive design with dark mode support.",
-  keywords: ["Next.js", "React", "TypeScript", "Tailwind CSS", "SEO", "Landing Page", "Dark Mode"],
+  description: "Play free online games on Puzzroo! Enjoy Chess, Sudoku, and brain-teasing puzzles. Compete against AI bots or challenge friends with instant browser play.",
+  keywords: ["Puzzroo", "Chess", "Sudoku", "Online Games", "Free Puzzles", "Brain Games", "Mind Games", "Chess AI"],
   authors: [{ name: "Puzzroo Team" }],
   creator: "Puzzroo",
   icons: {

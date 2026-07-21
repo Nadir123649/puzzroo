@@ -331,6 +331,9 @@ export function useChess() {
         piece?.type === 'p' &&
         ((piece.color === 'w' && toRank === '8') || (piece.color === 'b' && toRank === '1'))
       if (isPawnPromotion && !promotionPiece) {
+        setSelectedSquare(null)
+        setLegalMoves([])
+        setCaptureMoves([])
         setPendingPromotion({ from, to })
         setActiveModal('promotion')
         return false
@@ -403,6 +406,12 @@ export function useChess() {
           .then((aiMove) => {
             setTimeout(() => {
               if (aiMove) {
+                // Deduct 1 second for AI thinking time
+                if (sideRef.current === 'white') {
+                  setBlackTime(prev => (prev > 0 ? prev - 1 : 0))
+                } else {
+                  setWhiteTime(prev => (prev > 0 ? prev - 1 : 0))
+                }
                 const moveSuccess = executeMove(
                   aiMove.from,
                   aiMove.to,
@@ -418,7 +427,7 @@ export function useChess() {
               } else {
                 setIsAiThinking(false)
               }
-            }, 200)
+            }, 600)
           })
           .catch(() => {
             if (!isRetry) {
@@ -627,6 +636,14 @@ export function useChess() {
     setIsFlipped(prev => !prev)
   }, [])
 
+  const cancelPromotion = useCallback(() => {
+    setPendingPromotion(null)
+    setActiveModal('none')
+    setSelectedSquare(null)
+    setLegalMoves([])
+    setCaptureMoves([])
+  }, [])
+
   // -------------------------------------------------------------------
   // Return
   // -------------------------------------------------------------------
@@ -640,7 +657,7 @@ export function useChess() {
     activeModal, pendingPromotion,
     whiteTime, blackTime,
 
-    selectSquare, executeMove, handleSelectPromotion,
+    selectSquare, executeMove, handleSelectPromotion, cancelPromotion,
     undoMove, restartGame, resignGame, reviewHistoryMove,
     toggleSound, flipBoard, setActiveModal,
   }

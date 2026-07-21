@@ -66,7 +66,7 @@ export function CapturedPieces({
                 className="flex items-center bg-white dark:bg-[#262A34] px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm gap-1"
                 title={`${count} ${color} ${type}`}
               >
-                <div className="w-5 h-5 flex items-center justify-center">
+                <div className="w-6 h-6 flex items-center justify-center">
                   <SvgChessPiece
                     type={type as PieceType}
                     color={color}
