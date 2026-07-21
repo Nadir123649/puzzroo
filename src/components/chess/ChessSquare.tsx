@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo } from 'react'
 import { ChessPieceData, BoardThemeConfig } from '@/utils/chess'
 import { ChessPiece } from './ChessPiece'
 import { BoardCoordinates } from './BoardCoordinates'
@@ -23,14 +23,13 @@ interface ChessSquareProps {
   isCapture?: boolean
   isLastMove?: boolean
   isKingInCheck?: boolean
+  isMoveDest?: boolean
   disabled?: boolean
   onClick?: () => void
-  onDragStart?: (e: React.DragEvent) => void
-  onDragOver?: (e: React.DragEvent) => void
-  onDrop?: (e: React.DragEvent) => void
+  onPointerDown?: (e: React.PointerEvent) => void
 }
 
-export function ChessSquare({
+export const ChessSquare = memo(function ChessSquare({
   fileIndex,
   rankIndex,
   fileLabel,
@@ -46,11 +45,10 @@ export function ChessSquare({
   isCapture = false,
   isLastMove = false,
   isKingInCheck = false,
+  isMoveDest = false,
   disabled = false,
   onClick,
-  onDragStart,
-  onDragOver,
-  onDrop,
+  onPointerDown,
 }: ChessSquareProps) {
   const squareBgHex = isDarkSquare ? theme.darkSquareHex : theme.lightSquareHex
   const coordColorHex = isDarkSquare ? theme.coordinateColorDarkHex : theme.coordinateColorLightHex
@@ -62,11 +60,10 @@ export function ChessSquare({
   return (
     <div
       onClick={disabled ? undefined : onClick}
-      onDragOver={disabled ? undefined : onDragOver}
-      onDrop={disabled ? undefined : onDrop}
+      onPointerDown={disabled ? undefined : onPointerDown}
       style={{ backgroundColor: squareBgHex }}
       className={cn(
-        'relative aspect-square w-full h-full flex items-center justify-center transition-colors duration-150 group overflow-hidden select-none cursor-pointer',
+        'relative aspect-square w-full h-full flex items-center justify-center transition-colors duration-150 group overflow-hidden select-none cursor-pointer touch-none',
         disabled && 'cursor-not-allowed'
       )}
       data-square={squareName}
@@ -107,13 +104,13 @@ export function ChessSquare({
       )}
 
       {/* Legal Move Indicator (Empty Square Dot) */}
-      {isLegalMove && !piece && (
-        <div className="absolute w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#6949FF]/70 dark:bg-purple-400/80 shadow-sm pointer-events-none z-20" />
+      {isLegalMove && !piece && !isCapture && (
+        <div className="absolute w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#22C55E]/80 dark:bg-[#22C55E]/90 shadow-sm pointer-events-none z-20" />
       )}
 
       {/* Legal Capture Ring Indicator */}
-      {isLegalMove && piece && (
-        <div className="absolute inset-0 ring-4 ring-inset ring-[#EF4444]/80 bg-[#EF4444]/25 pointer-events-none z-20" />
+      {isCapture && piece && (
+        <div className="absolute inset-0 ring-4 ring-inset ring-[#EF4444]/80 bg-[#EF4444]/25 pointer-events-none z-20 animate-pulse" />
       )}
 
       {/* Hover Micro-Animation Overlay */}
@@ -121,21 +118,18 @@ export function ChessSquare({
 
       {/* Chess Piece */}
       {piece && (
-        <div
-          draggable={!disabled}
-          onDragStart={onDragStart}
-          className="w-full h-full flex items-center justify-center z-10"
-        >
+        <div className="w-full h-full flex items-center justify-center z-10 pointer-events-none">
           <ChessPiece
             piece={piece}
             theme={pieceTheme}
             customWhiteColor={customWhiteColor}
             customBlackColor={customBlackColor}
+            animateIn={isMoveDest}
           />
         </div>
       )}
     </div>
   )
-}
+})
 
 export default ChessSquare

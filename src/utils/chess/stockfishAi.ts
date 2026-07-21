@@ -149,51 +149,60 @@ export async function getBestAiMove(
   game: Chess,
   difficulty: AiDifficulty
 ): Promise<{ from: Square; to: Square; promotion?: PieceType } | null> {
-  // CRITICAL: Clone the engine instance so minimax calculations NEVER pollute or mutate live match state!
-  const searchEngine = new Chess(game.fen())
-  const moves = searchEngine.moves({ verbose: true })
-  if (moves.length === 0) return null
+  try {
+    // CRITICAL: Clone the engine instance so minimax calculations NEVER pollute or mutate live match state!
+    const searchEngine = new Chess(game.fen())
+    const moves = searchEngine.moves({ verbose: true })
+    if (moves.length === 0) return null
 
-  const aiColor = searchEngine.turn()
-  const isMaximizing = aiColor === 'w'
+    const aiColor = searchEngine.turn()
+    const isMaximizing = aiColor === 'w'
 
-  // Easy Difficulty: 30% random move, else fast depth 1 evaluation
-  if (difficulty === 'easy') {
-    if (Math.random() < 0.3) {
-      const randomMove = moves[Math.floor(Math.random() * moves.length)]
-      return { from: randomMove.from, to: randomMove.to, promotion: randomMove.promotion || 'q' }
-    }
-  }
-
-  const searchDepth = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 2 : 1
-
-  let bestMove = moves[0]
-  let bestValue = isMaximizing ? -Infinity : Infinity
-
-  // Shuffle moves slightly to avoid deterministic repetitive openings
-  const shuffledMoves = [...moves].sort(() => Math.random() - 0.5)
-
-  for (const move of shuffledMoves) {
-    searchEngine.move({ from: move.from, to: move.to, promotion: move.promotion })
-    const boardVal = minimax(searchEngine, searchDepth - 1, -Infinity, Infinity, !isMaximizing)
-    searchEngine.undo()
-
-    if (isMaximizing) {
-      if (boardVal > bestValue) {
-        bestValue = boardVal
-        bestMove = move
-      }
-    } else {
-      if (boardVal < bestValue) {
-        bestValue = boardVal
-        bestMove = move
+    // Easy Difficulty: 30% random move, else fast depth 1 evaluation
+    if (difficulty === 'easy') {
+      if (Math.random() < 0.3) {
+        const randomMove = moves[Math.floor(Math.random() * moves.length)]
+        return { from: randomMove.from, to: randomMove.to, promotion: randomMove.promotion ? (randomMove.promotion as PieceType) : undefined }
       }
     }
-  }
 
-  return {
-    from: bestMove.from,
-    to: bestMove.to,
-    promotion: bestMove.promotion || 'q',
+    const searchDepth = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 2 : 1
+
+    let bestMove = moves[0]
+    let bestValue = isMaximizing ? -Infinity : Infinity
+
+    // Shuffle moves slightly to avoid deterministic repetitive openings
+    const shuffledMoves = [...moves].sort(() => Math.random() - 0.5)
+
+    for (const move of shuffledMoves) {
+      searchEngine.move({ from: move.from, to: move.to, promotion: move.promotion })
+      const boardVal = minimax(searchEngine, searchDepth - 1, -Infinity, Infinity, !isMaximizing)
+      searchEngine.undo()
+
+      if (isMaximizing) {
+        if (boardVal > bestValue) {
+          bestValue = boardVal
+          bestMove = move
+        }
+      } else {
+        if (boardVal < bestValue) {
+          bestValue = boardVal
+          bestMove = move
+        }
+      }
+    }
+
+    return {
+      from: bestMove.from,
+      to: bestMove.to,
+      promotion: bestMove.promotion ? (bestMove.promotion as PieceType) : undefined,
+    }
+  } catch (err) {
+    console.error('[Chess AI] Search failed, returning random move:', err)
+    const fallbackEngine = new Chess(game.fen())
+    const fallbackMoves = fallbackEngine.moves({ verbose: true })
+    if (fallbackMoves.length === 0) return null
+    const randomMove = fallbackMoves[Math.floor(Math.random() * fallbackMoves.length)]
+    return { from: randomMove.from, to: randomMove.to, promotion: randomMove.promotion ? (randomMove.promotion as PieceType) : undefined }
   }
 }

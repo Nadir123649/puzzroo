@@ -35,7 +35,7 @@ export function CapturedPieces({
   return (
     <div
       className={cn(
-        'w-full flex flex-col gap-2 bg-[#F0EDFF]/80 dark:bg-[#1F222A] rounded-xl p-3 sm:p-4 border border-[#E0D9FF] dark:border-[#35383F] transition-all shadow-sm',
+        'w-full flex flex-col gap-2 bg-[#F0EDFF]/80 dark:bg-[#1F222A] rounded-xl p-2 sm:p-3 border border-[#E0D9FF] dark:border-[#35383F] transition-all shadow-sm',
         className
       )}
     >
