@@ -34,6 +34,10 @@ export async function GET(
 
     const match: any = { difficulty: diff };
     if (exclude) match.puzzleId = { $ne: exclude };
+    if (game === "tangram") {
+      match.active = true;
+      match.status = "active";
+    }
 
     const [doc] = await reg.model.aggregate([{ $match: match }, { $sample: { size: 1 } }]);
     if (!doc) return errorResponse(404, "no_puzzle", `No puzzle for difficulty ${diff}`);

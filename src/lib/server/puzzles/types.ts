@@ -48,7 +48,6 @@ export interface CrossMathPuzzleResponse {
   grid: unknown[][];
   availableNumbers: number[];
   maxMistakes: number;
-  solution: Record<string, number>;
 }
 
 export interface TangramPuzzleResponse {
@@ -67,6 +66,11 @@ export interface PuzzleSummary {
   difficulty: Difficulty;
   title?: string;
   size?: number;
+  givens?: number;
+  tier?: number;
+  // Additional fields for richer data
+  category?: string;
+  estimatedTime?: number;
 }
 
 export interface CatalogEntry {

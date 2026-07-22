@@ -19,11 +19,19 @@ const nonogramPuzzleSchema = new mongoose.Schema(
     hash: { type: String },
     generatorVersion: { type: String },
     dailyIndex: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+    version: { type: Number, default: 1 },
+    metadata: {
+      fillDensity: { type: Number },
+      uniqueSolution: { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );
 
 nonogramPuzzleSchema.index({ game: 1, difficulty: 1, dailyIndex: 1 });
+nonogramPuzzleSchema.index({ game: 1, difficulty: 1 });
+nonogramPuzzleSchema.index({ hash: 1 }, { sparse: true });
 
 export default mongoose.models.NonogramPuzzle ||
   mongoose.model("NonogramPuzzle", nonogramPuzzleSchema);

@@ -94,8 +94,10 @@ async function reportWin(
   }
 }
 
-export function useCrossMath() {
+export function useCrossMath(initialPuzzleId?: string) {
   const searchParams = useSearchParams()
+  const urlPuzzleId = searchParams.get('puzzleId')
+  const puzzleId = initialPuzzleId || urlPuzzleId || undefined
   const difficultyParam = (searchParams.get('difficulty') || 'easy') as Difficulty
   const usePatternMode = true
   
@@ -181,36 +183,54 @@ export function useCrossMath() {
       try {
         const savedGame = loadGameState()
 
-        // Determine puzzle source (API with static fallback)
-        let puzzle: CrossMathPuzzle
-        if (savedGame && savedGame.difficulty === difficulty) {
-          const resumeId = savedGame.puzzleId
-          try {
-            puzzle = isDailyChallenge
-              ? (await gameApi.getDailyPuzzle('crossmath', getDailyDateString(dateParam))) as CrossMathPuzzle
-              : (readPuzzleCache(resumeId) || (await gameApi.getPuzzleById('crossmath', resumeId)) as CrossMathPuzzle)
-          } catch {
-            puzzle = isDailyChallenge
-              ? getDailyCrossMathPuzzle(getDailyDate(dateParam), difficulty)
-              : (getPuzzleById(resumeId) ||
-                  (usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)))
-          }
-        } else {
-          try {
-            puzzle = isDailyChallenge
-              ? (await gameApi.getDailyPuzzle('crossmath', getDailyDateString(dateParam))) as CrossMathPuzzle
-              : (await gameApi.getPuzzle('crossmath', { difficulty })) as CrossMathPuzzle
-          } catch {
-            puzzle = isDailyChallenge
-              ? getDailyCrossMathPuzzle(getDailyDate(dateParam), difficulty)
-              : (usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty))
+        let puzzle: CrossMathPuzzle | null = null
+
+        // If puzzleId is specified, load that specific puzzle
+        if (puzzleId) {
+          const cached = readPuzzleCache(puzzleId)
+          if (cached) {
+            puzzle = cached
+          } else {
+            try {
+              puzzle = await gameApi.getPuzzleById('crossmath', puzzleId) as unknown as CrossMathPuzzle
+              if (puzzle) writePuzzleCache(puzzle)
+            } catch {
+              puzzle = getPuzzleById(puzzleId) || null
+            }
           }
         }
 
-        if (cancelled) return
+        // Fall back to saved game or random puzzle
+        if (!puzzle) {
+          if (savedGame && savedGame.difficulty === difficulty) {
+            const resumeId = savedGame.puzzleId
+            try {
+              puzzle = isDailyChallenge
+                ? (await gameApi.getDailyPuzzle('crossmath', getDailyDateString(dateParam))) as CrossMathPuzzle
+                : (readPuzzleCache(resumeId) || (await gameApi.getPuzzleById('crossmath', resumeId)) as CrossMathPuzzle)
+            } catch {
+              puzzle = isDailyChallenge
+                ? getDailyCrossMathPuzzle(getDailyDate(dateParam), difficulty)
+                : (getPuzzleById(resumeId) ||
+                    (usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)))
+            }
+          } else {
+            try {
+              puzzle = isDailyChallenge
+                ? (await gameApi.getDailyPuzzle('crossmath', getDailyDateString(dateParam))) as CrossMathPuzzle
+                : (await gameApi.getPuzzle('crossmath', { difficulty })) as CrossMathPuzzle
+            } catch {
+              puzzle = isDailyChallenge
+                ? getDailyCrossMathPuzzle(getDailyDate(dateParam), difficulty)
+                : (usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty))
+            }
+          }
+        }
+
+        if (cancelled || !puzzle) return
         writePuzzleCache(puzzle)
 
-        if (savedGame && savedGame.difficulty === difficulty) {
+        if (savedGame && savedGame.difficulty === difficulty && !puzzleId) {
           setBoard(savedGame.board)
           setMistakes(savedGame.mistakes)
           setScore(savedGame.score)
@@ -259,7 +279,7 @@ export function useCrossMath() {
     return () => {
       cancelled = true
     }
-  }, [difficulty, usePatternMode, isDailyChallenge, dateParam])
+  }, [difficulty, usePatternMode, isDailyChallenge, dateParam, puzzleId])
 
   useEffect(() => {
     if (gameStatus === 'playing' && board.length > 0 && currentPuzzle) {

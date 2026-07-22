@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { ArrowLeft, Trophy, History, Gamepad2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { images } from '@/lib/utils'
 import { GameLoader } from '@/components/ui/GameLoader'
 
@@ -23,25 +23,7 @@ export function SudokuHero({ backTo }: SudokuHeroProps = {}) {
   const isDailyChallenge = pathname.includes('/daily-challenge/')
   const isPastPuzzle = hasDate
 
-  const diffParam = searchParams?.get('difficulty') || 'easy'
-  const diffLabel = diffParam.charAt(0).toUpperCase() + diffParam.slice(1) + ' Mode'
-
-  let modeLabel = diffLabel
-  let ModeIcon = Gamepad2
-  let modeColorClass = 'text-[#22C55E]'
-  let modeBgClass = 'bg-[#DCFCE7] dark:bg-[#166534]/30 border-[#BBF7D0] dark:border-[#166534]'
-
-  if (isDailyChallenge) {
-    modeLabel = 'Daily Challenge'
-    ModeIcon = Trophy
-    modeColorClass = 'text-[#EAB308]'
-    modeBgClass = 'bg-[#FEF08A] dark:bg-[#854D0E]/30 border-[#FEF08A] dark:border-[#854D0E]'
-  } else if (isPastPuzzle) {
-    modeLabel = 'Past Puzzle'
-    ModeIcon = History
-    modeColorClass = 'text-[#3B82F6]'
-    modeBgClass = 'bg-[#DBEAFE] dark:bg-[#1E3A8A]/30 border-[#BFDBFE] dark:border-[#1E3A8A]'
-  }
+  // backTo and isPastPuzzle are used by handleBackClick
 
 
   // Prevent scroll when loading overlay is active
@@ -109,12 +91,6 @@ export function SudokuHero({ backTo }: SudokuHeroProps = {}) {
             <h1 className="font-urbanist font-bold text-[30px] md:text-[48px] leading-[120%] text-center text-[#212121] dark:text-[#FAFAFA] transition-colors duration-300">
               SUDOKU
             </h1>
-
-            {/* Mode Indicator */}
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[13px] font-urbanist font-bold ${modeBgClass} ${modeColorClass} transition-all duration-300 mt-2`}>
-              <ModeIcon size={14} />
-              <span>{modeLabel}</span>
-            </div>
 
             {/* Date Display */}
             {dateParam && (

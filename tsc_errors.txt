@@ -1,0 +1,26 @@
+src/app/api/v1/games/crossmath/daily/route.ts(23,20): error TS2339: Property 'puzzleId' does not exist on type '{ id: any; game: any; difficulty: any; patternId: any; patternName: string | null; patternSize: string; blanks: any; availableNumbers: any; maxMistakes: any; solution: any; dailyIndex: any; }'.
+src/app/api/v1/games/crossmath/puzzle/[puzzleId]/route.ts(15,17): error TS2339: Property 'puzzleId' does not exist on type '{ id: any; game: any; difficulty: any; patternId: any; patternName: string | null; patternSize: string; blanks: any; availableNumbers: any; maxMistakes: any; solution: any; _id: any; createdAt: any; updatedAt: any; }'.
+src/app/api/v1/games/crossmath/puzzles.route.ts(2,26): error TS2307: Cannot find module './../route-helpers' or its corresponding type declarations.
+src/app/api/v1/games/crossmath/puzzles.route.ts(7,36): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/app/api/v1/games/crossmath/puzzles.route.ts(7,41): error TS7006: Parameter 'user' implicitly has an 'any' type.
+src/app/api/v1/games/crossmath/puzzles.route.ts(17,56): error TS2345: Argument of type '{ page: number; pageSize: number; difficulty?: "easy" | "medium" | "hard" | undefined; shapeName?: string | undefined; }' is not assignable to parameter of type 'SelectRandomOptions'.
+  Property 'userId' is missing in type '{ page: number; pageSize: number; difficulty?: "easy" | "medium" | "hard" | undefined; shapeName?: string | undefined; }' but required in type 'SelectRandomOptions'.
+src/app/api/v1/games/crossmath/sessions/[sessionId]/abandon/route.ts(13,103): error TS2339: Property 'abandonedAt' does not exist on type 'SafeSessionResponse'.
+src/app/api/v1/games/crossmath/sessions/[sessionId]/complete/route.ts(36,5): error TS18048: 'result.session' is possibly 'undefined'.
+src/app/api/v1/games/crossmath/sessions/[sessionId]/complete/route.ts(37,5): error TS18048: 'result.session' is possibly 'undefined'.
+src/app/api/v1/games/crossmath/sessions/[sessionId]/complete/route.ts(38,5): error TS18048: 'result.session' is possibly 'undefined'.
+src/app/api/v1/games/crossmath/sessions/[sessionId]/complete/route.ts(39,5): error TS18048: 'result.session' is possibly 'undefined'.
+src/app/api/v1/games/crossmath/sessions/[sessionId]/complete/route.ts(40,5): error TS18048: 'result.session' is possibly 'undefined'.
+src/app/api/v1/games/crossmath/sessions/[sessionId]/complete/route.ts(46,16): error TS18048: 'result.session' is possibly 'undefined'.
+src/app/api/v1/games/crossmath/sessions/[sessionId]/complete/route.ts(48,18): error TS18048: 'result.session' is possibly 'undefined'.
+src/app/api/v1/games/crossmath/sessions/[sessionId]/complete/route.ts(49,15): error TS18048: 'result.session' is possibly 'undefined'.
+src/app/api/v1/games/crossmath/sessions/[sessionId]/complete/route.ts(50,18): error TS18048: 'result.session' is possibly 'undefined'.
+src/components/game-lobby/DifficultyTabs.tsx(97,16): error TS2304: Cannot find name 'counts'.
+src/components/game-lobby/DifficultyTabs.tsx(97,26): error TS2304: Cannot find name 'counts'.
+src/components/game-lobby/DifficultyTabs.tsx(99,21): error TS2304: Cannot find name 'counts'.
+src/lib/crossmath/helpers.ts(5,22): error TS2307: Cannot find module './types' or its corresponding type declarations.
+src/lib/crossmath/puzzleGenerator.ts(6,51): error TS2307: Cannot find module './types' or its corresponding type declarations.
+src/lib/crossmath/storage.ts(1,28): error TS2307: Cannot find module './types' or its corresponding type declarations.
+src/lib/server/puzzles/crossmath/services/PlaySessionRepository.ts(1,30): error TS7016: Could not find a declaration file for module 'uuid'. 'C:/Users/Hassan Irfan/Music/puzzroo/node_modules/uuid/dist/esm-browser/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/uuid` if it exists or add a new declaration (.d.ts) file containing `declare module 'uuid';`
+src/lib/server/puzzles/crossmath/services/RandomPuzzleEngine.ts(4,15): error TS2724: '"../types"' has no exported member named 'CrossMathPuzzleResponse'. Did you mean 'SafePuzzleResponse'?

@@ -1,11 +1,1 @@
-{
-  "game": "crossmath",
-  "generatorVersion": 1,
-  "difficulties": [
-    "hard"
-  ],
-  "counts": {
-    "hard": 1000
-  },
-  "encoding": "compact: solution (full) + blanks; grid reconstructed via patterns.ts"
-}
+{"counts": {"easy": 1000, "medium": 1000, "hard": 1000}, "difficulties": ["easy", "medium", "hard"]}

@@ -46,8 +46,8 @@ export async function connectDB() {
 
   (global as any)._mongooseConnection = mongoose.connect(uri, {
     autoIndex: false,
-    serverSelectionTimeoutMS: 3000,
-    connectTimeoutMS: 3000,
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
   });
   cached = (global as any)._mongooseConnection;
   try {
