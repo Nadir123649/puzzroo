@@ -179,6 +179,11 @@ export function useNonogram(initialPuzzleId?: string) {
 
     const applyPuzzle = (puzzle: PuzzleData) => {
       if (token !== initTokenRef.current) return
+      const local = getPuzzleById(puzzle.id)
+      if (local) {
+        puzzle.title = local.title
+        puzzle.category = local.category
+      }
       setCurrentPuzzle(puzzle)
       setGrid(createEmptyGrid(puzzle.size))
       setMistakeCount(0)

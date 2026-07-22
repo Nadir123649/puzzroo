@@ -15,6 +15,15 @@ const API_BASE = !isLocalhost && isClient
   ? "" 
   : (process.env.NEXT_PUBLIC_API_BASE_URL || "");
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp * 1000 < Date.now()
+  } catch {
+    return true
+  }
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/auth/refresh`, { method: "POST", credentials: "include" });
@@ -46,7 +55,15 @@ export async function api<T = any>(
     ...(fetchOptions.headers as Record<string, string>),
   };
 
-  const accessToken = localStorage.getItem("accessToken");
+  let accessToken = localStorage.getItem("accessToken");
+  if (accessToken && isTokenExpired(accessToken)) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      localStorage.setItem("accessToken", newToken);
+      if (onRefresh) onRefresh(newToken);
+      accessToken = newToken;
+    }
+  }
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
