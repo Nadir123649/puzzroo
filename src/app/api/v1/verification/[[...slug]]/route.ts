@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import User from "@/lib/server/models/User";
 import { connectDB } from "@/lib/server/db";
-import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
+import { successResponse, errorResponse, getOrigin } from "@/lib/server/utils/apiResponse";
 import { cookieOptions } from "@/lib/server/utils/cookieOptions";
 import { sendVerificationEmail } from "@/lib/server/services/emailService";
 import { getFirebaseAuth } from "@/lib/server/config/firebase";
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.emailVerificationToken = hashedToken;
       user.emailVerificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000;
       await user.save({ validateBeforeSave: false });
-      const verifyUrl = `${process.env.FRONTEND_URL}/api/v1/verification/email/verify/${verificationToken}`;
+      const verifyUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
       try {
         await sendVerificationEmail(user.email, verifyUrl);
       } catch {
@@ -128,22 +128,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     // ──── GET /api/v1/verification/email/verify/:token (email link) ────
     if (resource === "email" && action === "verify") {
-      if (!token) return NextResponse.redirect(new URL("/login?verified=false", process.env.FRONTEND_URL));
+      const baseUrl = getOrigin(request);
+      if (!token) return NextResponse.redirect(new URL("/login?verified=false", baseUrl));
       const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
       const user = await User.findOne({
         emailVerificationToken: hashedToken,
         emailVerificationTokenExpire: { $gt: Date.now() },
       });
-      if (!user) return NextResponse.redirect(new URL("/login?verified=false", process.env.FRONTEND_URL));
+      if (!user) return NextResponse.redirect(new URL("/login?verified=false", baseUrl));
       user.isVerified = true;
       user.emailVerificationToken = undefined;
       user.emailVerificationTokenExpire = undefined;
+      // If a pending password hash exists (linking flow), apply it and link "email" provider
+      if (user.pendingPasswordHash) {
+        user.password = user.pendingPasswordHash;
+        user.pendingPasswordHash = undefined;
+        if (!user.linkedProviders.includes("email")) user.linkedProviders.push("email");
+      }
       user.lastLoginAt = new Date();
       await user.save();
       const { payload } = await issueSession(request, user);
       await trackServer({ userId: user._id.toString(), event: "email_verified", request });
       await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "email_verify_autologin" }, request });
-      const res = NextResponse.redirect(new URL("/auth/complete", process.env.FRONTEND_URL));
+      const res = NextResponse.redirect(new URL("/auth/complete", baseUrl));
       res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
       return res;
     }

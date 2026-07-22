@@ -14,8 +14,8 @@ export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-[99999] flex items-center justify-center transition-opacity duration-300">
-      <div className="flex flex-col items-center gap-4 text-center select-none">
+    <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-[99999] flex items-center justify-center transition-opacity duration-300 pointer-events-none">
+      <div className="flex flex-col items-center gap-4 text-center select-none pointer-events-auto">
         {/* Puzzroo Logo & Brand */}
         <div className="flex items-center gap-[clamp(8px,1vw,12px)] select-none">
           <Image
