@@ -37,3 +37,4 @@ export interface GameState {
   difficulty: Difficulty
   availableNumbers: Set<number>
 }
+

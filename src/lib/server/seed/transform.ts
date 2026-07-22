@@ -81,6 +81,7 @@ export function nonogramDocs(): IndexedDoc[] {
   const raw = [...easyNonogram, ...mediumNonogram, ...hardNonogram, ...expertNonogram] as any[];
   const docs = raw.map((r) => ({
     puzzleId: r.id,
+    game: "nonogram",
     difficulty: r.difficulty,
     size: r.size,
     title: r.title || "Nonogram",
@@ -91,6 +92,12 @@ export function nonogramDocs(): IndexedDoc[] {
     columnClues: r.columnClues,
     hash: r._hash || "",
     generatorVersion: GENERATOR_VERSION,
+    isActive: true,
+    version: 1,
+    metadata: {
+      fillDensity: r.fillDensity,
+      uniqueSolution: r.uniqueSolution ?? true,
+    },
   }));
   return assignDailyIndex(docs);
 }
@@ -99,13 +106,13 @@ export function crossMathDocs(): IndexedDoc[] {
   const raw = [...easyCrossMath, ...mediumCrossMath, ...hardCrossMath] as any[];
   const docs = raw.map((r) => ({
     puzzleId: r.id,
+    game: "crossmath",
     difficulty: r.difficulty,
     patternId: r.patternId,
     solution: r.solution,
     blanks: r.blanks || [],
     availableNumbers: r.availableNumbers || [],
     maxMistakes: r.maxMistakes ?? 3,
-    size: 0,
     hash: r._hash || "",
     generatorVersion: GENERATOR_VERSION,
   }));
@@ -121,10 +128,20 @@ export function tangramDocs(): IndexedDoc[] {
     pieceShapeIds: r.pieceShapeIds,
     individualPiecePolygons: r.individualPiecePolygons,
     fullPolygon: r.fullPolygon,
+    game: "tangram",
     gameType: "tangram",
     active: r.active ?? true,
     hash: r._hash || r.id,
     generatorVersion: GENERATOR_VERSION,
+    version: "1.0",
+    status: "active",
+    dailyEligible: true,
+    estimatedSolveTime: r.difficulty === "easy" ? 120 : r.difficulty === "medium" ? 300 : 600,
+    metadata: {
+      pieceCount: 7,
+      allowedTransformations: ["rotate"],
+      canvasSize: { width: 20, height: 20 },
+    },
   }));
   return assignDailyIndex(docs);
 }

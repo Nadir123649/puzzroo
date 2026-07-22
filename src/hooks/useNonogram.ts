@@ -353,7 +353,7 @@ export function useNonogram(initialPuzzleId?: string) {
       if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
         void gameApi.complete('nonogram', {
           puzzleId: currentPuzzle.id,
-          difficulty: currentPuzzle.difficulty as 'easy' | 'medium' | 'hard',
+          difficulty: currentPuzzle.difficulty as 'easy' | 'medium' | 'hard' | 'expert',
           score: undefined,
           time: elapsedSeconds,
           hintsUsed: hintsUsed,

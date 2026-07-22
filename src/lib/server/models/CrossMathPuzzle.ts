@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
+import mongoose from "mongoose"
 
 const crossMathPuzzleSchema = new mongoose.Schema(
   {
     puzzleId: { type: String, required: true, unique: true },
-    game: { type: String, default: "crossmath" },
+    game: { type: String, default: "crossmath", required: true },
     difficulty: {
       type: String,
       enum: ["easy", "medium", "hard"],
@@ -14,15 +14,15 @@ const crossMathPuzzleSchema = new mongoose.Schema(
     blanks: { type: [String], default: [] },
     availableNumbers: { type: [Number], default: [] },
     maxMistakes: { type: Number, default: 3 },
-    size: { type: Number },
     hash: { type: String },
     generatorVersion: { type: String },
     dailyIndex: { type: Number, default: 0 },
   },
   { timestamps: true }
-);
+)
 
-crossMathPuzzleSchema.index({ game: 1, difficulty: 1, dailyIndex: 1 });
+crossMathPuzzleSchema.index({ game: 1, difficulty: 1, dailyIndex: 1 })
+crossMathPuzzleSchema.index({ puzzleId: 1 }, { unique: true })
 
 export default mongoose.models.CrossMathPuzzle ||
-  mongoose.model("CrossMathPuzzle", crossMathPuzzleSchema);
+  mongoose.model("CrossMathPuzzle", crossMathPuzzleSchema)

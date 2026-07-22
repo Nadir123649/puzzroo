@@ -32,13 +32,18 @@ export async function GET(
     const difficulty =
       q.data.difficulty || reg.difficulties[seed % reg.difficulties.length];
 
-    const count = await reg.model.countDocuments({ difficulty });
+    const dailyFilter: any = { difficulty };
+    if (game === "tangram") {
+      dailyFilter.active = true;
+      dailyFilter.status = "active";
+    }
+    const count = await reg.model.countDocuments(dailyFilter);
     if (count === 0) {
       return errorResponse(404, "no_puzzle", `No daily puzzle for difficulty ${difficulty}`);
     }
     const dailyIndex = seed % count;
 
-    const doc = await reg.model.findOne({ difficulty, dailyIndex }).lean();
+    const doc = await reg.model.findOne({ difficulty, dailyIndex, ...(game === "tangram" ? { active: true, status: "active" } : {}) }).lean();
     if (!doc) return errorResponse(404, "puzzle_not_found", "Daily puzzle not found");
 
     const res = successResponse({ ...(reg.toResponse(doc) as object), date, difficulty });

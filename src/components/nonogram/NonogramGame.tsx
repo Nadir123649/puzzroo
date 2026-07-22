@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Lightbulb, Flag, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Lightbulb, Flag, ChevronLeft, ChevronRight, Gamepad2 } from 'lucide-react'
 import { useNonogram } from '@/hooks/useNonogram'
 import { NonogramModal } from './NonogramModal'
 import { GameLoader } from '@/components/ui/GameLoader'
@@ -325,9 +325,10 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
             <div className="w-full flex flex-col gap-3">
               {/* Puzzle Metadata */}
               <div className="text-center space-y-1">
-                <h2 className="font-urbanist text-[24px] md:text-[28px] font-bold text-[#2B2F3A] dark:text-white">
-                  {currentPuzzle.title}
-                </h2>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[13px] font-urbanist font-bold bg-[#DCFCE7] dark:bg-[#166534]/30 border-[#BBF7D0] dark:border-[#166534] text-[#22C55E] transition-all duration-300">
+                  <Gamepad2 size={14} />
+                  <span>{currentPuzzle.title}</span>
+                </div>
                 <div className="flex items-center justify-center gap-3 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] font-urbanist text-[12px] font-semibold text-[#6949FF] dark:text-[#A592FF]">
                     <span className="capitalize">{currentPuzzle.category}</span>

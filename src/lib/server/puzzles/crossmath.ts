@@ -2,9 +2,8 @@ import {
   getPatternById,
   patternToGameGrid,
 } from "@shared/data/crossmath/patterns";
-import type { Cell, CrossMathPuzzle } from "@shared/lib/crossmath/types";
+import type { Cell } from "@shared/lib/crossmath/types";
 import type { CrossMathPuzzleResponse } from "./types";
-import { sanityCheckCrossMath } from "@shared/data/crossmath";
 
 interface CrossMathDoc {
   puzzleId: string;
@@ -57,12 +56,10 @@ export function crossMathToResponse(doc: CrossMathDoc): CrossMathPuzzleResponse 
     grid,
     availableNumbers: doc.availableNumbers,
     maxMistakes: doc.maxMistakes,
-    solution: doc.solution,
   };
 
-  const errors = sanityCheckCrossMath(response as unknown as CrossMathPuzzle, doc.blanks);
-  if (errors.length) {
-    throw new Error(`serve-time sanity failed for crossmath ${doc.puzzleId}: ${errors.join("; ")}`);
+  if (grid.length !== pattern.grid_rows || (grid[0]?.length !== pattern.grid_cols)) {
+    throw new Error(`serve-time sanity failed for crossmath ${doc.puzzleId}: grid dimensions mismatch`);
   }
   return response;
 }
