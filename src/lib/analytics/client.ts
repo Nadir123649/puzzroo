@@ -1,12 +1,5 @@
 "use client";
 
-// First-party, industry-standard-style analytics client.
-// - Persistent anonymousId (localStorage) for anonymous → user stitching
-// - Sessionization with a 30-minute inactivity window
-// - Event queue with batched delivery (interval / size / page-hide)
-// - Reliable unload delivery via fetch(keepalive:true) so the auth header
-//   is preserved (unlike navigator.sendBeacon)
-
 type CallType = "page" | "track" | "identify";
 
 interface QueuedEvent {
@@ -27,13 +20,11 @@ interface QueuedEvent {
 const ENDPOINT = `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/track`;
 const ANON_KEY = "pz_anon_id";
 const SESSION_KEY = "pz_session";
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 min inactivity
-const FLUSH_INTERVAL_MS = 5000;
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 const MAX_BATCH = 20;
 
 let queue: QueuedEvent[] = [];
-let flushTimer: ReturnType<typeof setInterval> | null = null;
-let started = false;
+let flushScheduled = false;
 
 function uuid(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
@@ -97,7 +88,22 @@ function baseContext() {
 
 function enqueue(e: QueuedEvent) {
   queue.push(e);
-  if (queue.length >= MAX_BATCH) flush();
+  if (queue.length >= MAX_BATCH) {
+    flush();
+    return;
+  }
+  scheduleFlush();
+}
+
+// Batch multiple rapid events (e.g. several track() calls) into one API request
+// using a microtask — no interval timers running when idle.
+function scheduleFlush() {
+  if (flushScheduled) return;
+  flushScheduled = true;
+  queueMicrotask(() => {
+    flushScheduled = false;
+    flush(false);
+  });
 }
 
 async function flush(useKeepalive = false) {
@@ -117,24 +123,19 @@ async function flush(useKeepalive = false) {
       credentials: "include",
     });
   } catch {
-    // Re-queue on failure (best-effort, capped to avoid unbounded growth).
     if (queue.length < 200) queue = events.concat(queue);
   }
 }
 
-function start() {
-  if (started || typeof window === "undefined") return;
-  started = true;
-  flushTimer = setInterval(() => flush(false), FLUSH_INTERVAL_MS);
-  const flushOnHide = () => {
+// Reliable delivery on page close (no interval timers).
+if (typeof window !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") flush(true);
-  };
-  document.addEventListener("visibilitychange", flushOnHide);
+  });
   window.addEventListener("pagehide", () => flush(true));
 }
 
 export function page(path?: string, properties?: Record<string, any>) {
-  start();
   const ctx = baseContext();
   enqueue({
     type: "page",
@@ -149,7 +150,6 @@ export function page(path?: string, properties?: Record<string, any>) {
 }
 
 export function track(event: string, properties?: Record<string, any>) {
-  start();
   enqueue({
     type: "track",
     event,
@@ -162,7 +162,6 @@ export function track(event: string, properties?: Record<string, any>) {
 }
 
 export function identify(userId: string, traits?: Record<string, any>) {
-  start();
   enqueue({
     type: "identify",
     event: "$identify",
@@ -172,11 +171,10 @@ export function identify(userId: string, traits?: Record<string, any>) {
     ...baseContext(),
     ts: Date.now(),
   });
-  // Flush promptly so identity is linked server-side quickly.
+  // Flush immediately so identity is linked server-side without delay.
   flush(false);
 }
 
-// On logout: rotate anonymousId + session so the next user is a distinct actor.
 export function reset() {
   if (typeof window === "undefined") return;
   flush(false);

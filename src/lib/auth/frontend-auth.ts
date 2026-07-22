@@ -40,24 +40,21 @@ export async function login(identifier: string, password: string, rememberMe: bo
 }
 
 export async function logout(): Promise<void> {
-  try {
-    await api("/api/v1/auth/logout", { method: "POST" });
-  } catch {}
-  // Also clear the Firebase client session so the next Google/Facebook sign-in
-  // starts fresh and shows the account chooser instead of silently reusing the
-  // previously signed-in account. Dynamically imported to keep Firebase out of
-  // bundles that only need basic auth helpers.
+  // Clear client state immediately so the UI reflects logged-out instantly.
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("puzzroo_auth");
+  localStorage.removeItem("puzzroo_user");
+  window.dispatchEvent(new Event("auth-change"));
+
+  // Server cleanup + Firebase signOut — fire in background, never block.
+  api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
   try {
     const [{ auth }, { signOut }] = await Promise.all([
       import("@/lib/config/firebase-client"),
       import("firebase/auth"),
     ]);
-    if (auth) await signOut(auth);
+    if (auth) signOut(auth).catch(() => {});
   } catch {}
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("puzzroo_auth");
-  localStorage.removeItem("puzzroo_user");
-  window.dispatchEvent(new Event("auth-change"));
 }
 
 export function isLoggedIn(): boolean {
@@ -212,11 +209,11 @@ export async function bootstrapSession(): Promise<User | null> {
   }
 }
 
-export async function register(name: string, username: string, email: string, password: string): Promise<{ success: boolean; error?: string; code?: string }> {
+export async function register(name: string, email: string, password: string): Promise<{ success: boolean; error?: string; code?: string }> {
   try {
     const res = await api("/api/v1/auth/register", {
       method: "POST",
-      body: JSON.stringify({ name, username, email, password }),
+      body: JSON.stringify({ name, email, password }),
     });
     if (!res.success) {
       const err = (res.payload as any)?.error;

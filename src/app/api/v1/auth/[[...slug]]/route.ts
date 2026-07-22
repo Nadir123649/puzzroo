@@ -14,6 +14,7 @@ import { registerSchema, loginSchema, changePasswordSchema, chooseUsernameSchema
 import { formatUser } from "@/lib/server/utils/formatUser";
 import { authPayload, issueSession } from "@/lib/server/utils/authHelpers";
 import { generatePublicId } from "@/lib/server/utils/publicId";
+import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
@@ -32,18 +33,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (action === "register") {
       const val = validate(registerSchema, body);
       if (val.error) return val.error;
-      const { name, username, password } = val.data!;
+      const { name, password } = val.data!;
       const email = val.data!.email.toLowerCase().trim();
       const existingUser = await User.findOne({ email });
       if (existingUser) return errorResponse(409, "email_taken", "A user with this email already exists");
-      const existingUsername = await User.findOne({ username });
-      if (existingUsername) return errorResponse(409, "username_taken", "Username is already taken");
+      const placeholderUsername = await generateUniqueUsername(name || email.split("@")[0] || "user");
       const hashedPassword = await bcrypt.hash(password, 10);
       const verificationToken = crypto.randomBytes(32).toString("hex");
       const hashedVerificationToken = crypto.createHash("sha256").update(verificationToken).digest("hex");
       const isDev = process.env.NODE_ENV !== "production";
       const user = await User.create({
-        name, username, usernameSet: true, email, password: hashedPassword,
+        name, username: placeholderUsername, usernameSet: false, email, password: hashedPassword,
         role: "free", publicId: await generatePublicId(),
         linkedProviders: ["email"],
         isVerified: isDev,

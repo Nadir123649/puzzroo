@@ -3,20 +3,22 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Clock, Check } from 'lucide-react'
+import { Clock, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getPuzzlesByDifficulty } from '@shared/data/nonogram'
-import { puzzleCounts } from '@shared/data/nonogram'
 import { getCompletedPuzzleIds } from '@shared/lib/nonogram/completion'
 import { useGameLobby } from '@/contexts/GameLobbyContext'
 import { images } from '@/lib/utils'
 import { useTheme } from '@/hooks/use-theme'
 import type { Difficulty } from '@shared/lib/nonogram/types'
 
+const ITEMS_PER_PAGE = 8
+
 export function NonogramPuzzleGrid() {
   const router = useRouter()
   const { selectedDifficulty } = useGameLobby()
   const { theme } = useTheme()
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set())
+  const [currentPage, setCurrentPage] = useState(1)
 
   const nonogramImage = theme === 'light' ? images.gameCards.nonogramWhite : images.gameCards.nonogram
 
@@ -28,6 +30,23 @@ export function NonogramPuzzleGrid() {
     () => getPuzzlesByDifficulty(selectedDifficulty as Difficulty),
     [selectedDifficulty]
   )
+
+  const totalPages = Math.max(1, Math.ceil(allPuzzles.length / ITEMS_PER_PAGE))
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedPuzzles = allPuzzles.slice(startIndex, endIndex)
+
+  // Clamp currentPage when total pages shrinks
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [allPuzzles.length, totalPages, currentPage])
+
+  // Reset to page 1 when difficulty changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedDifficulty])
 
   const handlePlay = (puzzleId: string) => {
     router.push(`/nonogram?difficulty=${selectedDifficulty}&puzzleId=${puzzleId}`)
@@ -46,7 +65,7 @@ export function NonogramPuzzleGrid() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
-          {allPuzzles.map((puzzle) => {
+          {paginatedPuzzles.map((puzzle) => {
             const isCompleted = completedIds.has(puzzle.id)
 
             return (
@@ -119,6 +138,33 @@ export function NonogramPuzzleGrid() {
             )
           })}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-6 mt-6 md:mt-8">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1F222A] disabled:border-[#BDBDBD] dark:disabled:border-[#616161] disabled:text-[#757575] dark:disabled:text-[#9E9E9E]"
+              aria-label="Previous Page"
+            >
+              <ChevronLeft size={24} strokeWidth={2.5} />
+            </button>
+
+            <span className="font-urbanist font-bold text-[16px] text-[#212121] dark:text-[#FAFAFA]">
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1F222A] disabled:border-[#BDBDBD] dark:disabled:border-[#616161] disabled:text-[#757575] dark:disabled:text-[#9E9E9E]"
+              aria-label="Next Page"
+            >
+              <ChevronRight size={24} strokeWidth={2.5} />
+            </button>
+          </div>
+        )}
       </div>
     </section>
   )

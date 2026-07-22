@@ -54,6 +54,142 @@ from puzzlegen.nonogram.pictures import curated_puzzles
 
 DEFAULT_OUT = Path(__file__).resolve().parent.parent.parent / "shared" / "src" / "data" / "nonogram"
 
+# ── Name pool for procedurally generated puzzles ────────────────────────────
+# Each entry: (title, category). Names are assigned by index modulo pool size
+# so they distribute evenly across all generated puzzles within a difficulty.
+NAME_POOL: list[tuple[str, str]] = [
+    ("Sunset", "nature"), ("Rainbow", "nature"), ("Waterfall", "nature"), ("Blossom", "nature"),
+    ("Garden", "nature"), ("Meadow", "nature"), ("Forest", "nature"), ("Petal", "nature"),
+    ("Horizon", "nature"), ("Canyon", "nature"), ("Glacier", "nature"), ("Oasis", "nature"),
+    ("Thunder", "weather"), ("Lightning", "weather"), ("Raindrop", "weather"), ("Snowflake", "weather"),
+    ("Tornado", "weather"), ("Monsoon", "weather"), ("Blizzard", "weather"), ("Sunbeam", "weather"),
+    ("Comet", "space"), ("Nebula", "space"), ("Galaxy", "space"), ("Orbit", "space"),
+    ("Eclipse", "space"), ("Asteroid", "space"), ("Satellite", "space"), ("Constellation", "space"),
+    ("Crescent", "space"), ("Supernova", "space"), ("Pulsar", "space"), ("Quasar", "space"),
+    ("Dolphin", "animals"), ("Penguin", "animals"), ("Octopus", "animals"), ("Butterfly", "animals"),
+    ("Dragonfly", "animals"), ("Ladybug", "animals"), ("Firefly", "animals"), ("Seahorse", "animals"),
+    ("Jellyfish", "animals"), ("Starfish", "animals"), ("Lobster", "animals"), ("Crab", "animals"),
+    ("Rabbit", "animals"), ("Squirrel", "animals"), ("Hedgehog", "animals"), ("Raccoon", "animals"),
+    ("Beaver", "animals"), ("Otter", "animals"), ("Fox", "animals"), ("Wolf", "animals"),
+    ("Bear", "animals"), ("Panda", "animals"), ("Koala", "animals"), ("Sloth", "animals"),
+    ("Deer", "animals"), ("Moose", "animals"), ("Bison", "animals"), ("Gazelle", "animals"),
+    ("Eagle", "animals"), ("Hawk", "animals"), ("Owl", "animals"), ("Parrot", "animals"),
+    ("Flamingo", "animals"), ("Peacock", "animals"), ("Swan", "animals"), ("Robin", "animals"),
+    ("Hummingbird", "animals"), ("Woodpecker", "animals"), ("Kingfisher", "animals"), ("Pelican", "animals"),
+    ("Turtle", "animals"), ("Snake", "animals"), ("Lizard", "animals"), ("Chameleon", "animals"),
+    ("Gecko", "animals"), ("Iguana", "animals"), ("Crocodile", "animals"), ("Salamander", "animals"),
+    ("Whale", "animals"), ("Shark", "animals"), ("Seal", "animals"), ("Walrus", "animals"),
+    ("Pufferfish", "animals"), ("Angelfish", "animals"), ("Clownfish", "animals"), ("Manta ray", "animals"),
+    ("Hamster", "animals"), ("Gerbil", "animals"), ("Chinchilla", "animals"), ("Ferret", "animals"),
+    ("Horse", "animals"), ("Zebra", "animals"), ("Donkey", "animals"), ("Camel", "animals"),
+    ("Llama", "animals"), ("Alpaca", "animals"), ("Goat", "animals"), ("Sheep", "animals"),
+    ("Cow", "animals"), ("Pig", "animals"), ("Chicken", "animals"), ("Duck", "animals"),
+    ("Goose", "animals"), ("Turkey", "animals"), ("Peacock", "animals"), ("Pheasant", "animals"),
+    ("Lion", "animals"), ("Tiger", "animals"), ("Leopard", "animals"), ("Jaguar", "animals"),
+    ("Panther", "animals"), ("Cheetah", "animals"), ("Lynx", "animals"), ("Bobcat", "animals"),
+    ("Gorilla", "animals"), ("Orangutan", "animals"), ("Chimpanzee", "animals"), ("Gibbon", "animals"),
+    ("Kangaroo", "animals"), ("Wallaby", "animals"), ("Wombat", "animals"), ("Platypus", "animals"),
+    ("Hippo", "animals"), ("Rhino", "animals"), ("Elephant", "animals"), ("Giraffe", "animals"),
+    ("Antelope", "animals"), ("Buffalo", "animals"), ("Yak", "animals"), ("Ox", "animals"),
+    ("Spider", "animals"), ("Scorpion", "animals"), ("Ant", "animals"), ("Bee", "animals"),
+    ("Mosquito", "animals"), ("Wasp", "animals"), ("Beetle", "animals"), ("Caterpillar", "animals"),
+    ("Coral", "nature"), ("Pebble", "nature"), ("Boulder", "nature"), ("Cliff", "nature"),
+    ("Cave", "nature"), ("Dune", "nature"), ("Geyser", "nature"), ("Lagoon", "nature"),
+    ("Arctic", "nature"), ("Tropic", "nature"), ("Savanna", "nature"), ("Taiga", "nature"),
+    ("Tulip", "nature"), ("Daisy", "nature"), ("Lily", "nature"), ("Rose", "nature"),
+    ("Lavender", "nature"), ("Orchid", "nature"), ("Lotus", "nature"), ("Ivy", "nature"),
+    ("Maple", "nature"), ("Oak", "nature"), ("Pine", "nature"), ("Willow", "nature"),
+    ("Fern", "nature"), ("Moss", "nature"), ("Cactus", "nature"), ("Bamboo", "nature"),
+    ("Pizza", "food"), ("Burger", "food"), ("Taco", "food"), ("Sushi", "food"),
+    ("Ramen", "food"), ("Curry", "food"), ("Stew", "food"), ("Soup", "food"),
+    ("Salad", "food"), ("Bread", "food"), ("Croissant", "food"), ("Bagel", "food"),
+    ("Pancake", "food"), ("Waffle", "food"), ("Muffin", "food"), ("Donut", "food"),
+    ("Cookie", "food"), ("Brownie", "food"), ("Cupcake", "food"), ("Pie", "food"),
+    ("Cheese", "food"), ("Yogurt", "food"), ("Ice cream", "food"), ("Popsicle", "food"),
+    ("Grape", "food"), ("Banana", "food"), ("Orange", "food"), ("Cherry", "food"),
+    ("Strawberry", "food"), ("Blueberry", "food"), ("Raspberry", "food"), ("Mango", "food"),
+    ("Peach", "food"), ("Pear", "food"), ("Melon", "food"), ("Kiwi", "food"),
+    ("Lemon", "food"), ("Lime", "food"), ("Coconut", "food"), ("Avocado", "food"),
+    ("Popcorn", "food"), ("Candy", "food"), ("Lollipop", "food"), ("Chocolate", "food"),
+    ("Nachos", "food"), ("Fries", "food"), ("Hot dog", "food"), ("Sandwich", "food"),
+    ("Bacon", "food"), ("Egg", "food"), ("Toast", "food"), ("Cereal", "food"),
+    ("Key", "objects"), ("Lamp", "objects"), ("Clock", "objects"), ("Mirror", "objects"),
+    ("Candle", "objects"), ("Vase", "objects"), ("Basket", "objects"), ("Bottle", "objects"),
+    ("Cup", "objects"), ("Plate", "objects"), ("Bowl", "objects"), ("Fork", "objects"),
+    ("Spoon", "objects"), ("Knife", "objects"), ("Scissors", "objects"), ("Needle", "objects"),
+    ("Hammer", "objects"), ("Saw", "objects"), ("Wrench", "objects"), ("Screwdriver", "objects"),
+    ("Ladder", "objects"), ("Bucket", "objects"), ("Brush", "objects"), ("Comb", "objects"),
+    ("Umbrella", "objects"), ("Wallet", "objects"), ("Purse", "objects"), ("Backpack", "objects"),
+    ("Book", "objects"), ("Notebook", "objects"), ("Pen", "objects"), ("Pencil", "objects"),
+    ("Ruler", "objects"), ("Compass", "objects"), ("Globe", "objects"), ("Map", "objects"),
+    ("Camera", "objects"), ("Binoculars", "objects"), ("Magnifier", "objects"), ("Microscope", "objects"),
+    ("Telescope", "objects"), ("Scale", "objects"), ("Balance", "objects"), ("Anvil", "objects"),
+    ("Bell", "objects"), ("Flag", "objects"), ("Crown", "objects"), ("Mask", "objects"),
+    ("Ring", "objects"), ("Necklace", "objects"), ("Bracelet", "objects"), ("Earring", "objects"),
+    ("Arrow", "symbols"), ("Shield", "symbols"), ("Medal", "symbols"), ("Trophy", "symbols"),
+    ("Anchor", "symbols"), ("Badge", "symbols"), ("Seal", "symbols"), ("Emblem", "symbols"),
+    ("Feather", "symbols"), ("Flame", "symbols"), ("Wing", "symbols"), ("Horn", "symbols"),
+    ("Dragon", "fantasy"), ("Unicorn", "fantasy"), ("Phoenix", "fantasy"), ("Griffin", "fantasy"),
+    ("Pegasus", "fantasy"), ("Centaur", "fantasy"), ("Minotaur", "fantasy"), ("Cyclops", "fantasy"),
+    ("Fairy", "fantasy"), ("Elf", "fantasy"), ("Dwarf", "fantasy"), ("Gnome", "fantasy"),
+    ("Wizard", "fantasy"), ("Witch", "fantasy"), ("Sorcerer", "fantasy"), ("Alchemist", "fantasy"),
+    ("Knight", "fantasy"), ("Paladin", "fantasy"), ("Rogue", "fantasy"), ("Archer", "fantasy"),
+    ("Castle", "fantasy"), ("Tower", "fantasy"), ("Fortress", "fantasy"), ("Citadel", "fantasy"),
+    ("Crystal", "fantasy"), ("Gem", "fantasy"), ("Amulet", "fantasy"), ("Potion", "fantasy"),
+    ("Scroll", "fantasy"), ("Rune", "fantasy"), ("Spell", "fantasy"), ("Wand", "fantasy"),
+    ("Goblin", "fantasy"), ("Troll", "fantasy"), ("Ogre", "fantasy"), ("Giant", "fantasy"),
+    ("Mermaid", "fantasy"), ("Nymph", "fantasy"), ("Sprite", "fantasy"), ("Imp", "fantasy"),
+    ("Rocket", "technology"), ("Robot", "technology"), ("Drone", "technology"), ("Laser", "technology"),
+    ("Satellite", "technology"), ("Telescope", "technology"), ("Laptop", "technology"), ("Tablet", "technology"),
+    ("Phone", "technology"), ("Watch", "technology"), ("Headphones", "technology"), ("Speaker", "technology"),
+    ("Battery", "technology"), ("Circuit", "technology"), ("Antenna", "technology"), ("Radar", "technology"),
+    ("Turbine", "technology"), ("Engine", "technology"), ("Piston", "technology"), ("Gear", "technology"),
+    ("Football", "sports"), ("Basketball", "sports"), ("Baseball", "sports"), ("Tennis", "sports"),
+    ("Soccer", "sports"), ("Volleyball", "sports"), ("Hockey", "sports"), ("Golf", "sports"),
+    ("Bowling", "sports"), ("Boxing", "sports"), ("Fencing", "sports"), ("Wrestling", "sports"),
+    ("Rugby", "sports"), ("Cricket", "sports"), ("Badminton", "sports"), ("Table tennis", "sports"),
+    ("Skateboard", "sports"), ("Surfboard", "sports"), ("Snowboard", "sports"), ("Ski", "sports"),
+    ("Bicycle", "sports"), ("Scooter", "sports"), ("Rollerblade", "sports"), ("Kite", "sports"),
+    ("Car", "transport"), ("Bus", "transport"), ("Train", "transport"), ("Plane", "transport"),
+    ("Helicopter", "transport"), ("Boat", "transport"), ("Ship", "transport"), ("Submarine", "transport"),
+    ("Truck", "transport"), ("Van", "transport"), ("Tractor", "transport"), ("Rickshaw", "transport"),
+    ("Canoe", "transport"), ("Kayak", "transport"), ("Raft", "transport"), ("Sailboat", "transport"),
+    ("Guitar", "music"), ("Piano", "music"), ("Drum", "music"), ("Violin", "music"),
+    ("Flute", "music"), ("Trumpet", "music"), ("Saxophone", "music"), ("Harp", "music"),
+    ("Microphone", "music"), ("Headphones", "music"), ("Note", "music"), ("Speaker", "music"),
+    ("Santa", "holidays"), ("Wreath", "holidays"), ("Candle", "holidays"), ("Bells", "holidays"),
+    ("Pumpkin", "holidays"), ("Bat", "holidays"), ("Skull", "holidays"), ("Spiderweb", "holidays"),
+    ("Egg", "holidays"), ("Bunny", "holidays"), ("Chick", "holidays"), ("Fireworks", "holidays"),
+    ("Hat", "clothing"), ("Shirt", "clothing"), ("Shoe", "clothing"), ("Boot", "clothing"),
+    ("Sock", "clothing"), ("Glove", "clothing"), ("Scarf", "clothing"), ("Belt", "clothing"),
+    ("Dress", "clothing"), ("Skirt", "clothing"), ("Jacket", "clothing"), ("Coat", "clothing"),
+    ("House", "buildings"), ("Barn", "buildings"), ("Shed", "buildings"), ("Lighthouse", "buildings"),
+    ("Windmill", "buildings"), ("Church", "buildings"), ("Temple", "buildings"), ("Pagoda", "buildings"),
+    ("Pyramid", "buildings"), ("Colosseum", "buildings"), ("Arch", "buildings"), ("Bridge", "buildings"),
+    ("Mountain", "geography"), ("Volcano", "geography"), ("Island", "geography"), ("Peninsula", "geography"),
+    ("Valley", "geography"), ("River", "geography"), ("Lake", "geography"), ("Ocean", "geography"),
+    ("Desert", "geography"), ("Jungle", "geography"), ("Swamp", "geography"), ("Reef", "geography"),
+    ("Spiral", "abstract"), ("Mosaic", "abstract"), ("Maze", "abstract"), ("Labyrinth", "abstract"),
+    ("Kaleidoscope", "abstract"), ("Mandala", "abstract"), ("Tessellation", "abstract"), ("Fractal", "abstract"),
+    ("Tide", "nature"), ("Mist", "weather"), ("Frost", "weather"), ("Hail", "weather"),
+    ("Dew", "nature"), ("Breeze", "weather"), ("Gust", "weather"), ("Tempest", "weather"),
+    ("Otter", "animals"), ("Badger", "animals"), ("Weasel", "animals"), ("Mole", "animals"),
+    ("Hedgehog", "animals"), ("Porcupine", "animals"), ("Armadillo", "animals"), ("Skunk", "animals"),
+    ("Parakeet", "animals"), ("Canary", "animals"), ("Finch", "animals"), ("Sparrow", "animals"),
+    ("Crow", "animals"), ("Raven", "animals"), ("Magpie", "animals"), ("Jay", "animals"),
+    ("Penguin", "animals"), ("Puffin", "animals"), ("Albatross", "animals"), ("Seagull", "animals"),
+    ("Toad", "animals"), ("Frog", "animals"), ("Newt", "animals"), ("Axolotl", "animals"),
+    ("Caterpillar", "animals"), ("Cocoon", "animals"), ("Chrysalis", "animals"), ("Silkworm", "animals"),
+    ("Sword", "objects"), ("Axe", "objects"), ("Spear", "objects"), ("Bow", "objects"),
+    ("Cannon", "objects"), ("Musket", "objects"), ("Saber", "objects"), ("Lance", "objects"),
+    ("Lantern", "objects"), ("Torch", "objects"), ("Bonfire", "objects"), ("Campfire", "objects"),
+    ("Fountain", "objects"), ("Well", "objects"), ("Statue", "objects"), ("Monument", "objects"),
+    ("Chess", "objects"), ("Dice", "objects"), ("Puzzle", "objects"), ("Domino", "objects"),
+    ("Marble", "objects"), ("Top", "objects"), ("Kite", "objects"), ("Yo-yo", "objects"),
+]
+
+assert len(NAME_POOL) > 100, "NAME_POOL must have at least 100 entries"
+
 
 def _sol_string(solution: list[list[int]]) -> str:
     return "".join(str(v) for row in solution for v in row)
@@ -170,14 +306,15 @@ def export_difficulty(difficulty: str, count: int, seed: int, out_dir: Path, ove
             if h in seen_hashes:
                 continue
             seen_hashes.add(h)
-            title = f"Nonogram {bucket.size}x{bucket.size}"
-            existing.append(_make_record(bucket, fields, h, title, "generated"))
+            name_entry = NAME_POOL[produced % len(NAME_POOL)]
+            title = name_entry[0]
+            category = name_entry[1]
+            existing.append(_make_record(bucket, fields, h, title, category))
             produced += 1
 
     out_dir.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(existing, separators=(",", ":")), encoding="utf-8")
-    print(f"  [{difficulty}] wrote {produced} -> {path.name} "
-          f"({sum(1 for r in existing if r.get('category') != 'generated')} curated)", flush=True)
+    print(f"  [{difficulty}] wrote {produced} -> {path.name}", flush=True)
     return produced
 
 

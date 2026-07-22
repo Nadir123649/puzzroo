@@ -16,7 +16,6 @@ const nameField = z
 
 export const registerSchema = z.object({
   name: nameField,
-  username: usernameField,
   email: z.string().trim().email("Please enter a valid email"),
   password: z
     .string()
