@@ -97,40 +97,48 @@ const getTargetRotation = (pieceType: string, scaledTarget: number[][], scale: n
   const targetCy = scaledTarget.reduce((sum, p) => sum + p[1], 0) / scaledTarget.length
   const centeredTarget = scaledTarget.map(([x, y]) => [x - targetCx, y - targetCy])
   
-  // Calculate average of base polygon
-  const baseAvgX = base.reduce((sum, p) => sum + p[0], 0) / base.length
-  const baseAvgY = base.reduce((sum, p) => sum + p[1], 0) / base.length
-  
-  // Test 8 possible rotations (0, 45, 90, 135, 180, 225, 270, 315)
-  for (let r = 0; r < 360; r += 45) {
-    const radians = (r * Math.PI) / 180
-    const cos = Math.cos(radians)
-    const sin = Math.sin(radians)
+  // If it's a parallelogram, check standard AND mirrored bases
+  const baseOptions = [base]
+  if (pieceType === 'parallelogram') {
+    const baseMirrored = [[0, 0], [puzzleUnit, 0], [puzzleUnit * 2, puzzleUnit], [puzzleUnit, puzzleUnit], [0, 0]]
+    baseOptions.push(baseMirrored)
+  }
+
+  for (const currentBase of baseOptions) {
+    const baseAvgX = currentBase.reduce((sum, p) => sum + p[0], 0) / currentBase.length
+    const baseAvgY = currentBase.reduce((sum, p) => sum + p[1], 0) / currentBase.length
     
-    const rotated = base.map(([x, y]) => {
-      const dx = x - baseAvgX
-      const dy = y - baseAvgY
-      return [
-        dx * cos - dy * sin,
-        dx * sin + dy * cos
-      ]
-    })
-    
-    let allMatched = true
-    for (const [tx, ty] of centeredTarget) {
-      const hasMatch = rotated.some(([rx, ry]) => {
-        const dx = rx - tx
-        const dy = ry - ty
-        return Math.sqrt(dx * dx + dy * dy) < 5.0
+    // Test 8 possible rotations (0, 45, 90, 135, 180, 225, 270, 315)
+    for (let r = 0; r < 360; r += 45) {
+      const radians = (r * Math.PI) / 180
+      const cos = Math.cos(radians)
+      const sin = Math.sin(radians)
+      
+      const rotated = currentBase.map(([x, y]) => {
+        const dx = x - baseAvgX
+        const dy = y - baseAvgY
+        return [
+          dx * cos - dy * sin,
+          dx * sin + dy * cos
+        ]
       })
-      if (!hasMatch) {
-        allMatched = false
-        break
+      
+      let allMatched = true
+      for (const [tx, ty] of centeredTarget) {
+        const hasMatch = rotated.some(([rx, ry]) => {
+          const dx = rx - tx
+          const dy = ry - ty
+          return Math.sqrt(dx * dx + dy * dy) < 5.0
+        })
+        if (!hasMatch) {
+          allMatched = false
+          break
+        }
       }
-    }
-    
-    if (allMatched) {
-      return r
+      
+      if (allMatched) {
+        return r
+      }
     }
   }
   
@@ -199,41 +207,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const scaledData = useRef<ReturnType<typeof scaleAndCenterPolygon> | null>(null)
   const lastCommittedStateRef = useRef<PieceState[] | null>(null)
 
-  // Helper: Create standard polygon for tray from pieceConfig with dynamic puzzle scale
-  const createStandardPolygon = useCallback((
-    pieceType: keyof typeof PIECE_CONFIG, 
-    trayPos: { x: number; y: number; rotation: number },
-    scale: number
-  ): number[][] => {
-    const config = PIECE_CONFIG[pieceType]
-    const puzzleUnit = 5 * scale // 5 is the canonical unit in the dataset, scaled dynamically
-    
-    // Simple polygon approximation based on piece type scaled to match silhouette
-    const basePolygons: Record<string, number[][]> = {
-      'large-triangle-1': [[0, 0], [puzzleUnit * 2, 0], [0, puzzleUnit * 2], [0, 0]],
-      'large-triangle-2': [[0, 0], [puzzleUnit * 2, 0], [0, puzzleUnit * 2], [0, 0]],
-      'medium-triangle': [[0, 0], [puzzleUnit * Math.SQRT2, 0], [0, puzzleUnit * Math.SQRT2], [0, 0]],
-      'small-triangle-1': [[0, 0], [puzzleUnit, 0], [0, puzzleUnit], [0, 0]],
-      'small-triangle-2': [[0, 0], [puzzleUnit, 0], [0, puzzleUnit], [0, 0]],
-      'square': [[0, 0], [puzzleUnit, 0], [puzzleUnit, puzzleUnit], [0, puzzleUnit], [0, 0]],
-      'parallelogram': [[0, puzzleUnit], [puzzleUnit, 0], [puzzleUnit * 2, 0], [puzzleUnit, puzzleUnit], [0, puzzleUnit]]
-    }
-    
-    const base = basePolygons[pieceType] || [[0, 0], [50, 0], [50, 50], [0, 50], [0, 0]]
-    
-    // Apply rotation if needed
-    const radians = (trayPos.rotation * Math.PI) / 180
-    const cos = Math.cos(radians)
-    const sin = Math.sin(radians)
-    
-    const rotated = base.map(([x, y]) => [
-      x * cos - y * sin,
-      x * sin + y * cos
-    ])
-    
-    // Translate to tray position
-    return rotated.map(([x, y]) => [x + trayPos.x, y + trayPos.y])
-  }, [])
+  // Helper: Create standard polygon has been removed as standardPolygon is now initialized dynamically from target geometry.
 
   // Timer effect — only depends on gameStatus to avoid unnecessary restarts
   useEffect(() => {
@@ -328,48 +302,30 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         y * scaled.scale + scaled.offsetY
       ])
       
-      // Get STANDARD piece shape from pieceConfig
       const pieceType = PIECE_TYPE_MAP[id]
       const trayLayoutItem = TRAY_LAYOUT[id] || { cx: 100, cy: 400, rotation: 0 }
       
       const targetRotation = getTargetRotation(pieceType, scaledTarget, scaled.scale)
       
-      // Calculate the rotated base average relative to (0,0) to compute tray translation offsets
-      const puzzleUnit = 5 * scaled.scale
-      const basePolygons: Record<string, number[][]> = {
-        'large-triangle-1': [[0, 0], [puzzleUnit * 2, 0], [0, puzzleUnit * 2], [0, 0]],
-        'large-triangle-2': [[0, 0], [puzzleUnit * 2, 0], [0, puzzleUnit * 2], [0, 0]],
-        'medium-triangle': [[0, 0], [puzzleUnit * Math.SQRT2, 0], [0, puzzleUnit * Math.SQRT2], [0, 0]],
-        'small-triangle-1': [[0, 0], [puzzleUnit, 0], [0, puzzleUnit], [0, 0]],
-        'small-triangle-2': [[0, 0], [puzzleUnit, 0], [0, puzzleUnit], [0, 0]],
-        'square': [[0, 0], [puzzleUnit, 0], [puzzleUnit, puzzleUnit], [0, puzzleUnit], [0, 0]],
-        'parallelogram': [[0, puzzleUnit], [puzzleUnit, 0], [puzzleUnit * 2, 0], [puzzleUnit, puzzleUnit], [0, puzzleUnit]]
-      }
-      
-      const base = basePolygons[pieceType] || [[0, 0], [50, 0], [50, 50], [0, 50], [0, 0]]
-      const radians = (trayLayoutItem.rotation * Math.PI) / 180
-      const cos = Math.cos(radians)
-      const sin = Math.sin(radians)
-      const rotated = base.map(([x, y]) => [
-        x * cos - y * sin,
-        x * sin + y * cos
+      // Get standard piece shape by centering the solution target and rotating it
+      const targetCx = scaledTarget.reduce((sum, p) => sum + p[0], 0) / scaledTarget.length
+      const targetCy = scaledTarget.reduce((sum, p) => sum + p[1], 0) / scaledTarget.length
+      const centered = scaledTarget.map(([x, y]) => [x - targetCx, y - targetCy])
+
+      // Initial rotation
+      const initRotation = trayLayoutItem.rotation - targetRotation
+      const rad = (initRotation * Math.PI) / 180
+      const cos = Math.cos(rad)
+      const sin = Math.sin(rad)
+
+      // Rotated and translated to tray position
+      const standardPolygon = centered.map(([x, y]) => [
+        trayLayoutItem.cx + (x * cos - y * sin),
+        trayLayoutItem.cy + (x * sin + y * cos)
       ])
-      const rotatedAvgX = rotated.reduce((sum, p) => sum + p[0], 0) / rotated.length
-      const rotatedAvgY = rotated.reduce((sum, p) => sum + p[1], 0) / rotated.length
       
-      const trayPos = {
-        x: trayLayoutItem.cx - rotatedAvgX,
-        y: trayLayoutItem.cy - rotatedAvgY,
-        rotation: trayLayoutItem.rotation
-      }
-      
-      // Use standard piece polygon (scaled to match piece size)
-      const standardPolygon = createStandardPolygon(pieceType, trayPos, scaled.scale)
-      
-      // CRITICAL: Calculate centroid of the rotated tray polygon
-      // This is the CENTER that PolygonPiece expects in transform.x/y
-      const trayCentroidX = standardPolygon.reduce((sum, p) => sum + p[0], 0) / standardPolygon.length
-      const trayCentroidY = standardPolygon.reduce((sum, p) => sum + p[1], 0) / standardPolygon.length
+      const trayCentroidX = trayLayoutItem.cx
+      const trayCentroidY = trayLayoutItem.cy
       
       return {
         id: id as TangramPieceId,
@@ -387,7 +343,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setMoveHistory([initialPieces])
     setHistoryIndex(0)
     lastCommittedStateRef.current = initialPieces
-  }, [puzzle, createStandardPolygon])
+  }, [puzzle])
 
   useEffect(() => {
     // Don't validate if pieces haven't been initialized yet or if the game is lost
@@ -858,39 +814,25 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         
         const targetRotation = getTargetRotation(pieceType, piece.targetPolygon, scale)
         
-        // Calculate the rotated base average relative to (0,0) to compute tray translation offsets
-        const puzzleUnit = 5 * scale
-        const basePolygons: Record<string, number[][]> = {
-          'large-triangle-1': [[0, 0], [puzzleUnit * 2, 0], [0, puzzleUnit * 2], [0, 0]],
-          'large-triangle-2': [[0, 0], [puzzleUnit * 2, 0], [0, puzzleUnit * 2], [0, 0]],
-          'medium-triangle': [[0, 0], [puzzleUnit * Math.SQRT2, 0], [0, puzzleUnit * Math.SQRT2], [0, 0]],
-          'small-triangle-1': [[0, 0], [puzzleUnit, 0], [0, puzzleUnit], [0, 0]],
-          'small-triangle-2': [[0, 0], [puzzleUnit, 0], [0, puzzleUnit], [0, 0]],
-          'square': [[0, 0], [puzzleUnit, 0], [puzzleUnit, puzzleUnit], [0, puzzleUnit], [0, 0]],
-          'parallelogram': [[0, puzzleUnit], [puzzleUnit, 0], [puzzleUnit * 2, 0], [puzzleUnit, puzzleUnit], [0, puzzleUnit]]
-        }
-        
-        const base = basePolygons[pieceType] || [[0, 0], [50, 0], [50, 50], [0, 50], [0, 0]]
-        const radians = (trayLayoutItem.rotation * Math.PI) / 180
-        const cos = Math.cos(radians)
-        const sin = Math.sin(radians)
-        const rotated = base.map(([x, y]) => [
-          x * cos - y * sin,
-          x * sin + y * cos
+        // Get standard piece shape by centering the solution target and rotating it
+        const targetCx = piece.targetPolygon.reduce((sum: number, p: number[]) => sum + p[0], 0) / piece.targetPolygon.length
+        const targetCy = piece.targetPolygon.reduce((sum: number, p: number[]) => sum + p[1], 0) / piece.targetPolygon.length
+        const centered = piece.targetPolygon.map(([x, y]) => [x - targetCx, y - targetCy])
+
+        // Initial rotation
+        const initRotation = trayLayoutItem.rotation - targetRotation
+        const rad = (initRotation * Math.PI) / 180
+        const cos = Math.cos(rad)
+        const sin = Math.sin(rad)
+
+        // Rotated and translated to tray position
+        const standardPolygon = centered.map(([x, y]) => [
+          trayLayoutItem.cx + (x * cos - y * sin),
+          trayLayoutItem.cy + (x * sin + y * cos)
         ])
-        const rotatedAvgX = rotated.reduce((sum, p) => sum + p[0], 0) / rotated.length
-        const rotatedAvgY = rotated.reduce((sum, p) => sum + p[1], 0) / rotated.length
         
-        const trayPos = {
-          x: trayLayoutItem.cx - rotatedAvgX,
-          y: trayLayoutItem.cy - rotatedAvgY,
-          rotation: trayLayoutItem.rotation
-        }
-        
-        const standardPolygon = createStandardPolygon(pieceType, trayPos, scale)
-        
-        const trayCentroidX = standardPolygon.reduce((sum, p) => sum + p[0], 0) / standardPolygon.length
-        const trayCentroidY = standardPolygon.reduce((sum, p) => sum + p[1], 0) / standardPolygon.length
+        const trayCentroidX = trayLayoutItem.cx
+        const trayCentroidY = trayLayoutItem.cy
         
         return {
           ...piece,
@@ -901,7 +843,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         }
       })
     })
-  }, [createStandardPolygon])
+  }, [])
 
   return {
     puzzle,

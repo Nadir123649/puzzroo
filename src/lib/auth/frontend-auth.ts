@@ -74,9 +74,52 @@ export function isLoggedIn(): boolean {
  * This prevents a dead/expired accessToken from permanently bouncing users
  * away from /login (the RedirectIfAuthenticated guard keys off isLoggedIn()).
  */
+function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const payload = JSON.parse(jsonPayload);
+    if (!payload.exp) return false;
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp < (now + 30);
+  } catch {
+    return true;
+  }
+}
+
 export async function ensureSession(): Promise<void> {
   if (typeof window === "undefined") return;
-  if (!localStorage.getItem("accessToken")) return;
+  const token = localStorage.getItem("accessToken");
+  if (!token) return;
+
+  if (!isTokenExpired(token)) {
+    try {
+      const meRes = await api("/api/v1/users/me");
+      if (meRes.success) {
+        const current = getCurrentUser();
+        const updated = mapUser(meRes.payload as any);
+        localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
+        window.dispatchEvent(new Event("auth-change"));
+      } else {
+        throw new Error("token_revoked");
+      }
+    } catch {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("puzzroo_auth");
+      localStorage.removeItem("puzzroo_user");
+      window.dispatchEvent(new Event("auth-change"));
+    }
+    return;
+  }
+
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/auth/refresh`, {
       method: "POST",

@@ -50,7 +50,7 @@ export function DeleteAccountModal({ isOpen, onClose, onDeleted }: DeleteAccount
         className="w-full max-w-[480px] bg-white dark:bg-[#1A1D23] rounded-3xl shadow-2xl relative overflow-hidden animate-slideUp my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="absolute top-0 left-0 w-full h-[6px] bg-gradient-to-r from-red-500 to-red-600" />
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-red-500 to-red-600" />
 
         <button
           onClick={handleClose}
@@ -63,9 +63,9 @@ export function DeleteAccountModal({ isOpen, onClose, onDeleted }: DeleteAccount
         <div className="p-4 sm:p-10">
           <div className="flex flex-col items-center text-center mb-8">
             <div className="w-16 h-16 bg-red-50 dark:bg-red-500/10 rounded-2xl flex items-center justify-center mb-5 border border-red-100 dark:border-red-500/20 shadow-sm">
-              <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-500" />
+               <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-500" />
             </div>
-            <h2 className="font-urbanist font-bold text-[26px] text-[#212121] dark:text-white mb-2">
+            <h2 className="font-urbanist font-extrabold text-[28px] text-red-600 dark:text-red-500 mb-2">
               Delete Account
             </h2>
             <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#9E9E9E]">

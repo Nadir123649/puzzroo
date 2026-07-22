@@ -38,17 +38,22 @@ export default function ContactUsPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     if (!validate()) return
 
     setIsSubmitting(true)
-    const result = await submitContact(name, email, message)
-    setIsSubmitting(false)
-    if (result.success) {
-      setIsSubmitted(true)
-    } else {
-      setErrors({ email: result.error })
+    try {
+      const result = await submitContact(name, email, message)
+      setIsSubmitting(false)
+      if (result.success) {
+        setIsSubmitted(true)
+      } else {
+        setErrors({ email: result.error || 'Failed to send message' })
+      }
+    } catch {
+      setIsSubmitting(false)
+      setErrors({ email: 'A network error occurred. Please try again.' })
     }
   }
 
