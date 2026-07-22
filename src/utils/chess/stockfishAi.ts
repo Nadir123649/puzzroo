@@ -4,7 +4,7 @@
  * Piece-Square tables, and Alpha-Beta pruning for tactical strength.
  */
 
-import { Chess, Square, PieceType } from '@/lib/chess/chessEngine'
+import { Chess, Square, PieceType, Move } from '@/lib/chess/chessEngine'
 
 export type AiDifficulty = 'easy' | 'medium' | 'hard'
 
@@ -117,7 +117,7 @@ function evaluateBoard(game: Chess): number {
 /**
  * Move ordering function: sorts captures and checks first to optimize Alpha-Beta pruning
  */
-function orderMoves(game: Chess, moves: ReturnType<InstanceType<typeof Chess>['moves']>) {
+function orderMoves(game: Chess, moves: Move[]) {
   return moves.sort((a, b) => {
     let scoreA = 0
     let scoreB = 0

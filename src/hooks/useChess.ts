@@ -118,6 +118,8 @@ export function useChess() {
   const [activeModal, setActiveModal] = useState<ModalType>('none')
   const [pendingPromotion, setPendingPromotion] = useState<{ from: Square; to: Square } | null>(null)
 
+  const aiTimerRef = useRef<NodeJS.Timeout | null>(null)
+
   // Ref to stabilize closure-dependent values (must be after state decls)
   const isAiThinkingRef = useRef(isAiThinking)
   useEffect(() => { isAiThinkingRef.current = isAiThinking }, [isAiThinking])
@@ -277,14 +279,9 @@ export function useChess() {
     const chess = new Chess()
 
     if (typeof window !== 'undefined') {
-      const savedFen = sessionStorage.getItem('puzzroo_chess_fen')
-      if (savedFen && savedFen.trim()) {
-        const loaded = chess.load(savedFen)
-        if (!loaded || chess.isGameOver()) {
-          sessionStorage.removeItem('puzzroo_chess_fen')
-          chess.load('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-        }
-      }
+      sessionStorage.removeItem('puzzroo_chess_fen')
+      localStorage.removeItem('puzzroo_chess_fen')
+      chess.load('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
     }
 
     chessRef.current = chess
@@ -397,6 +394,7 @@ export function useChess() {
       (side === 'black' && currentTurnColor === 'b')
 
     if (!isPlayerTurn && !isAiThinkingRef.current) {
+      const fenAtStart = chessRef.current.fen()
       let isRetry = false
       setIsAiThinking(true)
 
@@ -404,9 +402,15 @@ export function useChess() {
         if (!chessRef.current) return
         getBestAiMove(chessRef.current, difficulty)
           .then((aiMove) => {
-            setTimeout(() => {
+            if (aiTimerRef.current) clearTimeout(aiTimerRef.current)
+            aiTimerRef.current = setTimeout(() => {
+              // Verify position hasn't changed (e.g. user performed Undo or Restart)
+              if (!chessRef.current || chessRef.current.fen() !== fenAtStart) {
+                setIsAiThinking(false)
+                return
+              }
+
               if (aiMove) {
-                // Deduct 1 second for AI thinking time
                 if (sideRef.current === 'white') {
                   setBlackTime(prev => (prev > 0 ? prev - 1 : 0))
                 } else {
@@ -480,7 +484,6 @@ export function useChess() {
       // Select a piece
       const piece = chess.get(square)
       if (piece && piece.color === currentTurnColor) {
-        setSelectedSquare(square)
         const verboseMoves = chess.moves({ square, verbose: true })
         const targets: Square[] = []
         const captures: Square[] = []
@@ -494,8 +497,15 @@ export function useChess() {
             }
           }
         })
-        setLegalMoves(targets)
-        setCaptureMoves(captures)
+        if (targets.length > 0) {
+          setSelectedSquare(square)
+          setLegalMoves(targets)
+          setCaptureMoves(captures)
+        } else {
+          setSelectedSquare(null)
+          setLegalMoves([])
+          setCaptureMoves([])
+        }
       } else {
         setSelectedSquare(null)
         setLegalMoves([])
@@ -526,9 +536,15 @@ export function useChess() {
   // Undo
   // -------------------------------------------------------------------
   const undoMove = useCallback(() => {
-    if (gameStatus !== 'playing' || isAiThinking) return
+    if (gameStatus !== 'playing') return
     const chess = chessRef.current
     if (!chess) return
+
+    if (aiTimerRef.current) {
+      clearTimeout(aiTimerRef.current)
+      aiTimerRef.current = null
+    }
+    setIsAiThinking(false)
 
     setPendingPromotion(null)
     setActiveModal('none')
@@ -556,12 +572,18 @@ export function useChess() {
     setLastMove(null)
     syncBoardState(chess)
     saveState()
-  }, [gameStatus, isAiThinking, mode, syncBoardState, saveState])
+  }, [gameStatus, mode, syncBoardState, saveState])
 
   // -------------------------------------------------------------------
   // Restart
   // -------------------------------------------------------------------
   const restartGame = useCallback(() => {
+    if (aiTimerRef.current) {
+      clearTimeout(aiTimerRef.current)
+      aiTimerRef.current = null
+    }
+    setIsAiThinking(false)
+
     const chess = new Chess()
     chessRef.current = chess
     if (typeof window !== 'undefined') {
