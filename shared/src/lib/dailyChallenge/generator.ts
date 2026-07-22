@@ -91,6 +91,9 @@ export function generatePastPuzzles(
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
   // Start two days before the account was created (or two days ago for guests).
   const start = new Date(accountCreatedAt ?? today)
   start.setHours(0, 0, 0, 0)
@@ -98,7 +101,7 @@ export function generatePastPuzzles(
 
   const puzzles: DailyChallenge[] = []
   const cursor = new Date(start)
-  while (cursor <= today) {
+  while (cursor <= yesterday) {
     puzzles.push(generateDailyChallenge(new Date(cursor), gameId))
     cursor.setDate(cursor.getDate() + 1)
   }

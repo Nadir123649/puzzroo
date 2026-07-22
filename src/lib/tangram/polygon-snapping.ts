@@ -67,40 +67,48 @@ const getTargetRotation = (pieceType: string, scaledTarget: number[][], scale: n
   const targetCy = scaledTarget.reduce((sum, p) => sum + p[1], 0) / scaledTarget.length
   const centeredTarget = scaledTarget.map(([x, y]) => [x - targetCx, y - targetCy])
   
-  // Calculate average of base polygon
-  const baseAvgX = base.reduce((sum, p) => sum + p[0], 0) / base.length
-  const baseAvgY = base.reduce((sum, p) => sum + p[1], 0) / base.length
-  
-  // Test 8 possible rotations (0, 45, 90, 135, 180, 225, 270, 315)
-  for (let r = 0; r < 360; r += 45) {
-    const radians = (r * Math.PI) / 180
-    const cos = Math.cos(radians)
-    const sin = Math.sin(radians)
+  // If it's a parallelogram, check standard AND mirrored bases
+  const baseOptions = [base]
+  if (pieceType === 'parallelogram') {
+    const baseMirrored = [[0, 0], [puzzleUnit, 0], [puzzleUnit * 2, puzzleUnit], [puzzleUnit, puzzleUnit], [0, 0]]
+    baseOptions.push(baseMirrored)
+  }
+
+  for (const currentBase of baseOptions) {
+    const baseAvgX = currentBase.reduce((sum, p) => sum + p[0], 0) / currentBase.length
+    const baseAvgY = currentBase.reduce((sum, p) => sum + p[1], 0) / currentBase.length
     
-    const rotated = base.map(([x, y]) => {
-      const dx = x - baseAvgX
-      const dy = y - baseAvgY
-      return [
-        dx * cos - dy * sin,
-        dx * sin + dy * cos
-      ]
-    })
-    
-    let allMatched = true
-    for (const [tx, ty] of centeredTarget) {
-      const hasMatch = rotated.some(([rx, ry]) => {
-        const dx = rx - tx
-        const dy = ry - ty
-        return Math.sqrt(dx * dx + dy * dy) < 5.0
+    // Test 8 possible rotations (0, 45, 90, 135, 180, 225, 270, 315)
+    for (let r = 0; r < 360; r += 45) {
+      const radians = (r * Math.PI) / 180
+      const cos = Math.cos(radians)
+      const sin = Math.sin(radians)
+      
+      const rotated = currentBase.map(([x, y]) => {
+        const dx = x - baseAvgX
+        const dy = y - baseAvgY
+        return [
+          dx * cos - dy * sin,
+          dx * sin + dy * cos
+        ]
       })
-      if (!hasMatch) {
-        allMatched = false
-        break
+      
+      let allMatched = true
+      for (const [tx, ty] of centeredTarget) {
+        const hasMatch = rotated.some(([rx, ry]) => {
+          const dx = rx - tx
+          const dy = ry - ty
+          return Math.sqrt(dx * dx + dy * dy) < 5.0
+        })
+        if (!hasMatch) {
+          allMatched = false
+          break
+        }
       }
-    }
-    
-    if (allMatched) {
-      return r
+      
+      if (allMatched) {
+        return r
+      }
     }
   }
   

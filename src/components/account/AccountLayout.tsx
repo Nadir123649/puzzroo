@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
@@ -13,29 +13,21 @@ interface AccountLayoutProps {
 
 export function AccountLayout({ children }: AccountLayoutProps) {
   const router = useRouter()
-
-  const [mounted, setMounted] = React.useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     if (!isLoggedIn()) {
       router.replace('/login')
+    } else {
+      setAuthChecked(true)
     }
   }, [router])
 
-  if (!mounted) {
+  // While we haven't confirmed auth yet, render an invisible placeholder
+  // that keeps the same background so there is no white/black flash.
+  if (!authChecked) {
     return (
-      <div className="min-h-screen bg-white dark:bg-[#181A20] flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-[#6949FF] border-t-transparent rounded-full" />
-      </div>
-    )
-  }
-
-  if (!isLoggedIn()) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-[#181A20] flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-[#6949FF] border-t-transparent rounded-full" />
-      </div>
+      <div className="min-h-screen bg-white dark:bg-[#181A20]" />
     )
   }
 

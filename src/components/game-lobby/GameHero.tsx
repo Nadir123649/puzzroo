@@ -177,24 +177,29 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
               </button>
             )}
 
-            {/* OR Divider */}
-            <div className="w-full max-w-[382px] flex items-center justify-center">
-              <span className="font-urbanist font-medium text-[14px] text-[#757575] dark:text-[#BDBDBD]">OR</span>
-            </div>
+            {/* OR Divider, Daily Challenge, and Past Puzzles (Hidden for Chess) */}
+            {!isChess && (
+              <>
+                {/* OR Divider */}
+                <div className="w-full max-w-[382px] flex items-center justify-center">
+                  <span className="font-urbanist font-medium text-[14px] text-[#757575] dark:text-[#BDBDBD]">OR</span>
+                </div>
 
-            {/* Daily Challenge Button - Full Width */}
-            <Link href={`/daily-challenge/${isSudoku ? 'sudoku' : isCrossMath ? 'cross-math' : isNonogram ? 'nonogram' : isTangram ? 'tangram' : 'sudoku'}`} className="w-full max-w-[382px]">
-              <button className="w-full h-[46px] rounded-full border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
-                Daily Challenge
-              </button>
-            </Link>
+                {/* Daily Challenge Button - Full Width */}
+                <Link href={`/daily-challenge/${isSudoku ? 'sudoku' : isCrossMath ? 'cross-math' : isNonogram ? 'nonogram' : isTangram ? 'tangram' : 'sudoku'}`} className="w-full max-w-[382px]">
+                  <button className="w-full h-[46px] rounded-full border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
+                    Daily Challenge
+                  </button>
+                </Link>
 
-            {/* Past Puzzles Button - Full Width */}
-            <Link href={`/past-puzzles/${isSudoku ? 'sudoku' : isCrossMath ? 'cross-math' : isNonogram ? 'nonogram' : isTangram ? 'tangram' : 'sudoku'}`} className="w-full max-w-[382px]">
-              <button className="w-full h-[46px] rounded-full border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] hover:text-white font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
-                Past Puzzles
-              </button>
-            </Link>
+                {/* Past Puzzles Button - Full Width */}
+                <Link href={`/past-puzzles/${isSudoku ? 'sudoku' : isCrossMath ? 'cross-math' : isNonogram ? 'nonogram' : isTangram ? 'tangram' : 'sudoku'}`} className="w-full max-w-[382px]">
+                  <button className="w-full h-[46px] rounded-full border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] hover:text-white font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
+                    Past Puzzles
+                  </button>
+                </Link>
+              </>
+            )}
 
           </div>
         </div>

@@ -115,8 +115,20 @@ async function loadSudokuPuzzle(source: PuzzleSource): Promise<SudokuPuzzleData>
     }
     let dailyDate = new Date()
     if (source.date) {
-      const [y, m, d] = source.date.split('-')
-      if (y && m && d) dailyDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d))
+      const parts = source.date.split('-')
+      if (parts.length === 3) {
+        if (parts[2].length === 2) {
+          const month = parseInt(parts[0], 10)
+          const day = parseInt(parts[1], 10)
+          const year = 2000 + parseInt(parts[2], 10)
+          dailyDate = new Date(year, month - 1, day)
+        } else {
+          const year = parseInt(parts[0], 10)
+          const month = parseInt(parts[1], 10)
+          const day = parseInt(parts[2], 10)
+          dailyDate = new Date(year, month - 1, day)
+        }
+      }
     }
     return getDailySudokuPuzzle(dailyDate, source.difficulty)
   }
@@ -212,27 +224,7 @@ export function useSudoku() {
     ;(async () => {
       setLoading(true)
       try {
-        // Resume a saved in-progress game if it matches the requested difficulty
-        const saved = loadGameState()
-        if (!cancelled && (!isInitialized || !gameState.puzzleId || gameState.currentBoard.length === 0 || saved?.difficulty === currentDiff)) {
-          if (saved && saved.difficulty === currentDiff) {
-            setGameState({
-              currentBoard: saved.currentBoard,
-              initialBoard: saved.initialBoard,
-              solution: saved.solution,
-              puzzleId: saved.puzzleId,
-              mistakes: saved.mistakes,
-              score: saved.score,
-              time: saved.time,
-              gameStatus: saved.gameStatus as GameStatus,
-            })
-            puzzleIdRef.current = saved.puzzleId
-            setIsInitialized(true)
-            return
-          }
-        }
-
-        // Start fresh — fetch from API (static fallback on failure)
+        // Fetch or determine the target puzzle first
         const puzzle = urlId
           ? await loadSudokuPuzzle({ kind: 'byId', id: urlId })
           : isDailyChallenge
@@ -240,6 +232,27 @@ export function useSudoku() {
             : await loadSudokuPuzzle({ kind: 'random', difficulty: currentDiff, exclude: gameState.puzzleId })
 
         if (cancelled) return
+
+        const targetPuzzleId = isDailyChallenge && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id
+
+        // Only resume saved game if it matches the target puzzle ID
+        const saved = loadGameState()
+        if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === currentDiff) {
+          setGameState({
+            currentBoard: saved.currentBoard,
+            initialBoard: saved.initialBoard,
+            solution: saved.solution,
+            puzzleId: saved.puzzleId,
+            mistakes: saved.mistakes,
+            score: saved.score,
+            time: saved.time,
+            gameStatus: saved.gameStatus as GameStatus,
+          })
+          puzzleIdRef.current = saved.puzzleId
+          setIsInitialized(true)
+          return
+        }
+
         const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
         setGameState(next)
         puzzleIdRef.current = next.puzzleId
@@ -661,7 +674,8 @@ export function useSudoku() {
         return
       }
 
-      if (KEYBOARD_KEYS.DELETE.includes(e.key as any)) {
+      if (KEYBOARD_KEYS.DELETE.includes(e.key as any) || e.key === '0') {
+        e.preventDefault()
         eraseCell()
         return
       }
