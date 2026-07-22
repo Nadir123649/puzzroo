@@ -77,7 +77,7 @@ const CASTLING_RIGHTS = {
   b: { k: 4, q: 8 },
 }
 
-interface InternalPiece {
+export interface InternalPiece {
   type: PieceType
   color: Color
 }
@@ -299,6 +299,10 @@ export class Chess {
     return this._board[i] ? { ...this._board[i]! } : null
   }
 
+  public getRawBoard(): (InternalPiece | null)[] {
+    return this._board
+  }
+
   // ---------------------------------------------------------------------------
   // Position tracking
   // ---------------------------------------------------------------------------
@@ -396,7 +400,7 @@ export class Chess {
   // Move generation
   // ---------------------------------------------------------------------------
 
-  private generateMoves(): InternalMove[] {
+  private generateMoves(onlyCaptures: boolean = false): InternalMove[] {
     const moves: InternalMove[] = []
     const us = this._turn
     const them = us === 'w' ? 'b' : 'w'
@@ -414,7 +418,7 @@ export class Chess {
             for (const pr of ['q', 'r', 'b', 'n'] as PieceType[]) {
               moves.push({ color: us, from: i, to: forward, piece: 'p', promotion: pr, flags: FLAGS.PROMOTION })
             }
-          } else {
+          } else if (!onlyCaptures) {
             moves.push({ color: us, from: i, to: forward, piece: 'p', flags: FLAGS.NORMAL })
             // Double pawn push
             const doubleStep = i + (us === 'w' ? -32 : 32)
@@ -449,7 +453,9 @@ export class Chess {
             if ((target & 0x88) !== 0) break
             const dest = this._board[target]
             if (dest === null) {
-              moves.push({ color: us, from: i, to: target, piece: p.type, flags: FLAGS.NORMAL })
+              if (!onlyCaptures) {
+                moves.push({ color: us, from: i, to: target, piece: p.type, flags: FLAGS.NORMAL })
+              }
             } else {
               if (dest.color === them) {
                 moves.push({ color: us, from: i, to: target, piece: p.type, captured: dest.type, flags: FLAGS.CAPTURE })
@@ -461,7 +467,7 @@ export class Chess {
         }
 
         // Castling
-        if (p.type === 'k') {
+        if (p.type === 'k' && !onlyCaptures) {
           if (us === 'w') {
             // White kingside: e1-g1
             if ((this._castling.w & CASTLING_RIGHTS.w.k) &&
@@ -517,11 +523,11 @@ export class Chess {
   // Public moves() API
   // ---------------------------------------------------------------------------
 
-  public moves(options: { square?: Square; verbose: true }): Move[]
-  public moves(options?: { square?: Square; verbose?: false }): string[]
-  public moves(options?: { square?: Square; verbose?: boolean }): (Move | string)[]
-  public moves(options?: { square?: Square; verbose?: boolean }): any[] {
-    const pseudoMoves = this.generateMoves()
+  public moves(options: { square?: Square; verbose: true; onlyCaptures?: boolean }): Move[]
+  public moves(options?: { square?: Square; verbose?: false; onlyCaptures?: boolean }): string[]
+  public moves(options?: { square?: Square; verbose?: boolean; onlyCaptures?: boolean }): (Move | string)[]
+  public moves(options?: { square?: Square; verbose?: boolean; onlyCaptures?: boolean }): any[] {
+    const pseudoMoves = this.generateMoves(options?.onlyCaptures)
     const legalMoves: InternalMove[] = []
 
     for (const move of pseudoMoves) {

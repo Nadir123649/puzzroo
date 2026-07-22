@@ -24,6 +24,7 @@ interface ChessSquareProps {
   isLastMove?: boolean
   isKingInCheck?: boolean
   isMoveDest?: boolean
+  isHint?: boolean
   disabled?: boolean
   onClick?: () => void
   onPointerDown?: (e: React.PointerEvent) => void
@@ -46,6 +47,7 @@ export const ChessSquare = memo(function ChessSquare({
   isLastMove = false,
   isKingInCheck = false,
   isMoveDest = false,
+  isHint = false,
   disabled = false,
   onClick,
   onPointerDown,
@@ -92,6 +94,11 @@ export const ChessSquare = memo(function ChessSquare({
       {/* Last Move Highlight Overlay */}
       {isLastMove && (
         <div className="absolute inset-0 bg-yellow-400/35 pointer-events-none transition-colors" />
+      )}
+
+      {/* Practice Hint Green Overlay */}
+      {isHint && (
+        <div className="absolute inset-0 bg-green-500/30 ring-4 ring-inset ring-green-500 pointer-events-none z-10 animate-pulse" />
       )}
 
       {/* Selected Square Highlight Overlay */}

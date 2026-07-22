@@ -1,10 +1,4 @@
-/**
- * Chess AI Engine with Easy, Medium, and Hard difficulty levels
- * Uses Minimax evaluation with Quiescence Search, Move Ordering,
- * Piece-Square tables, and Alpha-Beta pruning for tactical strength.
- */
-
-import { Chess, Square, PieceType, Move } from '@/lib/chess/chessEngine'
+import { Chess, Square, PieceType, Move, InternalPiece } from '@/lib/chess/chessEngine'
 
 export type AiDifficulty = 'easy' | 'medium' | 'hard'
 
@@ -82,32 +76,37 @@ function evaluateBoard(game: Chess): number {
   }
 
   let totalScore = 0
-  const board = game.board()
+  const board = game.getRawBoard()
 
-  for (let r = 0; r < 8; r++) {
-    for (let c = 0; c < 8; c++) {
-      const piece = board[r][c]
-      if (!piece) continue
+  for (let i = 0; i < 128; i++) {
+    if ((i & 0x88) !== 0) {
+      i += 7
+      continue
+    }
 
-      let val = PIECE_VALUES[piece.type]
-      const squareIndex = piece.color === 'w' ? r * 8 + c : (7 - r) * 8 + c
+    const piece = board[i]
+    if (!piece) continue
 
-      let pst = 0
-      switch (piece.type) {
-        case 'p': pst = PAWN_TABLE[squareIndex]; break
-        case 'n': pst = KNIGHT_TABLE[squareIndex]; break
-        case 'b': pst = BISHOP_TABLE[squareIndex]; break
-        case 'r': pst = ROOK_TABLE[squareIndex]; break
-        case 'q': pst = QUEEN_TABLE[squareIndex]; break
-      }
+    let val = PIECE_VALUES[piece.type]
+    const r = i >> 4
+    const c = i & 7
+    const squareIndex = piece.color === 'w' ? r * 8 + c : (7 - r) * 8 + c
 
-      val += pst
+    let pst = 0
+    switch (piece.type) {
+      case 'p': pst = PAWN_TABLE[squareIndex]; break
+      case 'n': pst = KNIGHT_TABLE[squareIndex]; break
+      case 'b': pst = BISHOP_TABLE[squareIndex]; break
+      case 'r': pst = ROOK_TABLE[squareIndex]; break
+      case 'q': pst = QUEEN_TABLE[squareIndex]; break
+    }
 
-      if (piece.color === 'w') {
-        totalScore += val
-      } else {
-        totalScore -= val
-      }
+    val += pst
+
+    if (piece.color === 'w') {
+      totalScore += val
+    } else {
+      totalScore -= val
     }
   }
 
@@ -145,7 +144,7 @@ function quiescenceSearch(
   alpha: number,
   beta: number,
   isMaximizing: boolean,
-  depthLeft: number = 2
+  depthLeft: number = 1
 ): number {
   const standPat = evaluateBoard(game)
 
@@ -160,7 +159,7 @@ function quiescenceSearch(
   }
 
   // Search only capture moves
-  const captureMoves = game.moves({ verbose: true }).filter(m => m.captured)
+  const captureMoves = game.moves({ verbose: true, onlyCaptures: true })
   const orderedCaptures = orderMoves(game, captureMoves)
 
   for (const move of orderedCaptures) {
@@ -191,7 +190,7 @@ function minimax(
   isMaximizing: boolean
 ): number {
   if (depth === 0 || game.isGameOver()) {
-    return quiescenceSearch(game, alpha, beta, isMaximizing)
+    return evaluateBoard(game)
   }
 
   const rawMoves = game.moves({ verbose: true })
@@ -242,8 +241,8 @@ export async function getBestAiMove(
       }
     }
 
-    // Increased search depth for Medium (3) and Hard (4 + Quiescence)
-    const searchDepth = difficulty === 'hard' ? 4 : difficulty === 'medium' ? 3 : 1
+    // Adjusted search depth for Medium (1) and Hard (2) for instant moves on main thread
+    const searchDepth = difficulty === 'hard' ? 2 : 1
 
     const orderedMoves = orderMoves(searchEngine, [...moves])
     let bestMove = orderedMoves[0]

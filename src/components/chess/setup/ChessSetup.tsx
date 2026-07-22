@@ -26,6 +26,7 @@ export function ChessSetup() {
   const [pieceTheme, setPieceTheme] = useState<PieceThemeId>('classic')
   const [customWhiteColor, setCustomWhiteColor] = useState('#FFFFFF')
   const [customBlackColor, setCustomBlackColor] = useState('#010101')
+  const [practiceMode, setPracticeMode] = useState(false)
 
   const [timeControl, setTimeControl] = useState<number>(600) // seconds
   const [increment, setIncrement] = useState<number>(0) // seconds per move
@@ -58,7 +59,16 @@ export function ChessSetup() {
     if (theme && ['classic', 'green', 'brown', 'dark'].includes(theme)) {
       setBoardTheme(theme)
     }
+    const practice = searchParams?.get('practice') === 'true'
+    setPracticeMode(practice)
   }, [searchParams])
+
+  // Reset practiceMode if switching to local PvP mode
+  useEffect(() => {
+    if (mode === 'pvp') {
+      setPracticeMode(false)
+    }
+  }, [mode])
 
   const handleStartGame = async () => {
     setIsNavigating(true)
@@ -75,12 +85,13 @@ export function ChessSetup() {
       sessionStorage.setItem('chess_custom_black', customBlackColor)
       sessionStorage.setItem('chess_time', String(timeControl))
       sessionStorage.setItem('chess_increment', String(increment))
+      sessionStorage.setItem('chess_practice', String(practiceMode))
       // Clear old FEN match on new match setup
       sessionStorage.removeItem('puzzroo_chess_fen')
       localStorage.removeItem('puzzroo_chess_fen')
     }
 
-    const targetUrl = `/chess?mode=${mode}&side=${side}&difficulty=${difficulty}&theme=${boardTheme}&pieceTheme=${pieceTheme}&time=${timeControl}&increment=${increment}`
+    const targetUrl = `/chess?mode=${mode}&side=${side}&difficulty=${difficulty}&theme=${boardTheme}&pieceTheme=${pieceTheme}&time=${timeControl}&increment=${increment}&practice=${practiceMode}`
     router.push(targetUrl)
   }
 
@@ -162,6 +173,39 @@ export function ChessSetup() {
                   </button>
                 </div>
               </div>
+
+              {/* Practice Mode Choice */}
+              {mode === 'pve' && (
+                <div className="flex flex-col gap-2.5 w-full bg-white dark:bg-[#1F222A]/40 p-4 rounded-xl border border-gray-200 dark:border-[#35383F]">
+                  <div className="flex items-center justify-between">
+                    <span className="font-urbanist font-bold text-sm sm:text-base text-[#212121] dark:text-[#FAFAFA]">
+                      Practice Mode:
+                    </span>
+                    <div className="flex items-center gap-6">
+                      <label className="flex items-center gap-1.5 cursor-pointer font-urbanist font-bold text-xs sm:text-sm text-[#757575] dark:text-[#BDBDBD]">
+                        <input
+                          type="radio"
+                          name="practice_mode"
+                          checked={practiceMode}
+                          onChange={() => setPracticeMode(true)}
+                          className="accent-[#6949FF] w-4 h-4 cursor-pointer"
+                        />
+                        <span>Enabled</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer font-urbanist font-bold text-xs sm:text-sm text-[#757575] dark:text-[#BDBDBD]">
+                        <input
+                          type="radio"
+                          name="practice_mode"
+                          checked={!practiceMode}
+                          onChange={() => setPracticeMode(false)}
+                          className="accent-[#6949FF] w-4 h-4 cursor-pointer"
+                        />
+                        <span>Disabled</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Time Control */}
               <div className="flex flex-col gap-2.5 w-full">

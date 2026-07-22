@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { RotateCcw, RefreshCw, Settings, Flag, Volume2, VolumeX, RotateCw } from 'lucide-react'
+import { RotateCcw, RefreshCw, Settings, Flag, Volume2, VolumeX, RotateCw, Lightbulb } from 'lucide-react'
 
 interface GameControlsProps {
   onNewGame?: () => void
@@ -15,6 +15,9 @@ interface GameControlsProps {
   isFlipped?: boolean
   isMuted?: boolean
   disabled?: boolean
+  isPracticeMode?: boolean
+  onTogglePracticeMode?: () => void
+  onGetHint?: () => void
   className?: string
 }
 
@@ -28,6 +31,9 @@ export function GameControls({
   isFlipped = false,
   isMuted = false,
   disabled = false,
+  isPracticeMode = false,
+  onTogglePracticeMode,
+  onGetHint,
   className,
 }: GameControlsProps) {
   return (
@@ -41,14 +47,28 @@ export function GameControls({
         <h4 className="font-urbanist font-bold text-base text-[#212121] dark:text-[#FAFAFA]">
           Game Actions
         </h4>
-        <button
-          onClick={onToggleSound}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-[#262A34] border border-gray-200 dark:border-gray-700 text-xs font-urbanist font-bold text-[#6949FF] hover:bg-[#6949FF] hover:text-white transition-all"
-          title={isMuted ? 'Unmute Sound' : 'Mute Sound'}
-        >
-          {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-          <span>{isMuted ? 'Muted' : 'Audio On'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Practice Hint Button (Sudoku Style) */}
+          {isPracticeMode && (
+            <button
+              onClick={onGetHint}
+              disabled={disabled}
+              className="relative w-8 h-8 rounded-full bg-[#F0EDFF] dark:bg-[#262A34] border border-[#E0D9FF] dark:border-gray-700 flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-[#6949FF]"
+              title="Get Practice Hint"
+            >
+              <Lightbulb size={16} strokeWidth={2.5} className="animate-pulse" />
+            </button>
+          )}
+
+          <button
+            onClick={onToggleSound}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-[#262A34] border border-gray-200 dark:border-gray-700 text-xs font-urbanist font-bold text-[#6949FF] hover:bg-[#6949FF] hover:text-white transition-all"
+            title={isMuted ? 'Unmute Sound' : 'Mute Sound'}
+          >
+            {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            <span>{isMuted ? 'Muted' : 'Audio On'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Buttons Grid */}
