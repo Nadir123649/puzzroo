@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react'
 import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
 import { ChangeNameModal } from '@/components/account/ChangeNameModal'
 import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
-import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile } from '@/lib/auth/frontend-auth'
-import { Check, Activity, BarChart3, Monitor, Smartphone, Tablet, MapPin, Laptop, Trash2, Clock, Mail, Phone } from 'lucide-react'
+import { SetEmailModal } from '@/components/account/SetEmailModal'
+import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider } from '@/lib/auth/frontend-auth'
+import { notify } from '@/lib/toast'
+import { Check, Activity, BarChart3, Monitor, Smartphone, Tablet, MapPin, Laptop, Trash2, Clock, Mail, Phone, X } from 'lucide-react'
 
 const PROVIDER_META: Record<string, { label: string; badge: string; badgeClass: string }> = {
   google: { label: 'Google', badge: 'G', badgeClass: 'text-[#4285F4]' },
@@ -46,6 +48,7 @@ export default function AccountInformationPage() {
   const [localUser, setLocalUser] = useState(getCurrentUser())
   const [gameStats, setGameStats] = useState<any>(null)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const [isNameModalOpen, setIsNameModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [sessions, setSessions] = useState<SessionDevice[]>([])
@@ -55,6 +58,24 @@ export default function AccountInformationPage() {
   const canChangePassword = !!localUser?.hasPassword
 
   const currentSessionProvider = sessions.find(s => s.isCurrent)?.provider || provider
+
+  const canUnlink = linkedProviders.length >= 2
+
+  const handleUnlinkProvider = async (providerToUnlink: string) => {
+    const result = await unlinkProvider(providerToUnlink)
+    if (result.success) {
+      setLinkedProviders(prev => prev.filter(p => p !== providerToUnlink))
+      notify.success(`${providerToUnlink === 'email' ? 'Email & Password' : providerToUnlink.charAt(0).toUpperCase() + providerToUnlink.slice(1)} has been unlinked`)
+      fetchUserProfile().then(profile => {
+        if (profile) {
+          if (profile.linkedProviders?.length) setLinkedProviders(profile.linkedProviders)
+          if (profile.provider) setProvider(profile.provider)
+        }
+      })
+    } else {
+      notify.error(result.error || 'Failed to unlink provider')
+    }
+  }
 
   const handleNameChanged = (newName: string) => {
     const stored = localStorage.getItem('puzzroo_user')
@@ -202,32 +223,66 @@ export default function AccountInformationPage() {
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
                 {localUser?.email || 'N/A'}
               </span>
-              <div className="flex items-center gap-1 mt-0.5">
-                <Check size={12} className="text-green-600 dark:text-green-400" strokeWidth={3} />
-                <span className="font-urbanist text-[11px] text-green-600 dark:text-green-400 font-semibold">
-                  Verified
-                </span>
-              </div>
-              <span className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] mt-0.5">
-                Email address cannot be changed
-              </span>
+              {localUser?.email && localUser?.email !== 'N/A' ? (
+                <>
+                  {localUser?.isVerified ? (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Check size={12} className="text-green-600 dark:text-green-400" strokeWidth={3} />
+                      <span className="font-urbanist text-[11px] text-green-600 dark:text-green-400 font-semibold">
+                        Verified
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className="font-urbanist text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+                        Not Verified
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setIsEmailModalOpen(true)}
+                    className="mt-1 font-urbanist font-semibold text-[11px] text-[#6949FF] hover:underline"
+                  >
+                    Change Email
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] mt-0.5">
+                    No email connected
+                  </span>
+                  <button
+                    onClick={() => setIsEmailModalOpen(true)}
+                    className="mt-1 font-urbanist font-semibold text-[11px] text-[#6949FF] hover:underline"
+                  >
+                    Set Email
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
           {/* Password */}
-          {canChangePassword && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
-              <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-2 sm:mb-0">
-                Password
-              </span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
+            <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-2 sm:mb-0">
+              Password
+            </span>
+            {canChangePassword ? (
               <button
                 onClick={() => setIsPasswordModalOpen(true)}
                 className="w-full sm:w-auto px-5 py-1.5 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95"
               >
                 Change
               </button>
-            </div>
-          )}
+            ) : (
+              <button
+                onClick={() => setIsEmailModalOpen(true)}
+                className="w-full sm:w-auto px-5 py-1.5 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95"
+              >
+                Set Password
+              </button>
+            )}
+          </div>
 
           {/* Subscription Plan */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2">
@@ -275,6 +330,15 @@ export default function AccountInformationPage() {
                         )}
                       </div>
                     </div>
+                    {canUnlink && p !== 'phone' && (
+                      <button
+                        onClick={() => handleUnlinkProvider(p)}
+                        className="p-1.5 text-[#757575] dark:text-[#9E9E9E] hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all duration-200"
+                        title="Unlink"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
                   </div>
                 )
               })}
@@ -480,6 +544,12 @@ export default function AccountInformationPage() {
         )}
       </div>
       
+      <SetEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => { setIsEmailModalOpen(false); fetchUserProfile().then(p => { if (p?.user) setLocalUser(prev => prev ? { ...prev, email: p.user.email, hasPassword: p.user.hasPassword } : prev); }); }}
+        currentEmail={localUser?.email}
+        hasPassword={!!localUser?.hasPassword}
+      />
       <ChangePasswordModal 
         isOpen={isPasswordModalOpen} 
         onClose={() => setIsPasswordModalOpen(false)} 

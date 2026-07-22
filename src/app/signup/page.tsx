@@ -33,6 +33,8 @@ export default function SignupPage() {
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isLinking, setIsLinking] = useState(false)
+  const [serverMessage, setServerMessage] = useState('')
 
   // Consume a Facebook (redirect) OAuth result when the provider bounces back.
   useEffect(() => {
@@ -86,7 +88,9 @@ export default function SignupPage() {
     setIsSubmitting(false)
 
     if (result.success) {
-      notify.successKey('AUTH_SIGNUP_SUCCESS')
+      setIsLinking(!!result.linking)
+      setServerMessage(result.message || '')
+      if (!result.linking) notify.successKey('AUTH_SIGNUP_SUCCESS')
       setIsSuccess(true)
     } else {
       notify.errorFromResult(result, 'AUTH_SIGNUP_FAILED')
@@ -128,15 +132,30 @@ export default function SignupPage() {
           {isSuccess ? (
             <div className="text-center py-6 flex flex-col items-center gap-4">
               <div className="w-12 h-12 bg-[#6949FF] rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                ✉
+                {isLinking ? '🔗' : '✉'}
               </div>
               <div className="flex flex-col gap-1">
-                <p className="font-urbanist font-semibold text-[16px] text-[#6949FF]">
-                  Check your email
-                </p>
-                <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] max-w-[280px]">
-                  We sent a verification link to <strong>{email}</strong>. Click it to activate your account.
-                </p>
+                {isLinking ? (
+                  <>
+                    <p className="font-urbanist font-semibold text-[16px] text-[#6949FF]">
+                      {serverMessage || 'Account linking in progress'}
+                    </p>
+                    <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] max-w-[280px]">
+                      {serverMessage.includes('linked')
+                        ? 'Your account has been linked. You can now log in with email or Google.'
+                        : <>We found an existing account with <strong>{email}</strong>. Click the verification link to link email login to your existing account.</>}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-urbanist font-semibold text-[16px] text-[#6949FF]">
+                      Check your email
+                    </p>
+                    <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] max-w-[280px]">
+                      We sent a verification link to <strong>{email}</strong>. Click it to activate your account.
+                    </p>
+                  </>
+                )}
               </div>
               <Link href="/login" className="mt-2 font-urbanist text-[14px] text-[#6949FF] hover:underline font-semibold">
                 Go to Login

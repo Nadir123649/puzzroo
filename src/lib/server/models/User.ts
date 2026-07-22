@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
     // null guests don't collide.
     publicId: { type: String, default: null, unique: true, sparse: true },
     name: { type: String, trim: true, default: null },
-    email: { type: String, lowercase: true, trim: true, default: null },
+    email: { type: String, lowercase: true, trim: true, default: null, unique: true, sparse: true },
     password: { type: String, default: null },
     phone: { type: String, default: null },
     firebaseUid: { type: String, default: null },
@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema(
       default: "email",
     },
     linkedProviders: { type: [String], default: [] },
+    pendingEmail: { type: String, default: null },
+    pendingPasswordHash: { type: String, default: null },
     avatar: { type: String, default: null },
     role: {
       type: String,

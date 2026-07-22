@@ -94,14 +94,15 @@ export async function api<T = any>(
     }
 
     if (!res.ok) {
-      const error = await res.json().catch(() => ({ error: { message: `HTTP ${res.status}` } }));
-      throw new Error(error?.error?.message || `HTTP ${res.status}`);
+      // Server returned an error (4xx/5xx) — return the body as-is so callers
+      // can check !res.success and read payload.error. Don't throw: the catch
+      // block below is for true network failures.
+      return await res.json().catch(() => ({ success: false, payload: { error: { message: `HTTP ${res.status}` } } }));
     }
     const json = await res.json();
     return json;
   } catch {
-    // Network-level failure (offline / unreachable). Avoid duplicating the
-    // offline banner; only toast when we believe we're actually online.
+    // True network-level failure (offline / unreachable).
     if (typeof navigator !== "undefined" && navigator.onLine) {
       notify.errorKey("SYSTEM_GENERIC_ERROR");
     }
