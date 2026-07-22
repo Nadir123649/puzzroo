@@ -54,6 +54,9 @@ export function ChessGame({
     pendingPromotion,
     whiteTime,
     blackTime,
+    isPracticeMode,
+    setIsPracticeMode,
+    hintMove,
     selectSquare,
     executeMove,
     handleSelectPromotion,
@@ -65,6 +68,7 @@ export function ChessGame({
     toggleSound,
     flipBoard,
     setActiveModal,
+    getHint,
   } = useChess()
 
   const router = useRouter()
@@ -111,11 +115,11 @@ export function ChessGame({
 
   return (
     <div className="w-full px-4 sm:px-6 md:px-8 pb-6">
-      {/* Main Game Grid Layout (3-Column Grandmaster Layout) */}
-      <div className="w-full max-w-[1380px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 xl:gap-6 items-start">
+      {/* Main Game Flex Layout (Optimized side widths, centered board) */}
+      <div className="w-full max-w-[1380px] mx-auto flex flex-col lg:flex-row gap-5 xl:gap-6 justify-center items-center lg:items-stretch">
         
-        {/* Left Column: Player Cards & Captured Pieces (Cols 1-3 on Desktop) */}
-        <div className="lg:col-span-3 flex flex-col gap-4 sm:gap-5 w-full">
+        {/* Left Column: Player Cards & Captured Pieces */}
+        <div className="flex-grow flex-shrink basis-0 min-w-[280px] flex flex-col gap-4 sm:gap-5 w-full">
           {/* Top Player Card (Opponent / Black) */}
           <div className="flex flex-col gap-2">
             <PlayerCard
@@ -140,7 +144,7 @@ export function ChessGame({
                   ? (capturedPieces.whiteScore > capturedPieces.blackScore ? capturedPieces.whiteScore - capturedPieces.blackScore : 0)
                   : (capturedPieces.blackScore > capturedPieces.whiteScore ? capturedPieces.blackScore - capturedPieces.whiteScore : 0)
               }
-              className="flex flex-col w-full"
+              className="flex flex-col w-full min-h-[75px]"
             />
           </div>
 
@@ -157,7 +161,7 @@ export function ChessGame({
                   ? (capturedPieces.blackScore > capturedPieces.whiteScore ? capturedPieces.blackScore - capturedPieces.whiteScore : 0)
                   : (capturedPieces.whiteScore > capturedPieces.blackScore ? capturedPieces.whiteScore - capturedPieces.blackScore : 0)
               }
-              className="flex flex-col w-full"
+              className="flex flex-col w-full min-h-[75px]"
             />
 
             <PlayerCard
@@ -172,29 +176,12 @@ export function ChessGame({
           </div>
         </div>
 
-        {/* Middle Column: Interactive Chess Board (Cols 4-9 on Desktop) */}
-        <div className="lg:col-span-6 flex flex-col items-center w-full">
-          <div className="w-full max-w-[500px] flex flex-col items-center gap-2">
+        {/* Middle Column: Interactive Chess Board */}
+        <div className="w-full max-w-[500px] lg:flex-shrink-0 flex flex-col items-center">
+          <div className="w-full flex flex-col items-center gap-2">
             
-            {/* Active Turn Indicator Banner (ON TOP OF THE BOARD) */}
-            <div className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#F0EDFF] dark:bg-[#1F222A] border border-[#E0D9FF] dark:border-[#35383F] shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className={`w-3 h-3 rounded-full ${turn === 'white' ? 'bg-white shadow border border-gray-400' : 'bg-gray-900 border border-gray-600'}`} />
-                <span className="font-urbanist font-extrabold text-xs sm:text-sm text-[#212121] dark:text-[#FAFAFA]">
-                  {mode === 'pve'
-                    ? (side === turn ? `Your Turn (${turn.toUpperCase()})` : `Computer's Turn (${turn.toUpperCase()})`)
-                    : (turn === 'white' ? "Player 1's Turn (WHITE)" : "Player 2's Turn (BLACK)")}
-                </span>
-              </div>
-              {isAiThinking && (
-                <span className="text-xs font-urbanist font-bold text-[#6949FF] dark:text-purple-400 animate-pulse">
-                  Computer Thinking...
-                </span>
-              )}
-            </div>
-
             {/* The 8x8 Interactive Chess Board */}
-            <div ref={boardWrapperRef} className="w-full flex justify-center py-1 relative">
+            <div ref={boardWrapperRef} className="w-full flex justify-center relative">
               <ChessBoard
                 boardState={boardGrid}
                 theme={activeTheme}
@@ -207,24 +194,12 @@ export function ChessGame({
                 captureMoves={captureMoves}
                 lastMove={lastMove}
                 kingInCheckSquare={kingInCheckSquare}
+                hintMove={hintMove}
+                isCheckmate={gameStatus === 'checkmate'}
                 disabled={gameStatus !== 'playing' || isAiThinking}
                 onSquareSelect={selectSquare}
                 onMoveExecute={executeMove}
               />
-
-              {/* Check Notification */}
-              {showCheckNotif && (
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-red-600 text-white px-5 py-2 rounded-full font-urbanist font-extrabold text-sm shadow-lg z-30 animate-fadeIn">
-                  CHECK!
-                </div>
-              )}
-
-              {/* Thinking Overlay Badge */}
-              {isAiThinking && (
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-[#6949FF] text-white px-4 py-1.5 rounded-full font-urbanist font-extrabold text-xs shadow-lg animate-pulse z-30">
-                  Computer Thinking...
-                </div>
-              )}
 
               {/* Promotion Selector */}
               {activeModal === 'promotion' && pendingPromotion && (
@@ -245,13 +220,14 @@ export function ChessGame({
           </div>
         </div>
 
-        {/* Right Column: Match Notation & Controls (Cols 10-12 on Desktop) */}
-        <div className="lg:col-span-3 flex flex-col gap-4 sm:gap-5 w-full">
+        {/* Right Column: Match Notation & Controls */}
+        <div className="flex-grow flex-shrink basis-0 min-w-[280px] flex flex-col gap-4 sm:gap-5 w-full">
           {/* Move History Panel */}
           <MoveHistory
             moves={moveHistory}
             reviewIndex={reviewIndex}
             onReviewMove={reviewHistoryMove}
+            mode={mode}
           />
 
           {/* Gameplay Actions Panel */}
@@ -263,7 +239,10 @@ export function ChessGame({
             onToggleSound={toggleSound}
             isFlipped={isFlipped}
             isMuted={isMuted}
-            disabled={gameStatus !== 'playing' || isAiThinking}
+            isPracticeMode={isPracticeMode}
+            onGetHint={getHint}
+            disabled={gameStatus !== 'playing'}
+            isAiThinking={isAiThinking}
           />
         </div>
 
@@ -277,6 +256,8 @@ export function ChessGame({
         drawReason={drawReason}
         difficulty={difficulty}
         totalMoves={moveHistory.length}
+        gameStatus={gameStatus}
+        mode={mode}
         onRestartConfirm={restartGame}
         onResignConfirm={handleResignConfirm}
         onPlayAgain={restartGame}

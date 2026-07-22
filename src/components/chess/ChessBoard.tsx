@@ -20,6 +20,8 @@ interface ChessBoardProps {
   captureMoves?: Square[]
   lastMove?: { from: Square; to: Square } | null
   kingInCheckSquare?: Square | null
+  hintMove?: { from: Square; to: Square } | null
+  isCheckmate?: boolean
   disabled?: boolean
   onSquareSelect?: (square: Square) => void
   onMoveExecute?: (from: Square, to: Square) => void
@@ -38,6 +40,8 @@ export const ChessBoard = React.memo(function ChessBoard({
   captureMoves = [],
   lastMove = null,
   kingInCheckSquare = null,
+  hintMove = null,
+  isCheckmate = false,
   disabled = false,
   onSquareSelect,
   onMoveExecute,
@@ -108,6 +112,7 @@ export const ChessBoard = React.memo(function ChessBoard({
 
     if (!dragState.current.isDragging && (dx > 5 || dy > 5)) {
       dragState.current.isDragging = true
+      setDraggedSquare(dragState.current.fromSquare)
       try {
         ;(e.target as HTMLElement).setPointerCapture?.(dragState.current.pointerId)
       } catch {}
@@ -129,6 +134,7 @@ export const ChessBoard = React.memo(function ChessBoard({
     } catch {}
 
     dragState.current = null
+    setDraggedSquare(null)
     forceRender(n => n + 1)
 
     if (ds.isDragging) {
@@ -147,6 +153,7 @@ export const ChessBoard = React.memo(function ChessBoard({
       } catch {}
     }
     dragState.current = null
+    setDraggedSquare(null)
     forceRender(n => n + 1)
   }, [])
 
@@ -168,8 +175,10 @@ export const ChessBoard = React.memo(function ChessBoard({
         const isLast = lastMove?.from === squareName || lastMove?.to === squareName
         const isMoveDest = lastMove?.to === squareName
         const isCheck = kingInCheckSquare === squareName
+        const isHint = hintMove?.from === squareName || hintMove?.to === squareName
+        const isCheckmateSquare = isCheckmate && isCheck
 
-        const isBeingDragged = Boolean(dragState.current?.isDragging && dragState.current?.fromSquare === squareName)
+        const isBeingDragged = draggedSquare === squareName
 
         result.push(
           <ChessSquare
@@ -189,7 +198,9 @@ export const ChessBoard = React.memo(function ChessBoard({
             isCapture={isCapture}
             isLastMove={isLast}
             isMoveDest={isMoveDest}
-            isKingInCheck={isCheck}
+            isKingInCheck={isCheck && !isCheckmateSquare}
+            isCheckmate={isCheckmateSquare}
+            isHint={isHint}
             disabled={disabled}
             onClick={() => onSquareSelect?.(squareName)}
             onPointerDown={(e) => handlePointerDown(squareName, piece, e)}
@@ -201,7 +212,7 @@ export const ChessBoard = React.memo(function ChessBoard({
   }, [
     boardState, theme, pieceTheme, customWhiteColor, customBlackColor,
     rankIndices, fileIndices, selectedSquare, legalMoves, captureMoves,
-    lastMove, kingInCheckSquare, disabled, onSquareSelect, handlePointerDown
+    lastMove, kingInCheckSquare, disabled, onSquareSelect, handlePointerDown, draggedSquare, hintMove, isCheckmate
   ])
 
   return (

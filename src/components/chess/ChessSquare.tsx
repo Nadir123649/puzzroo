@@ -23,7 +23,9 @@ interface ChessSquareProps {
   isCapture?: boolean
   isLastMove?: boolean
   isKingInCheck?: boolean
+  isCheckmate?: boolean
   isMoveDest?: boolean
+  isHint?: boolean
   disabled?: boolean
   onClick?: () => void
   onPointerDown?: (e: React.PointerEvent) => void
@@ -45,7 +47,9 @@ export const ChessSquare = memo(function ChessSquare({
   isCapture = false,
   isLastMove = false,
   isKingInCheck = false,
+  isCheckmate = false,
   isMoveDest = false,
+  isHint = false,
   disabled = false,
   onClick,
   onPointerDown,
@@ -94,6 +98,11 @@ export const ChessSquare = memo(function ChessSquare({
         <div className="absolute inset-0 bg-yellow-400/35 pointer-events-none transition-colors" />
       )}
 
+      {/* Practice Hint Green Overlay */}
+      {isHint && (
+        <div className="absolute inset-0 bg-green-500/30 ring-4 ring-inset ring-green-500 pointer-events-none z-10 animate-pulse" />
+      )}
+
       {/* Selected Square Highlight Overlay */}
       {isSelected && (
         <div className="absolute inset-0 bg-[#6949FF]/40 ring-4 ring-inset ring-[#6949FF] pointer-events-none transition-all z-10" />
@@ -102,6 +111,16 @@ export const ChessSquare = memo(function ChessSquare({
       {/* King in Check Red Glow Overlay */}
       {isKingInCheck && (
         <div className="absolute inset-0 bg-red-500/40 ring-4 ring-inset ring-red-600 animate-pulse pointer-events-none z-10" />
+      )}
+
+      {/* Checkmate Badge & Glow */}
+      {isCheckmate && (
+        <>
+          <div className="absolute inset-0 bg-red-600/50 ring-4 ring-inset ring-red-700 pointer-events-none z-10 animate-pulse animate-duration-1000" />
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[8px] sm:text-[10px] font-urbanist font-extrabold px-1.5 py-0.5 rounded shadow-lg animate-bounce z-40 whitespace-nowrap uppercase tracking-wider">
+            Checkmate
+          </div>
+        </>
       )}
 
       {/* Legal Move Indicator (Empty Square Dot) */}
