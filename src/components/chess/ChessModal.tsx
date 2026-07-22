@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Trophy, ShieldAlert, RefreshCw, AlertCircle } from 'lucide-react'
+import { Trophy, ShieldAlert, RefreshCw, AlertCircle, X } from 'lucide-react'
 import { PieceColor } from '@/utils/chess'
 import { cn } from '@/lib/utils'
 
@@ -43,13 +43,13 @@ export function ChessModal({
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isConfirm) {
+      if (e.key === 'Escape') {
         onClose?.()
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [isConfirm, onClose])
+  }, [onClose])
 
   if (!isOpen || modalType === 'none') return null
 
@@ -82,7 +82,7 @@ export function ChessModal({
   return (
     <div
       className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
-      onClick={isConfirm ? () => onClose?.() : undefined}
+      onClick={() => onClose?.()}
     >
       
       {/* Win Modal */}
@@ -91,6 +91,15 @@ export function ChessModal({
           className="w-full max-w-md bg-gradient-to-b from-white to-[#F4F2FF] dark:from-[#1F222A] dark:to-[#171921] rounded-[32px] p-8 border border-green-500/20 shadow-2xl flex flex-col items-center text-center gap-6 animate-scaleIn relative overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Close button */}
+          <button
+            onClick={() => onClose?.()}
+            className="absolute top-5 right-5 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-1.5 rounded-full hover:bg-gray-155 dark:hover:bg-[#262A34] transition-all duration-200 z-50 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+
           {/* Decorative Sparkle Gradient */}
           <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-green-400/10 blur-3xl pointer-events-none" />
           <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-[#6949FF]/10 blur-3xl pointer-events-none" />
@@ -150,6 +159,15 @@ export function ChessModal({
           className="w-full max-w-md bg-gradient-to-b from-white to-[#FFF2F2] dark:from-[#1F222A] dark:to-[#1C181E] rounded-[32px] p-8 border border-red-500/20 shadow-2xl flex flex-col items-center text-center gap-6 animate-scaleIn relative overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Close button */}
+          <button
+            onClick={() => onClose?.()}
+            className="absolute top-5 right-5 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-1.5 rounded-full hover:bg-gray-155 dark:hover:bg-[#262A34] transition-all duration-200 z-50 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+
           {/* Decorative Sparkle Gradient */}
           <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-red-500/10 blur-3xl pointer-events-none" />
           <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-[#6949FF]/10 blur-3xl pointer-events-none" />
@@ -209,6 +227,15 @@ export function ChessModal({
           className="w-full max-w-md bg-gradient-to-b from-white to-[#F0F5FF] dark:from-[#1F222A] dark:to-[#171B26] rounded-[32px] p-8 border border-blue-500/20 shadow-2xl flex flex-col items-center text-center gap-6 animate-scaleIn relative overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Close button */}
+          <button
+            onClick={() => onClose?.()}
+            className="absolute top-5 right-5 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-1.5 rounded-full hover:bg-gray-155 dark:hover:bg-[#262A34] transition-all duration-200 z-50 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+
           {/* Decorative Sparkle Gradient */}
           <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
 
@@ -251,7 +278,19 @@ export function ChessModal({
 
       {/* Restart Confirmation */}
       {modalType === 'restart_confirm' && (
-        <div className="w-full max-w-sm bg-white dark:bg-[#1F222A] rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col items-center text-center gap-4 animate-scaleIn">
+        <div 
+          className="w-full max-w-sm bg-white dark:bg-[#1F222A] rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col items-center text-center gap-4 animate-scaleIn relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => onClose?.()}
+            className="absolute top-4 right-4 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-1.5 rounded-full hover:bg-gray-155 dark:hover:bg-[#262A34] transition-all duration-200 z-50 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+
           <AlertCircle size={40} className="text-yellow-500" />
           <h3 className="font-urbanist font-extrabold text-lg text-[#212121] dark:text-white">
             Restart Game?
@@ -278,7 +317,19 @@ export function ChessModal({
 
       {/* Resign Confirmation */}
       {modalType === 'resign_confirm' && (
-        <div className="w-full max-w-sm bg-white dark:bg-[#1F222A] rounded-3xl p-6 border border-red-200 dark:border-red-900/50 shadow-2xl flex flex-col items-center text-center gap-4 animate-scaleIn">
+        <div 
+          className="w-full max-w-sm bg-white dark:bg-[#1F222A] rounded-3xl p-6 border border-red-200 dark:border-red-900/50 shadow-2xl flex flex-col items-center text-center gap-4 animate-scaleIn relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => onClose?.()}
+            className="absolute top-4 right-4 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-1.5 rounded-full hover:bg-gray-155 dark:hover:bg-[#262A34] transition-all duration-200 z-50 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+
           <AlertCircle size={40} className="text-red-500" />
           <h3 className="font-urbanist font-extrabold text-lg text-[#212121] dark:text-white">
             Resign Match?

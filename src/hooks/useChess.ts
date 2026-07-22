@@ -166,6 +166,9 @@ export function useChess() {
     if (gameStatus !== 'playing') return
 
     const tick = setInterval(() => {
+      // Clocks do not run until the first move of the match is made
+      if (moveHistory.length === 0) return
+
       if (turn === 'white') {
         setWhiteTime((prev) => {
           if (prev <= 30 && prev > 0) chessAudio.playTimerTick()
@@ -180,7 +183,7 @@ export function useChess() {
     }, 1000)
 
     return () => clearInterval(tick)
-  }, [turn, gameStatus])
+  }, [turn, gameStatus, moveHistory.length])
 
   // -------------------------------------------------------------------
   // Timeout Game Over Evaluation
@@ -258,7 +261,9 @@ export function useChess() {
       setWinner(winColor)
       const userSideColor = sideRef.current === 'black' ? 'black' : 'white'
       const isUserWinner = modeRef.current === 'pvp' || winColor === userSideColor
-      setActiveModal(isUserWinner ? 'win' : 'lose')
+      setTimeout(() => {
+        setActiveModal(isUserWinner ? 'win' : 'lose')
+      }, 1500)
       chessAudio.playCheckmate()
       return true
     }

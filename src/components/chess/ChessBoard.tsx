@@ -21,6 +21,7 @@ interface ChessBoardProps {
   lastMove?: { from: Square; to: Square } | null
   kingInCheckSquare?: Square | null
   hintMove?: { from: Square; to: Square } | null
+  isCheckmate?: boolean
   disabled?: boolean
   onSquareSelect?: (square: Square) => void
   onMoveExecute?: (from: Square, to: Square) => void
@@ -40,6 +41,7 @@ export const ChessBoard = React.memo(function ChessBoard({
   lastMove = null,
   kingInCheckSquare = null,
   hintMove = null,
+  isCheckmate = false,
   disabled = false,
   onSquareSelect,
   onMoveExecute,
@@ -174,6 +176,7 @@ export const ChessBoard = React.memo(function ChessBoard({
         const isMoveDest = lastMove?.to === squareName
         const isCheck = kingInCheckSquare === squareName
         const isHint = hintMove?.from === squareName || hintMove?.to === squareName
+        const isCheckmateSquare = isCheckmate && isCheck
 
         const isBeingDragged = draggedSquare === squareName
 
@@ -195,7 +198,8 @@ export const ChessBoard = React.memo(function ChessBoard({
             isCapture={isCapture}
             isLastMove={isLast}
             isMoveDest={isMoveDest}
-            isKingInCheck={isCheck}
+            isKingInCheck={isCheck && !isCheckmateSquare}
+            isCheckmate={isCheckmateSquare}
             isHint={isHint}
             disabled={disabled}
             onClick={() => onSquareSelect?.(squareName)}
@@ -208,7 +212,7 @@ export const ChessBoard = React.memo(function ChessBoard({
   }, [
     boardState, theme, pieceTheme, customWhiteColor, customBlackColor,
     rankIndices, fileIndices, selectedSquare, legalMoves, captureMoves,
-    lastMove, kingInCheckSquare, disabled, onSquareSelect, handlePointerDown, draggedSquare, hintMove
+    lastMove, kingInCheckSquare, disabled, onSquareSelect, handlePointerDown, draggedSquare, hintMove, isCheckmate
   ])
 
   return (

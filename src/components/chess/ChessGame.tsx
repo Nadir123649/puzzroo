@@ -195,6 +195,7 @@ export function ChessGame({
                 lastMove={lastMove}
                 kingInCheckSquare={kingInCheckSquare}
                 hintMove={hintMove}
+                isCheckmate={gameStatus === 'checkmate'}
                 disabled={gameStatus !== 'playing' || isAiThinking}
                 onSquareSelect={selectSquare}
                 onMoveExecute={executeMove}
@@ -240,7 +241,8 @@ export function ChessGame({
             isMuted={isMuted}
             isPracticeMode={isPracticeMode}
             onGetHint={getHint}
-            disabled={gameStatus !== 'playing' || isAiThinking}
+            disabled={gameStatus !== 'playing'}
+            isAiThinking={isAiThinking}
           />
         </div>
 

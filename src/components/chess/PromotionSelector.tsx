@@ -63,65 +63,70 @@ export function PromotionSelector({
   }
 
   return (
-    <div
-      style={{
-        left: `${leftPercent}%`,
-        top: isTopRank ? '0%' : 'auto',
-        bottom: isTopRank ? 'auto' : '0%',
-      }}
-      className={cn(
-        'absolute z-40 transition-all duration-200 p-1 flex flex-col items-center select-none pointer-events-auto',
-        visible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
-      )}
-    >
-      <div className="relative flex flex-col items-center bg-white dark:bg-[#1F222A] border-2 border-[#6949FF] rounded-2xl shadow-2xl p-2 gap-1.5">
-        {/* Header with Title & Cancel (X) Button */}
-        <div className="w-full flex items-center justify-between pb-1.5 border-b border-gray-200 dark:border-gray-800 px-1 gap-3">
-          <span className="text-[11px] font-urbanist font-extrabold text-[#6949FF] dark:text-purple-400">
-            Promote Pawn
-          </span>
+    <>
+      {/* Full screen transparent backdrop to catch clicks outside the selector card */}
+      <div
+        className="fixed inset-0 z-40 bg-transparent cursor-default pointer-events-auto"
+        onClick={onCancel}
+      />
+
+      {/* Promotion Selector card absolutely positioned over the pawn's column */}
+      <div
+        style={{
+          left: `${leftPercent}%`,
+          top: isTopRank ? '0%' : 'auto',
+          bottom: isTopRank ? 'auto' : '0%',
+        }}
+        className={cn(
+          'absolute z-50 transition-all duration-200 p-1 flex flex-col items-center select-none pointer-events-auto',
+          visible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative flex flex-col items-center bg-white/80 dark:bg-[#1F222A]/85 backdrop-blur-md border-2 border-[#6949FF] rounded-2xl shadow-2xl p-2 gap-1.5">
+          {/* Close (X) button in top-right corner */}
           {onCancel && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 onCancel()
               }}
-              className="w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md transition-transform active:scale-90 cursor-pointer"
+              className="absolute top-1.5 right-1.5 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#262A34] transition-all duration-200 cursor-pointer z-50"
               title="Cancel Promotion"
             >
-              <X size={12} strokeWidth={3} />
+              <X size={13} strokeWidth={2.5} />
             </button>
           )}
-        </div>
 
-        {/* Piece Selection Buttons */}
-        <div className="flex flex-row items-center gap-1 sm:gap-1.5">
-          {PIECE_OPTIONS.map((pType) => (
-            <button
-              key={pType}
-              onClick={(e) => {
-                e.stopPropagation()
-                onSelect(pType)
-              }}
-              className="flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl hover:bg-[#6949FF]/15 dark:hover:bg-[#6949FF]/25 border border-transparent hover:border-[#6949FF]/40 transition-all duration-150 active:scale-95 cursor-pointer group"
-            >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 transition-transform group-hover:scale-110">
-                <SvgChessPiece
-                  type={pType}
-                  color={color}
-                  theme={pieceTheme}
-                  customWhiteColor={customWhiteColor}
-                  customBlackColor={customBlackColor}
-                />
-              </div>
-              <span className="text-[10px] font-urbanist font-extrabold capitalize mt-0.5 text-[#212121] dark:text-[#FAFAFA]">
-                {pType}
-              </span>
-            </button>
-          ))}
+          {/* Piece Selection Buttons */}
+          <div className="flex flex-row items-center gap-1 sm:gap-1.5 mt-3 px-1">
+            {PIECE_OPTIONS.map((pType) => (
+              <button
+                key={pType}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onSelect(pType)
+                }}
+                className="flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl hover:bg-[#6949FF]/15 dark:hover:bg-[#6949FF]/25 border border-transparent hover:border-[#6949FF]/40 transition-all duration-150 active:scale-95 cursor-pointer group"
+              >
+                <div className="w-9 h-9 sm:w-10 sm:h-10 transition-transform group-hover:scale-110">
+                  <SvgChessPiece
+                    type={pType}
+                    color={color}
+                    theme={pieceTheme}
+                    customWhiteColor={customWhiteColor}
+                    customBlackColor={customBlackColor}
+                  />
+                </div>
+                <span className="text-[10px] font-urbanist font-extrabold capitalize mt-0.5 text-[#212121] dark:text-[#FAFAFA]">
+                  {pType}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 

@@ -15,6 +15,7 @@ interface GameControlsProps {
   isFlipped?: boolean
   isMuted?: boolean
   disabled?: boolean
+  isAiThinking?: boolean
   isPracticeMode?: boolean
   onTogglePracticeMode?: () => void
   onGetHint?: () => void
@@ -31,6 +32,7 @@ export function GameControls({
   isFlipped = false,
   isMuted = false,
   disabled = false,
+  isAiThinking = false,
   isPracticeMode = false,
   onTogglePracticeMode,
   onGetHint,
@@ -52,7 +54,7 @@ export function GameControls({
           {isPracticeMode && (
             <button
               onClick={onGetHint}
-              disabled={disabled}
+              disabled={disabled || isAiThinking}
               className="relative w-8 h-8 rounded-full bg-[#F0EDFF] dark:bg-[#262A34] border border-[#E0D9FF] dark:border-gray-700 flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-[#6949FF]"
               title="Get Practice Hint"
             >
@@ -76,7 +78,7 @@ export function GameControls({
         {/* Undo Move Button */}
         <button
           onClick={onUndo}
-          disabled={disabled}
+          disabled={disabled || isAiThinking}
           className="h-10 px-2 flex items-center justify-center gap-1.5 rounded-full border-2 border-[#6949FF] text-[#6949FF] dark:text-[#FAFAFA] bg-white dark:bg-[#262A34] hover:bg-[#6949FF] hover:text-white font-urbanist font-bold text-xs sm:text-sm transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
         >
           <RotateCcw size={15} className="flex-shrink-0" />
@@ -100,7 +102,7 @@ export function GameControls({
         {/* Restart Match Button */}
         <button
           onClick={onRestart}
-          disabled={disabled}
+          disabled={isAiThinking}
           className="h-10 px-2 flex items-center justify-center gap-1.5 rounded-full border border-gray-300 dark:border-gray-700 text-[#757575] dark:text-[#BDBDBD] hover:bg-gray-100 dark:hover:bg-[#262A34] font-urbanist font-bold text-xs transition-all duration-200 active:scale-95 disabled:opacity-50 whitespace-nowrap"
         >
           <RefreshCw size={14} className="flex-shrink-0" />
@@ -110,7 +112,7 @@ export function GameControls({
         {/* Resign Match Button */}
         <button
           onClick={onResign}
-          disabled={disabled}
+          disabled={disabled || isAiThinking}
           className="h-10 px-2 flex items-center justify-center gap-1.5 rounded-full border border-red-300 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 font-urbanist font-bold text-xs transition-all duration-200 active:scale-95 disabled:opacity-50 whitespace-nowrap"
         >
           <Flag size={14} className="flex-shrink-0" />
