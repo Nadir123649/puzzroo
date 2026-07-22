@@ -198,3 +198,4 @@ export function getDailyPatternPuzzle(difficulty: Difficulty, seed: number): Cro
 }
 
 export { boardPatterns, getRandomPattern, getPatternById }
+

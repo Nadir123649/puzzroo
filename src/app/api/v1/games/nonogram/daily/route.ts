@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { withAuth } from "../route-helpers";
 import { randomPuzzleEngine } from "@/lib/server/puzzles/nonogram/services/RandomPuzzleEngine";
 import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService";
+import { nonogramToResponse } from "@/lib/server/puzzles/nonogram";
 import DailyChallenge from "@/lib/server/models/DailyChallenge";
 import { dailyQuerySchema } from "@/lib/server/puzzles/nonogram/validators";
 import { successResponse } from "@/lib/server/utils/apiResponse";
@@ -47,16 +48,7 @@ export const GET = withAuth(async (req, user) => {
 
   return successResponse({
     date: today,
-    puzzle: {
-      id: puzzle.puzzleId,
-      title: puzzle.title,
-      difficulty: puzzle.difficulty,
-      size: puzzle.size,
-      category: puzzle.category,
-      estimatedTime: puzzle.estimatedTime,
-      rowClues: (puzzle.rowClues as number[][]).map((values) => ({ values })),
-      columnClues: (puzzle.columnClues as number[][]).map((values) => ({ values })),
-    },
+    puzzle: nonogramToResponse(puzzle),
     sessionId: session?._id || challenge.sessionId,
     status: challenge.status,
   });

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { withAuth } from "../route-helpers";
 import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService";
+import { nonogramToResponse } from "@/lib/server/puzzles/nonogram";
 import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle";
 import { successResponse } from "@/lib/server/utils/apiResponse";
 
@@ -26,17 +27,6 @@ export const GET = withAuth(async (req, user) => {
       startedAt: activeSession.startedAt,
       pausedAt: activeSession.pausedAt,
     },
-    puzzle: puzzle
-      ? {
-          id: puzzle.puzzleId,
-          title: puzzle.title,
-          difficulty: puzzle.difficulty,
-          size: puzzle.size,
-          category: puzzle.category,
-          estimatedTime: puzzle.estimatedTime,
-          rowClues: (puzzle.rowClues as number[][]).map((values) => ({ values })),
-          columnClues: (puzzle.columnClues as number[][]).map((values) => ({ values })),
-        }
-      : undefined,
+    puzzle: puzzle ? nonogramToResponse(puzzle) : undefined,
   });
 });

@@ -40,6 +40,7 @@ export class SessionService {
     const session = await PlaySession.create({
       userId: input.userId,
       puzzleId: input.puzzleId,
+      gameId: "nonogram",
       difficulty: input.difficulty,
       grid: emptyGrid,
       status: "active",

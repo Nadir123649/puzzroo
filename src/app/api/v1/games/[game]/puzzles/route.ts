@@ -39,6 +39,10 @@ export async function GET(
       difficulty: d.difficulty,
       title: d.title,
       size: d.size,
+      givens: d.givens,
+      tier: d.tier,
+      category: d.category,
+      estimatedTime: d.estimatedTime,
     }));
 
     const nextCursor =

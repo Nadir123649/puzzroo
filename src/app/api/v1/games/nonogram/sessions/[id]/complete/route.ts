@@ -6,6 +6,7 @@ import { statisticsService } from "@/lib/server/puzzles/nonogram/services/Statis
 import { sessionVerifySchema } from "@/lib/server/puzzles/nonogram/validators";
 import { successResponse } from "@/lib/server/utils/apiResponse";
 import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle";
+import PlaySession from "@/lib/server/models/PlaySession";
 
 export const POST = withAuth(async (req, user, params) => {
   const { id } = params;
@@ -18,9 +19,7 @@ export const POST = withAuth(async (req, user, params) => {
     );
   }
 
-  const session = await (
-    await import("@/lib/server/models/PlaySession")
-  ).default.findById(id);
+  const session = await PlaySession.findById(id);
   if (!session) {
     return Response.json(
       { success: false, payload: { error: { code: "session_not_found", message: "Session not found." } }, timestamp: Date.now() },

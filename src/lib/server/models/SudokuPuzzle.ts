@@ -19,6 +19,7 @@ const sudokuPuzzleSchema = new mongoose.Schema(
     hash: { type: String },
     generatorVersion: { type: String },
     dailyIndex: { type: Number, default: 0 },
+    isDailyEligible: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

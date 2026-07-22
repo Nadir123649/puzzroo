@@ -2,7 +2,7 @@
  * Sudoku Puzzle Data Types
  */
 
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert' | 'expert' | 'expert'
 
 export interface SudokuPuzzleData {
   id: string
