@@ -13,8 +13,21 @@ import { ProfileDropdown } from './ProfileDropdown'
 export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [loggedIn, setLoggedIn] = useState(false)
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+
+  // Initialise synchronously from localStorage so the very first render already
+  // shows the correct auth state — this prevents the "Sign up/Login" ↔ "Subscribe/Profile"
+  // width-difference from flashing and shifting the navbar on every navigation.
+  const [loggedIn, setLoggedIn] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return isLoggedIn()
+  })
+  const [user, setUser] = useState<{ name: string; email: string } | null>(() => {
+    if (typeof window === 'undefined') return null
+    const userData = getCurrentUser()
+    if (!userData) return null
+    return { name: userData.name || userData.username, email: userData.email }
+  })
+
   const [navbarMounted, setNavbarMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
@@ -72,13 +85,12 @@ export function Navbar() {
                 }
               }}
             >
-              <Image
+              <img
                 src={images.logo}
                 alt="Puzzroo Logo"
                 width={32}
                 height={32}
                 className="w-6 h-6 md:w-8 md:h-8 rounded-lg"
-                priority
               />
 
               <span className="font-urbanist text-[24px] font-extrabold text-[clamp(20px,2.5vw,40px)] tracking-tight text-[#181A20] dark:text-white transition-colors duration-300">
@@ -110,49 +122,53 @@ export function Navbar() {
                 </>
               )
             ) : (
-              <div className="h-[38px] w-[180px]" />
+              <>
+                <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                  Sign up
+                </Link>
+
+                <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                  Login
+                </Link>
+              </>
             )}
 
-            {navbarMounted && (
-              <button
-                onClick={toggleTheme}
-                className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
-                aria-label="Toggle theme"
-              >
-                <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
-                  {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-                </span>
-                <Image
-                  src={images.darkIcon}
-                  alt="Theme icon"
-                  width={20}
-                  height={20}
-                  className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
-                    }`}
-                />
-              </button>
-            )}
+            <button
+              onClick={toggleTheme}
+              className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
+              aria-label="Toggle theme"
+            >
+              <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
+                {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+              </span>
+              <img
+                src={images.darkIcon}
+                alt="Theme icon"
+                width={20}
+                height={20}
+                className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
+                  }`}
+              />
+            </button>
 
           </div>
 
           {/* RIGHT: Mobile Actions - Theme + Hamburger */}
           <div className="flex md:hidden items-center gap-2 ml-[20px]">
-            {navbarMounted && (
-              <button
-                onClick={toggleTheme}
-                className="flex items-center justify-center w-8 h-8 rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
-                aria-label="Toggle theme"
-              >
-                <Image
-                  src={images.darkIcon}
-                  alt="Theme icon"
-                  width={20}
-                  height={20}
-                  className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
-                    }`}
-                />
-              </button>
-            )}
+            <button
+              onClick={toggleTheme}
+              className="flex items-center justify-center w-8 h-8 rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
+              aria-label="Toggle theme"
+            >
+              <img
+                src={images.darkIcon}
+                alt="Theme icon"
+                width={20}
+                height={20}
+                className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
+                  }`}
+              />
+            </button>
 
             {/* Hamburger Menu */}
             <button

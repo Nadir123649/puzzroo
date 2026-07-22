@@ -52,16 +52,13 @@ function ChessContent() {
   }
 
   return (
-    <>
-      <ChessHero selectedDifficulty={difficulty} />
-      <ChessGame
-        initialDifficulty={difficulty}
-        initialBoardTheme={initialBoardTheme}
-        initialPieceTheme={initialPieceTheme}
-        initialCustomWhite={customWhite}
-        initialCustomBlack={customBlack}
-      />
-    </>
+    <ChessGame
+      initialDifficulty={difficulty}
+      initialBoardTheme={initialBoardTheme}
+      initialPieceTheme={initialPieceTheme}
+      initialCustomWhite={customWhite}
+      initialCustomBlack={customBlack}
+    />
   )
 }
 

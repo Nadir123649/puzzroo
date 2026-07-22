@@ -1,6 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { useRef, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { getBoardTheme, BoardThemeId } from '@/utils/chess'
 import { PieceThemeId, PIECE_THEMES } from '@/components/chess/SvgChessPiece'
 import { ChessBoard } from '@/components/chess/ChessBoard'
@@ -9,6 +10,7 @@ import { MoveHistory } from '@/components/chess/MoveHistory'
 import { CapturedPieces } from '@/components/chess/CapturedPieces'
 import { GameControls } from '@/components/chess/GameControls'
 import { ChessModal } from '@/components/chess/ChessModal'
+import { PromotionSelector } from '@/components/chess/PromotionSelector'
 import { useChess, formatTime } from '@/hooks/useChess'
 
 interface ChessGameProps {
@@ -40,6 +42,7 @@ export function ChessGame({
     legalMoves,
     captureMoves,
     lastMove,
+    inCheck,
     kingInCheckSquare,
     moveHistory,
     reviewIndex,
@@ -48,11 +51,16 @@ export function ChessGame({
     isMuted,
     isAiThinking,
     activeModal,
+    pendingPromotion,
     whiteTime,
     blackTime,
+    isPracticeMode,
+    setIsPracticeMode,
+    hintMove,
     selectSquare,
     executeMove,
     handleSelectPromotion,
+    cancelPromotion,
     undoMove,
     restartGame,
     resignGame,
@@ -60,13 +68,35 @@ export function ChessGame({
     toggleSound,
     flipBoard,
     setActiveModal,
+    getHint,
   } = useChess()
+
+  const router = useRouter()
+  const boardWrapperRef = useRef<HTMLDivElement>(null)
+  const [showCheckNotif, setShowCheckNotif] = useState(false)
+
+  const handleResignConfirm = () => {
+    resignGame()
+    router.push('/game/chess')
+  }
+
+  useEffect(() => {
+    if (inCheck) {
+      setShowCheckNotif(true)
+      const t = setTimeout(() => setShowCheckNotif(false), 1800)
+      return () => clearTimeout(t)
+    } else {
+      setShowCheckNotif(false)
+    }
+  }, [inCheck])
 
   const activeTheme = getBoardTheme(boardThemeId || initialBoardTheme)
   const activePieceTheme = PIECE_THEMES[pieceThemeId || initialPieceTheme] || PIECE_THEMES.classic
 
   const isPlayer1Turn = turn === 'white'
   const isPlayer2Turn = turn === 'black'
+  const isLowTimeWhite = whiteTime > 0 && whiteTime <= 30
+  const isLowTimeBlack = blackTime > 0 && blackTime <= 30
 
   // Top / Bottom Player Card Labels & Timers
   const topPlayerName = mode === 'pve' ? `Computer (${difficulty.toUpperCase()})` : 'Player 2 (Black)'
@@ -84,122 +114,121 @@ export function ChessGame({
   const bottomTimeFormatted = formatTime(bottomColor === 'white' ? whiteTime : blackTime)
 
   return (
-    <div className="w-full px-[20px] pb-10">
-      {/* Main Game Grid Layout */}
-      <div className="w-full max-w-[1380px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <div className="w-full px-4 sm:px-6 md:px-8 pb-6">
+      {/* Main Game Flex Layout (Optimized side widths, centered board) */}
+      <div className="w-full max-w-[1380px] mx-auto flex flex-col lg:flex-row gap-5 xl:gap-6 justify-center items-center lg:items-stretch">
         
-        {/* Left / Main Board Area (Cols 1-7 on Desktop) */}
-        <div className="lg:col-span-7 xl:col-span-8 flex flex-col items-center gap-4 w-full">
-          
+        {/* Left Column: Player Cards & Captured Pieces */}
+        <div className="flex-grow flex-shrink basis-0 min-w-[280px] flex flex-col gap-4 sm:gap-5 w-full">
           {/* Top Player Card (Opponent / Black) */}
-          <PlayerCard
-            name={topPlayerName}
-            title={topPlayerTitle}
-            rating={topPlayerRating}
-            color={topColor}
-            difficulty={mode === 'pve' ? difficulty.toUpperCase() : undefined}
-            isActive={topIsActive}
-            timePlaceholder={isAiThinking ? 'Thinking...' : topTimeFormatted}
-          />
+          <div className="flex flex-col gap-2">
+            <PlayerCard
+              name={topPlayerName}
+              title={topPlayerTitle}
+              rating={topPlayerRating}
+              color={topColor}
+              difficulty={mode === 'pve' ? difficulty.toUpperCase() : undefined}
+              isActive={topIsActive}
+              timePlaceholder={topTimeFormatted}
+              lowTime={topColor === 'white' ? isLowTimeWhite : isLowTimeBlack}
+            />
 
-          {/* Active Turn Indicator Banner */}
-          <div className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#F0EDFF] dark:bg-[#1F222A] border border-[#E0D9FF] dark:border-[#35383F]">
-            <div className="flex items-center gap-2">
-              <span className={`w-2.5 h-2.5 rounded-full ${turn === 'white' ? 'bg-white shadow border border-gray-400' : 'bg-gray-900 border border-gray-600'}`} />
-              <span className="font-urbanist font-extrabold text-xs sm:text-sm text-[#212121] dark:text-[#FAFAFA]">
-                {mode === 'pve'
-                  ? (side === turn ? `Your Turn (${turn.toUpperCase()})` : `Computer's Turn (${turn.toUpperCase()})`)
-                  : `${turn.toUpperCase()} to Move`}
-              </span>
-            </div>
-            {isAiThinking && (
-              <span className="text-[11px] font-urbanist font-bold text-[#6949FF] dark:text-purple-400 animate-pulse">
-                Computer Thinking...
-              </span>
-            )}
-          </div>
-
-          {/* Captured Pieces by White (Opponent's lost pieces) */}
-          <CapturedPieces
-            pieces={capturedPieces.byWhite}
-            color="black"
-            pieceTheme={activePieceTheme}
-            customWhiteColor={initialCustomWhite}
-            customBlackColor={initialCustomBlack}
-            scoreAdvantage={capturedPieces.whiteScore > capturedPieces.blackScore ? capturedPieces.whiteScore - capturedPieces.blackScore : 0}
-            className="hidden sm:flex flex-col"
-          />
-
-          {/* The 8x8 Interactive Chess Board */}
-          <div className="w-full flex justify-center py-2 relative">
-            <ChessBoard
-              boardState={boardGrid}
-              theme={activeTheme}
+            <CapturedPieces
+              pieces={topColor === 'black' ? capturedPieces.byWhite : capturedPieces.byBlack}
+              color={topColor === 'black' ? 'black' : 'white'}
               pieceTheme={activePieceTheme}
               customWhiteColor={initialCustomWhite}
               customBlackColor={initialCustomBlack}
-              isFlipped={isFlipped}
-              selectedSquare={selectedSquare}
-              legalMoves={legalMoves}
-              captureMoves={captureMoves}
-              lastMove={lastMove}
-              kingInCheckSquare={kingInCheckSquare}
-              disabled={gameStatus !== 'playing' || isAiThinking}
-              onSquareSelect={selectSquare}
-              onMoveExecute={executeMove}
+              scoreAdvantage={
+                topColor === 'black'
+                  ? (capturedPieces.whiteScore > capturedPieces.blackScore ? capturedPieces.whiteScore - capturedPieces.blackScore : 0)
+                  : (capturedPieces.blackScore > capturedPieces.whiteScore ? capturedPieces.blackScore - capturedPieces.whiteScore : 0)
+              }
+              className="flex flex-col w-full min-h-[75px]"
             />
-
-            {/* Thinking Overlay Badge */}
-            {isAiThinking && (
-              <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-[#6949FF] text-white px-4 py-1.5 rounded-full font-urbanist font-extrabold text-xs shadow-lg animate-pulse z-30">
-                Computer Thinking...
-              </div>
-            )}
           </div>
-
-          {/* Captured Pieces by Black (Player's lost pieces) */}
-          <CapturedPieces
-            pieces={capturedPieces.byBlack}
-            color="white"
-            pieceTheme={activePieceTheme}
-            customWhiteColor={initialCustomWhite}
-            customBlackColor={initialCustomBlack}
-            scoreAdvantage={capturedPieces.blackScore > capturedPieces.whiteScore ? capturedPieces.blackScore - capturedPieces.whiteScore : 0}
-            className="hidden sm:flex flex-col"
-          />
 
           {/* Bottom Player Card (You / White) */}
-          <PlayerCard
-            name={bottomPlayerName}
-            title={bottomPlayerTitle}
-            rating={bottomPlayerRating}
-            color={bottomColor}
-            isActive={bottomIsActive}
-            timePlaceholder={bottomTimeFormatted}
-          />
-        </div>
-
-        {/* Right / Side Panels Area (Cols 8-12 on Desktop) */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4 w-full">
-          {/* Mobile Only: Captured Pieces */}
-          <div className="flex sm:hidden flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <CapturedPieces
-              pieces={capturedPieces.byWhite}
-              color="black"
+              pieces={bottomColor === 'white' ? capturedPieces.byBlack : capturedPieces.byWhite}
+              color={bottomColor === 'white' ? 'white' : 'black'}
               pieceTheme={activePieceTheme}
               customWhiteColor={initialCustomWhite}
               customBlackColor={initialCustomBlack}
-              scoreAdvantage={capturedPieces.whiteScore > capturedPieces.blackScore ? capturedPieces.whiteScore - capturedPieces.blackScore : 0}
+              scoreAdvantage={
+                bottomColor === 'white'
+                  ? (capturedPieces.blackScore > capturedPieces.whiteScore ? capturedPieces.blackScore - capturedPieces.whiteScore : 0)
+                  : (capturedPieces.whiteScore > capturedPieces.blackScore ? capturedPieces.whiteScore - capturedPieces.blackScore : 0)
+              }
+              className="flex flex-col w-full min-h-[75px]"
             />
-            <CapturedPieces
-              pieces={capturedPieces.byBlack}
-              color="white"
-              pieceTheme={activePieceTheme}
-              customWhiteColor={initialCustomWhite}
-              customBlackColor={initialCustomBlack}
-              scoreAdvantage={capturedPieces.blackScore > capturedPieces.whiteScore ? capturedPieces.blackScore - capturedPieces.whiteScore : 0}
+
+            <PlayerCard
+              name={bottomPlayerName}
+              title={bottomPlayerTitle}
+              rating={bottomPlayerRating}
+              color={bottomColor}
+              isActive={bottomIsActive}
+              timePlaceholder={bottomTimeFormatted}
+              lowTime={bottomColor === 'white' ? isLowTimeWhite : isLowTimeBlack}
             />
           </div>
+        </div>
+
+        {/* Middle Column: Interactive Chess Board */}
+        <div className="w-full max-w-[500px] lg:flex-shrink-0 flex flex-col items-center">
+          <div className="w-full flex flex-col items-center gap-2">
+            
+            {/* The 8x8 Interactive Chess Board */}
+            <div ref={boardWrapperRef} className="w-full flex justify-center relative">
+              <ChessBoard
+                boardState={boardGrid}
+                theme={activeTheme}
+                pieceTheme={activePieceTheme}
+                customWhiteColor={initialCustomWhite}
+                customBlackColor={initialCustomBlack}
+                isFlipped={isFlipped}
+                selectedSquare={selectedSquare}
+                legalMoves={legalMoves}
+                captureMoves={captureMoves}
+                lastMove={lastMove}
+                kingInCheckSquare={kingInCheckSquare}
+                hintMove={hintMove}
+                isCheckmate={gameStatus === 'checkmate'}
+                disabled={gameStatus !== 'playing' || isAiThinking}
+                onSquareSelect={selectSquare}
+                onMoveExecute={executeMove}
+              />
+
+              {/* Promotion Selector */}
+              {activeModal === 'promotion' && pendingPromotion && (
+                <PromotionSelector
+                  toSquare={pendingPromotion.to}
+                  color={turn}
+                  pieceTheme={activePieceTheme}
+                  customWhiteColor={initialCustomWhite}
+                  customBlackColor={initialCustomBlack}
+                  isMounted={true}
+                  isFlipped={isFlipped}
+                  onSelect={handleSelectPromotion}
+                  onCancel={cancelPromotion}
+                />
+              )}
+            </div>
+
+          </div>
+        </div>
+
+        {/* Right Column: Match Notation & Controls */}
+        <div className="flex-grow flex-shrink basis-0 min-w-[280px] flex flex-col gap-4 sm:gap-5 w-full">
+          {/* Move History Panel */}
+          <MoveHistory
+            moves={moveHistory}
+            reviewIndex={reviewIndex}
+            onReviewMove={reviewHistoryMove}
+            mode={mode}
+          />
 
           {/* Gameplay Actions Panel */}
           <GameControls
@@ -210,33 +239,27 @@ export function ChessGame({
             onToggleSound={toggleSound}
             isFlipped={isFlipped}
             isMuted={isMuted}
-            disabled={gameStatus !== 'playing' || isAiThinking}
-          />
-
-          {/* Move History Panel */}
-          <MoveHistory
-            moves={moveHistory}
-            reviewIndex={reviewIndex}
-            onReviewMove={reviewHistoryMove}
+            isPracticeMode={isPracticeMode}
+            onGetHint={getHint}
+            disabled={gameStatus !== 'playing'}
+            isAiThinking={isAiThinking}
           />
         </div>
 
       </div>
 
       {/* Game Modals (Promotion, Win, Lose, Draw, Confirmations) */}
-      <ChessModal
-        isOpen={activeModal !== 'none'}
+       <ChessModal
+        isOpen={activeModal !== 'none' && activeModal !== 'promotion'}
         modalType={activeModal}
-        turn={turn}
         winner={winner}
         drawReason={drawReason}
         difficulty={difficulty}
-        pieceTheme={activePieceTheme}
-        customWhiteColor={initialCustomWhite}
-        customBlackColor={initialCustomBlack}
-        onSelectPromotion={handleSelectPromotion}
+        totalMoves={moveHistory.length}
+        gameStatus={gameStatus}
+        mode={mode}
         onRestartConfirm={restartGame}
-        onResignConfirm={resignGame}
+        onResignConfirm={handleResignConfirm}
         onPlayAgain={restartGame}
         onClose={() => setActiveModal('none')}
       />
