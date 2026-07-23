@@ -59,6 +59,9 @@ export function SudokuBoard({
       className={`grid grid-cols-9 ${
         mobile ? 'w-full' : 'w-[457.5px]'
       } aspect-square border-[3.03px] border-[#212121] dark:border-[#FAFAFA]`}
+      style={{
+        gridTemplateRows: 'repeat(9, 1fr)',
+      }}
       role="grid"
       aria-label="Sudoku board"
     >

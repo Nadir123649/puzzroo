@@ -61,6 +61,7 @@ export function SudokuCell({
       onClick={handleClick}
       onMouseDown={(e) => e.preventDefault()}
       className={`
+        w-full h-full
         flex items-center justify-center
         border-[1.52px] border-[#424242] dark:border-[#FAFAFA]
         font-urbanist font-bold ${textSizeClass} leading-[120%]

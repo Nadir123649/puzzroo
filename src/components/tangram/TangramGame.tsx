@@ -30,6 +30,9 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   const searchParams = useSearchParams()
   const difficulty = (searchParams?.get('difficulty') as TangramDifficulty) || 'easy'
   
+  const dateParam = searchParams?.get('date')
+  const isFromPastPuzzles = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
+  
   const [isResetting, setIsResetting] = useState(false)
   const [loaderText, setLoaderText] = useState('Loading game...')
   const [mobileBoardWidth, setMobileBoardWidth] = useState(350)
@@ -40,6 +43,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
   const {
     puzzle,
+    loading,
     pieces,
     selectedPiece,
     gameStatus,
@@ -62,6 +66,33 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     hasRedo,
     commitHistory
   } = usePolygonTangram(difficulty)
+
+  // Prevent scroll when loading overlay is active
+  useEffect(() => {
+    if (isResetting || loading) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.overflowY = 'hidden'
+      document.body.style.touchAction = 'none'
+      document.documentElement.style.overflow = 'hidden'
+      document.documentElement.style.overflowY = 'hidden'
+      document.documentElement.style.touchAction = 'none'
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.overflowY = ''
+      document.body.style.touchAction = ''
+      document.documentElement.style.overflow = ''
+      document.documentElement.style.overflowY = ''
+      document.documentElement.style.touchAction = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.overflowY = ''
+      document.body.style.touchAction = ''
+      document.documentElement.style.overflow = ''
+      document.documentElement.style.overflowY = ''
+      document.documentElement.style.touchAction = ''
+    }
+  }, [isResetting, loading])
 
   const [isModalVisible, setIsModalVisible] = useState(false)
 
@@ -110,14 +141,22 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     setIsResetting(false)
   }
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setIsModalVisible(false)
+    setLoaderText('Replaying game...')
+    setIsResetting(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
     replayPuzzle()
+    setIsResetting(false)
   }
 
-  const handleReplay = () => {
+  const handleReplay = async () => {
     setIsModalVisible(false)
+    setLoaderText('Replaying game...')
+    setIsResetting(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
     replayPuzzle()
+    setIsResetting(false)
   }
 
   const handleUndo = () => {
@@ -176,7 +215,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   const progressPercent = totalPieces > 0 ? Math.round((snappedCount / totalPieces) * 100) : 0
 
   return (
-    <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative">
+    <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}>
       <div className="w-full max-w-[1380px] mx-auto px-[20px] flex justify-center overflow-visible">
         <div className="w-full flex flex-col gap-[20px] pb-0 md:pb-[10px] max-w-full overflow-visible">
 
@@ -355,14 +394,24 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                   </button>
                 )}
 
-                {/* New Game / Replay Button */}
-                <button
-                  onClick={mode === 'normal' ? handleNewGame : handleReplay}
-                  disabled={isResetting}
-                  className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {mode === 'normal' ? 'New Game' : 'Replay'}
-                </button>
+                {/* Replay Game / New Game / Replay Button */}
+                {isFromPastPuzzles ? (
+                  <button
+                    onClick={handleReplay}
+                    disabled={isResetting}
+                    className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    Replay Game
+                  </button>
+                ) : (
+                  <button
+                    onClick={mode === 'normal' ? handleNewGame : handleReplay}
+                    disabled={isResetting}
+                    className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {mode === 'normal' ? 'New Game' : 'Replay'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -510,7 +559,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
       </div>
 
       {/* Loading Overlay */}
-      <GameLoader isOpen={isResetting} text={loaderText} />
+      <GameLoader isOpen={isResetting || loading} text={loaderText} />
 
       {/* Completion Modal */}
       <TangramModal
@@ -532,7 +581,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
         timeRemaining={timeRemaining}
         isTimeUp={gameStatus === 'lost'}
         onPlayAgain={handleRetry}
-        onNewPuzzle={mode === 'normal' ? handleNewGame : undefined}
+        onNewPuzzle={mode === 'normal' && !isFromPastPuzzles ? handleNewGame : undefined}
         onBackToLobby={handleBackToLobby}
         onClose={() => setIsModalVisible(false)}
       />

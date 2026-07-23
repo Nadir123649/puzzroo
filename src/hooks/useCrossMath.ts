@@ -24,6 +24,15 @@ import {
   clearGameState,
 } from '@shared/lib/crossmath/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
+import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
+
+function getTodayDateParam(): string {
+  const d = new Date()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const y = String(d.getFullYear()).slice(-2)
+  return `${m}-${day}-${y}`
+}
 
 const PUZZLE_CACHE_KEY = 'puzzroo_crossmath_cache_by_id'
 
@@ -139,7 +148,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     value: number
     timestamp: number
   }>>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   
   const [history, setHistory] = useState<any[]>([])
 
@@ -291,6 +300,17 @@ export function useCrossMath(initialPuzzleId?: string) {
     }
   }, [board, difficulty, mistakes, score, time, gameStatus, currentPuzzle])
 
+  // Update challenge status to in-progress when game is loaded
+  useEffect(() => {
+    if (board.length > 0 && isDailyChallenge) {
+      const challengeId = dateParam ? `daily-cross-math-${dateParam}` : `daily-cross-math-${getTodayDateParam()}`
+      const currentStatus = getChallengeStatus(challengeId)
+      if (currentStatus !== 'completed') {
+        updateChallengeStatus(challengeId, 'in-progress')
+      }
+    }
+  }, [board.length, isDailyChallenge, dateParam])
+
   // Timer
   useEffect(() => {
     if (gameStatus === 'playing') {
@@ -437,6 +457,9 @@ export function useCrossMath(initialPuzzleId?: string) {
         score: score,
         difficulty: difficulty,
       })
+      if (isDailyChallenge) {
+        updateChallengeStatus(puzzleId, 'completed')
+      }
       reportWin(puzzleId, difficulty, score, time, mistakes)
       
       // Clear selection on win
@@ -904,6 +927,9 @@ export function useCrossMath(initialPuzzleId?: string) {
           score: winScore,
           difficulty: difficulty,
         })
+        if (isDailyChallenge) {
+          updateChallengeStatus(puzzleId, 'completed')
+        }
         reportWin(puzzleId, difficulty, winScore, time, mistakes)
         
         // Clear selection on win

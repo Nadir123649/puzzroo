@@ -37,9 +37,12 @@ async function refreshAccessToken(): Promise<string | null> {
 
 export async function api<T = any>(
   path: string,
-  options: RequestInit & { params?: Record<string, string | number | boolean | undefined> } = {}
+  options: RequestInit & { 
+    params?: Record<string, string | number | boolean | undefined>
+    suppressToast?: boolean
+  } = {}
 ): Promise<{ success: boolean; payload: T; timestamp?: number }> {
-  const { params, ...fetchOptions } = options;
+  const { params, suppressToast, ...fetchOptions } = options;
   let url = path.startsWith("/api") ? `${API_BASE}${path}` : path;
 
   if (params) {

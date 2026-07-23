@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from '../../hooks/use-theme'
@@ -9,6 +8,8 @@ import { images } from '@/lib/utils'
 import { isLoggedIn, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
+
+let globalMounted = false
 
 export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
@@ -18,29 +19,27 @@ export function Navbar() {
   // shows the correct auth state — this prevents the "Sign up/Login" ↔ "Subscribe/Profile"
   // width-difference from flashing and shifting the navbar on every navigation.
   const [loggedIn, setLoggedIn] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false
+    if (typeof window === 'undefined' || !globalMounted) return false
     return isLoggedIn()
   })
   const [user, setUser] = useState<{ name: string; email: string } | null>(() => {
-    if (typeof window === 'undefined') return null
+    if (typeof window === 'undefined' || !globalMounted) return null
     const userData = getCurrentUser()
     if (!userData) return null
     return { name: userData.name || userData.username, email: userData.email }
   })
 
-  const [navbarMounted, setNavbarMounted] = useState(false)
+  const [navbarMounted, setNavbarMounted] = useState(globalMounted)
   const pathname = usePathname()
   const router = useRouter()
 
-  const [authKey, setAuthKey] = useState(0)
-
   useEffect(() => {
+    globalMounted = true
     setNavbarMounted(true)
 
     const checkAuth = () => {
       const isAuth = isLoggedIn()
       setLoggedIn(isAuth)
-      setAuthKey(prev => prev + 1)
 
       if (isAuth) {
         const userData = getCurrentUser()
@@ -62,6 +61,23 @@ export function Navbar() {
     return () => {
       window.removeEventListener('storage', checkAuth)
       window.removeEventListener('auth-change', checkAuth)
+    }
+  }, [])
+
+  // Sync auth state on page navigation
+  useEffect(() => {
+    const isAuth = isLoggedIn()
+    setLoggedIn(isAuth)
+    if (isAuth) {
+      const userData = getCurrentUser()
+      if (userData) {
+        setUser({
+          name: userData.name || userData.username,
+          email: userData.email,
+        })
+      }
+    } else {
+      setUser(null)
     }
   }, [pathname])
 
@@ -100,27 +116,15 @@ export function Navbar() {
           </div>
 
           {/* RIGHT: Desktop Actions */}
-          <div key={authKey} className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
-            {navbarMounted ? (
-              loggedIn && user ? (
-                <>
-                  <Link href="/subscription" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                    Subscribe Us
-                  </Link>
+          <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
+            {(loggedIn && user) ? (
+              <>
+                <Link href="/subscription" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                  Subscribe Us
+                </Link>
 
-                  <ProfileDropdown userName={user.name} userEmail={user.email} />
-                </>
-              ) : (
-                <>
-                  <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                    Sign up
-                  </Link>
-
-                  <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                    Login
-                  </Link>
-                </>
-              )
+                <ProfileDropdown userName={user.name} userEmail={user.email} />
+              </>
             ) : (
               <>
                 <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">

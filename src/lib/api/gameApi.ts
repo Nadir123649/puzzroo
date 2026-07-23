@@ -42,6 +42,7 @@ export const gameApi = {
   async getPuzzle(game: GameId, params: GetPuzzleParams = {}) {
     const res = await api<unknown>(`/api/v1/games/${game}/puzzle`, {
       params: params as Record<string, string | number | boolean | undefined>,
+      suppressToast: true,
     });
     return res.payload as
       | SudokuPuzzleResponse
@@ -51,7 +52,9 @@ export const gameApi = {
   },
 
   async getPuzzleById(game: GameId, id: string) {
-    const res = await api<unknown>(`/api/v1/games/${game}/puzzle/${encodeURIComponent(id)}`);
+    const res = await api<unknown>(`/api/v1/games/${game}/puzzle/${encodeURIComponent(id)}`, {
+      suppressToast: true,
+    });
     return res.payload as
       | SudokuPuzzleResponse
       | NonogramPuzzleResponse
@@ -61,7 +64,10 @@ export const gameApi = {
 
   async getDailyPuzzle(game: GameId, date?: string) {
     const params = date ? { date } : undefined;
-    const res = await api<unknown>(`/api/v1/games/${game}/daily`, { params });
+    const res = await api<unknown>(`/api/v1/games/${game}/daily`, {
+      params,
+      suppressToast: true,
+    });
     return res.payload as
       | SudokuPuzzleResponse
       | NonogramPuzzleResponse
