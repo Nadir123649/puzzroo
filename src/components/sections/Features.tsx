@@ -45,7 +45,7 @@ export function Features() {
             </h2>
           </div>
 
-          {/* Mobile: Feature Mobile Image - Max width 395px centered */}
+          {/* Mobile: Feature Mobile Image - Max width 395px in centered */}
           <div className="w-full">
             <Image
               src={images.featureMobile}
