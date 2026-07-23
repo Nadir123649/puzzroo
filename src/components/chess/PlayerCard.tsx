@@ -14,6 +14,7 @@ interface PlayerCardProps {
   isActive?: boolean
   difficulty?: string
   timePlaceholder?: string
+  lowTime?: boolean
   className?: string
 }
 
@@ -26,6 +27,7 @@ export function PlayerCard({
   isActive = false,
   difficulty,
   timePlaceholder = '10:00',
+  lowTime = false,
   className,
 }: PlayerCardProps) {
   const isWhite = color === 'white'
@@ -33,9 +35,9 @@ export function PlayerCard({
   return (
     <div
       className={cn(
-        'w-full bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 transition-all duration-300 flex items-center justify-between gap-3',
+        'w-full bg-[#F0EDFF] dark:bg-[#1F222A] rounded-xl sm:rounded-2xl p-2 sm:p-3 border-2 transition-colors duration-200 flex items-center justify-between gap-3',
         isActive
-          ? 'border-[#6949FF] shadow-lg shadow-[#6949FF]/15 dark:shadow-[#6949FF]/20 ring-2 ring-[#6949FF]/30'
+          ? 'border-[#6949FF] shadow-md'
           : 'border-transparent dark:border-[#35383F]',
         className
       )}
@@ -56,34 +58,26 @@ export function PlayerCard({
               {name.slice(0, 2).toUpperCase()}
             </span>
           )}
-
-          {/* Color Badge indicator */}
-          <span
-            className={cn(
-              'absolute bottom-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-white dark:border-[#1F222A]',
-              isWhite ? 'bg-white shadow-md' : 'bg-[#181A20]'
-            )}
-            title={`${color} pieces`}
-          />
         </div>
 
         {/* Name, Title, Rating */}
         <div className="flex flex-col min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-nowrap min-w-0">
             {title && (
-              <span className="bg-[#6949FF] text-white text-[10px] font-urbanist font-bold px-1.5 py-0.5 rounded">
+              <span className="bg-[#6949FF] text-white text-[10px] font-urbanist font-bold px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap">
                 {title}
               </span>
             )}
-            <h4 className="font-urbanist font-bold text-sm sm:text-base text-[#212121] dark:text-[#FAFAFA] truncate">
+            <h4 className="font-urbanist font-bold text-xs sm:text-sm md:text-base text-[#212121] dark:text-[#FAFAFA] truncate whitespace-nowrap">
               {name}
             </h4>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-urbanist text-[#757575] dark:text-[#BDBDBD] truncate">
-            {rating && <span>Rating: {rating}</span>}
+          <div className="flex items-center gap-2 text-[11px] sm:text-xs font-urbanist text-[#757575] dark:text-[#BDBDBD] truncate whitespace-nowrap">
+            <span className={cn('inline-block w-2.5 h-2.5 rounded-full border border-gray-400 flex-shrink-0', isWhite ? 'bg-white shadow-sm' : 'bg-gray-900')} title={`${color} pieces`} />
+            {rating && <span className="whitespace-nowrap">Rating: {rating}</span>}
             {difficulty && (
-              <span className="bg-purple-100 dark:bg-purple-900/40 text-[#6949FF] dark:text-purple-300 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+              <span className="bg-purple-100 dark:bg-purple-900/40 text-[#6949FF] dark:text-purple-300 text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
                 {difficulty}
               </span>
             )}
@@ -93,18 +87,26 @@ export function PlayerCard({
 
       {/* Right: Active Indicator & Timer Placeholder */}
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-        {/* Active turn badge */}
-        {isActive && (
-          <span className="hidden sm:inline-flex items-center gap-1 bg-[#22C55E]/10 text-[#22C55E] text-xs font-urbanist font-semibold px-2.5 py-1 rounded-full animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
-            Turn
-          </span>
-        )}
+        {/* Active turn badge with fixed layout dimensions */}
+        <span
+          className={cn(
+            'hidden sm:inline-flex items-center gap-1 bg-[#22C55E]/15 text-[#22C55E] text-xs font-urbanist font-semibold px-2.5 py-1 rounded-full transition-opacity duration-200',
+            isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          )}
+        >
+          <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
+          Turn
+        </span>
 
         {/* Timer Placeholder */}
-        <div className="bg-white dark:bg-[#262A34] px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-1.5">
+        <div className={cn(
+          'px-3 py-1.5 rounded-lg border shadow-sm flex items-center gap-1.5 transition-all duration-300',
+          lowTime
+            ? 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 animate-pulse'
+            : 'bg-white dark:bg-[#262A34] border-gray-200 dark:border-gray-700'
+        )}>
           <svg
-            className="w-4 h-4 text-[#757575] dark:text-[#BDBDBD]"
+            className={cn('w-4 h-4', lowTime ? 'text-red-500' : 'text-[#757575] dark:text-[#BDBDBD]')}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -116,7 +118,10 @@ export function PlayerCard({
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <span className="font-mono font-bold text-sm sm:text-base text-[#212121] dark:text-[#FAFAFA]">
+          <span className={cn(
+            'font-mono font-bold text-sm sm:text-base',
+            lowTime ? 'text-red-600 dark:text-red-400' : 'text-[#212121] dark:text-[#FAFAFA]'
+          )}>
             {timePlaceholder}
           </span>
         </div>

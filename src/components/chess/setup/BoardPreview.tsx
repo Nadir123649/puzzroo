@@ -6,8 +6,9 @@ import { PieceThemeId, PIECE_THEMES } from '../SvgChessPiece'
 import { ChessBoard } from '../ChessBoard'
 import { cn } from '@/lib/utils'
 
-// Sample preview board state showcasing key pieces
+// Queen's Gambit Declined Opening Position (1. d4 d5  2. c4 e6  3. Nc3 Nf6)
 const SAMPLE_PREVIEW_GRID: BoardGrid = [
+  // Rank 8 (Row 0)
   [
     { type: 'rook', color: 'black' },
     { type: 'knight', color: 'black' },
@@ -15,33 +16,40 @@ const SAMPLE_PREVIEW_GRID: BoardGrid = [
     { type: 'queen', color: 'black' },
     { type: 'king', color: 'black' },
     { type: 'bishop', color: 'black' },
-    { type: 'knight', color: 'black' },
+    null,
     { type: 'rook', color: 'black' },
   ],
+  // Rank 7 (Row 1)
   [
     { type: 'pawn', color: 'black' },
     { type: 'pawn', color: 'black' },
     { type: 'pawn', color: 'black' },
-    { type: 'pawn', color: 'black' },
-    { type: 'pawn', color: 'black' },
+    null,
+    null,
     { type: 'pawn', color: 'black' },
     { type: 'pawn', color: 'black' },
     { type: 'pawn', color: 'black' },
   ],
-  [null, null, null, null, null, null, null, null],
-  [null, null, null, { type: 'pawn', color: 'white' }, null, null, null, null],
-  [null, null, { type: 'knight', color: 'white' }, null, { type: 'pawn', color: 'black' }, null, null, null],
-  [null, null, null, null, null, null, null, null],
+  // Rank 6 (Row 2)
+  [null, null, null, null, { type: 'pawn', color: 'black' }, { type: 'knight', color: 'black' }, null, null],
+  // Rank 5 (Row 3)
+  [null, null, null, { type: 'pawn', color: 'black' }, null, null, null, null],
+  // Rank 4 (Row 4)
+  [null, null, { type: 'pawn', color: 'white' }, { type: 'pawn', color: 'white' }, null, null, null, null],
+  // Rank 3 (Row 5)
+  [null, null, { type: 'knight', color: 'white' }, null, null, null, null, null],
+  // Rank 2 (Row 6)
   [
     { type: 'pawn', color: 'white' },
     { type: 'pawn', color: 'white' },
-    { type: 'pawn', color: 'white' },
+    null,
     null,
     { type: 'pawn', color: 'white' },
     { type: 'pawn', color: 'white' },
     { type: 'pawn', color: 'white' },
     { type: 'pawn', color: 'white' },
   ],
+  // Rank 1 (Row 7)
   [
     { type: 'rook', color: 'white' },
     null,
@@ -89,7 +97,7 @@ export function BoardPreview({
       </div>
 
       {/* Live Chess Board */}
-      <div className="w-full max-w-[440px] aspect-square flex items-center justify-center py-2">
+      <div className="w-full max-w-[500px] aspect-square flex items-center justify-center py-2">
         <ChessBoard
           boardState={SAMPLE_PREVIEW_GRID}
           theme={activeBoardTheme}

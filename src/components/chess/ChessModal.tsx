@@ -1,10 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Trophy, ShieldAlert, RefreshCw, Sparkles, AlertCircle, X, Check } from 'lucide-react'
-import { PieceType, PieceColor } from '@/utils/chess'
-import { SvgChessPiece, PieceThemeConfig, PIECE_THEMES } from './SvgChessPiece'
+import { Trophy, ShieldAlert, RefreshCw, AlertCircle, X } from 'lucide-react'
+import { PieceColor } from '@/utils/chess'
 import { cn } from '@/lib/utils'
 
 export type ModalType = 'none' | 'promotion' | 'win' | 'lose' | 'draw' | 'restart_confirm' | 'resign_confirm'
@@ -12,14 +11,12 @@ export type ModalType = 'none' | 'promotion' | 'win' | 'lose' | 'draw' | 'restar
 interface ChessModalProps {
   isOpen: boolean
   modalType: ModalType
-  turn?: PieceColor
   winner?: PieceColor | null
   drawReason?: string | null
   difficulty?: string
-  pieceTheme?: PieceThemeConfig
-  customWhiteColor?: string
-  customBlackColor?: string
-  onSelectPromotion?: (piece: PieceType) => void
+  totalMoves?: number
+  gameStatus?: string
+  mode?: string
   onRestartConfirm?: () => void
   onResignConfirm?: () => void
   onPlayAgain?: () => void
@@ -29,20 +26,30 @@ interface ChessModalProps {
 export function ChessModal({
   isOpen,
   modalType,
-  turn = 'white',
   winner,
   drawReason,
   difficulty = 'easy',
-  pieceTheme = PIECE_THEMES.classic,
-  customWhiteColor,
-  customBlackColor,
-  onSelectPromotion,
+  totalMoves = 0,
+  gameStatus = 'playing',
+  mode = 'pve',
   onRestartConfirm,
   onResignConfirm,
   onPlayAgain,
   onClose,
 }: ChessModalProps) {
   const router = useRouter()
+
+  const isConfirm = modalType === 'restart_confirm' || modalType === 'resign_confirm'
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose?.()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onClose])
 
   if (!isOpen || modalType === 'none') return null
 
@@ -54,77 +61,91 @@ export function ChessModal({
     router.push('/chess/setup')
   }
 
+  // Get localized detailed game end message
+  const getSubtext = () => {
+    const isTimeout = gameStatus === 'timeout'
+    if (isTimeout) {
+      if (mode === 'pve') {
+        return winner === 'white' ? 'You won by timeout' : 'You lost by timeout'
+      } else {
+        return winner === 'white' ? 'Player 1 won by timeout' : 'Player 2 won by timeout'
+      }
+    } else {
+      if (mode === 'pve') {
+        return winner === 'white' ? 'You won by checkmate' : 'You lost by checkmate'
+      } else {
+        return winner === 'white' ? 'Player 1 won by checkmate' : 'Player 2 won by checkmate'
+      }
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn">
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300"
+      onClick={() => onClose?.()}
+    >
       
-      {/* Promotion Modal */}
-      {modalType === 'promotion' && (
-        <div className="w-full max-w-sm bg-white dark:bg-[#1F222A] rounded-2xl p-6 border border-[#6949FF]/30 shadow-2xl flex flex-col items-center gap-4 text-center">
-          <div className="flex items-center gap-2 text-[#6949FF] dark:text-purple-300">
-            <Sparkles size={22} />
-            <h3 className="font-urbanist font-extrabold text-xl">Pawn Promotion</h3>
-          </div>
-          <p className="text-xs font-urbanist text-[#757575] dark:text-[#BDBDBD]">
-            Choose a piece to replace your pawn:
-          </p>
-
-          <div className="grid grid-cols-4 gap-3 w-full my-2">
-            {(['queen', 'rook', 'bishop', 'knight'] as PieceType[]).map((pType) => (
-              <button
-                key={pType}
-                onClick={() => onSelectPromotion?.(pType)}
-                className="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-[#6949FF] bg-gray-50 dark:bg-[#262A34] transition-all duration-200 active:scale-95 cursor-pointer"
-              >
-                <div className="w-10 h-10">
-                  <SvgChessPiece
-                    type={pType}
-                    color={turn}
-                    theme={pieceTheme}
-                    customWhiteColor={customWhiteColor}
-                    customBlackColor={customBlackColor}
-                  />
-                </div>
-                <span className="text-[11px] font-urbanist font-bold capitalize mt-1 text-[#212121] dark:text-[#FAFAFA]">
-                  {pType}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Win Modal */}
       {modalType === 'win' && (
-        <div className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-3xl p-6 sm:p-8 border border-green-500/30 shadow-2xl flex flex-col items-center text-center gap-5">
-          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/40 text-green-600 flex items-center justify-center">
-            <Trophy size={36} />
+        <div
+          className="w-full max-w-md bg-gradient-to-b from-white to-[#F4F2FF] dark:from-[#1F222A] dark:to-[#171921] rounded-[32px] p-8 border border-green-500/20 shadow-2xl flex flex-col items-center text-center gap-6 animate-scaleIn relative overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => onClose?.()}
+            className="absolute top-5 right-5 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-1.5 rounded-full hover:bg-gray-155 dark:hover:bg-[#262A34] transition-all duration-200 z-50 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+
+          {/* Decorative Sparkle Gradient */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-green-400/10 blur-3xl pointer-events-none" />
+          <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-[#6949FF]/10 blur-3xl pointer-events-none" />
+
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-green-500 to-emerald-400 text-white flex items-center justify-center shadow-lg shadow-green-500/20 animate-pulse">
+            <Trophy size={42} />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <h2 className="font-urbanist font-extrabold text-2xl sm:text-3xl text-[#212121] dark:text-white">
-              {winner ? `${winner.toUpperCase()} VICTORIOUS!` : 'MATCH WON!'}
+          <div className="flex flex-col gap-1.5 z-10">
+            <h2 className="font-urbanist font-extrabold text-3xl sm:text-4xl text-[#212121] dark:text-white tracking-tight leading-none bg-gradient-to-r from-[#212121] via-[#6949FF] to-[#212121] dark:from-white dark:via-purple-400 dark:to-white bg-clip-text text-transparent">
+              VICTORY!
             </h2>
-            <p className="font-urbanist text-xs sm:text-sm text-[#757575] dark:text-[#BDBDBD]">
-              Checkmate! Spectacular tactical performance.
+            <p className="font-urbanist font-bold text-sm sm:text-base text-green-600 dark:text-green-400">
+              {getSubtext()}
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 w-full mt-2">
+          <div className="flex items-center gap-3 justify-center z-10">
+            <div className="bg-[#6949FF]/5 dark:bg-[#262A34] rounded-2xl px-4 py-2 flex flex-col items-center min-w-[80px] border border-[#6949FF]/10">
+              <span className="text-[10px] font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD] uppercase tracking-wider">Moves</span>
+              <span className="font-urbanist font-extrabold text-base text-[#6949FF] dark:text-purple-300">{totalMoves}</span>
+            </div>
+            {mode === 'pve' && (
+              <div className="bg-[#6949FF]/5 dark:bg-[#262A34] rounded-2xl px-4 py-2 flex flex-col items-center min-w-[90px] border border-[#6949FF]/10">
+                <span className="text-[10px] font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD] uppercase tracking-wider">Difficulty</span>
+                <span className="text-xs font-extrabold text-[#6949FF] dark:text-purple-300 uppercase tracking-wide mt-0.5">{difficulty}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3 w-full mt-2 z-10">
             <button
               onClick={onPlayAgain}
-              className="w-full h-12 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-base transition-all duration-200 active:scale-95 shadow-md shadow-[#6949FF]/20"
+              className="w-full h-12 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-base transition-all duration-200 active:scale-95 shadow-lg shadow-[#6949FF]/20"
             >
               Play Again
             </button>
             <button
               onClick={handleNewGameSetup}
-              className="w-full h-11 rounded-full border-2 border-[#6949FF] text-[#6949FF] dark:text-white bg-white dark:bg-[#262A34] hover:bg-[#6949FF] hover:text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-95"
+              className="w-full h-11 rounded-full border-2 border-[#E0D9FF] dark:border-[#35383F] text-[#6949FF] dark:text-white bg-white dark:bg-[#262A34] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-sm transition-all duration-200 active:scale-95"
             >
               New Game Setup
             </button>
             <button
               onClick={handleBackToLobby}
-              className="text-xs font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD] hover:underline pt-1"
+              className="text-xs font-urbanist font-bold text-[#757575] dark:text-[#BDBDBD] hover:text-[#6949FF] hover:underline pt-1 transition-colors"
             >
               Back to Lobby
             </button>
@@ -134,36 +155,65 @@ export function ChessModal({
 
       {/* Lose Modal */}
       {modalType === 'lose' && (
-        <div className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-3xl p-6 sm:p-8 border border-red-500/30 shadow-2xl flex flex-col items-center text-center gap-5">
-          <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/40 text-red-500 flex items-center justify-center">
-            <ShieldAlert size={36} />
+        <div
+          className="w-full max-w-md bg-gradient-to-b from-white to-[#FFF2F2] dark:from-[#1F222A] dark:to-[#1C181E] rounded-[32px] p-8 border border-red-500/20 shadow-2xl flex flex-col items-center text-center gap-6 animate-scaleIn relative overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => onClose?.()}
+            className="absolute top-5 right-5 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-1.5 rounded-full hover:bg-gray-155 dark:hover:bg-[#262A34] transition-all duration-200 z-50 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+
+          {/* Decorative Sparkle Gradient */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-red-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-[#6949FF]/10 blur-3xl pointer-events-none" />
+
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-red-500 to-rose-400 text-white flex items-center justify-center shadow-lg shadow-red-500/20">
+            <ShieldAlert size={42} />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <h2 className="font-urbanist font-extrabold text-2xl sm:text-3xl text-[#212121] dark:text-white">
-              YOU WERE DEFEATED
+          <div className="flex flex-col gap-1.5 z-10">
+            <h2 className="font-urbanist font-extrabold text-3xl sm:text-4xl text-[#212121] dark:text-white tracking-tight leading-none">
+              DEFEAT
             </h2>
-            <p className="font-urbanist text-xs sm:text-sm text-[#757575] dark:text-[#BDBDBD]">
-              The Computer ({difficulty.toUpperCase()} AI) claimed victory by checkmate.
+            <p className="font-urbanist font-bold text-sm sm:text-base text-red-600 dark:text-red-400">
+              {getSubtext()}
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 w-full mt-2">
+          <div className="flex items-center gap-3 justify-center z-10">
+            <div className="bg-[#6949FF]/5 dark:bg-[#262A34] rounded-2xl px-4 py-2 flex flex-col items-center min-w-[80px] border border-[#6949FF]/10">
+              <span className="text-[10px] font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD] uppercase tracking-wider">Moves</span>
+              <span className="font-urbanist font-extrabold text-base text-[#6949FF] dark:text-purple-300">{totalMoves}</span>
+            </div>
+            {mode === 'pve' && (
+              <div className="bg-[#6949FF]/5 dark:bg-[#262A34] rounded-2xl px-4 py-2 flex flex-col items-center min-w-[90px] border border-[#6949FF]/10">
+                <span className="text-[10px] font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD] uppercase tracking-wider">Difficulty</span>
+                <span className="text-xs font-extrabold text-[#6949FF] dark:text-purple-300 uppercase tracking-wide mt-0.5">{difficulty}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3 w-full mt-2 z-10">
             <button
               onClick={onPlayAgain}
-              className="w-full h-12 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-base transition-all duration-200 active:scale-95 shadow-md shadow-[#6949FF]/20"
+              className="w-full h-12 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-base transition-all duration-200 active:scale-95 shadow-lg shadow-[#6949FF]/20"
             >
-              Replay Match
+              Play Again
             </button>
             <button
               onClick={handleNewGameSetup}
-              className="w-full h-11 rounded-full border-2 border-[#6949FF] text-[#6949FF] dark:text-white bg-white dark:bg-[#262A34] hover:bg-[#6949FF] hover:text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-95"
+              className="w-full h-11 rounded-full border-2 border-[#E0D9FF] dark:border-[#35383F] text-[#6949FF] dark:text-white bg-white dark:bg-[#262A34] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-sm transition-all duration-200 active:scale-95"
             >
-              Change Difficulty / Setup
+              New Game Setup
             </button>
             <button
               onClick={handleBackToLobby}
-              className="text-xs font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD] hover:underline pt-1"
+              className="text-xs font-urbanist font-bold text-[#757575] dark:text-[#BDBDBD] hover:text-[#6949FF] hover:underline pt-1 transition-colors"
             >
               Back to Lobby
             </button>
@@ -173,30 +223,52 @@ export function ChessModal({
 
       {/* Draw Modal */}
       {modalType === 'draw' && (
-        <div className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-3xl p-6 sm:p-8 border border-blue-500/30 shadow-2xl flex flex-col items-center text-center gap-5">
-          <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-500 flex items-center justify-center">
-            <RefreshCw size={36} />
+        <div
+          className="w-full max-w-md bg-gradient-to-b from-white to-[#F0F5FF] dark:from-[#1F222A] dark:to-[#171B26] rounded-[32px] p-8 border border-blue-500/20 shadow-2xl flex flex-col items-center text-center gap-6 animate-scaleIn relative overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => onClose?.()}
+            className="absolute top-5 right-5 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-1.5 rounded-full hover:bg-gray-155 dark:hover:bg-[#262A34] transition-all duration-200 z-50 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+
+          {/* Decorative Sparkle Gradient */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <RefreshCw size={36} className="animate-spin-slow" />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <h2 className="font-urbanist font-extrabold text-2xl sm:text-3xl text-[#212121] dark:text-white">
-              MATCH DRAWN
+          <div className="flex flex-col gap-1.5 z-10">
+            <h2 className="font-urbanist font-extrabold text-3xl sm:text-4xl text-[#212121] dark:text-white tracking-tight leading-none">
+              DRAW
             </h2>
-            <p className="font-urbanist text-xs sm:text-sm text-[#757575] dark:text-[#BDBDBD]">
-              Reason: <span className="font-bold text-[#6949FF] capitalize">{drawReason || 'Stalemate'}</span>
+            <p className="font-urbanist font-bold text-sm sm:text-base text-blue-600 dark:text-blue-400 capitalize">
+              {drawReason || 'Stalemate'}
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 w-full mt-2">
+          <div className="flex items-center gap-3 justify-center z-10">
+            <div className="bg-[#6949FF]/5 dark:bg-[#262A34] rounded-2xl px-4 py-2 flex flex-col items-center min-w-[80px] border border-[#6949FF]/10">
+              <span className="text-[10px] font-urbanist font-semibold text-[#757575] dark:text-[#BDBDBD] uppercase tracking-wider">Moves</span>
+              <span className="font-urbanist font-extrabold text-base text-[#6949FF] dark:text-purple-300">{totalMoves}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 w-full mt-2 z-10">
             <button
               onClick={onPlayAgain}
-              className="w-full h-12 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-base transition-all duration-200 active:scale-95 shadow-md shadow-[#6949FF]/20"
+              className="w-full h-12 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-base transition-all duration-200 active:scale-95 shadow-lg shadow-[#6949FF]/20"
             >
               Play Again
             </button>
             <button
               onClick={handleBackToLobby}
-              className="w-full h-11 rounded-full border-2 border-gray-300 dark:border-gray-700 text-[#757575] dark:text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-95"
+              className="w-full h-11 rounded-full border-2 border-gray-300 dark:border-gray-700 text-[#757575] dark:text-white bg-white dark:bg-[#262A34] hover:bg-gray-50 dark:hover:bg-[#35383F] font-urbanist font-bold text-sm transition-all duration-200 active:scale-95"
             >
               Back to Lobby
             </button>
@@ -206,7 +278,19 @@ export function ChessModal({
 
       {/* Restart Confirmation */}
       {modalType === 'restart_confirm' && (
-        <div className="w-full max-w-sm bg-white dark:bg-[#1F222A] rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col items-center text-center gap-4">
+        <div 
+          className="w-full max-w-sm bg-white dark:bg-[#1F222A] rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col items-center text-center gap-4 animate-scaleIn relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => onClose?.()}
+            className="absolute top-4 right-4 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-1.5 rounded-full hover:bg-gray-155 dark:hover:bg-[#262A34] transition-all duration-200 z-50 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+
           <AlertCircle size={40} className="text-yellow-500" />
           <h3 className="font-urbanist font-extrabold text-lg text-[#212121] dark:text-white">
             Restart Game?
@@ -217,7 +301,7 @@ export function ChessModal({
           <div className="grid grid-cols-2 gap-3 w-full mt-2">
             <button
               onClick={onRestartConfirm}
-              className="h-10 rounded-full bg-[#6949FF] text-white font-urbanist font-bold text-sm transition-all active:scale-95"
+              className="h-10 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all active:scale-95 shadow-md shadow-[#6949FF]/10"
             >
               Restart
             </button>
@@ -233,7 +317,19 @@ export function ChessModal({
 
       {/* Resign Confirmation */}
       {modalType === 'resign_confirm' && (
-        <div className="w-full max-w-sm bg-white dark:bg-[#1F222A] rounded-2xl p-6 border border-red-200 dark:border-red-900/50 shadow-2xl flex flex-col items-center text-center gap-4">
+        <div 
+          className="w-full max-w-sm bg-white dark:bg-[#1F222A] rounded-3xl p-6 border border-red-200 dark:border-red-900/50 shadow-2xl flex flex-col items-center text-center gap-4 animate-scaleIn relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => onClose?.()}
+            className="absolute top-4 right-4 text-[#757575] hover:text-[#212121] dark:text-[#BDBDBD] dark:hover:text-white p-1.5 rounded-full hover:bg-gray-155 dark:hover:bg-[#262A34] transition-all duration-200 z-50 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+
           <AlertCircle size={40} className="text-red-500" />
           <h3 className="font-urbanist font-extrabold text-lg text-[#212121] dark:text-white">
             Resign Match?

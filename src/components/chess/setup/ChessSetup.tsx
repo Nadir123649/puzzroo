@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Play, Sparkles, User, Bot, Users } from 'lucide-react'
+import { ArrowLeft, Play, Sparkles, User, Bot, Users, Clock } from 'lucide-react'
 import { BoardThemeId } from '@/utils/chess'
 import { PieceThemeId } from '../SvgChessPiece'
 import { DifficultySelector, DifficultyLevel } from './DifficultySelector'
@@ -26,6 +26,20 @@ export function ChessSetup() {
   const [pieceTheme, setPieceTheme] = useState<PieceThemeId>('classic')
   const [customWhiteColor, setCustomWhiteColor] = useState('#FFFFFF')
   const [customBlackColor, setCustomBlackColor] = useState('#010101')
+  const [practiceMode, setPracticeMode] = useState(false)
+
+  const [timeControl, setTimeControl] = useState<number>(600) // seconds
+  const [increment, setIncrement] = useState<number>(0) // seconds per move
+
+  const TIME_OPTIONS = [
+    { label: 'Unlimited', value: 0 },
+    { label: '1 min', value: 60 },
+    { label: '3 min', value: 180 },
+    { label: '5 min', value: 300 },
+    { label: '10 min', value: 600 },
+    { label: '15 min', value: 900 },
+    { label: '30 min', value: 1800 },
+  ]
 
   const [isNavigating, setIsNavigating] = useState(false)
 
@@ -45,7 +59,16 @@ export function ChessSetup() {
     if (theme && ['classic', 'green', 'brown', 'dark'].includes(theme)) {
       setBoardTheme(theme)
     }
+    const practice = searchParams?.get('practice') === 'true'
+    setPracticeMode(practice)
   }, [searchParams])
+
+  // Reset practiceMode if switching to local PvP mode
+  useEffect(() => {
+    if (mode === 'pvp') {
+      setPracticeMode(false)
+    }
+  }, [mode])
 
   const handleStartGame = async () => {
     setIsNavigating(true)
@@ -60,12 +83,15 @@ export function ChessSetup() {
       sessionStorage.setItem('chess_piece_theme', pieceTheme)
       sessionStorage.setItem('chess_custom_white', customWhiteColor)
       sessionStorage.setItem('chess_custom_black', customBlackColor)
+      sessionStorage.setItem('chess_time', String(timeControl))
+      sessionStorage.setItem('chess_increment', String(increment))
+      sessionStorage.setItem('chess_practice', String(practiceMode))
       // Clear old FEN match on new match setup
       sessionStorage.removeItem('puzzroo_chess_fen')
       localStorage.removeItem('puzzroo_chess_fen')
     }
 
-    const targetUrl = `/chess?mode=${mode}&side=${side}&difficulty=${difficulty}&theme=${boardTheme}&pieceTheme=${pieceTheme}`
+    const targetUrl = `/chess?mode=${mode}&side=${side}&difficulty=${difficulty}&theme=${boardTheme}&pieceTheme=${pieceTheme}&time=${timeControl}&increment=${increment}&practice=${practiceMode}`
     router.push(targetUrl)
   }
 
@@ -146,6 +172,88 @@ export function ChessSetup() {
                     <span>Pass & Play (2P)</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Practice Mode Choice */}
+              {mode === 'pve' && (
+                <div className="flex flex-col gap-2.5 w-full bg-white dark:bg-[#1F222A]/40 p-4 rounded-xl border border-gray-200 dark:border-[#35383F]">
+                  <div className="flex items-center justify-between">
+                    <span className="font-urbanist font-bold text-sm sm:text-base text-[#212121] dark:text-[#FAFAFA]">
+                      Practice Mode:
+                    </span>
+                    <div className="flex items-center gap-6">
+                      <label className="flex items-center gap-1.5 cursor-pointer font-urbanist font-bold text-xs sm:text-sm text-[#757575] dark:text-[#BDBDBD]">
+                        <input
+                          type="radio"
+                          name="practice_mode"
+                          checked={practiceMode}
+                          onChange={() => setPracticeMode(true)}
+                          className="accent-[#6949FF] w-4 h-4 cursor-pointer"
+                        />
+                        <span>Enabled</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer font-urbanist font-bold text-xs sm:text-sm text-[#757575] dark:text-[#BDBDBD]">
+                        <input
+                          type="radio"
+                          name="practice_mode"
+                          checked={!practiceMode}
+                          onChange={() => setPracticeMode(false)}
+                          className="accent-[#6949FF] w-4 h-4 cursor-pointer"
+                        />
+                        <span>Disabled</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Time Control */}
+              <div className="flex flex-col gap-2.5 w-full">
+                <label className="font-urbanist font-bold text-sm sm:text-base text-[#212121] dark:text-[#FAFAFA]">
+                  Time Control
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {TIME_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setTimeControl(opt.value)}
+                      className={cn(
+                        'flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 font-urbanist font-bold text-xs transition-all duration-200 cursor-pointer active:scale-95 bg-white dark:bg-[#1F222A]',
+                        timeControl === opt.value
+                          ? 'border-[#6949FF] text-[#6949FF] dark:text-purple-300 bg-[#6949FF]/5 dark:bg-[#6949FF]/15 ring-2 ring-[#6949FF]/30'
+                          : 'border-gray-200 dark:border-[#35383F] text-[#757575] dark:text-[#BDBDBD] hover:border-gray-300'
+                      )}
+                    >
+                      <Clock size={14} />
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {timeControl > 0 && (
+                  <div className="flex items-center gap-3 mt-1">
+                    <label className="font-urbanist font-semibold text-xs text-[#757575] dark:text-[#BDBDBD]">
+                      Increment (sec):
+                    </label>
+                    <div className="flex gap-1.5">
+                      {[0, 2, 5, 10, 15].map((inc) => (
+                        <button
+                          key={inc}
+                          type="button"
+                          onClick={() => setIncrement(inc)}
+                          className={cn(
+                            'w-8 h-8 rounded-lg border-2 font-urbanist font-bold text-xs transition-all duration-200 cursor-pointer active:scale-95 bg-white dark:bg-[#1F222A]',
+                            increment === inc
+                              ? 'border-[#6949FF] text-[#6949FF] dark:text-purple-300 bg-[#6949FF]/5 dark:bg-[#6949FF]/15'
+                              : 'border-gray-200 dark:border-[#35383F] text-[#757575] dark:text-[#BDBDBD]'
+                          )}
+                        >
+                          {inc}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Player Side Choice (White or Black) */}

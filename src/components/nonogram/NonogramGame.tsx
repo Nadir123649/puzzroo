@@ -68,12 +68,8 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     }
   }, [gameStatus])
 
-  const handleReplay = async () => {
-    setLoaderText('Replaying game...')
-    setIsResetting(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
+  const handleReplay = () => {
     resetPuzzle()
-    setIsResetting(false)
   }
 
   const handleNewPuzzle = async () => {

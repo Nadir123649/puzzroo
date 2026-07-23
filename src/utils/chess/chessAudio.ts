@@ -14,12 +14,22 @@
 class ChessAudio {
   private audioCtx: AudioContext | null = null
   private isMuted: boolean = false
+  private lastPlayTime: Map<string, number> = new Map()
+  private readonly SOUND_COOLDOWN = 50 // ms
 
   constructor() {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('puzzroo_chess_muted')
       this.isMuted = saved === 'true'
     }
+  }
+
+  private canPlay(soundId: string): boolean {
+    const now = Date.now()
+    const last = this.lastPlayTime.get(soundId) || 0
+    if (now - last < this.SOUND_COOLDOWN) return false
+    this.lastPlayTime.set(soundId, now)
+    return true
   }
 
   private initCtx() {
@@ -48,8 +58,45 @@ class ChessAudio {
     return this.isMuted
   }
 
+  public playGameStart() {
+    if (this.isMuted || !this.canPlay('start')) return
+    const ctx = this.initCtx()
+    if (!ctx) return
+
+    const notes = [261.63, 329.63, 392, 523.25] // C4, E4, G4, C5
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.12)
+      gain.gain.setValueAtTime(0.2, ctx.currentTime + idx * 0.12)
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + idx * 0.12 + 0.25)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start(ctx.currentTime + idx * 0.12)
+      osc.stop(ctx.currentTime + idx * 0.12 + 0.25)
+    })
+  }
+
+  public playTimerTick() {
+    if (this.isMuted || !this.canPlay('tick')) return
+    const ctx = this.initCtx()
+    if (!ctx) return
+
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(800, ctx.currentTime)
+    gain.gain.setValueAtTime(0.06, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.04)
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.04)
+  }
+
   public playMove() {
-    if (this.isMuted) return
+    if (this.isMuted || !this.canPlay('move')) return
     const ctx = this.initCtx()
     if (!ctx) return
 
@@ -71,7 +118,7 @@ class ChessAudio {
   }
 
   public playCapture() {
-    if (this.isMuted) return
+    if (this.isMuted || !this.canPlay('capture')) return
     const ctx = this.initCtx()
     if (!ctx) return
 
@@ -94,7 +141,7 @@ class ChessAudio {
   }
 
   public playCheck() {
-    if (this.isMuted) return
+    if (this.isMuted || !this.canPlay('check')) return
     const ctx = this.initCtx()
     if (!ctx) return
 
@@ -116,7 +163,7 @@ class ChessAudio {
   }
 
   public playPromotion() {
-    if (this.isMuted) return
+    if (this.isMuted || !this.canPlay('promotion')) return
     const ctx = this.initCtx()
     if (!ctx) return
 
@@ -140,7 +187,7 @@ class ChessAudio {
   }
 
   public playCheckmate() {
-    if (this.isMuted) return
+    if (this.isMuted || !this.canPlay('checkmate')) return
     const ctx = this.initCtx()
     if (!ctx) return
 

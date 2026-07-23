@@ -34,13 +34,14 @@ export function SudokuModal({
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        onPlayAgain()
+        if (onClose) onClose()
+        else onPlayAgain()
       }
     }
 
     window.addEventListener('keydown', handleEsc)
     return () => window.removeEventListener('keydown', handleEsc)
-  }, [isOpen, onPlayAgain])
+  }, [isOpen, onPlayAgain, onClose])
 
   // Fire a success toast when the win modal opens
   useEffect(() => {
@@ -74,7 +75,7 @@ export function SudokuModal({
         className={`fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[99999] transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
-        onClick={onPlayAgain}
+        onClick={onClose ?? onPlayAgain}
       />
 
       {/* Modal */}

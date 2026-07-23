@@ -122,6 +122,12 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     
     // Update status from localStorage and apply lock
     const withStatus = generated.map((puzzle, index) => {
+      if (authed) {
+        return {
+          ...puzzle,
+          status: getChallengeStatus(puzzle.id),
+        }
+      }
       if (index >= accessibleCount) {
         return { ...puzzle, status: 'locked' as DailyChallengeStatus }
       }
@@ -132,7 +138,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     })
     
     setPuzzles(withStatus)
-  }, [gameId, accessibleCount])
+  }, [gameId, accessibleCount, authed])
 
   // Filter puzzles
   const filteredPuzzles = puzzles.filter(p => {
@@ -473,7 +479,9 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
   }
 
   return (
-    <div className="relative bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-4 md:p-5 flex flex-col gap-2.5 md:gap-4 hover:border-[#6949FF] transition-all duration-300 group"
+    <div 
+      onClick={handleCardClick}
+      className={`relative bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-4 md:p-5 flex flex-col gap-2.5 md:gap-4 hover:border-[#6949FF] transition-all duration-300 group ${!isCompleted ? 'cursor-pointer' : ''}`}
     >
       {/* Completion Badge */}
       {isCompleted && !isLocked && (

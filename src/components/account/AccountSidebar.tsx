@@ -86,7 +86,7 @@ export function AccountSidebar() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-[280px] flex-shrink-0">
         <div className="sticky top-[90px]">
-          <nav className="bg-gradient-to-br from-white via-purple-50/20 to-purple-50/40 dark:from-[#1A1D23] dark:via-[#1A1D23] dark:to-[#1A1D23] rounded-xl border border-purple-100/50 dark:border-[#2A2D35] overflow-hidden shadow-sm shadow-purple-500/5 h-[calc(100vh-130px)] flex flex-col justify-between">
+          <nav className="bg-white dark:bg-[#1F222A] rounded-xl border border-[#E0E0E0] dark:border-[#35383F] overflow-hidden shadow-sm h-[calc(100vh-130px)] flex flex-col justify-between">
             <div className="flex-1 overflow-y-auto">
               {visibleItems.map((item) => {
                 const Icon = item.icon
@@ -127,7 +127,7 @@ export function AccountSidebar() {
 
       {/* Mobile Drawer - SLIDE FROM LEFT with Glassmorphism */}
       <aside
-        className={`lg:hidden fixed top-[64px] left-0 h-[calc(100vh-64px)] w-[280px] backdrop-blur-xl bg-gradient-to-br from-white via-purple-50/90 to-purple-100/90 dark:bg-none dark:bg-[#1A1D23]/95 border-r border-purple-200/80 dark:border-purple-500/30 z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-2xl shadow-purple-500/10 flex flex-col justify-between ${
+        className={`lg:hidden fixed top-[64px] left-0 h-[calc(100vh-64px)] w-[280px] bg-white dark:bg-[#1F222A] border-r border-[#E0E0E0] dark:border-[#35383F] z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-2xl flex flex-col justify-between ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
