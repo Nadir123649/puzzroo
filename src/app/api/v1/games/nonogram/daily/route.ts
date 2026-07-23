@@ -31,7 +31,7 @@ export const GET = withAuth(async (req, user) => {
     ? await sessionService.getSessionById(challenge.sessionId.toString(), user.id).catch(() => null)
     : null;
 
-  let session = existingSession;
+let session = existingSession;
   if (!session) {
     try {
       session = await sessionService.startSession({
@@ -42,13 +42,17 @@ export const GET = withAuth(async (req, user) => {
       challenge.sessionId = session._id;
       await challenge.save();
     } catch (e: any) {
-      if (e.message !== "puzzle_not_found") throw e;
+      console.error('[nonogram] daily: Failed to create new session:', e.message, e.stack);
+      if (e.message !== "puzzle_not_found") {
+        throw e;
+      }
     }
   }
 
+const puzzleResponse = nonogramToResponse(puzzle);
   return successResponse({
+    ...puzzleResponse,
     date: today,
-    puzzle: nonogramToResponse(puzzle),
     sessionId: session?._id || challenge.sessionId,
     status: challenge.status,
   });
