@@ -10,6 +10,8 @@ import { isLoggedIn, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
 
+let globalMounted = false
+
 export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -28,13 +30,14 @@ export function Navbar() {
     return { name: userData.name || userData.username, email: userData.email }
   })
 
-  const [navbarMounted, setNavbarMounted] = useState(false)
+  const [navbarMounted, setNavbarMounted] = useState(globalMounted)
   const pathname = usePathname()
   const router = useRouter()
 
   const [authKey, setAuthKey] = useState(0)
 
   useEffect(() => {
+    globalMounted = true
     setNavbarMounted(true)
 
     const checkAuth = () => {
@@ -100,24 +103,26 @@ export function Navbar() {
 
           {/* RIGHT: Desktop Actions */}
           <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
-            {(loggedIn && user) ? (
-              <>
-                <Link href="/subscription" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                  Subscribe Us
-                </Link>
+            {navbarMounted && (
+              (loggedIn && user) ? (
+                <>
+                  <Link href="/subscription" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                    Subscribe Us
+                  </Link>
 
-                <ProfileDropdown userName={user.name} userEmail={user.email} />
-              </>
-            ) : (
-              <>
-                <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                  Sign up
-                </Link>
+                  <ProfileDropdown userName={user.name} userEmail={user.email} />
+                </>
+              ) : (
+                <>
+                  <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                    Sign up
+                  </Link>
 
-                <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                  Login
-                </Link>
-              </>
+                  <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                    Login
+                  </Link>
+                </>
+              )
             )}
 
             <button

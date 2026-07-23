@@ -84,8 +84,9 @@ export function generatePastPuzzles(
 ): DailyChallenge[] {
   const puzzles: DailyChallenge[] = []
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
   
-  for (let i = 0; i < days; i++) {
+  for (let i = 1; i <= days; i++) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
     

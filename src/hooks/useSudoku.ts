@@ -43,6 +43,15 @@ import {
   loadDifficultyPreference,
 } from '@shared/lib/sudoku/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
+import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
+
+function getTodayDateParam(): string {
+  const d = new Date()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const y = String(d.getFullYear()).slice(-2)
+  return `${m}-${day}-${y}`
+}
 
 const CACHE_KEY = 'puzzroo_sudoku_cache_by_id'
 
@@ -279,6 +288,17 @@ export function useSudoku() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlDifficulty, urlId, isDailyChallenge, dateParam])
 
+  // Update challenge status to in-progress when game is loaded
+  useEffect(() => {
+    if (isInitialized && isDailyChallenge) {
+      const challengeId = dateParam ? `daily-sudoku-${dateParam}` : `daily-sudoku-${getTodayDateParam()}`
+      const currentStatus = getChallengeStatus(challengeId)
+      if (currentStatus !== 'completed') {
+        updateChallengeStatus(challengeId, 'in-progress')
+      }
+    }
+  }, [isInitialized, isDailyChallenge, dateParam])
+
   // UI state
   const [selectedCell, setSelectedCell] = useState<Position | null>(null)
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null)
@@ -394,6 +414,11 @@ export function useSudoku() {
       difficulty,
     })
 
+    if (isDailyChallenge) {
+      const challengeId = dateParam ? `daily-sudoku-${dateParam}` : `daily-sudoku-${getTodayDateParam()}`
+      updateChallengeStatus(challengeId, 'completed')
+    }
+
     const token =
       typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
     if (token) {
@@ -411,7 +436,7 @@ export function useSudoku() {
           /* fire-and-forget: never block */
         })
     }
-  }, [gameState.time, gameState.mistakes, difficulty])
+  }, [gameState.time, gameState.mistakes, difficulty, isDailyChallenge, dateParam])
 
   /**
    * Select cell
@@ -647,6 +672,47 @@ export function useSudoku() {
     }
   }, [difficulty])
 
+  const replayBoard = useCallback(async () => {
+    if (!gameState.puzzleId) return
+    setSelectedCell(null)
+    setSelectedNumber(null)
+    setNotesMode(false)
+    setIsWinAnimating(false)
+    setScoreFeedbacks([])
+    startTimeRef.current = null
+    hintsUsedRef.current = 0
+
+    setLoading(true)
+    let cancelled = false
+    try {
+      let puzzle: SudokuPuzzleData
+      if (isDailyChallenge) {
+        puzzle = await loadSudokuPuzzle({ kind: 'daily', date: dateParam ?? undefined, difficulty })
+      } else {
+        const cleanId = gameState.puzzleId.startsWith('daily-sudoku-')
+          ? gameState.puzzleId.replace('daily-sudoku-', '')
+          : gameState.puzzleId
+        puzzle = await loadSudokuPuzzle({ kind: 'byId', id: cleanId })
+      }
+      if (!cancelled) {
+        const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
+        setGameState(next)
+        puzzleIdRef.current = next.puzzleId
+      }
+    } catch {
+      if (!cancelled) {
+        const puzzle = isDailyChallenge
+          ? getDailySudokuPuzzle(new Date(), difficulty)
+          : getPuzzleById(gameState.puzzleId) ?? getRandomPuzzle(difficulty)
+        const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
+        setGameState(next)
+        puzzleIdRef.current = next.puzzleId
+      }
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
+  }, [gameState.puzzleId, difficulty, isDailyChallenge, dateParam])
+
   /**
    * Toggle notes mode
    */
@@ -722,6 +788,7 @@ export function useSudoku() {
     enterNumber,
     eraseCell,
     resetBoard,
+    replayBoard,
     toggleNotesMode,
     requestHint,
     changeDifficulty,

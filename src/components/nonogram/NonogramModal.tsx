@@ -193,12 +193,14 @@ export function NonogramModal({
                   >
                     Replay
                   </button>
-                  <button
-                    onClick={onNewPuzzle}
-                    className="w-full h-[40px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
-                  >
-                    New Game
-                  </button>
+                  {onNewPuzzle && (
+                    <button
+                      onClick={onNewPuzzle}
+                      className="w-full h-[40px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
+                    >
+                      New Game
+                    </button>
+                  )}
                 </>
               ) : (
                 <>
@@ -208,12 +210,14 @@ export function NonogramModal({
                   >
                     Try Again
                   </button>
-                  <button
-                    onClick={onNewPuzzle}
-                    className="w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] hover:bg-[#6949FF]/10 font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none"
-                  >
-                    New Game
-                  </button>
+                  {onNewPuzzle && (
+                    <button
+                      onClick={onNewPuzzle}
+                      className="w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] hover:bg-[#6949FF]/10 font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none"
+                    >
+                      New Game
+                    </button>
+                  )}
                 </>
               )}
               {onBackToGames && (

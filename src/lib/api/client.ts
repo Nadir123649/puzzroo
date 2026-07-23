@@ -28,9 +28,12 @@ async function refreshAccessToken(): Promise<string | null> {
 
 export async function api<T = any>(
   path: string,
-  options: RequestInit & { params?: Record<string, string | number | boolean | undefined> } = {}
+  options: RequestInit & { 
+    params?: Record<string, string | number | boolean | undefined>
+    suppressToast?: boolean
+  } = {}
 ): Promise<{ success: boolean; payload: T; timestamp?: number }> {
-  const { params, ...fetchOptions } = options;
+  const { params, suppressToast, ...fetchOptions } = options;
   let url = path.startsWith("/api") ? `${API_BASE}${path}` : path;
 
   if (params) {
@@ -85,7 +88,7 @@ export async function api<T = any>(
   } catch {
     // Network-level failure (offline / unreachable). Avoid duplicating the
     // offline banner; only toast when we believe we're actually online.
-    if (typeof navigator !== "undefined" && navigator.onLine) {
+    if (!suppressToast && typeof navigator !== "undefined" && navigator.onLine) {
       notify.errorKey("SYSTEM_GENERIC_ERROR");
     }
     throw new Error("Network request failed");

@@ -84,7 +84,9 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
       ? images.gameCards.sudoku 
       : gameId === 'nonogram' 
         ? (theme === 'light' ? images.gameCards.nonogramWhite : images.gameCards.nonogram)
-        : images.gameCards.sudoku
+        : gameId === 'tangram'
+          ? images.gameCards.tangram
+          : images.gameCards.sudoku
 
   // Lock body scroll when loading
   useEffect(() => {
@@ -431,12 +433,14 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
                 {puzzle.difficulty}
               </span>
             </div>
-            <div className="flex items-center justify-between py-1 border-b border-[#F0F0F0] dark:border-[#35383F]">
-              <span className="font-urbanist text-[#757575] dark:text-[#BDBDBD]">Shape</span>
-              <span className="font-urbanist font-semibold text-[#424242] dark:text-[#E0E0E0] capitalize">
-                {puzzle.shape}
-              </span>
-            </div>
+            {puzzle.gameId === 'nonogram' && (
+              <div className="flex items-center justify-between py-1 border-b border-[#F0F0F0] dark:border-[#35383F]">
+                <span className="font-urbanist text-[#757575] dark:text-[#BDBDBD]">Shape</span>
+                <span className="font-urbanist font-semibold text-[#424242] dark:text-[#E0E0E0] capitalize">
+                  {puzzle.shape}
+                </span>
+              </div>
+            )}
             <div className="flex items-center justify-between py-1">
               <span className="font-urbanist text-[#757575] dark:text-[#BDBDBD]">Status</span>
               <span className={`font-urbanist font-bold text-[11px] md:text-[12px] ${statusColors[puzzle.status]}`}>
@@ -461,7 +465,6 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
 
   const handleCardClick = async (e: React.MouseEvent) => {
     e.preventDefault()
-    if (isCompleted) return
     onPlayClick(true)
     // Show loading for 1 second
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -481,7 +484,7 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
   return (
     <div 
       onClick={handleCardClick}
-      className={`relative bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-4 md:p-5 flex flex-col gap-2.5 md:gap-4 hover:border-[#6949FF] transition-all duration-300 group ${!isCompleted ? 'cursor-pointer' : ''}`}
+      className={`relative bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-4 md:p-5 flex flex-col gap-2.5 md:gap-4 hover:border-[#6949FF] transition-all duration-300 group cursor-pointer`}
     >
       {/* Completion Badge */}
       {isCompleted && !isLocked && (
@@ -521,12 +524,14 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
             {puzzle.difficulty}
           </span>
         </div>
-        <div className="flex items-center justify-between py-1 border-b border-[#F0F0F0] dark:border-[#35383F]">
-          <span className="font-urbanist text-[#757575] dark:text-[#BDBDBD]">Shape</span>
-          <span className="font-urbanist font-semibold text-[#424242] dark:text-[#E0E0E0] capitalize">
-            {puzzle.shape}
-          </span>
-        </div>
+        {puzzle.gameId === 'nonogram' && (
+          <div className="flex items-center justify-between py-1 border-b border-[#F0F0F0] dark:border-[#35383F]">
+            <span className="font-urbanist text-[#757575] dark:text-[#BDBDBD]">Shape</span>
+            <span className="font-urbanist font-semibold text-[#424242] dark:text-[#E0E0E0] capitalize">
+              {puzzle.shape}
+            </span>
+          </div>
+        )}
         <div className="flex items-center justify-between py-1">
           <span className="font-urbanist text-[#757575] dark:text-[#BDBDBD]">Status</span>
           <span className={`font-urbanist font-bold text-[11px] md:text-[12px] ${statusColors[actualStatus]}`}>
@@ -538,10 +543,10 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
       {/* Play Button - CTA Style like Signup */}
       {isCompleted ? (
         <button
-          disabled
-          className="w-full h-[37px] md:h-[46px] rounded-full bg-[#EEEEEE] dark:bg-[#35383F] text-[#757575] dark:text-[#9E9E9E] font-urbanist font-bold text-[14px] md:text-[16px] flex items-center justify-center gap-2 cursor-not-allowed"
+          onClick={handleCardClick}
+          className="w-full h-[37px] md:h-[46px] rounded-full border-2 border-[#22C55E] text-[#22C55E] hover:bg-[#E8F5E9] dark:hover:bg-[#1B5E20]/20 font-urbanist font-bold text-[14px] md:text-[16px] flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 cursor-pointer"
         >
-          <span>Completed</span>
+          <span>Replay</span>
           <Check size={16} className="text-[#22C55E]" strokeWidth={3} />
         </button>
       ) : (

@@ -39,6 +39,16 @@ import {
   getHintLimits,
 } from '@shared/lib/nonogram/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
+import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
+
+function getTodayDateParam(): string {
+  const d = new Date()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const y = String(d.getFullYear()).slice(-2)
+  return `${m}-${day}-${y}`
+}
+
 import { gameApi } from '@/lib/api/gameApi'
 
 import { dailyPuzzles } from '@shared/data/nonogram'
@@ -263,6 +273,17 @@ export function useNonogram(initialPuzzleId?: string) {
     }
   }, [urlDifficulty, isInitialized, initialPuzzleId, initializePuzzle])
 
+  // Update challenge status to in-progress when game is loaded
+  useEffect(() => {
+    if (isInitialized && currentPuzzle && isDailyChallenge) {
+      const challengeId = dateParam ? `daily-nonogram-${dateParam}` : `daily-nonogram-${getTodayDateParam()}`
+      const currentStatus = getChallengeStatus(challengeId)
+      if (currentStatus !== 'completed') {
+        updateChallengeStatus(challengeId, 'in-progress')
+      }
+    }
+  }, [isInitialized, currentPuzzle, isDailyChallenge, dateParam])
+
   /**
    * Timer management
    */
@@ -342,6 +363,9 @@ export function useNonogram(initialPuzzleId?: string) {
         hintsUsed: hintsUsed,
         difficulty: currentPuzzle.difficulty,
       })
+      if (isDailyChallenge) {
+        updateChallengeStatus(puzzleId, 'completed')
+      }
 
       // Also report completion to the API when logged in (fire-and-forget)
       if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {

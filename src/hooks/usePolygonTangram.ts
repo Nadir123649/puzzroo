@@ -9,8 +9,35 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { PolygonPuzzle, TangramPieceId } from '@shared/types/tangram-polygon'
-import { getRandomPuzzle } from '@shared/data/tangram'
+import { getRandomPuzzle, getPuzzlesByDifficulty } from '@shared/data/tangram'
 import type { TangramDifficulty } from '@shared/data/tangram'
+import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
+
+function getTodayDateParam(): string {
+  const d = new Date()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const y = String(d.getFullYear()).slice(-2)
+  return `${m}-${day}-${y}`
+}
+
+function getDailyDate(dateParam?: string | null): Date {
+  if (dateParam) {
+    const [month, day, year] = dateParam.split('-')
+    const fullYear = 2000 + parseInt(year)
+    return new Date(fullYear, parseInt(month) - 1, parseInt(day))
+  }
+  return new Date()
+}
+
+function getDailyTangramPuzzle(date: Date, diff: TangramDifficulty): PolygonPuzzle {
+  const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
+  const pool = getPuzzlesByDifficulty(diff)
+  const x = Math.sin(seed) * 10000
+  const rand = x - Math.floor(x)
+  const index = Math.floor(rand * pool.length)
+  return pool[index]
+}
 import { gameApi } from '@/lib/api/gameApi'
 import { scaleAndCenterPolygon, polygonToSVGPath } from '@shared/lib/tangram/polygon-renderer'
 import { calculateCentroid, polygonToPoints } from '@shared/lib/tangram/polygon-geometry'
@@ -163,8 +190,16 @@ const areStatesEqual = (state1: PieceState[], state2: PieceState[]) => {
 }
 
 export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
-  const [puzzle, setPuzzle] = useState<PolygonPuzzle>(() => getRandomPuzzle(difficulty))
   const searchParams = useSearchParams()
+  const dateParam = searchParams?.get('date')
+  const isDailyChallenge = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
+
+  const [puzzle, setPuzzle] = useState<PolygonPuzzle>(() => {
+    if (isDailyChallenge) {
+      return getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+    }
+    return getRandomPuzzle(difficulty)
+  })
   const getInitialTime = (diff: TangramDifficulty) => {
     switch (diff) {
       case 'hard': return 90    // 1.5 minutes
@@ -261,9 +296,15 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       try {
         let p: PolygonPuzzle
         try {
-          p = (await gameApi.getPuzzle('tangram', { difficulty })) as unknown as PolygonPuzzle
+          if (isDailyChallenge) {
+            p = (await gameApi.getDailyPuzzle('tangram', dateParam || undefined)) as unknown as PolygonPuzzle
+          } else {
+            p = (await gameApi.getPuzzle('tangram', { difficulty })) as unknown as PolygonPuzzle
+          }
         } catch {
-          p = getRandomPuzzle(difficulty)
+          p = isDailyChallenge
+            ? getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+            : getRandomPuzzle(difficulty)
         }
         if (!cancelled) {
           writeCache(p)
@@ -274,7 +315,18 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       }
     })()
     return () => { cancelled = true }
-  }, [difficulty])
+  }, [difficulty, isDailyChallenge, dateParam])
+
+  // Update challenge status to in-progress when game is loaded
+  useEffect(() => {
+    if (puzzle && isDailyChallenge) {
+      const challengeId = dateParam ? `daily-tangram-${dateParam}` : `daily-tangram-${getTodayDateParam()}`
+      const currentStatus = getChallengeStatus(challengeId)
+      if (currentStatus !== 'completed') {
+        updateChallengeStatus(challengeId, 'in-progress')
+      }
+    }
+  }, [puzzle, isDailyChallenge, dateParam])
 
   // Initialize pieces from puzzle
   useEffect(() => {
@@ -383,6 +435,9 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
               score: finalScore,
               difficulty: difficulty,
             })
+            if (isDailyChallenge) {
+              updateChallengeStatus(puzzleId, 'completed')
+            }
             if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
               gameApi.complete('tangram', {
                 puzzleId,
@@ -711,7 +766,9 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       setLoading(true)
       try {
         let p: PolygonPuzzle
-        if (id) {
+        if (isDailyChallenge) {
+          p = (await gameApi.getDailyPuzzle('tangram', dateParam || undefined)) as unknown as PolygonPuzzle
+        } else if (id) {
           const cached = readCache(id)
           if (cached) {
             p = cached
@@ -729,12 +786,19 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           writeCache(p)
           setPuzzle(p)
         }
+      } catch {
+        if (!cancelled) {
+          const p = isDailyChallenge
+            ? getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+            : current || getRandomPuzzle(difficulty)
+          setPuzzle(p)
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
     })()
     return () => { cancelled = true }
-  }, [difficulty])
+  }, [difficulty, isDailyChallenge, dateParam])
 
   const undoMove = useCallback(() => {
     const currentIdx = historyIndexRef.current

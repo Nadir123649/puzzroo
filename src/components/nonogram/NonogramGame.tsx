@@ -820,7 +820,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
         maxMistakes={maxMistakes}
         isWin={gameStatus === 'won'}
         onPlayAgain={handleReplay}
-        onNewPuzzle={handleNewPuzzle}
+        onNewPuzzle={!isFromPastPuzzles ? handleNewPuzzle : undefined}
         onBackToGames={handleBackToGames}
         onClose={() => setShowCompletionModal(false)}
       />

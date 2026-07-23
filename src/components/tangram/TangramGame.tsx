@@ -30,6 +30,9 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   const searchParams = useSearchParams()
   const difficulty = (searchParams?.get('difficulty') as TangramDifficulty) || 'easy'
   
+  const dateParam = searchParams?.get('date')
+  const isFromPastPuzzles = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
+  
   const [isResetting, setIsResetting] = useState(false)
   const [loaderText, setLoaderText] = useState('Loading game...')
   const [mobileBoardWidth, setMobileBoardWidth] = useState(350)
@@ -355,14 +358,24 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                   </button>
                 )}
 
-                {/* New Game / Replay Button */}
-                <button
-                  onClick={mode === 'normal' ? handleNewGame : handleReplay}
-                  disabled={isResetting}
-                  className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {mode === 'normal' ? 'New Game' : 'Replay'}
-                </button>
+                {/* Replay Game / New Game / Replay Button */}
+                {isFromPastPuzzles ? (
+                  <button
+                    onClick={handleReplay}
+                    disabled={isResetting}
+                    className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    Replay Game
+                  </button>
+                ) : (
+                  <button
+                    onClick={mode === 'normal' ? handleNewGame : handleReplay}
+                    disabled={isResetting}
+                    className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {mode === 'normal' ? 'New Game' : 'Replay'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -532,7 +545,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
         timeRemaining={timeRemaining}
         isTimeUp={gameStatus === 'lost'}
         onPlayAgain={handleRetry}
-        onNewPuzzle={mode === 'normal' ? handleNewGame : undefined}
+        onNewPuzzle={mode === 'normal' && !isFromPastPuzzles ? handleNewGame : undefined}
         onBackToLobby={handleBackToLobby}
         onClose={() => setIsModalVisible(false)}
       />
