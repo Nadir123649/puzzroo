@@ -45,7 +45,9 @@ export async function GET(request: NextRequest) {
     if (challenge.sessionId) {
       try {
         session = await sessionService.getSessionById(challenge.sessionId.toString(), userId);
-      } catch {}
+      } catch (error: any) {
+        console.log('[nonogram] daily: Failed to get existing session, creating new one:', error.message);
+      }
     }
 
     if (!session) {
@@ -57,7 +59,9 @@ export async function GET(request: NextRequest) {
         });
         challenge.sessionId = session._id;
         await challenge.save();
-      } catch {}
+      } catch (error: any) {
+        console.error('[nonogram] daily: Failed to create new session:', error.message, error.stack);
+      }
     }
 
     return successResponse({
