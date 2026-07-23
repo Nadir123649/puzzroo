@@ -15,7 +15,7 @@ interface NonogramModalProps {
   maxMistakes: number
   isWin: boolean
   onPlayAgain: () => void
-  onNewPuzzle: () => void
+  onNewPuzzle?: () => void
   onBackToGames?: () => void
   onClose?: () => void
 }
