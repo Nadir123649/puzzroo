@@ -43,6 +43,7 @@ export function SudokuGame() {
     selectNumber,
     eraseCell,
     resetBoard,
+    replayBoard,
     toggleNotesMode,
     requestHint,
     removeScoreFeedback,
@@ -88,7 +89,11 @@ export function SudokuGame() {
     setLoaderText(isReplay ? 'Replaying game...' : 'Loading game...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
-    resetBoard()
+    if (isReplay) {
+      replayBoard()
+    } else {
+      resetBoard()
+    }
     setIsResetting(false)
   }
 

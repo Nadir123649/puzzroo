@@ -88,32 +88,18 @@ export function generatePastPuzzles(
   gameId: 'sudoku' | 'cross-math' | 'nonogram' | 'tangram',
   accountCreatedAt?: Date
 ): DailyChallenge[] {
+  const puzzles: DailyChallenge[] = []
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-
-  // Start two days before the account was created (or two days ago for guests).
-  const start = new Date(accountCreatedAt ?? today)
-  start.setHours(0, 0, 0, 0)
-  start.setDate(start.getDate() - 2)
-
-  const puzzles: DailyChallenge[] = []
-  const cursor = new Date(start)
-  while (cursor <= yesterday) {
-    puzzles.push(generateDailyChallenge(new Date(cursor), gameId))
-    cursor.setDate(cursor.getDate() + 1)
+  // Generate challenges for the last N days, starting from yesterday
+  for (let i = 1; i <= days; i++) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    puzzles.push(generateDailyChallenge(date, gameId))
   }
 
-  // Guarantee a minimum of 3 puzzles (brand-new accounts).
-  while (puzzles.length < 3) {
-    start.setDate(start.getDate() - 1)
-    puzzles.unshift(generateDailyChallenge(new Date(start), gameId))
-  }
-
-  // Cap to the requested window size if it would otherwise be larger.
-  return puzzles.length > days ? puzzles.slice(puzzles.length - days) : puzzles
+  return puzzles
 }
 
 /**

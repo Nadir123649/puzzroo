@@ -184,10 +184,9 @@ export function CrossMathGame() {
                 requiredNumbersCount={requiredNumbersCount}
               />
 
-               {/* Action Button - New Game */}
-               {!isFromPastPuzzles && (
+               {isFromPastPuzzles ? (
                  <button
-                   onClick={() => handleNewGame(false)}
+                   onClick={() => handleNewGame(true)}
                    disabled={isResetting}
                    className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                  >
@@ -197,19 +196,35 @@ export function CrossMathGame() {
                        <span>Loading...</span>
                      </>
                    ) : (
-                     'New Game'
+                     'Replay Game'
                    )}
                  </button>
-               )}
+               ) : (
+                 <>
+                   <button
+                     onClick={() => handleNewGame(false)}
+                     disabled={isResetting}
+                     className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                   >
+                     {isResetting ? (
+                       <>
+                         <Loader2 className="animate-spin" size={20} />
+                         <span>Loading...</span>
+                       </>
+                     ) : (
+                       'New Game'
+                     )}
+                   </button>
 
-               {/* Action Button - Replay */}
-               <button
-                 onClick={() => handleNewGame(true)}
-                 disabled={isResetting}
-                 className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-               >
-                 Replay
-               </button>
+                   <button
+                     onClick={() => handleNewGame(true)}
+                     disabled={isResetting}
+                     className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                   >
+                     Replay
+                   </button>
+                 </>
+               )}
              </div>
            </div>
  
@@ -251,25 +266,24 @@ export function CrossMathGame() {
                requiredNumbersCount={requiredNumbersCount}
              />
  
-             {/* Feature Buttons Mobile */}
-             <SudokuControls
-               notesMode={false}
-               availableHints={availableHints}
-               onUndo={undoLastMove}
-               onErase={eraseCell}
-               onTogglePencil={() => {}}
-               onHint={requestHint}
-               mobile
-               showPencil={false}
-               canUndo={canUndo}
-               showReplay={true}
-               onReplay={replayBoard}
-             />
- 
-              {/* Action Button Mobile - New Game */}
-              {!isFromPastPuzzles && (
+              {/* Feature Buttons Mobile */}
+              <SudokuControls
+                notesMode={false}
+                availableHints={availableHints}
+                onUndo={undoLastMove}
+                onErase={eraseCell}
+                onTogglePencil={() => {}}
+                onHint={requestHint}
+                mobile
+                showPencil={false}
+                canUndo={canUndo}
+                showReplay={true}
+                onReplay={replayBoard}
+              />
+
+              {isFromPastPuzzles ? (
                 <button
-                  onClick={() => handleNewGame(false)}
+                  onClick={() => handleNewGame(true)}
                   disabled={isResetting}
                   className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
@@ -279,25 +293,39 @@ export function CrossMathGame() {
                       <span>Loading...</span>
                     </>
                   ) : (
-                    'New Game'
+                    'Replay Game'
                   )}
                 </button>
-              )}
+              ) : (
+                <>
+                  <button
+                    onClick={() => handleNewGame(false)}
+                    disabled={isResetting}
+                    className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isResetting ? (
+                      <>
+                        <Loader2 className="animate-spin" size={20} />
+                        <span>Loading...</span>
+                      </>
+                    ) : (
+                      'New Game'
+                    )}
+                  </button>
 
-              {/* Action Button Mobile - Replay */}
-              <button
-                onClick={() => handleNewGame(true)}
-                disabled={isResetting}
-                className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                Replay
-              </button>
-           </div>
- 
-         </div>
-       </div>
- 
-       {/* Win/Loss Modal */}
+                  <button
+                    onClick={() => handleNewGame(true)}
+                    disabled={isResetting}
+                    className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    Replay
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
        <SudokuModal
          isOpen={showModal}
          type={gameStatus === 'won' ? 'win' : 'gameOver'}
