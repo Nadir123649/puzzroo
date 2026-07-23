@@ -215,6 +215,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   // Dynamic cell sizing based on screen width and difficulty with zoom
   const cellSize = useMemo(() => {
     if (!currentPuzzle || windowWidth === 0) return 32
+    if (!currentPuzzle.rowClues || !currentPuzzle.columnClues) return 32
     
     const gridSize = currentPuzzle.size
     const padding = 40 // Container padding
@@ -289,8 +290,8 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   }
 
   // These must be computed before any early return to satisfy Rules of Hooks
-  const maxRowClueCount = currentPuzzle ? Math.max(...currentPuzzle.rowClues.map(c => c.values.length), 1) : 1
-  const maxColClueCount = currentPuzzle ? Math.max(...currentPuzzle.columnClues.map(c => c.values.length), 1) : 1
+  const maxRowClueCount = currentPuzzle?.rowClues ? Math.max(...currentPuzzle.rowClues.map(c => c.values.length), 1) : 1
+  const maxColClueCount = currentPuzzle?.columnClues ? Math.max(...currentPuzzle.columnClues.map(c => c.values.length), 1) : 1
 
   // Clue size should also scale with zoom
   const clueSize = cellSize

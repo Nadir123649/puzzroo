@@ -18,7 +18,9 @@ function NonogramContent() {
 
   const puzzleId = searchParams.get('puzzleId')
   const diffParam = searchParams.get('difficulty')
-  const shouldRenderGame = puzzleId || diffParam
+  const dateParam = searchParams.get('date')
+  const skipSelection = searchParams.get('skipSelection')
+  const shouldRenderGame = puzzleId || diffParam || dateParam || skipSelection
 
   return (
     <>
