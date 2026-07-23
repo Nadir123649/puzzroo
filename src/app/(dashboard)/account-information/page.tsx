@@ -116,7 +116,17 @@ export default function AccountInformationPage() {
 
   const handleRevokeSession = async (id: string) => {
     const ok = await revokeSession(id)
-    if (ok) setSessions(prev => prev.filter(s => s.id !== id))
+    if (ok) {
+      setSessions(prev => prev.filter(s => s.id !== id))
+      // If the revoked session was the current one, log out
+      const wasCurrent = sessions.find(s => s.id === id)?.isCurrent
+      if (wasCurrent) {
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('puzzroo_auth')
+        localStorage.removeItem('puzzroo_user')
+        window.location.href = '/login'
+      }
+    }
   }
 
   const getDeviceIcon = (type: string) => {
@@ -225,7 +235,7 @@ export default function AccountInformationPage() {
               </span>
               {localUser?.email && localUser?.email !== 'N/A' ? (
                 <>
-                  {localUser?.isVerified ? (
+                  {localUser?.isVerified || (localUser?.provider === 'google' && !localUser?.hasPassword) ? (
                     <div className="flex items-center gap-1 mt-0.5">
                       <Check size={12} className="text-green-600 dark:text-green-400" strokeWidth={3} />
                       <span className="font-urbanist text-[11px] text-green-600 dark:text-green-400 font-semibold">
@@ -543,15 +553,17 @@ export default function AccountInformationPage() {
                     </div>
                   </div>
 
-                  {!session.isCurrent && (
-                    <button
-                      onClick={() => handleRevokeSession(session.id)}
-                      className="p-2 text-[#757575] dark:text-[#9E9E9E] hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-all duration-200"
-                      title="Log out device"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleRevokeSession(session.id)}
+                    className={`p-2 rounded-full transition-all duration-200 ${
+                      session.isCurrent
+                        ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20'
+                        : 'text-[#757575] dark:text-[#9E9E9E] hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20'
+                    }`}
+                    title={session.isCurrent ? 'Log out this device' : 'Log out device'}
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               )
             })}

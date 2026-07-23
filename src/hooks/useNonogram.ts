@@ -79,6 +79,22 @@ function writeCache(id: string, puzzle: PuzzleData): void {
   }
 }
 
+function getDailyDate(dateParam?: string | null): Date {
+  if (dateParam) {
+    const [month, day, year] = dateParam.split('-')
+    const fullYear = 2000 + parseInt(year)
+    return new Date(fullYear, parseInt(month) - 1, parseInt(day))
+  }
+  return new Date()
+}
+
+function getDailyDateString(dateParam?: string | null): string {
+  const d = getDailyDate(dateParam)
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
+}
+
 function getDailyNonogramPuzzle(date: Date): PuzzleData {
   const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000)
   const index = Math.abs(dayOfYear) % dailyPuzzles.length
@@ -198,7 +214,7 @@ export function useNonogram(initialPuzzleId?: string) {
             writeCache(puzzle.id, puzzle)
           }
         } else if (isDailyChallenge) {
-          const res = await gameApi.getDailyPuzzle('nonogram', dateParam || undefined)
+          const res = await gameApi.getDailyPuzzle('nonogram', getDailyDateString(dateParam))
           puzzle = res as unknown as PuzzleData
           writeCache(puzzle.id, puzzle)
         } else {
