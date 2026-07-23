@@ -49,11 +49,39 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     setInputMode,
     setHoveredCell,
     setMousePosition,
+    loading,
   } = useNonogram(puzzleId)
 
   const [isResetting, setIsResetting] = useState(false)
   const [loaderText, setLoaderText] = useState('Loading game...')
   const [showCompletionModal, setShowCompletionModal] = useState(false)
+
+  // Prevent scroll when loading overlay is active
+  useEffect(() => {
+    if (isResetting || loading) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.overflowY = 'hidden'
+      document.body.style.touchAction = 'none'
+      document.documentElement.style.overflow = 'hidden'
+      document.documentElement.style.overflowY = 'hidden'
+      document.documentElement.style.touchAction = 'none'
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.overflowY = ''
+      document.body.style.touchAction = ''
+      document.documentElement.style.overflow = ''
+      document.documentElement.style.overflowY = ''
+      document.documentElement.style.touchAction = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.overflowY = ''
+      document.body.style.touchAction = ''
+      document.documentElement.style.overflow = ''
+      document.documentElement.style.overflowY = ''
+      document.documentElement.style.touchAction = ''
+    }
+  }, [isResetting, loading])
 
   // Show modal automatically when game is won or lost
   useEffect(() => {
@@ -68,8 +96,12 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     }
   }, [gameStatus])
 
-  const handleReplay = () => {
+  const handleReplay = async () => {
+    setLoaderText('Replaying game...')
+    setIsResetting(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
     resetPuzzle()
+    setIsResetting(false)
   }
 
   const handleNewPuzzle = async () => {
@@ -314,7 +346,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
 
   return (
     <>
-      <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300">
+      <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}>
         <div className="w-full px-[20px] pb-[40px] flex justify-center">
           <div className="w-full max-w-[717.5px] flex flex-col items-center gap-[20px]">
             
@@ -827,7 +859,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
       />
 
       {/* Loading Overlay */}
-      <GameLoader isOpen={isResetting} text={loaderText} />
+      <GameLoader isOpen={isResetting || loading} text={loaderText} />
     </>
   )
 }
