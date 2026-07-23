@@ -144,6 +144,16 @@ export const puzzleDataset: Record<Difficulty, CrossMathPuzzle[]> = {
   hard: buildPool(hardJson),
 }
 
+console.log('[crossmath-dbg] easy pool size:', puzzleDataset.easy.length)
+console.log('[crossmath-dbg] medium pool size:', puzzleDataset.medium.length)
+console.log('[crossmath-dbg] hard pool size:', puzzleDataset.hard.length)
+if (puzzleDataset.easy.length > 0) {
+  const p = puzzleDataset.easy[0]
+  const editableCount = p.grid.flat().filter(c => c.isEditable).length
+  console.log('[crossmath-dbg] first easy puzzle editable cells:', editableCount)
+  console.log('[crossmath-dbg] first easy puzzle availableNumbers:', p.availableNumbers)
+}
+
 /**
  * Always returns a pre-generated, uniqueness-guaranteed puzzle so every game has
  * a real board shape and a single solution.

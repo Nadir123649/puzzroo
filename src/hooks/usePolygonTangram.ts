@@ -30,6 +30,13 @@ function getDailyDate(dateParam?: string | null): Date {
   return new Date()
 }
 
+function getDailyDateString(dateParam?: string | null): string {
+  const d = getDailyDate(dateParam)
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
+}
+
 function getDailyTangramPuzzle(date: Date, diff: TangramDifficulty): PolygonPuzzle {
   const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
   const pool = getPuzzlesByDifficulty(diff)
@@ -297,9 +304,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         let p: PolygonPuzzle
         try {
           if (isDailyChallenge) {
-            const res = await gameApi.getDailyPuzzle('tangram', dateParam || undefined)
-            if (!res || !(res as any).id) throw new Error('invalid_puzzle')
-            p = res as unknown as PolygonPuzzle
+            p = (await gameApi.getDailyPuzzle('tangram', getDailyDateString(dateParam))) as unknown as PolygonPuzzle
           } else {
             const res = await gameApi.getPuzzle('tangram', { difficulty })
             if (!res || !(res as any).id) throw new Error('invalid_puzzle')
@@ -311,6 +316,11 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             : getRandomPuzzle(difficulty)
         }
         if (!cancelled) {
+          if (!p || !Array.isArray(p.fullPolygon) || !Array.isArray(p.pieceShapeIds)) {
+            p = isDailyChallenge
+              ? getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+              : getRandomPuzzle(difficulty)
+          }
           writeCache(p)
           setPuzzle(p)
         }
@@ -334,7 +344,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
 
   // Initialize pieces from puzzle
   useEffect(() => {
-    if (!puzzle) return
+    if (!puzzle || !Array.isArray(puzzle.fullPolygon)) return
     
     const scaled = scaleAndCenterPolygon(puzzle.fullPolygon)
     scaledData.current = scaled
@@ -799,6 +809,11 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           p = current || getRandomPuzzle(difficulty)
         }
         if (!cancelled) {
+          if (!p || !Array.isArray(p.fullPolygon) || !Array.isArray(p.pieceShapeIds)) {
+            p = isDailyChallenge
+              ? getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+              : current || getRandomPuzzle(difficulty)
+          }
           writeCache(p)
           setPuzzle(p)
         }

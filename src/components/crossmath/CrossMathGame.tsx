@@ -140,7 +140,6 @@ export function CrossMathGame() {
     <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}>
       <div className="w-full px-[20px] flex justify-center">
         <div className="w-full max-w-[1200px] flex flex-col gap-[15px] pb-0 md:pb-[50px]">
-          
           {/* Desktop Layout */}
           <div className="hidden md:flex gap-[30px] lg:gap-[48px] justify-center items-center">
             {/* CrossMath Board - Center aligned for easy mode */}
@@ -159,6 +158,16 @@ export function CrossMathGame() {
 
             {/* Right Control Panel - 230px width */}
             <div className="w-[230px] flex flex-col gap-[20px]">
+              {/* Difficulty Heading */}
+              <div className="text-center">
+                <span className="font-urbanist text-[11px] text-[#757575] dark:text-[#9E9E9E] uppercase tracking-wider font-bold">
+                  Difficulty
+                </span>
+                <h3 className="font-urbanist text-2xl font-extrabold text-[#212121] dark:text-white capitalize select-none mt-0.5">
+                  {difficulty}
+                </h3>
+              </div>
+
               {/* Stats */}
               <div className="relative overflow-visible">
                 <SudokuStats

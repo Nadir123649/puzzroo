@@ -4,13 +4,39 @@ import { randomPuzzleEngine } from "@/lib/server/puzzles/nonogram/services/Rando
 import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService";
 import { nonogramToResponse } from "@/lib/server/puzzles/nonogram";
 import DailyChallenge from "@/lib/server/models/DailyChallenge";
+import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle";
 import { dailyQuerySchema } from "@/lib/server/puzzles/nonogram/validators";
 import { successResponse } from "@/lib/server/utils/apiResponse";
+import { dateToSeed } from "@/lib/server/puzzles/daily";
 
 export const GET = withAuth(async (req, user) => {
   const url = new URL(req.url);
   const parsed = dailyQuerySchema.safeParse(Object.fromEntries(url.searchParams));
   const difficulty = parsed.success ? parsed.data.difficulty : undefined;
+  const dateParam = parsed.success ? parsed.data.date : undefined;
+
+  // Past date: deterministic puzzle by date seed, no challenge/session
+  if (dateParam) {
+    const seed = dateToSeed(dateParam);
+    const matchFilter: any = { game: "nonogram", isActive: true };
+    if (difficulty) matchFilter.difficulty = difficulty;
+    const count = await NonogramPuzzle.countDocuments(matchFilter);
+    if (count === 0) {
+      return Response.json(
+        { success: false, payload: { error: { code: "no_puzzles", message: "No puzzles available" } } },
+        { status: 404 }
+      );
+    }
+    const dailyIndex = seed % count;
+    const doc = await NonogramPuzzle.findOne({ ...matchFilter, dailyIndex }).lean();
+    if (!doc) {
+      return Response.json(
+        { success: false, payload: { error: { code: "puzzle_not_found", message: "Puzzle not found" } } },
+        { status: 404 }
+      );
+    }
+    return successResponse({ ...nonogramToResponse(doc), date: dateParam });
+  }
 
   const { puzzle, dailyChallenge } = await randomPuzzleEngine.selectDailyPuzzle(user.id, difficulty);
 

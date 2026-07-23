@@ -1,36 +1,48 @@
 import { NextRequest } from "next/server"
-import { withAuth } from "../route-helpers"
 import { randomPuzzleEngine } from "@/lib/server/puzzles/crossmath/services/RandomPuzzleEngine"
+import { auth } from "@/lib/server/middleware/auth"
 import { cacheHeaders } from "@/lib/server/utils/http"
+import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 
-export const GET = withAuth(async (req, user) => {
-  const url = new URL(req.url)
+export async function GET(request: NextRequest) {
+  const authResult = await auth(request)
+  const userId = "error" in authResult ? null : authResult.user.id
+
+  const url = new URL(request.url)
   const dateStr = url.searchParams.get("date") || new Date().toISOString().split("T")[0]
 
-  const puzzle = await randomPuzzleEngine.selectDailyPuzzle(dateStr)
+  try {
+    const puzzle = await randomPuzzleEngine.selectDailyPuzzle(dateStr)
 
-  const { getPatternById, patternToGameGrid } = await import("@shared/data/crossmath/patterns")
-  const pattern = getPatternById(puzzle.patternId)
-  const grid = pattern ? patternToGameGrid(pattern) : []
+    const { getPatternById, patternToGameGrid } = await import("@shared/data/crossmath/patterns")
+    const pattern = getPatternById(puzzle.patternId)
+    const grid = pattern ? patternToGameGrid(pattern) : []
 
-  const headers = cacheHeaders(86400)
+    const headers = cacheHeaders(86400)
 
-  return new Response(
-    JSON.stringify({
-      success: true,
-      payload: {
-        id: puzzle.id,
-        difficulty: puzzle.difficulty,
-        puzzleId: puzzle.id,
-        rows: pattern?.grid_rows || 0,
-        columns: pattern?.grid_cols || 0,
-        grid,
-        availableNumbers: puzzle.availableNumbers || [],
-        maxMistakes: puzzle.maxMistakes || 3,
-        date: dateStr,
-      },
-      timestamp: Date.now(),
-    }),
-    { status: 200, headers }
-  )
-})
+    return new Response(
+      JSON.stringify({
+        success: true,
+        payload: {
+          id: puzzle.id,
+          difficulty: puzzle.difficulty,
+          puzzleId: puzzle.id,
+          rows: pattern?.grid_rows || 0,
+          columns: pattern?.grid_cols || 0,
+          grid,
+          availableNumbers: puzzle.availableNumbers || [],
+          maxMistakes: puzzle.maxMistakes || 3,
+          solution: puzzle.solution || {},
+          date: dateStr,
+        },
+        timestamp: Date.now(),
+      }),
+      { status: 200, headers }
+    )
+  } catch (error: any) {
+    if (error.message === "no_daily_puzzles_available") {
+      return errorResponse(404, "no_daily_puzzle", "No daily puzzle available")
+    }
+    return errorResponse(500, "internal_error", "Internal Server Error")
+  }
+}
