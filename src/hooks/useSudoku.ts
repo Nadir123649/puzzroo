@@ -112,6 +112,7 @@ async function loadSudokuPuzzle(source: PuzzleSource): Promise<SudokuPuzzleData>
     } else {
       raw = await gameApi.getDailyPuzzle('sudoku', source.date)
     }
+    if (!raw || !(raw as any).id) throw new Error('invalid_puzzle')
     const puzzle = raw as unknown as SudokuPuzzleData
     writeCache(puzzle.id, puzzle)
     return puzzle

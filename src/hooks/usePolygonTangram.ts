@@ -297,9 +297,13 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         let p: PolygonPuzzle
         try {
           if (isDailyChallenge) {
-            p = (await gameApi.getDailyPuzzle('tangram', dateParam || undefined)) as unknown as PolygonPuzzle
+            const res = await gameApi.getDailyPuzzle('tangram', dateParam || undefined)
+            if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+            p = res as unknown as PolygonPuzzle
           } else {
-            p = (await gameApi.getPuzzle('tangram', { difficulty })) as unknown as PolygonPuzzle
+            const res = await gameApi.getPuzzle('tangram', { difficulty })
+            if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+            p = res as unknown as PolygonPuzzle
           }
         } catch {
           p = isDailyChallenge
@@ -691,7 +695,9 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       try {
         let p: PolygonPuzzle
         try {
-          p = (await gameApi.getPuzzle('tangram', { difficulty })) as unknown as PolygonPuzzle
+          const res = await gameApi.getPuzzle('tangram', { difficulty })
+          if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+          p = res as unknown as PolygonPuzzle
         } catch {
           p = getRandomPuzzle(difficulty)
         }
@@ -729,7 +735,9 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       try {
         let p: PolygonPuzzle
         try {
-          p = (await gameApi.getPuzzle('tangram', { difficulty, exclude: currentSourceId })) as unknown as PolygonPuzzle
+          const res = await gameApi.getPuzzle('tangram', { difficulty, exclude: currentSourceId })
+          if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+          p = res as unknown as PolygonPuzzle
         } catch {
           p = getRandomPuzzle(difficulty, currentSourceId)
         }
@@ -767,14 +775,22 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       try {
         let p: PolygonPuzzle
         if (isDailyChallenge) {
-          p = (await gameApi.getDailyPuzzle('tangram', dateParam || undefined)) as unknown as PolygonPuzzle
+          try {
+            const res = await gameApi.getDailyPuzzle('tangram', dateParam || undefined)
+            if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+            p = res as unknown as PolygonPuzzle
+          } catch {
+            p = getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+          }
         } else if (id) {
           const cached = readCache(id)
           if (cached) {
             p = cached
           } else {
             try {
-              p = (await gameApi.getPuzzleById('tangram', id)) as unknown as PolygonPuzzle
+              const res = await gameApi.getPuzzleById('tangram', id)
+              if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+              p = res as unknown as PolygonPuzzle
             } catch {
               p = current || getRandomPuzzle(difficulty)
             }

@@ -194,15 +194,18 @@ export function useNonogram(initialPuzzleId?: string) {
             puzzle = cached
           } else {
             const res = await gameApi.getPuzzleById('nonogram', puzzleId)
+            if (!res || !(res as any).id) throw new Error('invalid_puzzle')
             puzzle = res as unknown as PuzzleData
             writeCache(puzzle.id, puzzle)
           }
         } else if (isDailyChallenge) {
           const res = await gameApi.getDailyPuzzle('nonogram', dateParam || undefined)
+          if (!res || !(res as any).id) throw new Error('invalid_puzzle')
           puzzle = res as unknown as PuzzleData
           writeCache(puzzle.id, puzzle)
         } else {
           const res = await gameApi.getPuzzle('nonogram', { difficulty: diff })
+          if (!res || !(res as any).id) throw new Error('invalid_puzzle')
           puzzle = res as unknown as PuzzleData
           writeCache(puzzle.id, puzzle)
         }
