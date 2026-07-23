@@ -14,7 +14,7 @@ export function DifficultyTabs({
   selectedDifficulty,
   onDifficultyChange 
 }: DifficultyTabsProps) {
-  const modes = difficulties.slice(0, 3)
+  const modes = difficulties
   
   // Find initial selected index based on selectedDifficulty
   const getInitialIndex = () => {
@@ -73,7 +73,7 @@ export function DifficultyTabs({
       <span className="font-urbanist font-bold text-[15px] sm:text-[16px] leading-[140%] tracking-[0.2px] text-[#424242] dark:text-[var(--color-light)] whitespace-nowrap flex-shrink-0">
         Difficulty:
       </span>
-      <div className="flex items-center gap-0 flex-1 sm:w-[253px] sm:flex-none justify-between relative">
+      <div className="flex items-center gap-0 flex-1 sm:w-[340px] sm:flex-none justify-between relative">
         {/* Continuous grey line in background */}
         <div className="absolute left-0 right-0 h-[2px] bg-[#EEEEEE] rounded-full z-0" style={{ bottom: '0px' }}></div>
         {modes.map((difficulty, index) => (

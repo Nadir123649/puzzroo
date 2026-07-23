@@ -19,16 +19,13 @@ export default function SignupPage() {
   const router = useRouter()
   
   const [name, setName] = useState('')
-  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [usernameHint, setUsernameHint] = useState(false)
   
   // Validation errors
   const [errors, setErrors] = useState<{
     name?: string
-    username?: string
     email?: string
     password?: string
     general?: string
@@ -36,6 +33,8 @@ export default function SignupPage() {
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isLinking, setIsLinking] = useState(false)
+  const [serverMessage, setServerMessage] = useState('')
 
   // Consume a Facebook (redirect) OAuth result when the provider bounces back.
   useEffect(() => {
@@ -61,12 +60,6 @@ export default function SignupPage() {
     } else if (name.trim().length > 50) {
       newErrors.name = 'Full name must be at most 50 characters'
     }
-
-    if (!username.trim()) {
-      newErrors.username = 'Username is required'
-    } else if (!/^[a-z0-9._-]{3,20}$/.test(username)) {
-      newErrors.username = 'Username must be 3-20 characters: lowercase letters, numbers, . _ or -'
-    }
     
     if (!email.trim()) {
       newErrors.email = 'Email is required'
@@ -91,17 +84,17 @@ export default function SignupPage() {
     if (!validate()) return
 
     setIsSubmitting(true)
-    const result = await register(name, username, email, password)
+    const result = await register(name, email, password)
     setIsSubmitting(false)
 
     if (result.success) {
-      notify.successKey('AUTH_SIGNUP_SUCCESS')
+      setIsLinking(!!result.linking)
+      setServerMessage(result.message || '')
+      if (!result.linking) notify.successKey('AUTH_SIGNUP_SUCCESS')
       setIsSuccess(true)
     } else {
       notify.errorFromResult(result, 'AUTH_SIGNUP_FAILED')
-      if (result.code === 'username_taken') {
-        setErrors({ username: result.error })
-      } else if (result.code === 'email_taken') {
+      if (result.code === 'email_taken') {
         setErrors({ email: result.error })
       } else {
         setErrors({ general: result.error || 'Registration failed' })
@@ -139,15 +132,30 @@ export default function SignupPage() {
           {isSuccess ? (
             <div className="text-center py-6 flex flex-col items-center gap-4">
               <div className="w-12 h-12 bg-[#6949FF] rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                ✉
+                {isLinking ? '🔗' : '✉'}
               </div>
               <div className="flex flex-col gap-1">
-                <p className="font-urbanist font-semibold text-[16px] text-[#6949FF]">
-                  Check your email
-                </p>
-                <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] max-w-[280px]">
-                  We sent a verification link to <strong>{email}</strong>. Click it to activate your account.
-                </p>
+                {isLinking ? (
+                  <>
+                    <p className="font-urbanist font-semibold text-[16px] text-[#6949FF]">
+                      {serverMessage || 'Account linking in progress'}
+                    </p>
+                    <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] max-w-[280px]">
+                      {serverMessage.includes('linked')
+                        ? 'Your account has been linked. You can now log in with email or Google.'
+                        : <>We found an existing account with <strong>{email}</strong>. Click the verification link to link email login to your existing account.</>}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-urbanist font-semibold text-[16px] text-[#6949FF]">
+                      Check your email
+                    </p>
+                    <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] max-w-[280px]">
+                      We sent a verification link to <strong>{email}</strong>. Click it to activate your account.
+                    </p>
+                  </>
+                )}
               </div>
               <Link href="/login" className="mt-2 font-urbanist text-[14px] text-[#6949FF] hover:underline font-semibold">
                 Go to Login
@@ -163,45 +171,6 @@ export default function SignupPage() {
                   </p>
                 </div>
               )}
-              {/* Username Input */}
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="username" className="font-urbanist font-bold text-[14px] text-[#424242] dark:text-[#E0E0E0]">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  value={username}
-                  maxLength={20}
-                  onChange={(e) => {
-                    const lowered = e.target.value.toLowerCase()
-                    const hasInvalid = /[^a-z0-9._-]/.test(lowered)
-                    setUsername(lowered.replace(/[^a-z0-9._-]/g, ''))
-                    if (hasInvalid) {
-                      setUsernameHint(true)
-                      notify.errorKey('AUTH_USERNAME_INVALID', undefined, { id: 'username-invalid' })
-                    } else {
-                      setUsernameHint(false)
-                    }
-                    if (errors.username) setErrors(prev => ({ ...prev, username: undefined }))
-                  }}
-                  className={`w-full h-[48px] px-4 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${
-                    errors.username || usernameHint ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
-                  }`}
-                  placeholder="Enter your username"
-                  autoComplete="username"
-                />
-                {errors.username ? (
-                  <span className="font-urbanist font-semibold text-[12px] text-red-500">
-                    {errors.username}
-                  </span>
-                ) : usernameHint ? (
-                  <span className="font-urbanist font-semibold text-[12px] text-red-500">
-                    Lowercase letters, numbers, . _ or - . Cannot be changed later.
-                  </span>
-                ) : null}
-              </div>
-
               {/* Name Input */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="name" className="font-urbanist font-bold text-[14px] text-[#424242] dark:text-[#E0E0E0]">

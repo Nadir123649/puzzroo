@@ -26,7 +26,6 @@ function LoginPageContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{ identifier?: string; password?: string; general?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
   const [verifiedBanner, setVerifiedBanner] = useState<'success' | 'error' | null>(verified === 'true' ? 'success' : verified === 'false' ? 'error' : null)
   const [emailNotVerified, setEmailNotVerified] = useState(false)
@@ -82,11 +81,7 @@ function LoginPageContent() {
 
     if (result.success) {
       notify.successKey('AUTH_WELCOME_BACK')
-      setIsSuccess(true)
-      // Redirect to home after showing success message
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 1500)
+      window.location.replace('/')
     } else {
       notify.errorFromResult(result, 'AUTH_INVALID_CREDENTIALS')
       setErrors({ general: notify.fromResult(result, 'AUTH_INVALID_CREDENTIALS') })
@@ -119,17 +114,7 @@ function LoginPageContent() {
             </h2>
           </div>
 
-          {isSuccess ? (
-            <div className="text-center py-6 flex flex-col items-center gap-4">
-              <div className="w-12 h-12 bg-[#22C55E] rounded-full flex items-center justify-center text-white text-2xl font-bold animate-bounce">
-                ✓
-              </div>
-              <p className="font-urbanist font-semibold text-[16px] text-[#22C55E]">
-                Login Successful! Redirecting...
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
               {/* Verification Banner */}
               {verifiedBanner === 'success' && (
                 <div className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
@@ -352,7 +337,6 @@ function LoginPageContent() {
                 </span>
               </div>
             </form>
-          )}
 
         </div>
       </main>

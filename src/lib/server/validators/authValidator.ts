@@ -16,7 +16,6 @@ const nameField = z
 
 export const registerSchema = z.object({
   name: nameField,
-  username: usernameField,
   email: z.string().trim().email("Please enter a valid email"),
   password: z
     .string()
@@ -55,4 +54,17 @@ export const chooseUsernameSchema = z.object({
 export const updateProfileSchema = z.object({
   name: nameField.optional(),
   phone: z.string().optional(),
+});
+
+export const unlinkProviderSchema = z.object({
+  provider: z.enum(["email", "google", "facebook"]),
+});
+
+export const manageEmailSchema = z.object({
+  email: z.string().trim().email("Please enter a valid email"),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .max(20, "Password must be at most 20 characters")
+    .optional(),
 });

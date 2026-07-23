@@ -16,4 +16,6 @@ const loginSessionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+loginSessionSchema.index({ lastSeenAt: 1 }, { expireAfterSeconds: 7 * 24 * 60 * 60 });
+
 export default mongoose.models.LoginSession || mongoose.model("LoginSession", loginSessionSchema);

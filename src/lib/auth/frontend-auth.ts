@@ -16,6 +16,7 @@ export interface User {
   provider?: string
   linkedProviders?: string[]
   hasPassword?: boolean
+  isVerified?: boolean
 }
 
 export async function login(identifier: string, password: string, rememberMe: boolean = false): Promise<{ success: boolean; error?: string; code?: string }> {
@@ -34,30 +35,27 @@ export async function login(identifier: string, password: string, rememberMe: bo
     localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
     window.dispatchEvent(new Event("auth-change"));
     return { success: true };
-  } catch {
-    return { success: false, error: "Network error. Please try again." };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Network error. Please try again." };
   }
 }
 
 export async function logout(): Promise<void> {
-  try {
-    await api("/api/v1/auth/logout", { method: "POST" });
-  } catch {}
-  // Also clear the Firebase client session so the next Google/Facebook sign-in
-  // starts fresh and shows the account chooser instead of silently reusing the
-  // previously signed-in account. Dynamically imported to keep Firebase out of
-  // bundles that only need basic auth helpers.
+  // Clear client state immediately so the UI reflects logged-out instantly.
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("puzzroo_auth");
+  localStorage.removeItem("puzzroo_user");
+  window.dispatchEvent(new Event("auth-change"));
+
+  // Server cleanup + Firebase signOut — fire in background, never block.
+  api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
   try {
     const [{ auth }, { signOut }] = await Promise.all([
       import("@/lib/config/firebase-client"),
       import("firebase/auth"),
     ]);
-    if (auth) await signOut(auth);
+    if (auth) signOut(auth).catch(() => {});
   } catch {}
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("puzzroo_auth");
-  localStorage.removeItem("puzzroo_user");
-  window.dispatchEvent(new Event("auth-change"));
 }
 
 export function isLoggedIn(): boolean {
@@ -211,14 +209,57 @@ export async function updateUser(updates: Partial<User>): Promise<boolean> {
   }
 }
 
-export async function setUsername(username: string): Promise<{ success: boolean; error?: string }> {
+export async function manageEmail(email: string, password?: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api("/api/v1/auth/manage-email", {
+      method: "POST",
+      body: JSON.stringify({ email, ...(password ? { password } : {}) }),
+    });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Failed to update email" };
+    }
+    const payload = res.payload as any;
+    if (payload.user) {
+      const current = getCurrentUser();
+      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser({ ...payload.user, provider: current?.provider })));
+      window.dispatchEvent(new Event("auth-change"));
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error" };
+  }
+}
+
+export async function unlinkProvider(provider: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api("/api/v1/auth/unlink-provider", {
+      method: "POST",
+      body: JSON.stringify({ provider }),
+    });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Failed to unlink provider" };
+    }
+    const payload = res.payload as any;
+    if (payload.user) {
+      const current = getCurrentUser();
+      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser({ ...payload.user, provider: current?.provider })));
+      window.dispatchEvent(new Event("auth-change"));
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error" };
+  }
+}
+
+export async function setUsername(username: string): Promise<{ success: boolean; error?: string; code?: string }> {
   try {
     const res = await api("/api/v1/auth/set-username", {
       method: "POST",
       body: JSON.stringify({ username }),
     });
     if (!res.success) {
-      return { success: false, error: (res.payload as any)?.error?.message || "Failed to set username" };
+      const err = (res.payload as any)?.error;
+      return { success: false, error: err?.message || "Failed to set username", code: err?.code };
     }
     const payload = res.payload as any;
     if (payload.token?.accessToken) {
@@ -227,6 +268,28 @@ export async function setUsername(username: string): Promise<{ success: boolean;
     localStorage.setItem("puzzroo_auth", "true");
     localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
     window.dispatchEvent(new Event("auth-change"));
+    return { success: true };
+  } catch {
+    return { success: false, error: "Network error" };
+  }
+}
+
+export async function linkAndMerge(username: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await api("/api/v1/auth/link-and-merge", {
+      method: "POST",
+      body: JSON.stringify({ username }),
+    });
+    if (!res.success) {
+      return { success: false, error: (res.payload as any)?.error?.message || "Failed to link accounts" };
+    }
+    const payload = res.payload as any;
+    if (payload.token?.accessToken) {
+      localStorage.setItem("accessToken", payload.token.accessToken);
+      localStorage.setItem("puzzroo_auth", "true");
+      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
+      window.dispatchEvent(new Event("auth-change"));
+    }
     return { success: true };
   } catch {
     return { success: false, error: "Network error" };
@@ -255,17 +318,18 @@ export async function bootstrapSession(): Promise<User | null> {
   }
 }
 
-export async function register(name: string, username: string, email: string, password: string): Promise<{ success: boolean; error?: string; code?: string }> {
+export async function register(name: string, email: string, password: string): Promise<{ success: boolean; error?: string; code?: string; linking?: boolean; message?: string }> {
   try {
     const res = await api("/api/v1/auth/register", {
       method: "POST",
-      body: JSON.stringify({ name, username, email, password }),
+      body: JSON.stringify({ name, email, password }),
     });
     if (!res.success) {
       const err = (res.payload as any)?.error;
       return { success: false, error: err?.message || "Registration failed", code: err?.code };
     }
-    return { success: true };
+    const payload = res.payload as any;
+    return { success: true, linking: !!payload?.linking, message: payload?.message || '' };
   } catch {
     return { success: false, error: "Network error" };
   }
@@ -438,6 +502,7 @@ function mapUser(u: any): User {
     provider: u.provider || "email",
     linkedProviders: u.linkedProviders || [],
     hasPassword: u.hasPassword,
+    isVerified: u.isVerified,
   };
 }
 

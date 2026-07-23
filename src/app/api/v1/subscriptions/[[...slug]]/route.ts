@@ -3,7 +3,7 @@ import Subscription from "@/lib/server/models/Subscription";
 import Transaction from "@/lib/server/models/Transaction";
 import User from "@/lib/server/models/User";
 import { connectDB } from "@/lib/server/db";
-import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
+import { successResponse, errorResponse, getOrigin } from "@/lib/server/utils/apiResponse";
 import { auth } from "@/lib/server/middleware/auth";
 import { validate } from "@/lib/server/middleware/validate";
 import { createCheckoutSchema } from "@/lib/server/validators/subscriptionValidator";
@@ -92,6 +92,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
       // Stripe checkout for monthly/yearly
       try {
+        const baseUrl = getOrigin(request);
         const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
         const customer = await stripe.customers.create({ email: user.email, metadata: { userId: String(user._id) } });
         const session = await stripe.checkout.sessions.create({
@@ -107,8 +108,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             quantity: 1,
           }],
           mode: plan.interval === "one-time" ? "payment" : "subscription",
-          success_url: `${process.env.FRONTEND_URL}/account-information?checkout=success`,
-          cancel_url: `${process.env.FRONTEND_URL}/subscription?checkout=cancelled`,
+          success_url: `${baseUrl}/account-information?checkout=success`,
+          cancel_url: `${baseUrl}/subscription?checkout=cancelled`,
           metadata: { userId: String(user._id), planId: plan.id },
         });
         await trackServer({ userId: user._id.toString(), event: "subscription_checkout_started", properties: { plan: plan.id, price: plan.price }, request });

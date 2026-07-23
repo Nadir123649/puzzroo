@@ -3,7 +3,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import User from "@/lib/server/models/User";
 import { connectDB } from "@/lib/server/db";
-import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
+import { successResponse, errorResponse, getOrigin } from "@/lib/server/utils/apiResponse";
 import { sendResetPasswordEmail } from "@/lib/server/services/emailService";
 import { validate } from "@/lib/server/middleware/validate";
 import { forgotPasswordSchema, resetPasswordSchema } from "@/lib/server/validators/authValidator";
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.resetPasswordToken = hashedToken;
       user.resetPasswordTokenExpire = Date.now() + RESET_TOKEN_MINUTES * 60 * 1000;
       await user.save({ validateBeforeSave: false });
-      const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+      const resetUrl = `${getOrigin(request)}/reset-password/${resetToken}`;
       try {
         await sendResetPasswordEmail(user.email, resetUrl, RESET_TOKEN_MINUTES);
       } catch {

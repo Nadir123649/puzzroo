@@ -15,6 +15,15 @@ const API_BASE = !isLocalhost && isClient
   ? "" 
   : (process.env.NEXT_PUBLIC_API_BASE_URL || "");
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp * 1000 < Date.now()
+  } catch {
+    return true
+  }
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/auth/refresh`, { method: "POST", credentials: "include" });
@@ -49,7 +58,15 @@ export async function api<T = any>(
     ...(fetchOptions.headers as Record<string, string>),
   };
 
-  const accessToken = localStorage.getItem("accessToken");
+  let accessToken = localStorage.getItem("accessToken");
+  if (accessToken && isTokenExpired(accessToken)) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      localStorage.setItem("accessToken", newToken);
+      if (onRefresh) onRefresh(newToken);
+      accessToken = newToken;
+    }
+  }
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
@@ -80,15 +97,16 @@ export async function api<T = any>(
     }
 
     if (!res.ok) {
-      const error = await res.json().catch(() => ({ error: { message: `HTTP ${res.status}` } }));
-      throw new Error(error?.error?.message || `HTTP ${res.status}`);
+      // Server returned an error (4xx/5xx) — return the body as-is so callers
+      // can check !res.success and read payload.error. Don't throw: the catch
+      // block below is for true network failures.
+      return await res.json().catch(() => ({ success: false, payload: { error: { message: `HTTP ${res.status}` } } }));
     }
     const json = await res.json();
     return json;
   } catch {
-    // Network-level failure (offline / unreachable). Avoid duplicating the
-    // offline banner; only toast when we believe we're actually online.
-    if (!suppressToast && typeof navigator !== "undefined" && navigator.onLine) {
+    // True network-level failure (offline / unreachable).
+    if (typeof navigator !== "undefined" && navigator.onLine) {
       notify.errorKey("SYSTEM_GENERIC_ERROR");
     }
     throw new Error("Network request failed");

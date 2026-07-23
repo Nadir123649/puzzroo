@@ -43,6 +43,7 @@ export function Navbar() {
     const checkAuth = () => {
       const isAuth = isLoggedIn()
       setLoggedIn(isAuth)
+      setAuthKey(prev => prev + 1)
 
       if (isAuth) {
         const userData = getCurrentUser()
@@ -65,7 +66,7 @@ export function Navbar() {
       window.removeEventListener('storage', checkAuth)
       window.removeEventListener('auth-change', checkAuth)
     }
-  }, [pathname, authKey])
+  }, [pathname])
 
   return (
     <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-300 z-[200]">
@@ -102,9 +103,9 @@ export function Navbar() {
           </div>
 
           {/* RIGHT: Desktop Actions */}
-          <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
-            {navbarMounted && (
-              (loggedIn && user) ? (
+          <div key={authKey} className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
+            {navbarMounted ? (
+              loggedIn && user ? (
                 <>
                   <Link href="/subscription" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
                     Subscribe Us
