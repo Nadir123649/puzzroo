@@ -95,7 +95,7 @@ export function useNonogram(initialPuzzleId?: string) {
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null)
   const [selectionHistory, setSelectionHistory] = useState<CellPosition[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const initTokenRef = useRef(0)
   
   // Check if this is from daily challenge

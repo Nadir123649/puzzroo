@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
 import { TangramGame } from '@/components/tangram/TangramGame'
+import { TangramHero } from '@/components/tangram/TangramHero'
 import { markGameAsPlayed } from '@/components/sections/FreeGames'
 
 function TangramDailyChallengeContent() {
@@ -27,6 +28,7 @@ function TangramDailyChallengeContent() {
 
   return (
     <>
+      <TangramHero backTo="/past-puzzles/tangram" />
       <TangramGame mode="daily" />
     </>
   )

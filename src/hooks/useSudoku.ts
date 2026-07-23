@@ -177,7 +177,7 @@ export function useSudoku() {
   // Load difficulty preference
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [isInitialized, setIsInitialized] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   // Initialize game state
   const initializeGame = useCallback((diff: Difficulty, loadSaved = true) => {

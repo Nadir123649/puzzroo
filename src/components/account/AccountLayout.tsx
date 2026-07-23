@@ -25,24 +25,22 @@ export function AccountLayout({ children }: AccountLayoutProps) {
 
   // While we haven't confirmed auth yet, render an invisible placeholder
   // that keeps the same background so there is no white/black flash.
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-[#181A20]" />
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
       <Navbar />
 
-      <div className="w-full max-w-[1380px] mx-auto px-[20px] pt-[15px] md:pt-[30px] pb-[40px] md:pb-[60px]">
-        <div className="flex gap-8">
-          <AccountSidebar />
-          
-          <main className="flex-1 min-w-0">
-            {children}
-          </main>
-        </div>
+      <div className="w-full max-w-[1380px] mx-auto px-[20px] pt-[15px] md:pt-[30px] pb-[40px] md:pb-[60px] flex-grow">
+        {authChecked ? (
+          <div className="flex gap-8">
+            <AccountSidebar />
+            
+            <main className="flex-1 min-w-0">
+              {children}
+            </main>
+          </div>
+        ) : (
+          <div className="min-h-[400px]" />
+        )}
       </div>
 
       <Footer />

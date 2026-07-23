@@ -218,7 +218,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const [moveHistory, setMoveHistory] = useState<PieceState[][]>([])
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [hasWonOnce, setHasWonOnce] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   
   const moveHistoryRef = useRef<PieceState[][]>([])
   const historyIndexRef = useRef(-1)
@@ -759,7 +759,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setHistoryIndex(0)
     
     // Re-fetch the same puzzle by id and reset it to the tray (cache-first)
-    const current = puzzleRef.current
+    const current = puzzle
     const id = current?.id
     let cancelled = false
     ;(async () => {

@@ -148,7 +148,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     value: number
     timestamp: number
   }>>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   
   const [history, setHistory] = useState<any[]>([])
 

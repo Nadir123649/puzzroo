@@ -43,6 +43,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
   const {
     puzzle,
+    loading,
     pieces,
     selectedPiece,
     gameStatus,
@@ -65,6 +66,33 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     hasRedo,
     commitHistory
   } = usePolygonTangram(difficulty)
+
+  // Prevent scroll when loading overlay is active
+  useEffect(() => {
+    if (isResetting || loading) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.overflowY = 'hidden'
+      document.body.style.touchAction = 'none'
+      document.documentElement.style.overflow = 'hidden'
+      document.documentElement.style.overflowY = 'hidden'
+      document.documentElement.style.touchAction = 'none'
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.overflowY = ''
+      document.body.style.touchAction = ''
+      document.documentElement.style.overflow = ''
+      document.documentElement.style.overflowY = ''
+      document.documentElement.style.touchAction = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.overflowY = ''
+      document.body.style.touchAction = ''
+      document.documentElement.style.overflow = ''
+      document.documentElement.style.overflowY = ''
+      document.documentElement.style.touchAction = ''
+    }
+  }, [isResetting, loading])
 
   const [isModalVisible, setIsModalVisible] = useState(false)
 
@@ -113,14 +141,22 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     setIsResetting(false)
   }
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setIsModalVisible(false)
+    setLoaderText('Replaying game...')
+    setIsResetting(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
     replayPuzzle()
+    setIsResetting(false)
   }
 
-  const handleReplay = () => {
+  const handleReplay = async () => {
     setIsModalVisible(false)
+    setLoaderText('Replaying game...')
+    setIsResetting(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
     replayPuzzle()
+    setIsResetting(false)
   }
 
   const handleUndo = () => {
@@ -179,7 +215,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   const progressPercent = totalPieces > 0 ? Math.round((snappedCount / totalPieces) * 100) : 0
 
   return (
-    <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative">
+    <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}>
       <div className="w-full max-w-[1380px] mx-auto px-[20px] flex justify-center overflow-visible">
         <div className="w-full flex flex-col gap-[20px] pb-0 md:pb-[10px] max-w-full overflow-visible">
 
@@ -523,7 +559,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
       </div>
 
       {/* Loading Overlay */}
-      <GameLoader isOpen={isResetting} text={loaderText} />
+      <GameLoader isOpen={isResetting || loading} text={loaderText} />
 
       {/* Completion Modal */}
       <TangramModal
