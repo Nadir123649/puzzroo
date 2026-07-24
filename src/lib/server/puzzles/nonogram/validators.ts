@@ -6,14 +6,14 @@ export const sessionStartSchema = z.object({
 });
 
 export const sessionSaveSchema = z.object({
-  grid: z.array(z.array(z.object({ state: z.enum(["empty", "filled", "marked"]) }))),
+  grid: z.array(z.array(z.enum(["empty", "filled", "marked", "error"]))),
   elapsedSeconds: z.number().min(0),
   hintsUsed: z.number().min(0).optional(),
   mistakes: z.number().min(0).optional(),
 });
 
 export const sessionVerifySchema = z.object({
-  grid: z.array(z.array(z.object({ state: z.enum(["empty", "filled", "marked"]) }))),
+  grid: z.array(z.array(z.enum(["empty", "filled", "marked", "error"]))),
 });
 
 export const completeSessionSchema = z.object({

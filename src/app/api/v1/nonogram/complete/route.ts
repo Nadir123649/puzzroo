@@ -16,13 +16,15 @@ export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {};
   try { body = await request.json(); } catch {}
 
-  const { sessionId, grid, elapsedSeconds, hintsUsed, mistakes } = body as {
+  const { sessionId, grid: rawGrid, elapsedSeconds, hintsUsed, mistakes } = body as {
     sessionId?: string;
-    grid?: Array<Array<{ state: string }>>;
+    grid?: Array<Array<{ state: string } | string>>;
     elapsedSeconds?: number;
     hintsUsed?: number;
     mistakes?: number;
   };
+
+  const grid = rawGrid?.map(row => row.map(cell => typeof cell === 'string' ? cell : cell.state));
 
   if (!sessionId) {
     return errorResponse(400, 'validation_error', 'sessionId is required');

@@ -56,6 +56,7 @@ export function crossMathToResponse(doc: CrossMathDoc): CrossMathPuzzleResponse 
     grid,
     availableNumbers: doc.availableNumbers,
     maxMistakes: doc.maxMistakes,
+    solution: doc.solution,
   };
 
   if (grid.length !== pattern.grid_rows || (grid[0]?.length !== pattern.grid_cols)) {

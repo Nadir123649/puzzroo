@@ -20,7 +20,7 @@ const playSessionSchema = new mongoose.Schema(
       enum: ["active", "paused", "completed", "abandoned"],
       default: "active",
     },
-    grid: { type: [[Object]], default: [] },
+    grid: { type: [[String]], default: [] },
     pieceStates: [
       {
         pieceId: { type: String, required: true },
@@ -55,8 +55,11 @@ const playSessionSchema = new mongoose.Schema(
     replayCount: { type: Number, default: 0 },
     abandonReason: { type: String, default: null },
     completionResult: {
+      isComplete: { type: Boolean, default: false },
       isCorrect: { type: Boolean, default: false },
       accuracy: { type: Number, default: 0 },
+      correctCells: { type: Number, default: 0 },
+      totalCells: { type: Number, default: 0 },
       piecesCorrect: { type: Number, default: 0 },
       totalPieces: { type: Number, default: 7 },
     },
@@ -70,5 +73,9 @@ playSessionSchema.index({ userId: 1, status: 1, updatedAt: -1 });
 playSessionSchema.index({ puzzleId: 1, status: 1 });
 playSessionSchema.index({ userId: 1, gameId: 1, status: 1 });
 
-export default mongoose.models.PlaySession ||
-  mongoose.model("PlaySession", playSessionSchema);
+// Ensure fresh registration — delete stale model if another module registered it with wrong schema
+if (mongoose.models.PlaySession) {
+  delete mongoose.models.PlaySession;
+}
+const PlaySession = mongoose.model("PlaySession", playSessionSchema);
+export default PlaySession;

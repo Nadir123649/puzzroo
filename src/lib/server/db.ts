@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import dns from "dns";
+import { Resolver } from "dns/promises";
 import { promisify } from "util";
 
 const resolveSrv = promisify(dns.resolveSrv);
@@ -7,6 +8,14 @@ const resolveSrv = promisify(dns.resolveSrv);
 const MONGODB_URI = process.env.MONGO_URI;
 
 let cached = (global as any)._mongooseConnection;
+
+const CUSTOM_DNS = ["8.8.8.8", "8.8.4.4"];
+
+// Override default resolver so dns.resolveSrv (used for SRV lookups) uses
+// Google DNS.  dns.lookup uses the OS resolver, which we've already set to
+// 8.8.8.8 / 8.8.4.4 via netsh, so all hostname resolution goes through
+// Google DNS and Atlas hostnames resolve correctly.
+dns.setServers(CUSTOM_DNS);
 
 function buildDirectURI(srv: string, hosts: string): string {
   const url = new URL(srv.replace("mongodb+srv://", "mongodb://"));
@@ -37,17 +46,13 @@ export async function connectDB() {
 
   let uri = MONGODB_URI;
   if (uri.startsWith("mongodb+srv://")) {
-    try {
-      uri = await resolveSRVHosts(uri);
-    } catch {
-      // fallback to direct SRV format
-    }
+    uri = await resolveSRVHosts(uri);
   }
 
   (global as any)._mongooseConnection = mongoose.connect(uri, {
     autoIndex: false,
-    serverSelectionTimeoutMS: 10000,
-    connectTimeoutMS: 10000,
+    serverSelectionTimeoutMS: 15000,
+    connectTimeoutMS: 15000,
   });
   cached = (global as any)._mongooseConnection;
   try {

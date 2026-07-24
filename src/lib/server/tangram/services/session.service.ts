@@ -6,8 +6,8 @@ import type { TangramPieceState } from '../types';
 export async function startSession(
   userId: string,
   puzzleId: string,
-  difficulty: string
-) {
+  difficulty: "easy" | "medium" | "hard"
+): Promise<any> {
   const puzzle = await TangramPuzzle.findOne({ puzzleId }).lean();
   if (!puzzle) {
     throw new Error('Puzzle not found');
@@ -21,11 +21,11 @@ export async function startSession(
   });
 
   if (activeSession) {
-    if (!activeSession.pieceStates || activeSession.pieceStates.length === 0) {
+    if (!(activeSession as any).pieceStates || (activeSession as any).pieceStates.length === 0) {
       const pieceShapeIds = puzzle.pieceShapeIds as string[];
-      activeSession.pieceStates = pieceShapeIds.map(
+      (activeSession as any).pieceStates = pieceShapeIds.map(
         (pieceId: string) => ({
-          pieceId: pieceId as TangramPieceState['pieceId'],
+          pieceId: pieceId as any,
           position: { x: 0, y: 0 },
           rotation: 0,
           flipped: false,
@@ -52,7 +52,7 @@ export async function startSession(
     userId,
     puzzleId,
     gameId: 'tangram',
-    difficulty,
+    difficulty: difficulty as "easy" | "medium" | "hard",
     status: 'active',
     pieceStates: initialPieceStates,
     startedAt: new Date(),
@@ -136,7 +136,7 @@ export async function saveProgress(
 
   if (!session) throw new Error('Active session not found');
 
-  session.pieceStates = data.pieceStates;
+  (session as any).pieceStates = data.pieceStates;
   session.elapsedSeconds = data.elapsedSeconds;
   session.lastSaveAt = new Date();
 
@@ -172,7 +172,7 @@ export async function restartSession(sessionId: string, userId: string) {
     })
   );
 
-  session.pieceStates = initialPieceStates;
+  session.pieceStates = initialPieceStates as any;
   session.elapsedSeconds = 0;
   session.hintsUsed = 0;
   session.hints = [];
@@ -228,9 +228,9 @@ export async function replaySession(
     userId,
     puzzleId: original.puzzleId,
     gameId: 'tangram',
-    difficulty: original.difficulty,
+    difficulty: difficulty as "easy" | "medium" | "hard",
     status: 'active',
-    pieceStates: initialPieceStates,
+    pieceStates: initialPieceStates as any,
     startedAt: new Date(),
     elapsedSeconds: 0,
     replayCount: 1,

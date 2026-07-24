@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const playSessionSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    puzzleId: { type: mongoose.Schema.Types.ObjectId, ref: "SudokuPuzzle", required: true },
+    puzzleId: { type: String, required: true },
     status: {
       type: String,
       enum: ["playing", "paused", "completed", "abandoned"],
@@ -57,4 +57,4 @@ playSessionSchema.index({ userId: 1, puzzleId: 1 });
 playSessionSchema.index({ userId: 1, status: 1, startedAt: -1 });
 playSessionSchema.index({ userId: 1, completedAt: -1 });
 
-export default mongoose.models.PlaySession || mongoose.model("PlaySession", playSessionSchema);
+export default mongoose.models.SudokuPlaySession || mongoose.model("SudokuPlaySession", playSessionSchema);
