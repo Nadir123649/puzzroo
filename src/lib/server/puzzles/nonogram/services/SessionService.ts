@@ -159,7 +159,7 @@ export class SessionService {
       return this.restartSession(existing._id.toString(), userId);
     }
 
-    return this.startSession({ userId, puzzleId, difficulty });
+    return this.startSession({ userId, puzzleId, difficulty: difficulty as "easy" | "medium" | "hard" | "expert" });
   }
 
   async abandonSession(sessionId: string, userId: string, reason?: string) {
