@@ -11,7 +11,9 @@ import { useTheme } from '@/hooks/use-theme'
 import { useGameLobby } from '@/contexts/GameLobbyContext'
 import { images } from '@/lib/utils'
 import type { Difficulty } from '@shared/data/sudoku/types'
-import { saveDifficultyPreference } from '@shared/lib/sudoku/storage'
+import { saveDifficultyPreference, clearGameState as clearSudokuGameState } from '@shared/lib/sudoku/storage'
+import { clearGameState as clearCrossMathGameState } from '@shared/lib/crossmath/storage'
+import { clearGameState as clearNonogramGameState } from '@shared/lib/nonogram/storage'
 
 interface GameHeroProps {
   name: string
@@ -115,6 +117,10 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
   const handlePlayClick = async (e: React.MouseEvent) => {
     if (isSudoku || isCrossMath || isNonogram || isTangram || isChess) {
       e.preventDefault()
+      if (isSudoku) clearSudokuGameState()
+      if (isCrossMath) clearCrossMathGameState()
+      if (isNonogram) clearNonogramGameState()
+      // Tangram and Chess use sessions/context, no saved game state to clear
       setIsLoading(true)
       // Show loading for 1 second
       await new Promise(resolve => setTimeout(resolve, 1000))

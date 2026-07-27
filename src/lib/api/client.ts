@@ -104,7 +104,9 @@ export async function api<T = any>(
     }
     const json = await res.json();
     return json;
-  } catch {
+  } catch (err) {
+    // Silent abort — StrictMode double-mount or race condition
+    if (err instanceof DOMException && err.name === 'AbortError') throw err
     // True network-level failure (offline / unreachable).
     if (typeof navigator !== "undefined" && navigator.onLine) {
       notify.errorKey("SYSTEM_GENERIC_ERROR");

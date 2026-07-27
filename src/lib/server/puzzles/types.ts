@@ -48,6 +48,7 @@ export interface CrossMathPuzzleResponse {
   grid: unknown[][];
   availableNumbers: number[];
   maxMistakes: number;
+  solution: Record<string, number>;
 }
 
 export interface TangramPuzzleResponse {

@@ -13,7 +13,8 @@ export function withAuth(handler: Handler) {
     }
     await connectDB();
     try {
-      return await handler(req, authResult.user!, context?.params);
+      const resolvedParams = context?.params ? await context.params : undefined;
+      return await handler(req, authResult.user!, resolvedParams);
     } catch (error: any) {
       const code = error.message || "internal_error";
       const status = getErrorStatus(code);

@@ -30,7 +30,6 @@ import {
   isCellMistake,
   findHintPosition,
 } from '@shared/lib/nonogram/helpers'
-import { getRandomPuzzle, getPuzzleById } from '@shared/data/nonogram'
 import { 
   saveGameState, 
   loadGameState, 
@@ -51,7 +50,8 @@ function getTodayDateParam(): string {
 
 import { gameApi } from '@/lib/api/gameApi'
 
-import { dailyPuzzles } from '@shared/data/nonogram'
+// Module-level guard to cancel StrictMode double-mount in dev
+let _nonogramMountGuard = false
 
 const NONOGRAM_CACHE_KEY = 'puzzroo_nonogram_cache_by_id'
 
@@ -95,11 +95,6 @@ function getDailyDateString(dateParam?: string | null): string {
   return `${d.getFullYear()}-${m}-${day}`
 }
 
-function getDailyNonogramPuzzle(date: Date): PuzzleData {
-  const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000)
-  const index = Math.abs(dayOfYear) % dailyPuzzles.length
-  return dailyPuzzles[index]
-}
 
 export function useNonogram(initialPuzzleId?: string) {
   const searchParams = useSearchParams()
@@ -160,6 +155,64 @@ export function useNonogram(initialPuzzleId?: string) {
   // Track action type during dragging
   const dragActionRef = useRef<'fill' | 'erase' | 'mark' | 'unmark' | null>(null)
 
+  const sessionIdRef = useRef<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+  const sessionCreatedRef = useRef(false)
+  const completionCalledRef = useRef(false)
+
+  async function initSession(puzzleId: string, diff: string): Promise<any> {
+    if (sessionCreatedRef.current) return null
+    completionCalledRef.current = false
+    if (typeof window === 'undefined') return null
+    if (!localStorage.getItem('accessToken')) return null
+    try {
+      const res = await gameApi.createSession('nonogram', puzzleId, diff)
+      if (res && (res.sessionId || res._id || res.id)) {
+        sessionIdRef.current = res.sessionId || res._id || res.id
+        sessionCreatedRef.current = true
+        return res
+      }
+    } catch { /* no session */ }
+    return null
+  }
+
+  function saveMoveNow(g: CellState[][], elapsed: number, hints: number, mists: number) {
+    if (!sessionIdRef.current) return
+    abortRef.current?.abort()
+    const ac = new AbortController()
+    abortRef.current = ac
+    gameApi.saveMove('nonogram', sessionIdRef.current, {
+      grid: g,
+      elapsedSeconds: elapsed,
+      hintsUsed: hints,
+      mistakes: mists,
+    }, ac.signal).catch(err => {
+      if (err?.name !== 'AbortError') console.error('[nonogram] save move failed', err)
+    })
+  }
+
+  async function completePuzzle(g: CellState[][], elapsed: number, hints: number, mists: number) {
+    if (!sessionIdRef.current || completionCalledRef.current) return
+    completionCalledRef.current = true
+    try {
+      await gameApi.completeSession('nonogram', sessionIdRef.current, {
+        grid: g,
+        elapsedSeconds: elapsed,
+        hintsUsed: hints,
+        mistakes: mists,
+      })
+    } catch { /* ignore */ }
+  }
+
+  const lastMoveKeyRef = useRef('')
+
+  useEffect(() => {
+    if (!sessionIdRef.current || gameStatus !== 'playing') return
+    const key = JSON.stringify({ g: grid, h: hintsUsed, m: mistakeCount })
+    if (key === lastMoveKeyRef.current) return
+    lastMoveKeyRef.current = key
+    saveMoveNow(grid, elapsedSeconds, hintsUsed, mistakeCount)
+  }, [grid, hintsUsed, mistakeCount, elapsedSeconds, gameStatus])
 
   /**
    * Initialize a new puzzle
@@ -171,11 +224,6 @@ export function useNonogram(initialPuzzleId?: string) {
 
     const applyPuzzle = (puzzle: PuzzleData) => {
       if (token !== initTokenRef.current) return
-      const local = getPuzzleById(puzzle.id)
-      if (local) {
-        puzzle.title = local.title
-        puzzle.category = local.category
-      }
       setCurrentPuzzle(puzzle)
       setGrid(createEmptyGrid(puzzle.size))
       setMistakeCount(0)
@@ -225,26 +273,7 @@ export function useNonogram(initialPuzzleId?: string) {
           writeCache(puzzle.id, puzzle)
         }
       } catch {
-        // Static fallback
-        if (puzzleId) {
-          const foundPuzzle = getPuzzleById(puzzleId)
-          if (foundPuzzle) {
-            puzzle = foundPuzzle
-          } else {
-            console.warn(`Puzzle ${puzzleId} not found, using random puzzle`)
-            puzzle = getRandomPuzzle(diff)
-          }
-        } else if (isDailyChallenge) {
-          let dailyDate = new Date()
-          if (dateParam) {
-            const [month, day, year] = dateParam.split('-')
-            const fullYear = 2000 + parseInt(year)
-            dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
-          }
-          puzzle = getDailyNonogramPuzzle(dailyDate)
-        } else {
-          puzzle = getRandomPuzzle(diff)
-        }
+        throw new Error('puzzle_fetch_failed')
       }
       if (cancelled) return
 
@@ -271,11 +300,13 @@ export function useNonogram(initialPuzzleId?: string) {
           const prog = calculateProgress(saved.grid, puzzle.solution)
           setProgress(prog)
           setDifficulty(diff)
+          initSession(puzzle.id, diff)
           return
         }
       }
 
       applyPuzzle(puzzle)
+      initSession(puzzle.id, diff)
     } finally {
       if (!cancelled) setLoading(false)
     }
@@ -285,6 +316,12 @@ export function useNonogram(initialPuzzleId?: string) {
    * Sync with URL difficulty on mount/change
    */
   useEffect(() => {
+    // StrictMode double-mount guard: skip first mount in dev
+    if (process.env.NODE_ENV === 'development' && !_nonogramMountGuard) {
+      _nonogramMountGuard = true
+      return
+    }
+
     if (typeof window !== 'undefined' && !isInitialized) {
       const valid = ['easy', 'medium', 'hard', 'expert']
       const currentDiff = valid.includes(urlDifficulty) ? urlDifficulty : 'easy'
@@ -293,6 +330,10 @@ export function useNonogram(initialPuzzleId?: string) {
       // Use provided puzzleId or let initializePuzzle use random
       initializePuzzle(currentDiff, true, initialPuzzleId)
       setIsInitialized(true)
+    }
+
+    return () => {
+      if (process.env.NODE_ENV === 'development') _nonogramMountGuard = false
     }
   }, [urlDifficulty, isInitialized, initialPuzzleId, initializePuzzle])
 
@@ -403,6 +444,7 @@ export function useNonogram(initialPuzzleId?: string) {
         }).catch(() => {
           // best-effort; ignore failures
         })
+        void completePuzzle(grid, elapsedSeconds, hintsUsed, mistakeCount)
       }
       
       clearGameState()
@@ -718,6 +760,7 @@ export function useNonogram(initialPuzzleId?: string) {
       setInputMode('fill')
       startTimeRef.current = null
       clearGameState()
+      completionCalledRef.current = false
     }
   }, [currentPuzzle, difficulty])
 

@@ -1,0 +1,233 @@
+[db] mongoose connection error: MongoServerSelectionError: getaddrinfo EAI_AGAIN ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net
+    at async connectDB (src\lib\server\db.ts:54:5)
+    at async GET (src\app\api\v1\health\route.ts:10:5)
+  52 |   cached = (global as any)._mongooseConnection;
+  53 |   try {
+> 54 |     await cached;
+     |     ^
+  55 |   } catch (e) {
+  56 |     cached = null;
+  57 |     (global as any)._mongooseConnection = null; {
+  errorLabelSet: Set(0) {},
+  reason: TopologyDescription {
+    type: 'Unknown',
+    servers: Map(3) {
+      'ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-01.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-02.bjlz0aj.mongodb.net:27017' => [ServerDescription]
+    },
+    stale: false,
+    compatible: true,
+    heartbeatFrequencyMS: 10000,
+    localThresholdMS: 15,
+    setName: null,
+    maxElectionId: null,
+    maxSetVersion: null,
+    commonWireVersion: 0,
+    logicalSessionTimeoutMinutes: null
+  },
+  code: undefined,
+  [cause]: MongoNetworkError: getaddrinfo EAI_AGAIN ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net
+      at ignore-listed frames {
+    errorLabelSet: Set(3) { 'SystemOverloadedError', 'RetryableError', 'ResetPool' },
+    beforeHandshake: false,
+    [cause]: Error: getaddrinfo EAI_AGAIN ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net
+        at ignore-listed frames {
+      errno: -3001,
+      code: 'EAI_AGAIN',
+      syscall: 'getaddrinfo',
+      hostname: 'ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net'
+    }
+  }
+}
+⨯ MongooseServerSelectionError: getaddrinfo ENOTFOUND ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net
+    at async connectDB (src\lib\server\db.ts:85:5)
+    at async POST (src\app\api\v1\auth\[[...slug]]\route.ts:29:3)
+  83 |   cached = (global as any)._mongooseConnection;
+  84 |   try {
+> 85 |     await cached;
+     |     ^
+  86 |   } catch (e) {
+  87 |     cached = null;
+  88 |     (global as any)._mongooseConnection = null; {
+  errorLabelSet: Set(0) {},
+  reason: TopologyDescription {
+    type: 'ReplicaSetNoPrimary',
+    servers: Map(3) {
+      'ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-01.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-02.bjlz0aj.mongodb.net:27017' => [ServerDescription]
+    },
+    stale: false,
+    compatible: true,
+    heartbeatFrequencyMS: 10000,
+    localThresholdMS: 15,
+    setName: 'atlas-jopmjb-shard-0',
+    maxElectionId: null,
+    maxSetVersion: null,
+    commonWireVersion: 25,
+    logicalSessionTimeoutMinutes: 30
+  },
+  code: undefined,
+  [cause]: TopologyDescription {
+    type: 'ReplicaSetNoPrimary',
+    servers: Map(3) {
+      'ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-01.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-02.bjlz0aj.mongodb.net:27017' => [ServerDescription]
+    },
+    stale: false,
+    compatible: true,
+    heartbeatFrequencyMS: 10000,
+    localThresholdMS: 15,
+    setName: 'atlas-jopmjb-shard-0',
+    maxElectionId: null,
+    maxSetVersion: null,
+    commonWireVersion: 25,
+    logicalSessionTimeoutMinutes: 30
+  }
+}
+[db] mongoose connection error: MongoServerSelectionError: getaddrinfo ENOTFOUND ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net
+    at async connectDB (src\lib\server\db.ts:85:5)
+    at async POST (src\app\api\v1\auth\[[...slug]]\route.ts:29:3)
+  83 |   cached = (global as any)._mongooseConnection;
+  84 |   try {
+> 85 |     await cached;
+     |     ^
+  86 |   } catch (e) {
+  87 |     cached = null;
+  88 |     (global as any)._mongooseConnection = null; {
+  errorLabelSet: Set(0) {},
+  reason: TopologyDescription {
+    type: 'ReplicaSetNoPrimary',
+    servers: Map(3) {
+      'ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-01.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-02.bjlz0aj.mongodb.net:27017' => [ServerDescription]
+    },
+    stale: false,
+    compatible: true,
+    heartbeatFrequencyMS: 10000,
+    localThresholdMS: 15,
+    setName: 'atlas-jopmjb-shard-0',
+    maxElectionId: null,
+    maxSetVersion: null,
+    commonWireVersion: 25,
+    logicalSessionTimeoutMinutes: 30
+  },
+  code: undefined,
+  [cause]: MongoNetworkError: getaddrinfo ENOTFOUND ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net
+      at ignore-listed frames {
+    errorLabelSet: Set(3) { 'SystemOverloadedError', 'RetryableError', 'ResetPool' },
+    beforeHandshake: false,
+    [cause]: Error: getaddrinfo ENOTFOUND ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net
+        at ignore-listed frames {
+      errno: -3008,
+      code: 'ENOTFOUND',
+      syscall: 'getaddrinfo',
+      hostname: 'ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net'
+    }
+  }
+}
+[db] custom DNS resolution failed, falling back: TypeError: The "callback" argument must be of type function. Received undefined
+    at resolveWithCustomDNS (src\lib\server\db.ts:52:38)
+    at connectDB (src\lib\server\db.ts:87:23)
+    at POST (src\app\api\v1\auth\[[...slug]]\route.ts:29:18)
+  50 |     for (const host of hosts) {
+  51 |       const [hostname, port] = host.split(":");
+> 52 |       const [first] = await resolver.resolve4(hostname);
+     |                                      ^
+  53 |       resolved.push(`${first}:${port || "27017"}`);
+  54 |     }
+  55 |     return replaceHosts(MONGODB_URI, resolved); {
+  code: 'ERR_INVALID_ARG_TYPE'
+}
+⨯ MongooseServerSelectionError: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+    at async connectDB (src\lib\server\db.ts:97:5)
+    at async POST (src\app\api\v1\auth\[[...slug]]\route.ts:29:3)
+   95 |   cached = (global as any)._mongooseConnection;
+   96 |   try {
+>  97 |     await cached;
+      |     ^
+   98 |   } catch (e) {
+   99 |     cached = null;
+  100 |     (global as any)._mongooseConnection = null; {
+  errorLabelSet: Set(0) {},
+  reason: TopologyDescription {
+    type: 'Unknown',
+    servers: Map(3) {
+      'ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-01.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-02.bjlz0aj.mongodb.net:27017' => [ServerDescription]
+    },
+    stale: false,
+    compatible: true,
+    heartbeatFrequencyMS: 10000,
+    localThresholdMS: 15,
+    setName: null,
+    maxElectionId: null,
+    maxSetVersion: null,
+    commonWireVersion: 0,
+    logicalSessionTimeoutMinutes: null
+  },
+  code: undefined,
+  [cause]: TopologyDescription {
+    type: 'Unknown',
+    servers: Map(3) {
+      'ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-01.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-02.bjlz0aj.mongodb.net:27017' => [ServerDescription]
+    },
+    stale: false,
+    compatible: true,
+    heartbeatFrequencyMS: 10000,
+    localThresholdMS: 15,
+    setName: null,
+    maxElectionId: null,
+    maxSetVersion: null,
+    commonWireVersion: 0,
+    logicalSessionTimeoutMinutes: null
+  }
+}
+[db] mongoose connection error: MongoServerSelectionError: getaddrinfo ENOTFOUND ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net
+    at async connectDB (src\lib\server\db.ts:97:5)
+    at async POST (src\app\api\v1\auth\[[...slug]]\route.ts:29:3)
+   95 |   cached = (global as any)._mongooseConnection;
+   96 |   try {
+>  97 |     await cached;
+      |     ^
+   98 |   } catch (e) {
+   99 |     cached = null;
+  100 |     (global as any)._mongooseConnection = null; {
+  errorLabelSet: Set(0) {},
+  reason: TopologyDescription {
+    type: 'Unknown',
+    servers: Map(3) {
+      'ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-01.bjlz0aj.mongodb.net:27017' => [ServerDescription],
+      'ac-jfkspzv-shard-00-02.bjlz0aj.mongodb.net:27017' => [ServerDescription]
+    },
+    stale: false,
+    compatible: true,
+    heartbeatFrequencyMS: 10000,
+    localThresholdMS: 15,
+    setName: null,
+    maxElectionId: null,
+    maxSetVersion: null,
+    commonWireVersion: 0,
+    logicalSessionTimeoutMinutes: null
+  },
+  code: undefined,
+  [cause]: MongoNetworkError: getaddrinfo ENOTFOUND ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net
+      at ignore-listed frames {
+    errorLabelSet: Set(3) { 'SystemOverloadedError', 'RetryableError', 'ResetPool' },
+    beforeHandshake: false,
+    [cause]: Error: getaddrinfo ENOTFOUND ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net
+        at ignore-listed frames {
+      errno: -3008,
+      code: 'ENOTFOUND',
+      syscall: 'getaddrinfo',
+      hostname: 'ac-jfkspzv-shard-00-00.bjlz0aj.mongodb.net'
+    }
+  }
+}

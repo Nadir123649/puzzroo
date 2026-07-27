@@ -5,7 +5,7 @@ import { sessionStartSchema, sessionListQuerySchema } from "@/lib/server/puzzles
 import { successResponse } from "@/lib/server/utils/apiResponse";
 import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle";
 
-export const POST = withAuth(async (req) => {
+export const POST = withAuth(async (req, user) => {
   const body = await req.json();
   const parsed = sessionStartSchema.safeParse(body);
   if (!parsed.success) {
@@ -23,10 +23,13 @@ export const POST = withAuth(async (req) => {
     );
   }
 
-  const session = await sessionService.startSession({
-    userId: req.headers.get("x-user-id") || "",
-    ...parsed.data,
-  });
+  const session = await sessionService.startSession(
+    {
+      userId: user.id,
+      puzzleId: parsed.data.puzzleId,
+      difficulty: parsed.data.difficulty,
+    },
+  );
 
   return successResponse({
     sessionId: session._id,
@@ -34,6 +37,9 @@ export const POST = withAuth(async (req) => {
     difficulty: session.difficulty,
     status: session.status,
     grid: session.grid,
+    elapsedSeconds: session.elapsedSeconds || 0,
+    hintsUsed: session.hintsUsed || 0,
+    mistakes: session.mistakes || 0,
     startedAt: session.startedAt,
   }, 201);
 });

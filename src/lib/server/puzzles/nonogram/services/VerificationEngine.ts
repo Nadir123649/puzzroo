@@ -19,7 +19,7 @@ function computeLineClues(line: number[]): number[] {
 export class VerificationEngine {
   async verifyCompletion(
     puzzleId: string,
-    playerGrid: Array<Array<{ state: string }>>
+    playerGrid: string[][]
   ): Promise<VerificationResult> {
     const puzzle = await NonogramPuzzle.findOne({ puzzleId }).lean();
     if (!puzzle) {
@@ -44,19 +44,19 @@ export class VerificationEngine {
       for (let c = 0; c < size; c++) {
         if (solution[r][c] === 1) {
           totalCellsRequired++;
-          if (playerGrid[r][c]?.state === "filled") {
+          if (playerGrid[r][c] === "filled") {
             correctCells++;
           } else {
             incorrectCells++;
           }
-        } else if (playerGrid[r][c]?.state === "filled") {
+        } else if (playerGrid[r][c] === "filled") {
           incorrectCells++;
         }
       }
     }
 
     for (let r = 0; r < size; r++) {
-      const line = playerGrid[r].map((c) => (c.state === "filled" ? 1 : 0));
+      const line = playerGrid[r].map((c) => (c === "filled" ? 1 : 0));
       const actualClues = computeLineClues(line);
       const expectedClues = puzzle.rowClues[r] as number[];
       const match =
@@ -66,7 +66,7 @@ export class VerificationEngine {
 
     for (let c = 0; c < size; c++) {
       const line = playerGrid.map((row) =>
-        row[c].state === "filled" ? 1 : 0
+        row[c] === "filled" ? 1 : 0
       );
       const actualClues = computeLineClues(line);
       const expectedClues = puzzle.columnClues[c] as number[];
