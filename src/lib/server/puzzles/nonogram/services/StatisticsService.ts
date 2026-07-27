@@ -1,7 +1,7 @@
 import UserStatistics from "@/lib/server/models/UserStatistics";
 import PuzzleStatistics from "@/lib/server/models/PuzzleStatistics";
 import PlaySession from "@/lib/server/models/PlaySession";
-import type { Difficulty, UserGameStats } from "../types";
+import type { NonogramDifficulty, PlayerStats } from "../types";
 
 export class StatisticsService {
   async ensureUserStats(userId: string) {
@@ -181,7 +181,7 @@ export class StatisticsService {
     await stats.save();
   }
 
-  async getUserStats(userId: string): Promise<UserGameStats> {
+  async getUserStats(userId: string): Promise<PlayerStats> {
     const stats = await this.ensureUserStats(userId);
     return {
       totalPlayed: stats.totalPlayed,

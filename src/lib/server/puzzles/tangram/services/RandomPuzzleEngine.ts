@@ -1,4 +1,5 @@
 import TangramPuzzle from "@/lib/server/models/TangramPuzzle"
+import TangramPlaySession from "@/lib/server/models/TangramPlaySession"
 import type { TangramDifficulty } from "../types"
 
 interface SelectRandomOptions {
@@ -29,7 +30,7 @@ export class RandomPuzzleEngine {
         userId,
         status: "completed",
       }).distinct("puzzleId")
-      excludeIds.push(...completed.map(id => id.toString()))
+      excludeIds.push(...completed.map((id: any) => id.toString()))
     }
 
     if (excludeActive) {
@@ -37,7 +38,7 @@ export class RandomPuzzleEngine {
         userId,
         status: { $in: ["playing", "paused"] },
       }).distinct("puzzleId")
-      excludeIds.push(...active.map(id => id.toString()))
+      excludeIds.push(...active.map((id: any) => id.toString()))
     }
 
     if (excludeRecentAbandons) {
@@ -47,7 +48,7 @@ export class RandomPuzzleEngine {
         status: "abandoned",
         lastSaveAt: { $gte: twentyFourHoursAgo },
       }).distinct("puzzleId")
-      excludeIds.push(...recentAbandons.map(id => id.toString()))
+      excludeIds.push(...recentAbandons.map((id: any) => id.toString()))
     }
 
     if (excludeIds.length > 0) {

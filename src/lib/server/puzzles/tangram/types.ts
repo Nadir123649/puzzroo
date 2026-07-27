@@ -1,4 +1,4 @@
-import type { SessionStatus } from "../types"
+export type SessionStatus = 'playing' | 'paused' | 'completed' | 'abandoned'
 
 export type TangramDifficulty = 'easy' | 'medium' | 'hard' | 'expert'
 

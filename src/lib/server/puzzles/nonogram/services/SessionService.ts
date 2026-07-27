@@ -251,7 +251,7 @@ export class SessionService {
     const query: any = { userId }
     if (status) query.status = status
 
-    const sessions = await playSessionRepository.findByUser(userId, { status, limit })
+    const sessions = await playSessionRepository.findByUser(userId, { status: status as any, limit })
     const safeSessions = sessions.sessions.map(toSafeSession)
 
     return {
