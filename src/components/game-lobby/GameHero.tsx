@@ -71,16 +71,31 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
   const { theme } = useTheme()
   const router = useRouter()
   const { setSelectedDifficulty } = useGameLobby()
+
+  // Load saved difficulty or default to easy
+  const getInitialDifficulty = (): Difficulty => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('puzzroo_lobby_difficulty')
+        if (saved && ['easy', 'medium', 'hard', 'expert'].includes(saved)) {
+          return saved as Difficulty
+        }
+      } catch {}
+    }
+    return 'easy'
+  }
+
   const [isLoading, setIsLoading] = useState(false)
-  const [localDifficulty, setLocalDifficulty] = useState<Difficulty>('easy')
+  const [localDifficulty, setLocalDifficulty] = useState<Difficulty>(getInitialDifficulty)
   const timeLeft = useCountdownToMidnight()
   const currentDate = useCurrentDate()
   
-  // Always reset to Easy on mount and update context
+  // Load saved preference on mount
   useEffect(() => {
-    setLocalDifficulty('easy')
-    setSelectedDifficulty('easy')
-    saveDifficultyPreference('easy')
+    const saved = getInitialDifficulty()
+    setLocalDifficulty(saved)
+    setSelectedDifficulty(saved)
+    saveDifficultyPreference(saved)
   }, [])
 
   // Lock body scroll when loading overlay is active
@@ -112,6 +127,9 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
     setLocalDifficulty(difficulty)
     setSelectedDifficulty(difficulty)
     saveDifficultyPreference(difficulty)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('puzzroo_lobby_difficulty', difficulty)
+    }
   }
 
   const handlePlayClick = async (e: React.MouseEvent) => {

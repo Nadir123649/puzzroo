@@ -24,7 +24,9 @@ interface PastPuzzlesContentProps {
 }
 
 export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
+  const router = useRouter()
   const [puzzles, setPuzzles] = useState<DailyChallenge[]>([])
+  const [isNavigatingBack, setIsNavigatingBack] = useState(false)
   
   // Persist filter + selected date in sessionStorage so navigation doesn't reset them
   const storageKey = `puzzroo_past_filter_${gameId}`
@@ -227,6 +229,12 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     }
   }
 
+  const handleBackToHome = async () => {
+    setIsNavigatingBack(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    router.push('/')
+  }
+
   return (
     <>
       <Navbar />
@@ -234,14 +242,16 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
         <div className="w-full px-[20px] max-w-[1380px] mx-auto">
           
           {/* Back Arrow */}
-          <Link href="/" className="hidden md:inline-block">
+          <div className="hidden md:inline-block">
             <button
-              className="w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95"
+              onClick={handleBackToHome}
+              disabled={isNavigatingBack}
+              className="w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
               aria-label="Back to home"
             >
               <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
             </button>
-          </Link>
+          </div>
 
           {/* Main Container with Border */}
           <div className="border-[0.95px] border-[#979797] dark:border-[#E0E0E0] rounded-3xl pt-4 pb-4 pl-3 pr-3 md:p-6 md:pb-6 md:mt-5">
@@ -373,7 +383,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
       />
 
       {/* Loading Overlay */}
-      <GameLoader isOpen={isLoading} text="Loading game..." />
+      <GameLoader isOpen={isLoading || isNavigatingBack} text={isNavigatingBack ? "Navigating..." : "Loading game..."} />
     </>
   )
 }

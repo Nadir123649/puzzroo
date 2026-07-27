@@ -50,32 +50,7 @@ export function SudokuGame() {
     loading,
   } = useSudoku()
 
-  // Prevent scroll when loading overlay is active (New Game loading)
-  useEffect(() => {
-    if (isResetting || loading) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.overflowY = 'hidden'
-      document.body.style.touchAction = 'none'
-      document.documentElement.style.overflow = 'hidden'
-      document.documentElement.style.overflowY = 'hidden'
-      document.documentElement.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.overflowY = ''
-      document.body.style.touchAction = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.overflowY = ''
-      document.body.style.touchAction = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-    }
-  }, [isResetting, loading])
+
 
   // Show modal automatically when game is won or lost
   useEffect(() => {
@@ -107,6 +82,8 @@ export function SudokuGame() {
   }, [selectCell, selectNumber])
 
   const handleBackToGames = () => {
+    setLoaderText('Returning to lobby...')
+    setIsResetting(true)
     const params = new URLSearchParams(window.location.search)
     const hasDate = params.has('date')
     const returnUrl = hasDate ? (typeof window !== 'undefined' ? sessionStorage.getItem('puzzroo_return_url') : null) : null
@@ -119,13 +96,14 @@ export function SudokuGame() {
   }
 
   const handleNewGame = async (isReplay = false) => {
+    setShowModal(false)
     setLoaderText(isReplay ? 'Replaying game...' : 'Loading game...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
     if (isReplay) {
-      replayBoard()
+      await replayBoard()
     } else {
-      resetBoard()
+      await resetBoard()
     }
     setIsResetting(false)
   }
@@ -194,14 +172,7 @@ export function SudokuGame() {
                   disabled={isResetting}
                   className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isResetting ? (
-                    <>
-                      <Loader2 className="animate-spin" size={20} />
-                      <span>Loading...</span>
-                    </>
-                  ) : (
-                    'Replay Game'
-                  )}
+                  Replay Game
                 </button>
               ) : (
                 <button
@@ -209,14 +180,7 @@ export function SudokuGame() {
                   disabled={isResetting}
                   className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isResetting ? (
-                    <>
-                      <Loader2 className="animate-spin" size={20} />
-                      <span>Loading...</span>
-                    </>
-                  ) : (
-                    'New Game'
-                  )}
+                  New Game
                 </button>
               )}
             </div>
@@ -277,37 +241,23 @@ export function SudokuGame() {
             />
 
              {/* Action Button Mobile - New Game or Replay Game */}
-             {isFromPastPuzzles ? (
-               <button
-                 onClick={() => handleNewGame(true)}
-                 disabled={isResetting}
-                 className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-               >
-                 {isResetting ? (
-                   <>
-                     <Loader2 className="animate-spin" size={20} />
-                     <span>Loading...</span>
-                   </>
-                 ) : (
-                   'Replay Game'
-                 )}
-               </button>
-             ) : (
-               <button
-                 onClick={() => handleNewGame(false)}
-                 disabled={isResetting}
-                 className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-               >
-                 {isResetting ? (
-                   <>
-                     <Loader2 className="animate-spin" size={20} />
-                     <span>Loading...</span>
-                   </>
-                 ) : (
-                   'New Game'
-                 )}
-               </button>
-             )}
+              {isFromPastPuzzles ? (
+                <button
+                  onClick={() => handleNewGame(true)}
+                  disabled={isResetting}
+                  className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  Replay Game
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleNewGame(false)}
+                  disabled={isResetting}
+                  className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  New Game
+                </button>
+              )}
           </div>
 
         </div>

@@ -8,6 +8,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { notify, ToastMessages } from '@/lib/toast'
 import { images } from '@/lib/utils'
 import { RedirectIfAuthenticated } from '@/components/auth/RedirectIfAuthenticated'
+import { GameLoader } from '@/components/ui/GameLoader'
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
@@ -17,11 +18,17 @@ import { signInOAuthPopup, startOAuthRedirect, consumeOAuthRedirect, completeOAu
 
 export default function SignupPage() {
   const router = useRouter()
+  const [initialLoading, setInitialLoading] = useState(true)
   
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setInitialLoading(false), 200)
+    return () => clearTimeout(timer)
+  }, [])
   
   // Validation errors
   const [errors, setErrors] = useState<{
@@ -103,7 +110,9 @@ export default function SignupPage() {
   }
 
   return (
-    <RedirectIfAuthenticated>
+    <>
+      <GameLoader isOpen={initialLoading} text="Loading..." />
+      <RedirectIfAuthenticated>
       <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
         <Navbar />
       
@@ -351,5 +360,6 @@ export default function SignupPage() {
       <Footer />
       </div>
     </RedirectIfAuthenticated>
+    </>
   )
 }

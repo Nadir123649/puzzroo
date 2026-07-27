@@ -1,6 +1,8 @@
 'use client'
 
-import { RotateCcw, Undo, Eraser, Pencil, Lightbulb } from 'lucide-react'
+import Image from 'next/image'
+import { RotateCcw, Eraser, Pencil, Lightbulb } from 'lucide-react'
+import { images } from '@/lib/utils'
 
 interface SudokuControlsProps {
   notesMode: boolean
@@ -32,14 +34,14 @@ export function SudokuControls({
   if (mobile) {
     return (
       <div className="w-full flex justify-between items-center px-4">
-        {/* Undo Button */}
+        {/* Reset Button */}
         <button
           onClick={onUndo}
           disabled={!canUndo}
           className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Undo"
+          aria-label="Reset"
         >
-          <Undo size={20} strokeWidth={2} className="text-[#424242]" />
+          <Image src={images.arrowCounterClockwise} alt="Reset" width={20} height={20} className="text-[#424242]" />
         </button>
 
         {/* Erase Button */}
@@ -101,14 +103,14 @@ export function SudokuControls({
 
   return (
     <div className="w-full flex justify-between items-center gap-[8px]">
-      {/* Undo Button */}
+      {/* Reset Button */}
       <button
         onClick={onUndo}
         disabled={!canUndo}
         className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label="Undo"
+        aria-label="Reset"
       >
-        <Undo size={27} strokeWidth={2} className="text-[#424242]" />
+        <Image src={images.arrowCounterClockwise} alt="Reset" width={27} height={27} className="text-[#424242]" />
       </button>
 
       {/* Erase Button */}

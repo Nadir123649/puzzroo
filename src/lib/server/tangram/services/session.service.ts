@@ -184,9 +184,12 @@ export async function restartSession(sessionId: string, userId: string) {
   session.pausedState = null;
   session.completionResult = {
     isCorrect: false,
+    isComplete: false,
     accuracy: 0,
     piecesCorrect: 0,
     totalPieces: 7,
+    correctCells: 0,
+    totalCells: 0,
   };
   await session.save();
 

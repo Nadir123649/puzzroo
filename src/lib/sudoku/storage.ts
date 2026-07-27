@@ -27,8 +27,24 @@ export interface SavedGameState {
   savedAt: number
 }
 
-const keyFor = (puzzleId?: string) =>
-  puzzleId ? `puzzroo_sudoku_game_${puzzleId}` : STORAGE_KEY
+function getScopedKey(baseKey: string): string {
+  if (!isBrowser) return baseKey
+  try {
+    const userStr = localStorage.getItem("puzzroo_user")
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      if (user && user.id) {
+        return `${baseKey}_${user.id}`
+      }
+    }
+  } catch {}
+  return `${baseKey}_guest`
+}
+
+const keyFor = (puzzleId?: string) => {
+  const baseKey = puzzleId ? `puzzroo_sudoku_game_${puzzleId}` : STORAGE_KEY
+  return getScopedKey(baseKey)
+}
 
 /**
  * Save game state to localStorage
@@ -102,7 +118,8 @@ export function saveDifficultyPreference(difficulty: Difficulty): void {
   if (!isBrowser) return
   
   try {
-    localStorage.setItem('puzzroo_sudoku_difficulty', difficulty)
+    const key = getScopedKey('puzzroo_sudoku_difficulty')
+    localStorage.setItem(key, difficulty)
   } catch (error) {
     console.error('Failed to save difficulty preference:', error)
   }
@@ -115,7 +132,8 @@ export function loadDifficultyPreference(): Difficulty {
   if (!isBrowser) return 'easy'
   
   try {
-    const saved = localStorage.getItem('puzzroo_sudoku_difficulty')
+    const key = getScopedKey('puzzroo_sudoku_difficulty')
+    const saved = localStorage.getItem(key)
     if (saved && ['easy', 'medium', 'hard'].includes(saved)) {
       return saved as Difficulty
     }

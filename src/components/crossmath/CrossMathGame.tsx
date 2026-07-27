@@ -64,42 +64,15 @@ export function CrossMathGame() {
     }
   }, [gameStatus])
 
-  // Prevent scroll when loading overlay is active (New Game loading)
-  useEffect(() => {
-    if (isResetting || loading) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.overflowY = 'hidden'
-      document.body.style.touchAction = 'none'
-      document.documentElement.style.overflow = 'hidden'
-      document.documentElement.style.overflowY = 'hidden'
-      document.documentElement.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.overflowY = ''
-      document.body.style.touchAction = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.overflowY = ''
-      document.body.style.touchAction = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-    }
-  }, [isResetting, loading])
-
   const handleNewGame = async (isReplay = false) => {
     setLoaderText(isReplay ? 'Replaying game...' : 'Loading game...')
     setIsResetting(true)
     setShowModal(false)
     await new Promise(resolve => setTimeout(resolve, 1000))
     if (isReplay) {
-      replayBoard()
+      await replayBoard()
     } else {
-      resetBoard()
+      await resetBoard()
     }
     setIsResetting(false)
   }
@@ -109,6 +82,8 @@ export function CrossMathGame() {
   }
 
   const handleBackToGames = () => {
+    setLoaderText('Returning to lobby...')
+    setIsResetting(true)
     const params = new URLSearchParams(window.location.search)
     const hasDate = params.has('date')
     const returnUrl = hasDate ? (typeof window !== 'undefined' ? sessionStorage.getItem('puzzroo_return_url') : null) : null
@@ -212,14 +187,7 @@ export function CrossMathGame() {
                    disabled={isResetting}
                    className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                  >
-                   {isResetting ? (
-                     <>
-                       <Loader2 className="animate-spin" size={20} />
-                       <span>Loading...</span>
-                     </>
-                   ) : (
-                     'Replay Game'
-                   )}
+                   Replay Game
                  </button>
                ) : (
                  <>
@@ -228,14 +196,7 @@ export function CrossMathGame() {
                      disabled={isResetting}
                      className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                    >
-                     {isResetting ? (
-                       <>
-                         <Loader2 className="animate-spin" size={20} />
-                         <span>Loading...</span>
-                       </>
-                     ) : (
-                       'New Game'
-                     )}
+                     New Game
                    </button>
 
                    <button
@@ -309,14 +270,7 @@ export function CrossMathGame() {
                   disabled={isResetting}
                   className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isResetting ? (
-                    <>
-                      <Loader2 className="animate-spin" size={20} />
-                      <span>Loading...</span>
-                    </>
-                  ) : (
-                    'Replay Game'
-                  )}
+                  Replay Game
                 </button>
               ) : (
                 <>
@@ -325,14 +279,7 @@ export function CrossMathGame() {
                     disabled={isResetting}
                     className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {isResetting ? (
-                      <>
-                        <Loader2 className="animate-spin" size={20} />
-                        <span>Loading...</span>
-                      </>
-                    ) : (
-                      'New Game'
-                    )}
+                    New Game
                   </button>
 
                   <button

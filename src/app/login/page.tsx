@@ -8,6 +8,7 @@ import { notify, ToastMessages } from '@/lib/toast'
 import { Eye, EyeOff } from 'lucide-react'
 import { images } from '@/lib/utils'
 import { RedirectIfAuthenticated } from '@/components/auth/RedirectIfAuthenticated'
+import { GameLoader } from '@/components/ui/GameLoader'
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
@@ -347,15 +348,25 @@ function LoginPageContent() {
 }
 
 export default function LoginPage() {
+  const [initialLoading, setInitialLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setInitialLoading(false), 200)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
-    <RedirectIfAuthenticated>
-      <Suspense fallback={
-        <div className="min-h-screen bg-white dark:bg-[#181A20] flex items-center justify-center">
-          <div className="animate-spin w-8 h-8 border-2 border-[#6949FF] border-t-transparent rounded-full" />
-        </div>
-      }>
-        <LoginPageContent />
-      </Suspense>
-    </RedirectIfAuthenticated>
+    <>
+      <GameLoader isOpen={initialLoading} text="Loading..." />
+      <RedirectIfAuthenticated>
+        <Suspense fallback={
+          <div className="min-h-screen bg-white dark:bg-[#181A20] flex items-center justify-center">
+            <div className="animate-spin w-8 h-8 border-2 border-[#6949FF] border-t-transparent rounded-full" />
+          </div>
+        }>
+          <LoginPageContent />
+        </Suspense>
+      </RedirectIfAuthenticated>
+    </>
   )
 }

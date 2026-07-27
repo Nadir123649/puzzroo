@@ -43,7 +43,7 @@ export async function GET(
     }
     const dailyIndex = seed % count;
 
-    const doc = await reg.model.findOne({ difficulty, dailyIndex, ...(game === "tangram" ? { active: true, status: "active" } : {}) }).lean();
+    const doc = await reg.model.findOne(dailyFilter).skip(dailyIndex).lean();
     if (!doc) return errorResponse(404, "puzzle_not_found", "Daily puzzle not found");
 
     const res = successResponse({ ...(reg.toResponse(doc) as object), date, difficulty });

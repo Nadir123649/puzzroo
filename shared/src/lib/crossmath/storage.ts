@@ -18,10 +18,25 @@ export interface SavedCrossMathState {
   savedAt: number
 }
 
+function getScopedKey(baseKey: string): string {
+  if (!isBrowser) return baseKey
+  try {
+    const userStr = localStorage.getItem("puzzroo_user")
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      if (user && user.id) {
+        return `${baseKey}_${user.id}`
+      }
+    }
+  } catch {}
+  return `${baseKey}_guest`
+}
+
 export function saveDifficultyPreference(difficulty: Difficulty): void {
   if (!isBrowser) return
   try {
-    localStorage.setItem(DIFFICULTY_KEY, difficulty)
+    const key = getScopedKey(DIFFICULTY_KEY)
+    localStorage.setItem(key, difficulty)
   } catch (error) {
     console.error('Failed to save difficulty preference:', error)
   }
@@ -30,7 +45,8 @@ export function saveDifficultyPreference(difficulty: Difficulty): void {
 export function loadDifficultyPreference(): Difficulty {
   if (!isBrowser) return 'easy'
   try {
-    const saved = localStorage.getItem(DIFFICULTY_KEY)
+    const key = getScopedKey(DIFFICULTY_KEY)
+    const saved = localStorage.getItem(key)
     if (saved && ['easy', 'medium', 'hard'].includes(saved)) {
       return saved as Difficulty
     }
@@ -48,7 +64,8 @@ export function saveGameState(state: Omit<SavedCrossMathState, 'version' | 'save
       version: STORAGE_VERSION,
       savedAt: Date.now(),
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave))
+    const key = getScopedKey(STORAGE_KEY)
+    localStorage.setItem(key, JSON.stringify(dataToSave))
   } catch (error) {
     console.error('Failed to save game state:', error)
   }
@@ -57,7 +74,8 @@ export function saveGameState(state: Omit<SavedCrossMathState, 'version' | 'save
 export function loadGameState(): SavedCrossMathState | null {
   if (!isBrowser) return null
   try {
-    const data = localStorage.getItem(STORAGE_KEY)
+    const key = getScopedKey(STORAGE_KEY)
+    const data = localStorage.getItem(key)
     if (!data) return null
 
     const parsed = JSON.parse(data) as SavedCrossMathState
@@ -83,7 +101,8 @@ export function loadGameState(): SavedCrossMathState | null {
 export function clearGameState(): void {
   if (!isBrowser) return
   try {
-    localStorage.removeItem(STORAGE_KEY)
+    const key = getScopedKey(STORAGE_KEY)
+    localStorage.removeItem(key)
   } catch (error) {
     console.error('Failed to clear game state:', error)
   }

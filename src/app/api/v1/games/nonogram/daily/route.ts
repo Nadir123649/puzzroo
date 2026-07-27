@@ -28,7 +28,7 @@ export const GET = withAuth(async (req, user) => {
       );
     }
     const dailyIndex = seed % count;
-    const doc = await NonogramPuzzle.findOne({ ...matchFilter, dailyIndex }).lean();
+    const doc = await NonogramPuzzle.findOne(matchFilter).skip(dailyIndex).lean();
     if (!doc) {
       return Response.json(
         { success: false, payload: { error: { code: "puzzle_not_found", message: "Puzzle not found" } } },

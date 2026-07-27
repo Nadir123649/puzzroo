@@ -9,6 +9,20 @@ const STORAGE_KEYS = {
   SETTINGS: 'puzzroo_nonogram_settings',
 } as const
 
+function getScopedKey(baseKey: string): string {
+  if (typeof window === 'undefined') return baseKey
+  try {
+    const userStr = localStorage.getItem("puzzroo_user")
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      if (user && user.id) {
+        return `${baseKey}_${user.id}`
+      }
+    }
+  } catch {}
+  return `${baseKey}_guest`
+}
+
 /**
  * Save current game state
  */
@@ -16,7 +30,8 @@ export function saveGameState(state: SavedGameState): void {
   if (typeof window === 'undefined') return
   
   try {
-    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(state))
+    const key = getScopedKey(STORAGE_KEYS.GAME_STATE)
+    localStorage.setItem(key, JSON.stringify(state))
   } catch (error) {
     console.warn('Failed to save game state:', error)
   }
@@ -29,7 +44,8 @@ export function loadGameState(): SavedGameState | null {
   if (typeof window === 'undefined') return null
   
   try {
-    const saved = localStorage.getItem(STORAGE_KEYS.GAME_STATE)
+    const key = getScopedKey(STORAGE_KEYS.GAME_STATE)
+    const saved = localStorage.getItem(key)
     if (!saved) return null
     
     const state = JSON.parse(saved) as SavedGameState
@@ -53,7 +69,8 @@ export function clearGameState(): void {
   if (typeof window === 'undefined') return
   
   try {
-    localStorage.removeItem(STORAGE_KEYS.GAME_STATE)
+    const key = getScopedKey(STORAGE_KEYS.GAME_STATE)
+    localStorage.removeItem(key)
   } catch (error) {
     console.warn('Failed to clear game state:', error)
   }
@@ -73,7 +90,8 @@ export function loadGameStats(): GameStats {
   }
   
   try {
-    const saved = localStorage.getItem(STORAGE_KEYS.STATS)
+    const key = getScopedKey(STORAGE_KEYS.STATS)
+    const saved = localStorage.getItem(key)
     if (!saved) {
       return {
         puzzlesCompleted: 0,
@@ -102,7 +120,8 @@ export function saveGameStats(stats: GameStats): void {
   if (typeof window === 'undefined') return
   
   try {
-    localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(stats))
+    const key = getScopedKey(STORAGE_KEYS.STATS)
+    localStorage.setItem(key, JSON.stringify(stats))
   } catch (error) {
     console.warn('Failed to save stats:', error)
   }
@@ -151,5 +170,36 @@ export function getHintLimits(difficulty: string): number {
       return 2
     default:
       return 3
+  }
+}
+
+const DIFFICULTY_KEY = 'puzzroo_nonogram_difficulty'
+
+function getDifficultyScopedKey(): string {
+  if (typeof window === 'undefined') return DIFFICULTY_KEY
+  try {
+    const userStr = localStorage.getItem('puzzroo_user')
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      if (user && user.id) return `${DIFFICULTY_KEY}_${user.id}`
+    }
+  } catch {}
+  return `${DIFFICULTY_KEY}_guest`
+}
+
+export function saveDifficultyPreference(difficulty: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(getDifficultyScopedKey(), difficulty)
+  } catch {}
+}
+
+export function loadDifficultyPreference(): string {
+  if (typeof window === 'undefined') return 'easy'
+  try {
+    const saved = localStorage.getItem(getDifficultyScopedKey())
+    return saved || 'easy'
+  } catch {
+    return 'easy'
   }
 }
