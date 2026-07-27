@@ -14,6 +14,9 @@ export const POST = withAuth(async (req, user) => {
     )
   }
 
-  const session = await sessionService.startSession(user.id, parsed.data.puzzleId)
+  const session = await sessionService.startSession({
+    userId: user.id,
+    puzzleId: parsed.data.puzzleId,
+  })
   return successResponse(session, 201)
 })

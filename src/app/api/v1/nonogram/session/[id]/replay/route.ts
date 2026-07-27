@@ -20,12 +20,12 @@ export async function POST(
 
   try {
     const session = await sessionService.getSessionById(id, userResult.user.id);
-    const replayed = await sessionService.replaySession(userResult.user.id, session.puzzleId, session.difficulty);
+    const replayed = await sessionService.replaySession(userResult.user.id, session.puzzleId);
     return successResponse({
-      sessionId: replayed._id.toString(),
+      sessionId: replayed.sessionId,
       puzzleId: replayed.puzzleId,
       difficulty: replayed.difficulty,
-      status: replayed.status,
+      status: replayed.sessionStatus,
       startedAt: replayed.startedAt,
     });
   } catch (error: any) {
