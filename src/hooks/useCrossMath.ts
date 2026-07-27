@@ -216,6 +216,26 @@ export function useCrossMath(initialPuzzleId?: string) {
     })
   }
 
+  const reportWin = useCallback((
+    puzzleId: string,
+    diff: string,
+    finalScore: number,
+    elapsed: number,
+    finalMistakes: number
+  ) => {
+    if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
+      gameApi.complete('crossmath', {
+        puzzleId,
+        difficulty: diff,
+        score: finalScore,
+        time: elapsedFromCountdown(elapsed, diff),
+        hintsUsed: hintsUsedRef.current,
+        mistakes: finalMistakes,
+        moves: movesRef.current,
+      }).catch(() => {})
+    }
+  }, [])
+
   async function completePuzzle(grid: Cell[][], elapsed: number, diff: string, finalScore?: number, finalMistakes?: number) {
     if (!sessionIdRef.current || completionCalledRef.current) return
     completionCalledRef.current = true
