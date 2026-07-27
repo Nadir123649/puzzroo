@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const session = await sessionService.startSession({
       userId: userResult.user.id,
       puzzleId,
-      difficulty,
+      difficulty: difficulty as 'easy' | 'medium' | 'hard' | 'expert',
     });
 
     return successResponse({
