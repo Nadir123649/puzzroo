@@ -474,6 +474,64 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         isSnapped: false
       }
     })
+    // Check if there is a saved state in LocalStorage first!
+    if (typeof window !== 'undefined') {
+      try {
+        const userStr = localStorage.getItem('puzzroo_user')
+        const userId = userStr ? JSON.parse(userStr)?.id : 'guest'
+        const storageKey = `puzzroo_tangram_game_${userId}`
+        const savedRaw = localStorage.getItem(storageKey)
+        if (savedRaw) {
+          const saved = JSON.parse(savedRaw)
+          if (saved.puzzleId === puzzle.id && saved.difficulty === difficulty && saved.pieceStates && saved.pieceStates.length > 0) {
+            // Restore from LocalStorage!
+            const restoredPieces = initialPieces.map(p => {
+              const savedPiece = saved.pieceStates.find((s: any) => s.pieceId === p.id)
+              if (savedPiece) {
+                const targetCx = p.targetPolygon.reduce((sum, pt) => sum + pt[0], 0) / p.targetPolygon.length
+                const targetCy = p.targetPolygon.reduce((sum, pt) => sum + pt[1], 0) / p.targetPolygon.length
+                const centered = p.targetPolygon.map(([cx, cy]) => [cx - targetCx, cy - targetCy])
+                
+                const tx = savedPiece.position.x
+                const ty = savedPiece.position.y
+                const rot = savedPiece.rotation
+                
+                const rad = (rot * Math.PI) / 180
+                const cos = Math.cos(rad)
+                const sin = Math.sin(rad)
+                
+                const currentPolygon = centered.map(([cx, cy]) => [
+                  tx + (cx * cos - cy * sin),
+                  ty + (cx * sin + cy * cos)
+                ])
+                
+                return {
+                  ...p,
+                  transform: { x: tx, y: ty, rotation: rot },
+                  currentPolygon,
+                  isPlaced: savedPiece.placed || false,
+                  isSnapped: savedPiece.snapped || false,
+                }
+              }
+              return p
+            })
+
+            setPieces(restoredPieces)
+            setMoveHistory([restoredPieces])
+            setHistoryIndex(0)
+            lastCommittedStateRef.current = restoredPieces
+
+            const remaining = getInitialTime(difficulty) - saved.elapsedSeconds
+            setTimeRemaining(Math.max(0, remaining))
+            setHintsUsed(saved.hintsUsed)
+            return // Skip standard tray layout initialization
+          }
+        }
+      } catch (e) {
+        console.error('[tangram] local restore failed', e)
+      }
+    }
+
     setPieces(initialPieces)
     setMoveHistory([initialPieces])
     setHistoryIndex(0)
@@ -483,14 +541,36 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const lastMoveKeyRef = useRef('')
 
   useEffect(() => {
-    if (!sessionIdRef.current || gameStatus !== 'playing') return
-    if (pieces.length === 0) return
+    if (gameStatus !== 'playing') return
+    if (pieces.length === 0 || !puzzle) return
     const elapsed = getInitialTime(difficulty) - timeRemaining
     const key = JSON.stringify(pieces.map(p => ({ id: p.id, x: p.transform.x, y: p.transform.y, r: p.transform.rotation, placed: p.isPlaced, snapped: p.isSnapped })))
     if (key === lastMoveKeyRef.current) return
     lastMoveKeyRef.current = key
-    saveMoveNow(pieces, elapsed, hintsUsed)
-  }, [pieces, hintsUsed, timeRemaining, gameStatus, difficulty])
+
+    // Save to server
+    if (sessionIdRef.current) {
+      saveMoveNow(pieces, elapsed, hintsUsed)
+    }
+
+    // Save to LocalStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const userStr = localStorage.getItem('puzzroo_user')
+        const userId = userStr ? JSON.parse(userStr)?.id : 'guest'
+        const storageKey = `puzzroo_tangram_game_${userId}`
+        localStorage.setItem(storageKey, JSON.stringify({
+          puzzleId: puzzle.id,
+          difficulty,
+          elapsedSeconds: elapsed,
+          hintsUsed,
+          pieceStates: piecesToRecord(pieces),
+        }))
+      } catch (e) {
+        console.error('[tangram] local save failed', e)
+      }
+    }
+  }, [pieces, hintsUsed, timeRemaining, gameStatus, difficulty, puzzle])
 
   useEffect(() => {
     // Don't validate if pieces haven't been initialized yet or if the game is lost
@@ -525,6 +605,15 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           const dateParam = searchParams?.get('date')
           const puzzleId = dateParam ? `daily-tangram-${dateParam}` : puzzle?.id
           if (puzzleId) {
+            // Clear local storage progress upon completion
+            if (typeof window !== 'undefined') {
+              try {
+                const userStr = localStorage.getItem('puzzroo_user')
+                const userId = userStr ? JSON.parse(userStr)?.id : 'guest'
+                localStorage.removeItem(`puzzroo_tangram_game_${userId}`)
+              } catch {}
+            }
+
             markPuzzleCompleted('tangram', puzzleId, {
               time: getInitialTime(difficulty) - timeRemaining,
               score: finalScore,

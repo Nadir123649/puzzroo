@@ -861,6 +861,19 @@ export function useNonogram(initialPuzzleId?: string) {
   }, [currentPuzzle, gameStatus])
 
   /**
+   * Reveal Solution - fill all cells correctly even if game is won/lost/ended
+   */
+  const revealSolution = useCallback(() => {
+    if (!currentPuzzle) return
+
+    setGrid(() => {
+      return currentPuzzle.solution.map((row) =>
+        row.map((val) => (val === 1 ? 'filled' : 'empty'))
+      )
+    })
+  }, [currentPuzzle])
+
+  /**
    * Keyboard controls with input mode support
    */
   useEffect(() => {
@@ -1006,6 +1019,7 @@ export function useNonogram(initialPuzzleId?: string) {
     changeDifficulty,
     useHint,
     autoFill,
+    revealSolution,
     setInputMode,
     setValidationMode,
     setHoveredCell,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Lightbulb, Flag, ChevronLeft, ChevronRight, Gamepad2 } from 'lucide-react'
+import { Lightbulb, Flag, ChevronLeft, ChevronRight, Gamepad2, Eye } from 'lucide-react'
 import { useNonogram } from '@/hooks/useNonogram'
 import { NonogramModal } from './NonogramModal'
 import { GameLoader } from '@/components/ui/GameLoader'
@@ -46,6 +46,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     newPuzzle,
     useHint,
     autoFill,
+    revealSolution,
     setInputMode,
     setHoveredCell,
     setMousePosition,
@@ -769,6 +770,16 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                   </span>
                 )}
               </button>
+
+              {/* Autofill Button - Development Only */}
+              {process.env.NODE_ENV === 'development' && gameStatus === 'playing' && (
+                <button
+                  onClick={autoFill}
+                  className="flex-1 h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
+                >
+                  Autofill
+                </button>
+              )}
 
               {/* Reset Button */}
               <button
