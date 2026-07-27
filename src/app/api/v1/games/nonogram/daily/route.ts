@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
     if (error.message === "no_daily_puzzles_available") {
       return errorResponse(404, "no_daily_puzzle", "No daily puzzle available")
     }
+
     return errorResponse(500, "internal_error", "Internal Server Error")
   }
 }

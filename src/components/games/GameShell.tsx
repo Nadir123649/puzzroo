@@ -158,14 +158,7 @@ export function GameShell({
                     disabled={isResetting}
                     className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {isResetting ? (
-                      <>
-                        <Loader2 className="animate-spin" size={20} />
-                        <span>Loading...</span>
-                      </>
-                    ) : (
-                      newGameLabel
-                    )}
+                    {newGameLabel}
                   </button>
                 )}
 
@@ -250,14 +243,7 @@ export function GameShell({
                 disabled={isResetting}
                 className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {isResetting ? (
-                  <>
-                    <Loader2 className="animate-spin" size={20} />
-                    <span>Loading...</span>
-                  </>
-                ) : (
-                  newGameLabel
-                )}
+                {newGameLabel}
               </button>
             )}
 

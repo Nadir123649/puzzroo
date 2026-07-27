@@ -3,9 +3,10 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { User, CreditCard, Bell, History, LogOut, Activity } from 'lucide-react'
+import { User, CreditCard, Bell, History, LogOut, Activity, Sun, Moon } from 'lucide-react'
 import { logout, getCurrentUser } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
+import { useTheme } from '../../hooks/use-theme'
 
 interface ProfileDropdownProps {
   userName: string
@@ -17,6 +18,7 @@ export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
   const [isAdmin, setIsAdmin] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const { theme, toggleTheme } = useTheme()
 
   useEffect(() => {
     const syncRole = () => setIsAdmin(getCurrentUser()?.role === 'admin')
@@ -42,12 +44,11 @@ export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
     }
   }, [isOpen])
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     notify.successKey('AUTH_LOGOUT_SUCCESS')
     setIsOpen(false)
-    router.push('/login')
-    router.refresh()
+    window.location.replace('/login')
   }
 
   // Truncate name if too long
@@ -58,7 +59,7 @@ export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
       {/* Profile Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 h-[38px] px-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#1F222A] transition-all duration-200 active:scale-95"
+        className="flex items-center gap-2.5 h-[38px] px-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#1F222A] transition-all duration-200 active:scale-95 mr-1.5"
         aria-label="Profile menu"
       >
         {/* Avatar */}
@@ -161,6 +162,23 @@ export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
                 </span>
               </Link>
             )}
+
+            <button
+              onClick={() => {
+                toggleTheme()
+                setIsOpen(false)
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150 text-left"
+            >
+              {theme === 'dark' ? (
+                <Sun size={18} className="text-[#6949FF]" strokeWidth={2} />
+              ) : (
+                <Moon size={18} className="text-[#6949FF]" strokeWidth={2} />
+              )}
+              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              </span>
+            </button>
           </div>
 
           {/* Logout */}

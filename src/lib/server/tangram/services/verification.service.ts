@@ -53,7 +53,7 @@ export async function completeSession(
   }
 
   session.status = 'completed';
-  session.pieceStates = pieceStates;
+  session.pieceStates = pieceStates as any;
   session.elapsedSeconds = elapsedSeconds;
   session.completedAt = new Date();
   session.lastSaveAt = new Date();
@@ -63,9 +63,12 @@ export async function completeSession(
 
   session.completionResult = {
     isCorrect: true,
+    isComplete: true,
     accuracy: result.accuracy,
     piecesCorrect: result.piecesCorrect,
     totalPieces: result.totalPieces,
+    correctCells: 0,
+    totalCells: 0,
   };
 
   await session.save();

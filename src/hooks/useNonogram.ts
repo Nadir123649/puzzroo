@@ -7,11 +7,11 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { 
-  CellState, 
-  CellPosition, 
-  Difficulty, 
-  PuzzleData, 
+import {
+  CellState,
+  CellPosition,
+  Difficulty,
+  PuzzleData,
   ValidationStatus,
   GameStatus,
   GameProgress,
@@ -21,7 +21,7 @@ import {
 
 // Drag state types
 type DragDirection = 'horizontal' | 'vertical' | null
-import { 
+import {
   createEmptyGrid,
   checkPuzzleCompletion,
   validateAllRows,
@@ -30,12 +30,14 @@ import {
   isCellMistake,
   findHintPosition,
 } from '@shared/lib/nonogram/helpers'
-import { 
-  saveGameState, 
-  loadGameState, 
+import {
+  saveGameState,
+  loadGameState,
   clearGameState,
   updateStatsOnCompletion,
   getHintLimits,
+  saveDifficultyPreference,
+  loadDifficultyPreference,
 } from '@shared/lib/nonogram/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
@@ -99,26 +101,42 @@ function getDailyDateString(dateParam?: string | null): string {
 export function useNonogram(initialPuzzleId?: string) {
   const searchParams = useSearchParams()
   const urlDifficulty = (searchParams.get('difficulty') || 'easy') as Difficulty
+  const savedDifficulty = loadDifficultyPreference() as Difficulty
 
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy')
+  const getInitialDifficulty = (): Difficulty => {
+    if (urlDifficulty && ['easy', 'medium', 'hard', 'expert'].includes(urlDifficulty)) return urlDifficulty as Difficulty
+    return (savedDifficulty || 'easy') as Difficulty
+  }
+
+  const [difficulty, setDifficultyState] = useState<Difficulty>(getInitialDifficulty)
+
+  const setDifficulty = useCallback((d: Difficulty) => {
+    setDifficultyState(d)
+    saveDifficultyPreference(d)
+  }, [])
   const [currentPuzzle, setCurrentPuzzle] = useState<PuzzleData | null>(null)
   const [grid, setGrid] = useState<CellState[][]>([])
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null)
   const [selectionHistory, setSelectionHistory] = useState<CellPosition[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const initTokenRef = useRef(0)
-  
+
   // Check if this is from daily challenge
   const dateParam = searchParams.get('date')
   const isDailyChallenge = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
-  
+
   // Phase 3: Input mode system
   const [inputMode, setInputMode] = useState<InputMode>('fill')
   const [validationMode, setValidationMode] = useState<ValidationMode>('assisted')
-  
+
   // Phase 2: Game state
   const [gameStatus, setGameStatus] = useState<GameStatus>('playing')
+  const gameStatusRef = useRef(gameStatus)
+  useEffect(() => {
+    gameStatusRef.current = gameStatus
+  }, [gameStatus])
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [rowValidation, setRowValidation] = useState<ValidationStatus[]>([])
   const [columnValidation, setColumnValidation] = useState<ValidationStatus[]>([])
@@ -131,7 +149,7 @@ export function useNonogram(initialPuzzleId?: string) {
   const [maxHints, setMaxHints] = useState(5)
   const [errorCell, setErrorCell] = useState<CellPosition | null>(null)
   const [mistakeCount, setMistakeCount] = useState(0)
-  
+
   // Hovered Cell and Mouse coordinates for tooltip
   const [hoveredCell, setHoveredCell] = useState<CellPosition | null>(null)
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null)
@@ -141,19 +159,21 @@ export function useNonogram(initialPuzzleId?: string) {
   const [dragDirection, setDragDirection] = useState<DragDirection>(null)
   const [dragPreviewCells, setDragPreviewCells] = useState<Set<string>>(new Set())
   const dragStartPos = useRef<CellPosition | null>(null)
-  
+
   const hasDraggedRef = useRef(false)
   const wasDraggingRef = useRef(false)
-  
+
   // Timer ref
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const startTimeRef = useRef<number | null>(null)
-  
+
   // Guard to prevent duplicate click/tap actions (pointer events vs click event race condition)
+  const pointerHandledRef = useRef(false)
   const lastInteractionRef = useRef<{ row: number; col: number; timestamp: number } | null>(null)
-  
+
   // Track action type during dragging
   const dragActionRef = useRef<'fill' | 'erase' | 'mark' | 'unmark' | null>(null)
+  const processedDragCellsRef = useRef<Set<string>>(new Set())
 
   const sessionIdRef = useRef<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -222,16 +242,16 @@ export function useNonogram(initialPuzzleId?: string) {
     const token = ++initTokenRef.current
     let cancelled = false
 
-    const applyPuzzle = (puzzle: PuzzleData) => {
+    const applyPuzzle = async (puzzle: PuzzleData) => {
       if (token !== initTokenRef.current) return
       setCurrentPuzzle(puzzle)
       setGrid(createEmptyGrid(puzzle.size))
       setMistakeCount(0)
       setSelectionHistory([])
-      
+
       // Set initial countdown time based on estimatedTime
       setElapsedSeconds(puzzle.estimatedTime || (diff === 'expert' ? 1200 : diff === 'hard' ? 900 : diff === 'medium' ? 600 : 300))
-      
+
       setHintsUsed(0)
       setMaxHints(getHintLimits(diff))
       setGameStatus('playing')
@@ -249,67 +269,71 @@ export function useNonogram(initialPuzzleId?: string) {
     }
 
     setLoading(true)
+    let puzzle: PuzzleData | null = null
     try {
-      let puzzle: PuzzleData
-      try {
-        if (puzzleId) {
-          const cached = readCache(puzzleId)
-          if (cached) {
-            puzzle = cached
-          } else {
-            const res = await gameApi.getPuzzleById('nonogram', puzzleId)
-            if (!res || !(res as any).id) throw new Error('invalid_puzzle')
-            puzzle = res as unknown as PuzzleData
-            writeCache(puzzle.id, puzzle)
-          }
-        } else if (isDailyChallenge) {
-          const res = await gameApi.getDailyPuzzle('nonogram', getDailyDateString(dateParam))
-          puzzle = res as unknown as PuzzleData
-          writeCache(puzzle.id, puzzle)
+      if (puzzleId) {
+        const cached = readCache(puzzleId)
+        if (cached) {
+          puzzle = cached
         } else {
-          const res = await gameApi.getPuzzle('nonogram', { difficulty: diff })
+          const res = await gameApi.getPuzzleById('nonogram', puzzleId)
           if (!res || !(res as any).id) throw new Error('invalid_puzzle')
           puzzle = res as unknown as PuzzleData
           writeCache(puzzle.id, puzzle)
         }
-      } catch {
-        throw new Error('puzzle_fetch_failed')
+      } else if (isDailyChallenge) {
+        const res = await gameApi.getDailyPuzzle('nonogram', getDailyDateString(dateParam))
+        if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+        puzzle = res as unknown as PuzzleData
+        writeCache(puzzle.id, puzzle)
+      } else {
+        const res = await gameApi.getPuzzle('nonogram', { difficulty: diff })
+        if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+        puzzle = res as unknown as PuzzleData
+        writeCache(puzzle.id, puzzle)
       }
-      if (cancelled) return
-
-      const targetPuzzleId = isDailyChallenge && dateParam ? `daily-nonogram-${dateParam}` : puzzle.id
-
-      if (loadSaved && typeof window !== 'undefined') {
-        const saved = loadGameState()
-        if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === diff) {
-          setCurrentPuzzle(puzzle)
-          setGrid(saved.grid)
-          setMistakeCount(saved.mistakeCount)
-          setElapsedSeconds(saved.elapsedSeconds)
-          setGameStatus('playing') // always resume as playing
-          setHintsUsed(saved.hintsUsed)
-          
-          const maxH = getHintLimits(diff)
-          setMaxHints(maxH)
-          
-          const colVal = validateAllColumns(saved.grid, puzzle.columnClues)
-          const rowVal = validateAllRows(saved.grid, puzzle.rowClues)
-          setColumnValidation(colVal)
-          setRowValidation(rowVal)
-          
-          const prog = calculateProgress(saved.grid, puzzle.solution)
-          setProgress(prog)
-          setDifficulty(diff)
-          initSession(puzzle.id, diff)
-          return
-        }
-      }
-
-      applyPuzzle(puzzle)
-      initSession(puzzle.id, diff)
-    } finally {
-      if (!cancelled) setLoading(false)
+    } catch {
+      setLoading(false)
+      setError('Failed to load puzzle. Please try again.')
+      return
     }
+    if (cancelled || !puzzle) {
+      if (!cancelled) setLoading(false)
+      return
+    }
+
+    const targetPuzzleId = isDailyChallenge && dateParam ? `daily-nonogram-${dateParam}` : puzzle.id
+
+    if (loadSaved && typeof window !== 'undefined') {
+      const saved = loadGameState()
+      if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === diff) {
+        setCurrentPuzzle(puzzle)
+        setGrid(saved.grid)
+        setMistakeCount(saved.mistakeCount)
+        setElapsedSeconds(saved.elapsedSeconds)
+        setGameStatus('playing') // always resume as playing
+        setHintsUsed(saved.hintsUsed)
+
+        const maxH = getHintLimits(diff)
+        setMaxHints(maxH)
+
+        const colVal = validateAllColumns(saved.grid, puzzle.columnClues)
+        const rowVal = validateAllRows(saved.grid, puzzle.rowClues)
+        setColumnValidation(colVal)
+        setRowValidation(rowVal)
+
+        const prog = calculateProgress(saved.grid, puzzle.solution)
+        setProgress(prog)
+        setDifficulty(diff)
+        initSession(puzzle.id, diff)
+        if (!cancelled) setLoading(false)
+        return
+      }
+    }
+
+    applyPuzzle(puzzle)
+    initSession(puzzle.id, diff)
+    if (!cancelled) setLoading(false)
   }, [isDailyChallenge, dateParam])
 
   /**
@@ -325,7 +349,7 @@ export function useNonogram(initialPuzzleId?: string) {
     if (typeof window !== 'undefined' && !isInitialized) {
       const valid = ['easy', 'medium', 'hard', 'expert']
       const currentDiff = valid.includes(urlDifficulty) ? urlDifficulty : 'easy'
-      
+
       setDifficulty(currentDiff)
       // Use provided puzzleId or let initializePuzzle use random
       initializePuzzle(currentDiff, true, initialPuzzleId)
@@ -404,7 +428,7 @@ export function useNonogram(initialPuzzleId?: string) {
     // Validate rows and columns
     const rowStatus = validateAllRows(grid, currentPuzzle.rowClues)
     const colStatus = validateAllColumns(grid, currentPuzzle.columnClues)
-    
+
     setRowValidation(rowStatus)
     setColumnValidation(colStatus)
 
@@ -417,7 +441,7 @@ export function useNonogram(initialPuzzleId?: string) {
     if (isComplete) {
       setGameStatus('won')
       updateStatsOnCompletion(elapsedSeconds)
-      
+
       // Mark puzzle as completed in universal tracking system
       const dateParam = searchParams.get('date')
       // Convert date to full puzzle ID format: daily-nonogram-MM-DD-YY
@@ -446,7 +470,7 @@ export function useNonogram(initialPuzzleId?: string) {
         })
         void completePuzzle(grid, elapsedSeconds, hintsUsed, mistakeCount)
       }
-      
+
       clearGameState()
     }
   }, [grid, currentPuzzle, gameStatus, elapsedSeconds])
@@ -469,7 +493,13 @@ export function useNonogram(initialPuzzleId?: string) {
    */
   const applyCellAction = useCallback((position: CellPosition, mode: InputMode, isDrag = false): CellState => {
     const currentState = grid[position.row]?.[position.col]
-    
+
+    // Check if cell is correct and filled (part of the solution)
+    const isCorrectAndFilled = currentState === 'filled' && currentPuzzle?.solution[position.row]?.[position.col] === 1
+    if (isCorrectAndFilled) {
+      return 'filled' // Cannot be erased or changed!
+    }
+
     if (isDrag && dragActionRef.current) {
       const action = dragActionRef.current
       if (action === 'fill') return 'filled'
@@ -477,13 +507,13 @@ export function useNonogram(initialPuzzleId?: string) {
       if (action === 'mark') return 'marked'
       return 'empty'
     }
-    
+
     if (mode === 'fill') {
       return (currentState === 'filled' || currentState === 'error') ? 'empty' : 'filled'
     } else {
       return currentState === 'marked' ? 'empty' : 'marked'
     }
-  }, [grid])
+  }, [grid, currentPuzzle])
 
   /**
    * Handle cell click - apply action based on active input mode
@@ -491,51 +521,55 @@ export function useNonogram(initialPuzzleId?: string) {
   const handleCellClick = useCallback((position: CellPosition) => {
     if (gameStatus !== 'playing' || !currentPuzzle || isDragging) return
     if (wasDraggingRef.current) return
-    
+
     // Prevent double processing from race condition between pointer/drag and click handlers
-    const now = Date.now()
+    if (pointerHandledRef.current) {
+      pointerHandledRef.current = false
+      return
+    }
     if (
       lastInteractionRef.current &&
       lastInteractionRef.current.row === position.row &&
-      lastInteractionRef.current.col === position.col &&
-      now - lastInteractionRef.current.timestamp < 350
+      lastInteractionRef.current.col === position.col
     ) {
+      lastInteractionRef.current = null
       return
     }
-    lastInteractionRef.current = { row: position.row, col: position.col, timestamp: now }
+    lastInteractionRef.current = { row: position.row, col: position.col, timestamp: Date.now() }
 
     setSelectedCell(position)
-    
+
     const newState = applyCellAction(position, inputMode)
-    
+    if (newState === grid[position.row][position.col]) return
+
     // Only validate Fill mode - Mark mode (flags) can be placed anywhere
     // Skip validation if the cell is already an error (don't count same mistake twice)
     if (inputMode === 'fill' && newState === 'filled' && validationMode === 'assisted' && grid[position.row][position.col] !== 'error') {
       const tempGrid = grid.map(row => [...row])
       tempGrid[position.row][position.col] = newState
       const isMistake = isCellMistake(tempGrid, currentPuzzle.solution, position)
-      
+
       if (isMistake) {
-          // Count the mistake and check limit
-          setMistakeCount((prev) => {
-            const nextMistakes = prev + 1
-            const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
-            if (nextMistakes >= limit) {
-              setGameStatus('lost')
-              clearGameState()
-            }
-            return nextMistakes
-          })
-          // Show error feedback permanently (don't revert)
-          setGrid((prevGrid) => {
-            const newGrid = prevGrid.map((row) => [...row])
-            newGrid[position.row][position.col] = 'error'
-            return newGrid
-          })
-          return
-        }
+        // Count the mistake and check limit
+        setMistakeCount((prev) => {
+          const nextMistakes = prev + 1
+          const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+          if (nextMistakes >= limit) {
+            setGameStatus('lost')
+            clearGameState()
+          }
+          return nextMistakes
+        })
+        // Show error feedback permanently (don't revert)
+        setGrid((prevGrid) => {
+          const newGrid = prevGrid.map((row) => [...row])
+          newGrid[position.row][position.col] = 'error'
+          return newGrid
+        })
+        return
+      }
     }
-    
+
     setGrid((prevGrid) => {
       const newGrid = prevGrid.map((row) => [...row])
       newGrid[position.row][position.col] = newState
@@ -546,7 +580,7 @@ export function useNonogram(initialPuzzleId?: string) {
   /**
    * Drag handlers - for drag fill, drag cross, and drag erase
    */
-  
+
   // Helper: Create cell key for visited tracking
   const getCellKey = (position: CellPosition): string => {
     return `${position.row}-${position.col}`
@@ -559,13 +593,13 @@ export function useNonogram(initialPuzzleId?: string) {
   ): DragDirection => {
     const rowDiff = Math.abs(current.row - start.row)
     const colDiff = Math.abs(current.col - start.col)
-    
+
     if (rowDiff === 0 && colDiff === 0) return null
-    
+
     // Lock to dominant direction
     if (rowDiff > colDiff) return 'vertical'
     if (colDiff > rowDiff) return 'horizontal'
-    
+
     // Equal movement - keep previous direction or default to horizontal
     return dragDirection || 'horizontal'
   }
@@ -573,39 +607,87 @@ export function useNonogram(initialPuzzleId?: string) {
   // Start drag
   const handleDragStart = useCallback((position: CellPosition) => {
     if (gameStatus !== 'playing' || !currentPuzzle) return
-    
+
+    pointerHandledRef.current = true
+    lastInteractionRef.current = { row: position.row, col: position.col, timestamp: Date.now() }
+
     setIsDragging(true)
     setDragDirection(null)
     dragStartPos.current = position
-    
+    processedDragCellsRef.current = new Set([getCellKey(position)])
+
     // Determine the action based on the starting cell state and inputMode
     const startState = grid[position.row]?.[position.col]
+    let action: 'fill' | 'erase' | 'mark' | 'unmark'
     if (inputMode === 'fill') {
-      dragActionRef.current = (startState === 'filled' || startState === 'error') ? 'erase' : 'fill'
+      action = (startState === 'filled' || startState === 'error') ? 'erase' : 'fill'
     } else {
-      dragActionRef.current = startState === 'marked' ? 'unmark' : 'mark'
+      action = startState === 'marked' ? 'unmark' : 'mark'
     }
-    
-    // Show preview for starting cell
-    setDragPreviewCells(new Set([getCellKey(position)]))
+    dragActionRef.current = action
+
+    // Apply the action immediately to the first cell
+    const newState = applyCellAction(position, inputMode, true)
+    if (newState === startState) {
+      hasDraggedRef.current = false
+      return
+    }
+
+    if (grid[position.row]?.[position.col] === 'error') {
+      hasDraggedRef.current = false
+      return
+    }
+
+    if (inputMode === 'fill' && newState === 'filled' && validationMode === 'assisted') {
+      const isMistake = currentPuzzle.solution[position.row][position.col] === 0
+      if (isMistake) {
+        setMistakeCount((prev) => {
+          const nextMistakes = prev + 1
+          const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+          if (nextMistakes >= limit) {
+            setGameStatus('lost')
+            clearGameState()
+          }
+          return nextMistakes
+        })
+        setGrid((prevGrid) => {
+          const newGrid = prevGrid.map((row) => [...row])
+          newGrid[position.row][position.col] = 'error'
+          return newGrid
+        })
+        hasDraggedRef.current = false
+        return
+      }
+    }
+
+    setGrid((prevGrid) => {
+      const newGrid = prevGrid.map((row) => [...row])
+      newGrid[position.row][position.col] = newState
+      return newGrid
+    })
+
     hasDraggedRef.current = false
-  }, [currentPuzzle, gameStatus, grid, inputMode])
+  }, [currentPuzzle, gameStatus, grid, inputMode, applyCellAction, validationMode, difficulty])
 
   // Continue drag
   const handleDragEnter = useCallback((position: CellPosition) => {
-    if (!isDragging || !dragStartPos.current || !currentPuzzle) return
-    
+    if (!isDragging || !dragStartPos.current || !currentPuzzle || !dragActionRef.current) return
+
+    const cellKey = getCellKey(position)
+    // If we already processed this cell in this drag, skip
+    if (processedDragCellsRef.current.has(cellKey)) return
+
     // Determine and enforce direction lock
     const direction = determineDragDirection(dragStartPos.current, position)
-    
+
     // Set direction on first move
     if (dragDirection === null && direction !== null) {
       setDragDirection(direction)
     }
-    
+
     const currentDirection = dragDirection || direction
     if (currentDirection === null) return
-    
+
     // Enforce direction lock - only update cells in locked direction
     if (currentDirection === 'horizontal' && position.row !== dragStartPos.current.row) {
       return // Ignore cells outside locked row
@@ -613,47 +695,66 @@ export function useNonogram(initialPuzzleId?: string) {
     if (currentDirection === 'vertical' && position.col !== dragStartPos.current.col) {
       return // Ignore cells outside locked column
     }
-    
-    const start = dragStartPos.current
-    const newPreviewKeys = new Set<string>()
-    
-    if (currentDirection === 'horizontal') {
-      const minCol = Math.min(start.col, position.col)
-      const maxCol = Math.max(start.col, position.col)
-      for (let c = minCol; c <= maxCol; c++) {
-        newPreviewKeys.add(`${start.row}-${c}`)
-      }
-    } else {
-      const minRow = Math.min(start.row, position.row)
-      const maxRow = Math.max(start.row, position.row)
-      for (let r = minRow; r <= maxRow; r++) {
-        newPreviewKeys.add(`${r}-${start.col}`)
+
+    // Mark as processed
+    processedDragCellsRef.current.add(cellKey)
+    hasDraggedRef.current = true
+
+    const newState = applyCellAction(position, inputMode, true)
+
+    const isRowCompleted = rowValidation[position.row] === 'completed'
+    const isColCompleted = columnValidation[position.col] === 'completed'
+    if (grid[position.row]?.[position.col] === 'error' || isRowCompleted || isColCompleted) {
+      return
+    }
+
+    if (inputMode === 'fill' && newState === 'filled' && validationMode === 'assisted') {
+      const isMistake = currentPuzzle.solution[position.row][position.col] === 0
+      if (isMistake) {
+        setMistakeCount((prev) => {
+          const nextMistakes = prev + 1
+          const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+          if (nextMistakes >= limit) {
+            setGameStatus('lost')
+            clearGameState()
+          }
+          return nextMistakes
+        })
+        setGrid((prevGrid) => {
+          const newGrid = prevGrid.map((row) => [...row])
+          newGrid[position.row][position.col] = 'error'
+          return newGrid
+        })
+        return
       }
     }
-    
-    setDragPreviewCells(newPreviewKeys)
-    hasDraggedRef.current = newPreviewKeys.size > 1
-  }, [isDragging, dragDirection, currentPuzzle, determineDragDirection])
+
+    setGrid((prevGrid) => {
+      const newGrid = prevGrid.map((row) => [...row])
+      newGrid[position.row][position.col] = newState
+      return newGrid
+    })
+  }, [isDragging, dragDirection, currentPuzzle, determineDragDirection, inputMode, applyCellAction, validationMode, difficulty, rowValidation, columnValidation])
 
   // Handle pointer move - detect cell under pointer
   const handlePointerMove = useCallback((e: PointerEvent) => {
     if (!isDragging) return
-    
+
     // Get element under pointer
     const element = document.elementFromPoint(e.clientX, e.clientY)
     if (!element) return
-    
+
     // Find the cell button element
     const cellButton = element.closest('button[data-cell-position]')
     if (!cellButton) return
-    
+
     // Extract position from data attribute
     const positionData = cellButton.getAttribute('data-cell-position')
     if (!positionData) return
-    
+
     const [row, col] = positionData.split('-').map(Number)
     if (isNaN(row) || isNaN(col)) return
-    
+
     handleDragEnter({ row, col })
   }, [isDragging, handleDragEnter])
 
@@ -665,81 +766,20 @@ export function useNonogram(initialPuzzleId?: string) {
     }
   }, [isDragging, handlePointerMove])
 
-  // End drag - apply changes with sequential flip animation
+  // End drag - clean up drag state
   const handleDragEnd = useCallback(() => {
     if (!isDragging) return
-    
-    if (!hasDraggedRef.current) {
-      setIsDragging(false)
-      setDragDirection(null)
-      setDragPreviewCells(new Set())
-      dragStartPos.current = null
-      return
-    }
 
     wasDraggingRef.current = true
     setTimeout(() => {
       wasDraggingRef.current = false
     }, 100)
-    
-    const cellsToUpdate = Array.from(dragPreviewCells)
-    
-    // Apply changes sequentially with 30ms stagger for flip effect
-    cellsToUpdate.forEach((cellKey, index) => {
-      setTimeout(() => {
-        const [rowStr, colStr] = cellKey.split('-')
-        const position: CellPosition = { row: parseInt(rowStr), col: parseInt(colStr) }
-        
-        // Mark as handled to prevent click handler from double-firing
-        lastInteractionRef.current = { row: position.row, col: position.col, timestamp: Date.now() }
-        
-        const newState = applyCellAction(position, inputMode, true)
-        
-        // Only validate Fill mode during drag - Mark mode (flags) can be placed anywhere
-        // Skip validation if the cell is already an error (don't count same mistake twice)
-        if (inputMode === 'fill' && newState === 'filled' && validationMode === 'assisted' && currentPuzzle && grid[position.row][position.col] !== 'error') {
-          const tempGrid = grid.map(row => [...row])
-          tempGrid[position.row][position.col] = newState
-          const isMistake = isCellMistake(tempGrid, currentPuzzle.solution, position)
-          
-          if (isMistake) {
-            // Count the mistake and check limit
-            setMistakeCount((prev) => {
-              const nextMistakes = prev + 1
-              const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
-              if (nextMistakes >= limit) {
-                setGameStatus('lost')
-                clearGameState()
-              }
-              return nextMistakes
-            })
-            // Show error feedback permanently (don't revert)
-            setGrid((prevGrid) => {
-              const newGrid = prevGrid.map((row) => [...row])
-              newGrid[position.row][position.col] = 'error'
-              return newGrid
-            })
-            return
-          }
-        }
-        
-        // Apply the state change
-        setGrid((prevGrid) => {
-          const newGrid = prevGrid.map((row) => [...row])
-          newGrid[position.row][position.col] = newState
-          return newGrid
-        })
-      }, index * 30)
-    })
-    
-    // Clean up drag state after all animations start
-    setTimeout(() => {
-      setIsDragging(false)
-      setDragDirection(null)
-      setDragPreviewCells(new Set())
-      dragStartPos.current = null
-    }, cellsToUpdate.length * 30 + 100)
-  }, [isDragging, dragPreviewCells, inputMode, applyCellAction, validationMode, currentPuzzle, grid, difficulty])
+
+    setIsDragging(false)
+    setDragDirection(null)
+    dragStartPos.current = null
+    processedDragCellsRef.current = new Set()
+  }, [isDragging])
 
   /**
    * Reset the current puzzle
@@ -771,7 +811,7 @@ export function useNonogram(initialPuzzleId?: string) {
     // Use current puzzle's difficulty, not URL or state
     // This ensures "New Puzzle" respects the mode you're currently playing
     const currentDiff = currentPuzzle?.difficulty || difficulty
-    
+
     // Initialize puzzle with CURRENT difficulty
     initializePuzzle(currentDiff, false, puzzleId)
   }, [currentPuzzle, difficulty, initializePuzzle])
@@ -821,6 +861,19 @@ export function useNonogram(initialPuzzleId?: string) {
   }, [currentPuzzle, gameStatus])
 
   /**
+   * Reveal Solution - fill all cells correctly even if game is won/lost/ended
+   */
+  const revealSolution = useCallback(() => {
+    if (!currentPuzzle) return
+
+    setGrid(() => {
+      return currentPuzzle.solution.map((row) =>
+        row.map((val) => (val === 1 ? 'filled' : 'empty'))
+      )
+    })
+  }, [currentPuzzle])
+
+  /**
    * Keyboard controls with input mode support
    */
   useEffect(() => {
@@ -844,9 +897,9 @@ export function useNonogram(initialPuzzleId?: string) {
       // Arrow keys for navigation
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault()
-        
+
         const baseCell = hoveredCell || selectedCell
-        
+
         if (!baseCell) {
           setSelectedCell({ row: 0, col: 0 })
           setHoveredCell({ row: 0, col: 0 })
@@ -881,7 +934,7 @@ export function useNonogram(initialPuzzleId?: string) {
         const size = currentPuzzle.size
         const nextCol = (selectedCell.col + 1) % size
         const nextRow = nextCol === 0 ? (selectedCell.row + 1) % size : selectedCell.row
-        
+
         setSelectedCell({ row: nextRow, col: nextCol })
         setHoveredCell({ row: nextRow, col: nextCol })
       }
@@ -908,11 +961,11 @@ export function useNonogram(initialPuzzleId?: string) {
             const historyCopy = [...prev]
             historyCopy.pop() // Remove current cell
             const prevCell = historyCopy[historyCopy.length - 1]
-            
+
             // Move selection/hover back to previous cell
             setSelectedCell(prevCell)
             setHoveredCell(prevCell)
-            
+
             // Clear previous cell
             setGrid((prevGrid) => {
               const newGrid = prevGrid.map((row) => [...row])
@@ -939,6 +992,7 @@ export function useNonogram(initialPuzzleId?: string) {
     currentPuzzle,
     isInitialized,
     loading,
+    error,
     gameStatus,
     elapsedSeconds,
     rowValidation,
@@ -965,6 +1019,7 @@ export function useNonogram(initialPuzzleId?: string) {
     changeDifficulty,
     useHint,
     autoFill,
+    revealSolution,
     setInputMode,
     setValidationMode,
     setHoveredCell,

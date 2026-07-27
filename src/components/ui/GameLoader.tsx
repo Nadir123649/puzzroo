@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
 import { images } from '@/lib/utils'
@@ -11,42 +11,45 @@ interface GameLoaderProps {
 }
 
 export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
-  React.useEffect(() => {
+  const [mounted, setMounted] = useState(isOpen)
+  const [visible, setVisible] = useState(isOpen)
+
+  useEffect(() => {
     if (isOpen) {
+      setMounted(true)
+      setVisible(true)
+      // Lock scroll
       document.body.style.overflow = 'hidden'
-      document.body.style.overflowY = 'hidden'
       document.body.style.touchAction = 'none'
       document.documentElement.style.overflow = 'hidden'
-      document.documentElement.style.overflowY = 'hidden'
-      document.documentElement.style.touchAction = 'none'
-      document.documentElement.style.scrollbarGutter = 'auto'
-      document.body.style.scrollbarGutter = 'auto'
     } else {
+      setVisible(false)
+      // Unlock scroll immediately when closing
       document.body.style.overflow = ''
-      document.body.style.overflowY = ''
       document.body.style.touchAction = ''
       document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-      document.documentElement.style.scrollbarGutter = ''
-      document.body.style.scrollbarGutter = ''
+      const timer = setTimeout(() => {
+        setMounted(false)
+      }, 300)
+      return () => clearTimeout(timer)
     }
     return () => {
       document.body.style.overflow = ''
-      document.body.style.overflowY = ''
       document.body.style.touchAction = ''
       document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-      document.documentElement.style.scrollbarGutter = ''
-      document.body.style.scrollbarGutter = ''
     }
   }, [isOpen])
 
-  if (!isOpen) return null
+  if (!mounted) return null
 
   return (
-    <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-[99999] flex items-center justify-center transition-opacity duration-300">
+    <div
+      className={`fixed inset-0 bg-white dark:bg-[#181A20] z-[99999] flex items-center justify-center ${
+        isOpen ? '' : 'transition-opacity duration-300'
+      } ${
+        visible ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
       <div className="flex flex-col items-center gap-4 text-center select-none pointer-events-auto">
         {/* Puzzroo Logo & Brand */}
         <div className="flex items-center gap-[clamp(8px,1vw,12px)] select-none">

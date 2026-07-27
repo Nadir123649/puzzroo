@@ -11,6 +11,7 @@ import Navbar from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/Footer'
 import { TangramHero } from '@/components/tangram/TangramHero'
 import { TangramGame } from '@/components/tangram/TangramGame'
+import { GameLoader } from '@/components/ui/GameLoader'
 import { markGameAsPlayed } from '@/components/sections/FreeGames'
 
 function TangramContent() {
@@ -46,17 +47,27 @@ function TangramContent() {
 }
 
 export default function TangramPage() {
+  const [initialLoading, setInitialLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setInitialLoading(false), 200)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
-    <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-      <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[10px]">
-        <Navbar />
-        <main className="flex-grow flex flex-col">
-          <Suspense fallback={<div className="flex-grow" />}>
-            <TangramContent />
-          </Suspense>
-        </main>
+    <>
+      <GameLoader isOpen={initialLoading} text="Loading game..." />
+      <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
+        <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[10px]">
+          <Navbar />
+          <main className="flex-grow flex flex-col">
+            <Suspense fallback={<div className="flex-grow" />}>
+              <TangramContent />
+            </Suspense>
+          </main>
+        </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </>
   )
 }

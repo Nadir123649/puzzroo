@@ -12,12 +12,13 @@ interface TangramModalProps {
   time: number
   mistakes: number
   hintsUsed: number
-  score: number
+  score: number | string
   difficulty?: string
   timeRemaining?: number
   isTimeUp?: boolean
   onPlayAgain: () => void
   onNewPuzzle?: () => void
+  onRestart?: () => void
   onBackToLobby?: () => void
   onClose?: () => void
 }
@@ -33,6 +34,7 @@ export function TangramModal({
   isTimeUp = false,
   onPlayAgain,
   onNewPuzzle,
+  onRestart,
   onBackToLobby,
   onClose,
 }: TangramModalProps) {
@@ -79,13 +81,17 @@ export function TangramModal({
       />
 
       {/* Modal */}
-      <div className={`fixed inset-0 z-[100000] flex items-center justify-center p-4 transition-opacity duration-300 ${
-        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}>
+      <div 
+        className={`fixed inset-0 z-[100000] flex items-center justify-center p-4 transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+      >
         <div
           className={`relative bg-[#F0EDFF] dark:bg-[#1F222A] rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8 transform transition-all duration-300 ${
             isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
           }`}
+          onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
@@ -182,14 +188,27 @@ export function TangramModal({
                 >
                   Play Again
                 </button>
-                {onNewPuzzle && (
-                  <button
-                    onClick={onNewPuzzle}
-                    className="w-full h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                  >
-                    New Game
-                  </button>
-                )}
+                
+                {/* Restart and New Game in one row */}
+                <div className="flex gap-2.5 sm:gap-3">
+                  {onRestart && (
+                    <button
+                      onClick={onRestart}
+                      className="flex-1 h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+                    >
+                      Restart
+                    </button>
+                  )}
+                  {onNewPuzzle && (
+                    <button
+                      onClick={onNewPuzzle}
+                      className="flex-1 h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+                    >
+                      New Game
+                    </button>
+                  )}
+                </div>
+                
                 {onBackToLobby && (
                   <button
                     onClick={onBackToLobby}

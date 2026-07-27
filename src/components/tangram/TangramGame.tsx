@@ -48,6 +48,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     selectedPiece,
     gameStatus,
     timeRemaining,
+    score,
     hintsUsed,
     hintPiece,
     availableHints,
@@ -57,7 +58,6 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     rotateLeft,
     rotateRight,
     requestHint,
-    autoFill,
     newGame,
     replayPuzzle,
     undoMove,
@@ -67,32 +67,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     commitHistory
   } = usePolygonTangram(difficulty)
 
-  // Prevent scroll when loading overlay is active
-  useEffect(() => {
-    if (isResetting || loading) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.overflowY = 'hidden'
-      document.body.style.touchAction = 'none'
-      document.documentElement.style.overflow = 'hidden'
-      document.documentElement.style.overflowY = 'hidden'
-      document.documentElement.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.overflowY = ''
-      document.body.style.touchAction = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.overflowY = ''
-      document.body.style.touchAction = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-    }
-  }, [isResetting, loading])
+
 
   const [isModalVisible, setIsModalVisible] = useState(false)
 
@@ -150,6 +125,15 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     setIsResetting(false)
   }
 
+  const handleRestart = async () => {
+    setIsModalVisible(false)
+    setLoaderText('Restarting...')
+    setIsResetting(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    replayPuzzle()
+    setIsResetting(false)
+  }
+
   const handleReplay = async () => {
     setIsModalVisible(false)
     setLoaderText('Replaying game...')
@@ -167,11 +151,9 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     redoMove()
   }
 
-  const handleAutoFill = () => {
-    autoFill()
-  }
-
   const handleBackToLobby = () => {
+    setLoaderText('Returning to lobby...')
+    setIsResetting(true)
     const params = new URLSearchParams(window.location.search)
     const hasDate = params.has('date')
     const returnUrl = hasDate ? (typeof window !== 'undefined' ? sessionStorage.getItem('puzzroo_return_url') : null) : null
@@ -264,7 +246,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     onDragEnd={commitHistory}
                     boardContainerWidth={desktopBoardWidth}
                     allPieces={pieces}
-                    disabled={false}
+                    disabled={gameStatus !== 'playing'}
                   />
                 ))}
               </TangramBoard>
@@ -276,10 +258,10 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               style={{ minHeight: `${(desktopBoardWidth * 493) / 750}px` }}
             >
               {/* Premium Controls Card - fills space but doesn't push buttons down */}
-              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 shadow-lg shadow-purple-500/5 flex flex-col gap-5 flex-1 mb-3">
+              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-6 shadow-lg shadow-purple-500/5 flex flex-col gap-5 flex-1 mb-3">
                 {/* Difficulty Heading - centered, bold, larger */}
                 {puzzle && (
-                  <div className="text-center">
+                  <div className="text-center py-1">
                     <span className="font-urbanist text-[11px] text-[#757575] dark:text-[#9E9E9E] uppercase tracking-wider font-bold">
                       Difficulty
                     </span>
@@ -383,17 +365,6 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
               {/* Bottom Actions Section */}
               <div className="w-full flex flex-col gap-[12px]">
-                {/* Auto Fill Button (Development Only) */}
-                {process.env.NODE_ENV === 'development' && (
-                  <button
-                    onClick={handleAutoFill}
-                    disabled={isResetting}
-                    className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Auto Fill
-                  </button>
-                )}
-
                 {/* Replay Game / New Game / Replay Button */}
                 {isFromPastPuzzles ? (
                   <button
@@ -471,7 +442,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     onDragEnd={commitHistory}
                     boardContainerWidth={mobileBoardWidth}
                     allPieces={pieces}
-                    disabled={false}
+                    disabled={gameStatus !== 'playing'}
                   />
                 ))}
               </TangramBoard>
@@ -532,27 +503,16 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               </button>
             </div>
 
-            {/* Auto Fill Button Mobile (Development Only) */}
-            {process.env.NODE_ENV === 'development' && (
-              <button
-                onClick={handleAutoFill}
-                disabled={isResetting}
-                className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Auto Fill
-              </button>
-            )}
-
             {/* Replay / New Game Button Mobile */}
-            {mode === 'normal' && isFromPastPuzzles ? (
+            {isFromPastPuzzles || mode !== 'normal' ? (
               <button
-                onClick={handleRetry}
+                onClick={handleReplay}
                 disabled={isResetting}
                 className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Replay
+                Replay Game
               </button>
-            ) : mode === 'normal' && (
+            ) : (
               <button
                 onClick={handleNewGame}
                 disabled={isResetting}
@@ -584,11 +544,12 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
         })()}
         mistakes={0}
         hintsUsed={hintsUsed}
-        score={0}
+        score={score}
         difficulty={puzzle?.difficulty || 'easy'}
         timeRemaining={timeRemaining}
         isTimeUp={gameStatus === 'lost'}
         onPlayAgain={handleRetry}
+        onRestart={handleRestart}
         onNewPuzzle={mode === 'normal' && !isFromPastPuzzles ? handleNewGame : undefined}
         onBackToLobby={handleBackToLobby}
         onClose={() => setIsModalVisible(false)}

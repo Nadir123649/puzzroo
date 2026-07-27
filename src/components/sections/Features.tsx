@@ -158,11 +158,11 @@ export function Features() {
                     <Image
                       src={images.featureStars}
                       alt="Premium Features"
-                      width={0}
-                      height={0}
+                      width={359}
+                      height={559}
                       sizes="(max-width: 1024px) 100vw, 359px"
                       className="w-full h-auto object-cover"
-                      style={{ height: 'auto' }}
+                      style={{ width: '100%', height: 'auto' }}
                     />
                   </div>
                 </div>

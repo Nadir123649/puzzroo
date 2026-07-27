@@ -60,6 +60,7 @@ export default function AccountInformationPage() {
   const currentSessionProvider = sessions.find(s => s.isCurrent)?.provider || provider
 
   const canUnlink = linkedProviders.length >= 2
+  const [confirmUnlink, setConfirmUnlink] = useState<string | null>(null)
 
   const handleUnlinkProvider = async (providerToUnlink: string) => {
     const result = await unlinkProvider(providerToUnlink)
@@ -142,7 +143,7 @@ export default function AccountInformationPage() {
       </div>
 
       {/* Account Details Card */}
-      <div className="bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] p-4 md:p-6 mb-4">
+      <div className="bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] px-4 md:px-6 pt-4 md:pt-6 pb-2 md:pb-4 mb-4">
         <h2 className="font-urbanist font-bold text-[18px] md:text-[20px] text-[#212121] dark:text-white mb-4">
           Account Details
         </h2>
@@ -197,11 +198,11 @@ export default function AccountInformationPage() {
           </div>
 
           {/* Username */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
             <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-2 sm:mb-0">
               Username
             </span>
-            <div className="flex flex-col items-start sm:items-end">
+            <div className="flex flex-col items-start sm:items-end justify-center">
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
                 {localUser?.username || 'N/A'}
               </span>
@@ -212,10 +213,15 @@ export default function AccountInformationPage() {
           </div>
 
           {/* Email Address */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
-            <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-1 sm:mb-0">
-              Email Address
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
+            <div className="flex items-center gap-2 mb-1 sm:mb-0">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6M22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6M22 6L12 13L2 6" stroke="#6949FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD]">
+                Email Address
+              </span>
+            </div>
             <div className="flex flex-col items-start sm:items-end">
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
                 {localUser?.email || 'N/A'}
@@ -264,21 +270,26 @@ export default function AccountInformationPage() {
             <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-2 sm:mb-0">
               Password
             </span>
-            {canChangePassword ? (
-              <button
-                onClick={() => setIsPasswordModalOpen(true)}
-                className="w-full sm:w-auto px-5 py-1.5 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95"
-              >
-                Change
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsEmailModalOpen(true)}
-                className="w-full sm:w-auto px-5 py-1.5 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95"
-              >
-                Set Password
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+                {canChangePassword ? '********' : 'Not set'}
+              </span>
+              {canChangePassword ? (
+                <button
+                  onClick={() => setIsPasswordModalOpen(true)}
+                  className="px-5 py-1.5 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95"
+                >
+                  Change
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsEmailModalOpen(true)}
+                  className="px-5 py-1.5 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95"
+                >
+                  Set Password
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Subscription Plan */}
@@ -342,7 +353,7 @@ export default function AccountInformationPage() {
                     </div>
                     {canUnlink && p !== 'phone' && (
                       <button
-                        onClick={() => handleUnlinkProvider(p)}
+                        onClick={() => setConfirmUnlink(p)}
                         className="p-1.5 text-[#757575] dark:text-[#9E9E9E] hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all duration-200"
                         title="Unlink"
                       >
@@ -356,7 +367,7 @@ export default function AccountInformationPage() {
           </div>
 
           {/* Delete Account */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-3 mt-1 border-t border-[#E0E0E0] dark:border-[#35383F]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-[#E0E0E0] dark:border-[#35383F]">
             <div className="flex flex-col mb-2 sm:mb-0">
               <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD]">
                 Delete Account
@@ -579,6 +590,37 @@ export default function AccountInformationPage() {
         onClose={() => setIsDeleteModalOpen(false)}
         onDeleted={() => { window.location.href = '/' }}
       />
+
+      {/* Unlink Confirmation Modal */}
+      {confirmUnlink && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50" onClick={() => setConfirmUnlink(null)}>
+          <div className="bg-white dark:bg-[#1F222A] rounded-2xl p-6 max-w-sm mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#35383F]" onClick={e => e.stopPropagation()}>
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                <X size={24} className="text-red-600" strokeWidth={2.5} />
+              </div>
+              <h3 className="font-urbanist font-bold text-[18px] text-[#212121] dark:text-white">Unlink Account</h3>
+              <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD]">
+                Are you sure you want to unlink {confirmUnlink === 'email' ? 'Email & Password' : confirmUnlink.charAt(0).toUpperCase() + confirmUnlink.slice(1)}?
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setConfirmUnlink(null)}
+                  className="flex-1 py-2.5 rounded-full bg-gray-100 dark:bg-[#2A2D35] text-[#424242] dark:text-[#E0E0E0] font-urbanist font-semibold text-[14px] transition-all duration-200 active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { setConfirmUnlink(null); handleUnlinkProvider(confirmUnlink) }}
+                  className="flex-1 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-urbanist font-semibold text-[14px] transition-all duration-200 active:scale-95"
+                >
+                  Unlink
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

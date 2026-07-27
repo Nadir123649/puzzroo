@@ -16,7 +16,6 @@ export function DifficultyTabs({
 }: DifficultyTabsProps) {
   const modes = difficulties
   
-  // Find initial selected index based on selectedDifficulty
   const getInitialIndex = () => {
     if (!selectedDifficulty) return 0
     const index = modes.findIndex(
@@ -25,19 +24,31 @@ export function DifficultyTabs({
     return index >= 0 ? index : 0
   }
   
-  const [selected, setSelected] = useState(getInitialIndex)
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 84 })
+  // Initialize with 0 to avoid hydration mismatch, then update in useEffect
+  const [selected, setSelected] = useState(0)
+  const [mounted, setMounted] = useState(false)
+  // Start as null to avoid SSR/client mismatch — only set after mount
+  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number } | null>(null)
   const buttonsRef = useRef<(HTMLButtonElement | null)[]>([])
 
-  // Update selected index when selectedDifficulty prop changes
+  // Set correct initial index after mount
   useEffect(() => {
+    setMounted(true)
+    const initialIndex = getInitialIndex()
+    setSelected(initialIndex)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
     const newIndex = getInitialIndex()
     if (newIndex !== selected) {
       setSelected(newIndex)
     }
-  }, [selectedDifficulty])
+  }, [selectedDifficulty, mounted])
 
   useEffect(() => {
+    if (!mounted) return
+    
     const updateIndicator = () => {
       const button = buttonsRef.current[selected]
       if (button) {
@@ -58,7 +69,7 @@ export function DifficultyTabs({
     updateIndicator()
     window.addEventListener('resize', updateIndicator)
     return () => window.removeEventListener('resize', updateIndicator)
-  }, [selected])
+  }, [selected, mounted])
 
   const handleClick = (index: number) => {
     setSelected(index)
@@ -69,11 +80,12 @@ export function DifficultyTabs({
   }
 
   return (
-    <div className="flex flex-row flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0">
+    <div className="flex flex-row flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto">
       <span className="font-urbanist font-bold text-[15px] sm:text-[16px] leading-[140%] tracking-[0.2px] text-[#424242] dark:text-[var(--color-light)] whitespace-nowrap flex-shrink-0">
         Difficulty:
       </span>
-      <div className="flex items-center gap-0 flex-1 sm:w-[340px] sm:flex-none justify-between relative">
+      {/* Container: fit-content so no blank space on either side */}
+      <div className="flex items-center gap-0 w-auto relative">
         {/* Continuous grey line in background */}
         <div className="absolute left-0 right-0 h-[2px] bg-[#EEEEEE] rounded-full z-0" style={{ bottom: '0px' }}></div>
         {modes.map((difficulty, index) => (
@@ -83,10 +95,10 @@ export function DifficultyTabs({
               buttonsRef.current[index] = el
             }}
             onClick={() => handleClick(index)}
-            className="relative flex flex-col items-center gap-1.5 group z-10 flex-1 sm:flex-none"
+            className="relative flex flex-col items-center gap-1.5 group z-10"
           >
             <span
-              className={`font-urbanist font-bold text-[12px] sm:text-[13px] md:text-[14px] transition-all duration-700 ease-in-out px-1.5 sm:px-3 ${
+              className={`font-urbanist font-bold text-[12px] sm:text-[13px] md:text-[14px] transition-all duration-700 ease-in-out px-4 sm:px-6 ${
                 selected === index
                   ? 'text-[var(--color-primary)]'
                   : 'text-[#9E9E9E] group-hover:text-[#757575]'
@@ -94,20 +106,22 @@ export function DifficultyTabs({
             >
               {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
             </span>
-            {/* Transparent placeholder for JS indicator calculation */}
-            <div className="grey-line w-[78px] sm:w-[80px] md:w-[84px] h-0 opacity-0"></div>
+            {/* Invisible spacer that the sliding indicator measures against */}
+            <div className="grey-line w-full h-0 opacity-0"></div>
           </button>
         ))}
         
-        {/* Purple sliding line - positioned absolutely to slide between tabs */}
-        <div 
-          className="absolute h-[4px] bg-[var(--color-primary)] rounded-full transition-all duration-700 ease-in-out pointer-events-none z-20"
-          style={{ 
-            left: `${indicatorStyle.left}px`,
-            width: `${indicatorStyle.width}px`,
-            bottom: '-1px', // Positions 4px line centered over 2px grey (1px above, 1px below grey line)
-          }}
-        ></div>
+        {/* Purple sliding line — only rendered client-side after measuring to avoid hydration mismatch */}
+        {indicatorStyle !== null && (
+          <div 
+            className="absolute h-[4px] bg-[var(--color-primary)] rounded-full transition-all duration-700 ease-in-out pointer-events-none z-20"
+            style={{ 
+              left: `${indicatorStyle.left}px`,
+              width: `${indicatorStyle.width}px`,
+              bottom: '-1px',
+            }}
+          />
+        )}
       </div>
     </div>
   )

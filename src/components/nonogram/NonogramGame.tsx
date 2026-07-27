@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Lightbulb, Flag, ChevronLeft, ChevronRight, Gamepad2 } from 'lucide-react'
+import { Lightbulb, Flag, ChevronLeft, ChevronRight, Gamepad2, Eye } from 'lucide-react'
 import { useNonogram } from '@/hooks/useNonogram'
 import { NonogramModal } from './NonogramModal'
 import { GameLoader } from '@/components/ui/GameLoader'
@@ -46,42 +46,19 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     newPuzzle,
     useHint,
     autoFill,
+    revealSolution,
     setInputMode,
     setHoveredCell,
     setMousePosition,
     loading,
+    error,
   } = useNonogram(puzzleId)
 
   const [isResetting, setIsResetting] = useState(false)
   const [loaderText, setLoaderText] = useState('Loading game...')
   const [showCompletionModal, setShowCompletionModal] = useState(false)
 
-  // Prevent scroll when loading overlay is active
-  useEffect(() => {
-    if (isResetting || loading) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.overflowY = 'hidden'
-      document.body.style.touchAction = 'none'
-      document.documentElement.style.overflow = 'hidden'
-      document.documentElement.style.overflowY = 'hidden'
-      document.documentElement.style.touchAction = 'none'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.overflowY = ''
-      document.body.style.touchAction = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.overflowY = ''
-      document.body.style.touchAction = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-    }
-  }, [isResetting, loading])
+
 
   // Show modal automatically when game is won or lost
   useEffect(() => {
@@ -97,6 +74,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   }, [gameStatus])
 
   const handleReplay = async () => {
+    setShowCompletionModal(false)
     setLoaderText('Replaying game...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -306,6 +284,8 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   }, [currentPuzzle, windowWidth, zoomLevel])
 
   const handleBackToGames = () => {
+    setLoaderText('Returning to lobby...')
+    setIsResetting(true)
     const params = new URLSearchParams(window.location.search)
     const hasDate = params.has('date')
     const returnUrl = hasDate ? (typeof window !== 'undefined' ? sessionStorage.getItem('puzzroo_return_url') : null) : null
@@ -333,22 +313,35 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     return boardWidth > containerWidth
   }, [currentPuzzle, windowWidth, cornerWidth, cellSize])
 
-  if (!isInitialized || !currentPuzzle || rowValidation.length === 0 || columnValidation.length === 0) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-[#181A20]">
-        <GameLoader isOpen={true} text="Loading game..." />
-      </div>
-    )
-  }
-
+  const isCurrentlyLoading = !isInitialized || !currentPuzzle || !currentPuzzle.rowClues || !currentPuzzle.columnClues || rowValidation.length === 0 || columnValidation.length === 0;
 
   const canUseHint = hintsUsed < maxHints && gameStatus === 'playing'
 
+  if (error) {
+    return (
+      <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300">
+        <div className="w-full px-[20px] py-[60px] flex justify-center">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <span className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD]">{error}</span>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-semibold text-[14px] transition-all duration-200 active:scale-95"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <>
-      <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}>
+      <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 ${(isResetting || loading || isCurrentlyLoading) ? 'pointer-events-none select-none' : ''}`}>
         <div className="w-full px-[20px] pb-[40px] flex justify-center">
           <div className="w-full max-w-[717.5px] flex flex-col items-center gap-[20px]">
+            {!isCurrentlyLoading && (
+              <>
             
             {/* Timer and Progress Bar */}
             <div className="w-full flex flex-col gap-3">
@@ -778,6 +771,16 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                 )}
               </button>
 
+              {/* Autofill Button - Development Only */}
+              {process.env.NODE_ENV === 'development' && gameStatus === 'playing' && (
+                <button
+                  onClick={autoFill}
+                  className="flex-1 h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
+                >
+                  Autofill
+                </button>
+              )}
+
               {/* Reset Button */}
               <button
                 onClick={resetPuzzle}
@@ -818,13 +821,14 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                 <strong>F</strong>: Fill Mode • <strong>M</strong>: Mark Mode • Click/Drag to interact • Arrow keys to navigate • <strong>Enter</strong>: Apply mode • Backspace to clear
               </p>
             </div>
-
+          </>
+        )}
           </div>
         </div>
       </section>
 
       {/* Floating Tooltip - Follows Mouse Cursor */}
-      {hoveredCell && mousePosition && (
+      {!isCurrentlyLoading && hoveredCell && mousePosition && (
         <div
           className="fixed pointer-events-none transition-none"
           style={{
@@ -843,23 +847,25 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
       )}
 
       {/* Completion & Game Over Modal */}
-      <NonogramModal
-        isOpen={(gameStatus === 'won' || gameStatus === 'lost') && showCompletionModal}
-        difficulty={currentPuzzle.difficulty}
-        time={elapsedSeconds}
-        completionPercentage={progress.percentComplete}
-        hintsUsed={hintsUsed}
-        mistakes={mistakeCount}
-        maxMistakes={maxMistakes}
-        isWin={gameStatus === 'won'}
-        onPlayAgain={handleReplay}
-        onNewPuzzle={!isFromPastPuzzles ? handleNewPuzzle : undefined}
-        onBackToGames={handleBackToGames}
-        onClose={() => setShowCompletionModal(false)}
-      />
+      {!isCurrentlyLoading && (
+        <NonogramModal
+          isOpen={(gameStatus === 'won' || gameStatus === 'lost') && showCompletionModal}
+          difficulty={currentPuzzle.difficulty}
+          time={elapsedSeconds}
+          completionPercentage={progress.percentComplete}
+          hintsUsed={hintsUsed}
+          mistakes={mistakeCount}
+          maxMistakes={maxMistakes}
+          isWin={gameStatus === 'won'}
+          onPlayAgain={handleReplay}
+          onNewPuzzle={!isFromPastPuzzles ? handleNewPuzzle : undefined}
+          onBackToGames={handleBackToGames}
+          onClose={() => setShowCompletionModal(false)}
+        />
+      )}
 
       {/* Loading Overlay */}
-      <GameLoader isOpen={isResetting || loading} text={loaderText} />
+      <GameLoader isOpen={isResetting || loading || isCurrentlyLoading} text={isCurrentlyLoading ? 'Loading game...' : loaderText} />
     </>
   )
 }

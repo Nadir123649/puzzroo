@@ -106,7 +106,7 @@ export function EarlyLegends() {
                   >
                     <div className="relative bg-[#F0EDFF] dark:bg-[#1F222A] border-2 border-[#E8E8E8] dark:border-[#35383F] rounded-xl md:rounded-2xl p-4 md:p-6 transition-all duration-300 hover:border-[#6949FF] hover:shadow-lg h-full">
                       {/* Star Icon - Top Left Corner */}
-                      <div className="absolute top-2 left-2 md:top-3 md:left-3 w-5 h-5 md:w-7 md:h-7 z-10">
+                      <div className="absolute top-2 left-2 md:top-3 md:left-3 w-5 h-5 md:w-7 md:h-7 z-10 flex items-center">
                         <Image
                           src={images.starIcon}
                           alt="Star"
@@ -117,7 +117,7 @@ export function EarlyLegends() {
                       </div>
 
                       {/* Rank Number - Top Right Corner (aligned with Star Icon) */}
-                      <div className="absolute top-1.5 right-2 md:top-2 md:right-3 z-10">
+                      <div className="absolute top-2 right-2 md:top-3 md:right-3 z-10 h-5 md:h-7 flex items-center">
                         <span className="font-urbanist font-bold text-[16px] md:text-[24px] text-[#6949FF] leading-none">
                           #{originalIndex + 1}
                         </span>
