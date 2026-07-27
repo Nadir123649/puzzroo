@@ -140,3 +140,12 @@ export interface PlayerStats {
   averageAccuracy: number
   favoriteDifficulty: TangramDifficulty | null
 }
+
+export interface SafePuzzleResponse {
+  id: string
+  difficulty: TangramDifficulty
+  pieceShapeIds: string[]
+  individualPiecePolygons: any[]
+  fullPolygon: any[]
+  metadata?: any
+}
