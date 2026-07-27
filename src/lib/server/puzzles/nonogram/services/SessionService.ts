@@ -5,23 +5,31 @@ import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle"
 import NonogramPlaySession from "@/lib/server/models/NonogramPlaySession"
 import type { SafeSessionResponse, SafePuzzleResponse, SaveProgressResponse, ProgressInfo, CompleteSessionResponse, CompletionResult } from "../types"
 
-function computeProgress(grid: Record<string, number>, blanks: string[]): ProgressInfo {
-  const filled = blanks.filter(b => grid[b] !== undefined).length
+function computeProgress(grid: string[][], blanks: string[]): ProgressInfo {
+  let filled = 0
+  let total = 0
+  if (Array.isArray(grid)) {
+    for (const row of grid) {
+      if (Array.isArray(row)) {
+        for (const cell of row) {
+          total++
+          if (cell === 'filled') {
+            filled++
+          }
+        }
+      }
+    }
+  }
   return {
     filledCells: filled,
-    totalBlanks: blanks.length,
-    percentage: blanks.length > 0 ? Math.round((filled / blanks.length) * 100) : 100,
+    totalBlanks: total,
+    percentage: total > 0 ? Math.round((filled / total) * 100) : 100,
   }
 }
 
 function toSafeSession(session: Record<string, any>): SafeSessionResponse {
-  const gridRaw = session.grid || {}
-  const grid: Record<string, number> =
-    gridRaw instanceof Map
-      ? Object.fromEntries(gridRaw)
-      : typeof gridRaw === "object" && gridRaw !== null
-        ? gridRaw
-        : {}
+  const gridRaw = session.grid || []
+  const grid: string[][] = Array.isArray(gridRaw) ? gridRaw : []
 
   return {
     sessionId: session._id?.toString() || session.sessionId,
@@ -29,8 +37,6 @@ function toSafeSession(session: Record<string, any>): SafeSessionResponse {
     difficulty: session.difficulty,
     sessionStatus: session.status,
     grid,
-    blanks: session.blanks || [],
-    availableNumbers: session.availableNumbers || [],
     moves: session.moves || 0,
     mistakes: session.mistakes || 0,
     hintsUsed: session.hintsUsed || 0,
@@ -101,14 +107,14 @@ export class SessionService {
   async saveProgress(
     sessionId: string,
     userId: string,
-    grid: Record<string, number>,
+    grid: string[][],
     elapsedTime: number,
     hintsUsed: number,
     mistakes: number,
     moves: number
   ) {
     const session = await this.getSession(sessionId, userId)
-    const progress = computeProgress(grid, session.blanks)
+    const progress = computeProgress(grid, [])
 
     const result = await playSessionRepository.saveProgress(
       sessionId,
@@ -126,7 +132,7 @@ export class SessionService {
   async completeSession(
     sessionId: string,
     userId: string,
-    grid: Record<string, number>,
+    grid: string[][],
     elapsedTime: number,
     hintsUsed: number,
     mistakes: number,
@@ -136,7 +142,7 @@ export class SessionService {
     const session = await this.getSession(sessionId, userId)
 
     let result: CompletionResult
-    if (grid && Object.keys(grid).length > 0) {
+    if (grid && grid.length > 0) {
       const verification = await verificationEngine.verifyCompletion(session.puzzleId, grid)
       result = {
         isComplete: verification.isComplete,

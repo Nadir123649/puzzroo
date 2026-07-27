@@ -20,7 +20,7 @@ const nonogramPlaySessionSchema = new mongoose.Schema(
       enum: ["playing", "paused", "completed", "abandoned"],
       default: "playing",
     },
-    grid: { type: Map, of: Number, default: {} },
+    grid: { type: [[String]], default: [] },
     mistakes: { type: Number, default: 0 },
     hintsUsed: { type: Number, default: 0 },
     moves: { type: Number, default: 0 },

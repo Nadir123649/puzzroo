@@ -62,7 +62,16 @@ export async function POST(request: NextRequest) {
       correctCells: result.correctCells,
     };
 
-    await sessionService.completeSession(sessionId, userResult.user.id, completionResult);
+    await sessionService.completeSession(
+      sessionId,
+      userResult.user.id,
+      grid || [],
+      elapsedSeconds || 0,
+      hintsUsed || 0,
+      mistakes || 0,
+      0,
+      0
+    );
 
     await statisticsService.updateOnSessionComplete(
       userResult.user.id,

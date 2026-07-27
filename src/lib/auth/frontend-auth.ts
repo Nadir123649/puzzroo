@@ -103,21 +103,7 @@ function clearClientSession() {
 
 export async function ensureSession(): Promise<void> {
   if (typeof window === "undefined") return;
-  let token = localStorage.getItem("accessToken");
-  if (!token) {
-    try {
-      const res = await api("/api/v1/oauth/guest", { method: "POST" });
-      if (res.success && res.payload?.token?.accessToken) {
-        localStorage.setItem("accessToken", res.payload.token.accessToken);
-        localStorage.setItem("puzzroo_auth", "true");
-        localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(res.payload.user)));
-        window.dispatchEvent(new Event("auth-change"));
-        token = res.payload.token.accessToken;
-      }
-    } catch (err) {
-      console.error("Failed to auto-login as guest:", err);
-    }
-  }
+  const token = localStorage.getItem("accessToken");
   if (!token) return;
 
   if (!isTokenExpired(token)) {
