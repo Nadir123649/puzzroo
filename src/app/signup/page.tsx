@@ -291,7 +291,7 @@ export default function SignupPage() {
                     })
                   } catch (err: any) {
                     setIsSubmitting(false)
-                    if (err?.code !== 'auth/popup-closed-by-user') {
+                    if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
                       notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
                       setErrors({ email: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }

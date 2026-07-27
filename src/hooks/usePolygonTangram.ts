@@ -9,8 +9,11 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { PolygonPuzzle, TangramPieceId } from '@shared/types/tangram-polygon'
-import type { TangramDifficulty } from '@shared/data/tangram'
+type TangramDifficulty = 'easy' | 'medium' | 'hard'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
+
+// Module-level guard to cancel StrictMode double-mount in dev
+let _tangramMountGuard = false
 
 function getTodayDateParam(): string {
   const d = new Date()
@@ -36,21 +39,12 @@ function getDailyDateString(dateParam?: string | null): string {
   return `${d.getFullYear()}-${m}-${day}`
 }
 
-async function getDailyTangramPuzzle(date: Date, diff: TangramDifficulty): Promise<PolygonPuzzle> {
-  const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
-  const { getPuzzlesByDifficulty } = await import('@shared/data/tangram')
-  const pool = getPuzzlesByDifficulty(diff)
-  const x = Math.sin(seed) * 10000
-  const rand = x - Math.floor(x)
-  const index = Math.floor(rand * pool.length)
-  return pool[index]
-}
 import { gameApi } from '@/lib/api/gameApi'
-import { scaleAndCenterPolygon, polygonToSVGPath } from '@shared/lib/tangram/polygon-renderer'
+import { scaleAndCenterPolygon } from '@shared/lib/tangram/polygon-renderer'
 import { calculateCentroid, polygonToPoints } from '@shared/lib/tangram/polygon-geometry'
 import { validatePuzzle } from '@shared/lib/tangram/polygon-validation'
 import { attemptSnap, geometricallyMatches } from '@shared/lib/tangram/polygon-snapping'
-import { PIECE_CONFIG, UNIT } from '@shared/lib/tangram/pieceConfig'
+import { PIECE_CONFIG } from '@shared/lib/tangram/pieceConfig'
 
 const PIECE_COLORS: Record<TangramPieceId, string> = {
   baseTriangle1: '#4A90E2',
@@ -123,7 +117,7 @@ interface PieceState {
 
 const getTargetRotation = (pieceType: string, scaledTarget: number[][], scale: number): number => {
   const puzzleUnit = 5 * scale
-  
+
   const basePolygons: Record<string, number[][]> = {
     'large-triangle-1': [[0, 0], [puzzleUnit * 2, 0], [0, puzzleUnit * 2], [0, 0]],
     'large-triangle-2': [[0, 0], [puzzleUnit * 2, 0], [0, puzzleUnit * 2], [0, 0]],
@@ -133,15 +127,15 @@ const getTargetRotation = (pieceType: string, scaledTarget: number[][], scale: n
     'square': [[0, 0], [puzzleUnit, 0], [puzzleUnit, puzzleUnit], [0, puzzleUnit], [0, 0]],
     'parallelogram': [[0, puzzleUnit], [puzzleUnit, 0], [puzzleUnit * 2, 0], [puzzleUnit, puzzleUnit], [0, puzzleUnit]]
   }
-  
+
   const base = basePolygons[pieceType]
   if (!base || base.length === 0 || scaledTarget.length === 0) return 0
-  
+
   // Calculate centroid of scaledTarget
   const targetCx = scaledTarget.reduce((sum, p) => sum + p[0], 0) / scaledTarget.length
   const targetCy = scaledTarget.reduce((sum, p) => sum + p[1], 0) / scaledTarget.length
   const centeredTarget = scaledTarget.map(([x, y]) => [x - targetCx, y - targetCy])
-  
+
   // If it's a parallelogram, check standard AND mirrored bases
   const baseOptions = [base]
   if (pieceType === 'parallelogram') {
@@ -152,13 +146,13 @@ const getTargetRotation = (pieceType: string, scaledTarget: number[][], scale: n
   for (const currentBase of baseOptions) {
     const baseAvgX = currentBase.reduce((sum, p) => sum + p[0], 0) / currentBase.length
     const baseAvgY = currentBase.reduce((sum, p) => sum + p[1], 0) / currentBase.length
-    
+
     // Test 8 possible rotations (0, 45, 90, 135, 180, 225, 270, 315)
     for (let r = 0; r < 360; r += 45) {
       const radians = (r * Math.PI) / 180
       const cos = Math.cos(radians)
       const sin = Math.sin(radians)
-      
+
       const rotated = currentBase.map(([x, y]) => {
         const dx = x - baseAvgX
         const dy = y - baseAvgY
@@ -167,7 +161,7 @@ const getTargetRotation = (pieceType: string, scaledTarget: number[][], scale: n
           dx * sin + dy * cos
         ]
       })
-      
+
       let allMatched = true
       for (const [tx, ty] of centeredTarget) {
         const hasMatch = rotated.some(([rx, ry]) => {
@@ -180,13 +174,13 @@ const getTargetRotation = (pieceType: string, scaledTarget: number[][], scale: n
           break
         }
       }
-      
+
       if (allMatched) {
         return r
       }
     }
   }
-  
+
   return 0
 }
 
@@ -212,7 +206,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const dateParam = searchParams?.get('date')
   const isDailyChallenge = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
 
-  const [puzzle, setPuzzle] = useState<PolygonPuzzle>(DUMMY_TANGRAM_PUZZLE)
+  const [puzzle, setPuzzle] = useState<PolygonPuzzle | null>(null)
   const getInitialTime = (diff: TangramDifficulty) => {
     switch (diff) {
       case 'hard': return 90    // 1.5 minutes
@@ -232,10 +226,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [hasWonOnce, setHasWonOnce] = useState(false)
   const [loading, setLoading] = useState(true)
-  
+
   const moveHistoryRef = useRef<PieceState[][]>([])
   const historyIndexRef = useRef(-1)
-  const puzzleRef = useRef<PolygonPuzzle>(puzzle)
+  const puzzleRef = useRef<PolygonPuzzle | null>(puzzle)
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -254,6 +248,68 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const shownHints = useRef<Set<TangramPieceId>>(new Set())
   const scaledData = useRef<ReturnType<typeof scaleAndCenterPolygon> | null>(null)
   const lastCommittedStateRef = useRef<PieceState[] | null>(null)
+
+  const sessionIdRef = useRef<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+  const sessionCreatedRef = useRef(false)
+  const completionCalledRef = useRef(false)
+
+  function piecesToRecord(pieces: PieceState[]): any[] {
+    return pieces.map(p => ({
+      pieceId: p.id,
+      position: { x: p.transform.x, y: p.transform.y },
+      rotation: p.transform.rotation,
+      placed: p.isPlaced,
+      snapped: p.isSnapped,
+      color: p.color,
+    }))
+  }
+
+  async function initSession(puzzleId: string, diff: string): Promise<any> {
+    if (sessionCreatedRef.current) return null
+    completionCalledRef.current = false
+    if (typeof window === 'undefined') return null
+    if (!localStorage.getItem('accessToken')) return null
+    try {
+      const res = await gameApi.createSession('tangram', puzzleId, diff)
+      if (res && (res.sessionId || res._id || res.id)) {
+        sessionIdRef.current = res.sessionId || res._id || res.id
+        sessionCreatedRef.current = true
+        return res
+      }
+    } catch { /* no session */ }
+    return null
+  }
+
+  function saveMoveNow(pieces: PieceState[], elapsed: number, hints: number) {
+    if (!sessionIdRef.current) return
+    abortRef.current?.abort()
+    const ac = new AbortController()
+    abortRef.current = ac
+    const pieceStates = piecesToRecord(pieces)
+    gameApi.saveMove('tangram', sessionIdRef.current, {
+      pieceStates,
+      elapsedSeconds: elapsed,
+      hintsUsed: hints,
+      mistakes: 0,
+    }, ac.signal).catch(err => {
+      if (err?.name !== 'AbortError') console.error('[tangram] save move failed', err)
+    })
+  }
+
+  async function completePuzzle(pieces: PieceState[], elapsed: number, hints: number) {
+    if (!sessionIdRef.current || completionCalledRef.current) return
+    completionCalledRef.current = true
+    try {
+      const pieceStates = piecesToRecord(pieces)
+      await gameApi.completeSession('tangram', sessionIdRef.current, {
+        pieceStates,
+        elapsedSeconds: elapsed,
+        hintsUsed: hints,
+        mistakes: 0,
+      })
+    } catch { /* ignore */ }
+  }
 
   // Helper: Create standard polygon has been removed as standardPolygon is now initialized dynamically from target geometry.
 
@@ -301,42 +357,47 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     }
   }, [])
 
-  // Async init — fetch puzzle from API with static fallback + localStorage cache
+  // Async init — fetch puzzle from API
   useEffect(() => {
+    // StrictMode double-mount guard: skip first mount in dev
+    if (process.env.NODE_ENV === 'development' && !_tangramMountGuard) {
+      _tangramMountGuard = true
+      return
+    }
+
     let cancelled = false
-    ;(async () => {
-      setLoading(true)
-      try {
-        let p: PolygonPuzzle
+      ; (async () => {
+        setLoading(true)
         try {
-          if (isDailyChallenge) {
-            p = (await gameApi.getDailyPuzzle('tangram', getDailyDateString(dateParam))) as unknown as PolygonPuzzle
-          } else {
-            const res = await gameApi.getPuzzle('tangram', { difficulty })
-            if (!res || !(res as any).id) throw new Error('invalid_puzzle')
-            p = res as unknown as PolygonPuzzle
+          let p: PolygonPuzzle | null = null
+          try {
+            if (isDailyChallenge) {
+              const res = await gameApi.getDailyPuzzle('tangram', getDailyDateString(dateParam))
+              if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+              p = res as unknown as PolygonPuzzle
+            } else {
+              const res = await gameApi.getPuzzle('tangram', { difficulty })
+              if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+              p = res as unknown as PolygonPuzzle
+            }
+          } catch {
+            p = null
           }
-        } catch {
-          const { getRandomPuzzle } = await import('@shared/data/tangram')
-          p = isDailyChallenge
-            ? await getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
-            : getRandomPuzzle(difficulty)
-        }
-        if (!cancelled) {
-          if (!p || !Array.isArray(p.fullPolygon) || !Array.isArray(p.pieceShapeIds)) {
-            const { getRandomPuzzle } = await import('@shared/data/tangram')
-            p = isDailyChallenge
-              ? await getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
-              : getRandomPuzzle(difficulty)
+          if (!cancelled) {
+            if (p && Array.isArray(p.fullPolygon) && Array.isArray(p.pieceShapeIds)) {
+              writeCache(p)
+              setPuzzle(p)
+              initSession(p.id, difficulty)
+            }
           }
-          writeCache(p)
-          setPuzzle(p)
+        } finally {
+          if (!cancelled) setLoading(false)
         }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
-    return () => { cancelled = true }
+      })()
+    return () => {
+      cancelled = true
+      if (process.env.NODE_ENV === 'development') _tangramMountGuard = false
+    }
   }, [difficulty, isDailyChallenge, dateParam])
 
   // Update challenge status to in-progress when game is loaded
@@ -353,10 +414,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   // Initialize pieces from puzzle
   useEffect(() => {
     if (!puzzle || !Array.isArray(puzzle.fullPolygon)) return
-    
+
     const scaled = scaleAndCenterPolygon(puzzle.fullPolygon)
     scaledData.current = scaled
-    
+
     // Tray layout - Two rows, defined by target centroids (cx, cy) - Better spacing for all piece sizes
     const TRAY_LAYOUT: Record<string, { cx: number; cy: number; rotation: number }> = {
       'baseTriangle1': { cx: 140, cy: 335, rotation: 45 },
@@ -367,7 +428,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       'square': { cx: 455, cy: 445, rotation: 0 },
       'parallelogram': { cx: 620, cy: 445, rotation: 0 }
     }
-    
+
     const initialPieces: PieceState[] = puzzle.pieceShapeIds.map((id, index) => {
       // Get polygon from dataset for solution target
       const basePolygon = puzzle.individualPiecePolygons[index]
@@ -375,12 +436,12 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         x * scaled.scale + scaled.offsetX,
         y * scaled.scale + scaled.offsetY
       ])
-      
+
       const pieceType = PIECE_TYPE_MAP[id]
       const trayLayoutItem = TRAY_LAYOUT[id] || { cx: 100, cy: 400, rotation: 0 }
-      
+
       const targetRotation = getTargetRotation(pieceType, scaledTarget, scaled.scale)
-      
+
       // Get standard piece shape by centering the solution target and rotating it
       const targetCx = scaledTarget.reduce((sum, p) => sum + p[0], 0) / scaledTarget.length
       const targetCy = scaledTarget.reduce((sum, p) => sum + p[1], 0) / scaledTarget.length
@@ -397,10 +458,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         trayLayoutItem.cx + (x * cos - y * sin),
         trayLayoutItem.cy + (x * sin + y * cos)
       ])
-      
+
       const trayCentroidX = trayLayoutItem.cx
       const trayCentroidY = trayLayoutItem.cy
-      
+
       return {
         id: id as TangramPieceId,
         basePolygon: scaledTarget,
@@ -419,26 +480,38 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     lastCommittedStateRef.current = initialPieces
   }, [puzzle])
 
+  const lastMoveKeyRef = useRef('')
+
+  useEffect(() => {
+    if (!sessionIdRef.current || gameStatus !== 'playing') return
+    if (pieces.length === 0) return
+    const elapsed = getInitialTime(difficulty) - timeRemaining
+    const key = JSON.stringify(pieces.map(p => ({ id: p.id, x: p.transform.x, y: p.transform.y, r: p.transform.rotation, placed: p.isPlaced, snapped: p.isSnapped })))
+    if (key === lastMoveKeyRef.current) return
+    lastMoveKeyRef.current = key
+    saveMoveNow(pieces, elapsed, hintsUsed)
+  }, [pieces, hintsUsed, timeRemaining, gameStatus, difficulty])
+
   useEffect(() => {
     // Don't validate if pieces haven't been initialized yet or if the game is lost
     if (pieces.length === 0 || gameStatus === 'lost') return
-    
+
     // Once the puzzle has been won, don't re-run win/loss detection
     // This allows undo/redo without re-triggering the modal
     if (hasWonOnce) return
-    
+
     // Only validate if at least one piece is placed when in playing mode
     if (gameStatus === 'playing') {
       const hasPlacedPieces = pieces.some(p => p.isPlaced)
       if (!hasPlacedPieces) return
     }
-    
+
     const currentPolygons = pieces.map(p => p.currentPolygon)
     const targetPolygons = pieces.map(p => p.targetPolygon)
     const pieceIds = pieces.map(p => p.id)
-    
+
     const validation = validatePuzzle(pieceIds, currentPolygons, targetPolygons)
-    
+
     if (validation.isSolved) {
       if (gameStatus === 'playing') {
         // 0.3-second delay so the last piece snaps before the modal shows
@@ -469,7 +542,9 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
                 hintsUsed,
                 mistakes: 0,
                 moves: 0,
-              }).catch(() => {})
+              }).catch(() => { })
+              const elapsed = getInitialTime(difficulty) - timeRemaining
+              completePuzzle(pieces, elapsed, hintsUsed)
             }
           }
         }, 300)
@@ -487,23 +562,23 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setPieces(prev => {
       const newPieces = prev.map(piece => {
         if (piece.id !== pieceId) return piece
-        
+
         // Calculate delta from current center to new center
         const deltaX = centerX - piece.transform.x
         const deltaY = centerY - piece.transform.y
-      
+
         // Apply delta to all polygon points
         const newPolygon = piece.currentPolygon.map(([px, py]) => [px + deltaX, py + deltaY])
         const newTransform = { x: centerX, y: centerY, rotation: piece.transform.rotation }
-        
+
         // Try snapping
         const targetPolygons = prev.map(p => p.targetPolygon)
-        
+
         // Calculate which target slots are already occupied by other snapped pieces
         const occupiedTargetIndices = new Set<number>()
         prev.forEach(p => {
           if (p.id !== pieceId && p.isSnapped) {
-            const matchedIndex = targetPolygons.findIndex(targetPoly => 
+            const matchedIndex = targetPolygons.findIndex(targetPoly =>
               geometricallyMatches(p.currentPolygon, targetPoly, 5)
             )
             if (matchedIndex !== -1) {
@@ -517,11 +592,11 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           newPolygon,
           newTransform,
           targetPolygons,
-          puzzle.pieceShapeIds,
+          puzzle!.pieceShapeIds,
           scaledData.current?.scale || 1,
           occupiedTargetIndices
         )
-        
+
         if (snapResult?.shouldSnap) {
           // Trigger pulse animation on successful snap
           if (onSnapSuccess) {
@@ -531,7 +606,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           setTimeout(() => {
             setSelectedPiece(null)
           }, 0)
-          
+
           // Snap: use target polygon and target center
           return {
             ...piece,
@@ -541,7 +616,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             isSnapped: true
           }
         }
-        
+
         // No snap: use new position
         return {
           ...piece,
@@ -551,7 +626,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           isSnapped: false
         }
       })
-      
+
       return newPieces
     })
   }, [puzzle])
@@ -560,51 +635,51 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setPieces(prev => {
       const newPieces = prev.map(piece => {
         if (piece.id !== pieceId) return piece
-        
+
         const newRotation = piece.transform.rotation + direction * 45
-      
-      // Keep transform.x and transform.y STABLE - they define the rotation center
-      // Do NOT recalculate from currentPolygon
-      
-      // Rotate currentPolygon coordinates around the STABLE center
-      const centerX = piece.transform.x
-      const centerY = piece.transform.y
-      
-      const radians = (direction * 45 * Math.PI) / 180
-      const cos = Math.cos(radians)
-      const sin = Math.sin(radians)
-      
-      const rotatedPolygon = piece.currentPolygon.map(([x, y]) => {
-        const dx = x - centerX
-        const dy = y - centerY
-        return [
-          centerX + dx * cos - dy * sin,
-          centerY + dx * sin + dy * cos
-        ]
+
+        // Keep transform.x and transform.y STABLE - they define the rotation center
+        // Do NOT recalculate from currentPolygon
+
+        // Rotate currentPolygon coordinates around the STABLE center
+        const centerX = piece.transform.x
+        const centerY = piece.transform.y
+
+        const radians = (direction * 45 * Math.PI) / 180
+        const cos = Math.cos(radians)
+        const sin = Math.sin(radians)
+
+        const rotatedPolygon = piece.currentPolygon.map(([x, y]) => {
+          const dx = x - centerX
+          const dy = y - centerY
+          return [
+            centerX + dx * cos - dy * sin,
+            centerY + dx * sin + dy * cos
+          ]
+        })
+
+        // Return with UNCHANGED center coordinates
+        return {
+          ...piece,
+          transform: { x: centerX, y: centerY, rotation: newRotation },
+          currentPolygon: rotatedPolygon,
+          isSnapped: false
+        }
       })
-      
-      // Return with UNCHANGED center coordinates
-      return {
-        ...piece,
-        transform: { x: centerX, y: centerY, rotation: newRotation },
-        currentPolygon: rotatedPolygon,
-        isSnapped: false
+
+      // Save new state to history if it actually changed
+      if (lastCommittedStateRef.current && areStatesEqual(newPieces, lastCommittedStateRef.current)) {
+        return newPieces
       }
-    })
-    
-    // Save new state to history if it actually changed
-    if (lastCommittedStateRef.current && areStatesEqual(newPieces, lastCommittedStateRef.current)) {
+      lastCommittedStateRef.current = newPieces
+
+      setHistoryIndex(idx => {
+        setMoveHistory(history => [...history.slice(0, idx + 1), newPieces])
+        return idx + 1
+      })
+
       return newPieces
-    }
-    lastCommittedStateRef.current = newPieces
-    
-    setHistoryIndex(idx => {
-      setMoveHistory(history => [...history.slice(0, idx + 1), newPieces])
-      return idx + 1
     })
-    
-    return newPieces
-  })
   }, [])
 
   const rotateLeft = useCallback(() => {
@@ -617,31 +692,31 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
 
   const requestHint = useCallback(() => {
     if (hintsUsed >= 3) return
-    
+
     // Clear any existing hint timeout to prevent overlapping timeouts from hiding the hint early
     if (hintTimeoutRef.current) {
       clearTimeout(hintTimeoutRef.current)
       hintTimeoutRef.current = null
     }
-    
+
     const currentPolygons = pieces.map(p => p.currentPolygon)
     const targetPolygons = pieces.map(p => p.targetPolygon)
     const pieceIds = pieces.map(p => p.id)
     const validation = validatePuzzle(pieceIds, currentPolygons, targetPolygons)
-    
+
     // Get all pieces that are not correctly placed/snapped
     const unsolvedPieces = pieces.filter(p => {
       const val = validation.pieces.find(vp => vp.pieceId === p.id)
       return val ? !val.isCorrect : true
     })
-    
+
     if (unsolvedPieces.length === 0) return // No pieces to hint
-    
+
     // Get unsolved pieces that haven't been shown yet
     const unhintedPieces = unsolvedPieces.filter(p => !shownHints.current.has(p.id))
-    
+
     let chosenPieceId: TangramPieceId
-    
+
     // If all unsolved pieces have been hinted, clear the set and start over
     if (unhintedPieces.length === 0) {
       shownHints.current.clear()
@@ -653,14 +728,14 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       const randomPiece = unhintedPieces[Math.floor(Math.random() * unhintedPieces.length)]
       chosenPieceId = randomPiece.id
     }
-    
+
     shownHints.current.add(chosenPieceId)
     setHintsUsed(h => h + 1)
     setHintPiece(chosenPieceId)
-    
+
     // Hard mode: 1 second hint. Easy/Medium: 5 seconds
     const hintDuration = difficulty === 'hard' ? 1000 : 5000
-    
+
     hintTimeoutRef.current = setTimeout(() => {
       setHintPiece(null)
       hintTimeoutRef.current = null
@@ -672,7 +747,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       const newPieces = prev.map((piece, index) => {
         const targetPolygon = prev[index].targetPolygon
         const targetCentroid = calculateCentroid(polygonToPoints(targetPolygon))
-        
+
         return {
           ...piece,
           transform: { x: targetCentroid.x, y: targetCentroid.y, rotation: 0 },
@@ -681,12 +756,12 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           isSnapped: true
         }
       })
-      
+
       setHistoryIndex(idx => {
         setMoveHistory(history => [...history.slice(0, idx + 1), newPieces])
         return idx + 1
       })
-      
+
       return newPieces
     })
   }, [])
@@ -708,26 +783,24 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     }
     // Set new puzzle - this will trigger piece initialization
     let cancelled = false
-    ;(async () => {
-      setLoading(true)
-      try {
-        let p: PolygonPuzzle
+      ; (async () => {
+        setLoading(true)
         try {
-          const res = await gameApi.getPuzzle('tangram', { difficulty })
-          if (!res || !(res as any).id) throw new Error('invalid_puzzle')
-          p = res as unknown as PolygonPuzzle
-        } catch {
-          const { getRandomPuzzle } = await import('@shared/data/tangram')
-          p = getRandomPuzzle(difficulty)
+          let p: PolygonPuzzle
+        const res = await gameApi.getPuzzle('tangram', { difficulty })
+        if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+        p = res as unknown as PolygonPuzzle
+          if (!cancelled) {
+            writeCache(p)
+            setPuzzle(p)
+            sessionCreatedRef.current = false
+            sessionIdRef.current = null
+            initSession(p.id, difficulty)
+          }
+        } finally {
+          if (!cancelled) setLoading(false)
         }
-        if (!cancelled) {
-          writeCache(p)
-          setPuzzle(p)
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
+      })()
     return () => { cancelled = true }
   }, [difficulty])
 
@@ -749,26 +822,24 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     // Get a different puzzle - this will trigger piece initialization
     const currentSourceId = puzzle?.sourceId
     let cancelled = false
-    ;(async () => {
-      setLoading(true)
-      try {
-        let p: PolygonPuzzle
+      ; (async () => {
+        setLoading(true)
         try {
-          const res = await gameApi.getPuzzle('tangram', { difficulty, exclude: currentSourceId })
-          if (!res || !(res as any).id) throw new Error('invalid_puzzle')
-          p = res as unknown as PolygonPuzzle
-        } catch {
-          const { getRandomPuzzle } = await import('@shared/data/tangram')
-          p = getRandomPuzzle(difficulty, currentSourceId)
+          let p: PolygonPuzzle
+        const res = await gameApi.getPuzzle('tangram', { difficulty, exclude: currentSourceId })
+        if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+        p = res as unknown as PolygonPuzzle
+          if (!cancelled) {
+            writeCache(p)
+            setPuzzle(p)
+            sessionCreatedRef.current = false
+            sessionIdRef.current = null
+            initSession(p.id, difficulty)
+          }
+        } finally {
+          if (!cancelled) setLoading(false)
         }
-        if (!cancelled) {
-          writeCache(p)
-          setPuzzle(p)
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
+      })()
     return () => { cancelled = true }
   }, [difficulty, puzzle])
 
@@ -783,71 +854,47 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       clearTimeout(hintTimeoutRef.current)
       hintTimeoutRef.current = null
     }
-    
+
+    completionCalledRef.current = false
     setHistoryIndex(0)
-    
+
     // Re-fetch the same puzzle by id and reset it to the tray (cache-first)
     const current = puzzle
     const id = current?.id
     let cancelled = false
-    ;(async () => {
-      setLoading(true)
-      try {
-        let p: PolygonPuzzle
-        if (isDailyChallenge) {
-          try {
-            const res = await gameApi.getDailyPuzzle('tangram', dateParam || undefined)
+      ; (async () => {
+        setLoading(true)
+        try {
+          let p: PolygonPuzzle
+          if (isDailyChallenge) {
+          const res = await gameApi.getDailyPuzzle('tangram', dateParam || undefined)
+          if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+          p = res as unknown as PolygonPuzzle
+          } else if (id) {
+            const cached = readCache(id)
+            if (cached) {
+              p = cached
+            } else {
+            const res = await gameApi.getPuzzleById('tangram', id)
             if (!res || !(res as any).id) throw new Error('invalid_puzzle')
             p = res as unknown as PolygonPuzzle
-          } catch {
-            p = await getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
-          }
-        } else if (id) {
-          const cached = readCache(id)
-          if (cached) {
-            p = cached
-          } else {
-            try {
-              const res = await gameApi.getPuzzleById('tangram', id)
-              if (!res || !(res as any).id) throw new Error('invalid_puzzle')
-              p = res as unknown as PolygonPuzzle
-            } catch {
-              const { getRandomPuzzle } = await import('@shared/data/tangram')
-              p = current || getRandomPuzzle(difficulty)
-            }
           }
         } else {
-          const { getRandomPuzzle } = await import('@shared/data/tangram')
-          p = current || getRandomPuzzle(difficulty)
+          if (!current) throw new Error('no_current_puzzle')
+          p = current
         }
         if (!cancelled) {
-          if (!p || !Array.isArray(p.fullPolygon) || !Array.isArray(p.pieceShapeIds)) {
-            p = isDailyChallenge
-              ? await getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
-              : current
-            if (!p || p === DUMMY_TANGRAM_PUZZLE) {
-              const { getRandomPuzzle } = await import('@shared/data/tangram')
-              p = getRandomPuzzle(difficulty)
-            }
+            writeCache(p)
+            setPuzzle(p)
           }
-          writeCache(p)
-          setPuzzle(p)
-        }
-      } catch {
-        if (!cancelled) {
-          let p = isDailyChallenge
-            ? await getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
-            : current
-          if (!p || p === DUMMY_TANGRAM_PUZZLE) {
-            const { getRandomPuzzle } = await import('@shared/data/tangram')
-            p = getRandomPuzzle(difficulty)
+        } catch {
+          if (!cancelled) {
+          setLoading(false)
           }
-          setPuzzle(p)
+        } finally {
+          if (!cancelled) setLoading(false)
         }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
+      })()
     return () => { cancelled = true }
   }, [difficulty, isDailyChallenge, dateParam])
 
@@ -890,7 +937,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         return prev
       }
       lastCommittedStateRef.current = prev
-      
+
       setHistoryIndex(idx => {
         setMoveHistory(history => [...history.slice(0, idx + 1), prev])
         return idx + 1
@@ -904,14 +951,14 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setPieces(prev => {
       const placedPieces = prev.filter(p => p.isPlaced)
       if (placedPieces.length === 0) return prev
-      
+
       // Get last placed piece (assumes most recent is last in placed array)
       const lastPlaced = placedPieces[placedPieces.length - 1]
-      
+
       // Return this piece to its tray position by re-initializing it
       return prev.map(piece => {
         if (piece.id !== lastPlaced.id) return piece
-        
+
         // Re-create tray position for this piece - MUST match initialization layout
         const TRAY_LAYOUT: Record<string, { cx: number; cy: number; rotation: number }> = {
           'baseTriangle1': { cx: 140, cy: 335, rotation: 45 },
@@ -922,13 +969,13 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           'square': { cx: 455, cy: 445, rotation: 0 },
           'parallelogram': { cx: 620, cy: 445, rotation: 0 }
         }
-        
+
         const trayLayoutItem = TRAY_LAYOUT[piece.id] || { cx: 100, cy: 400, rotation: 0 }
         const pieceType = PIECE_TYPE_MAP[piece.id]
         const scale = scaledData.current?.scale || 1
-        
+
         const targetRotation = getTargetRotation(pieceType, piece.targetPolygon, scale)
-        
+
         // Get standard piece shape by centering the solution target and rotating it
         const targetCx = piece.targetPolygon.reduce((sum: number, p: number[]) => sum + p[0], 0) / piece.targetPolygon.length
         const targetCy = piece.targetPolygon.reduce((sum: number, p: number[]) => sum + p[1], 0) / piece.targetPolygon.length
@@ -945,10 +992,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           trayLayoutItem.cx + (x * cos - y * sin),
           trayLayoutItem.cy + (x * sin + y * cos)
         ])
-        
+
         const trayCentroidX = trayLayoutItem.cx
         const trayCentroidY = trayLayoutItem.cy
-        
+
         return {
           ...piece,
           transform: { x: trayCentroidX, y: trayCentroidY, rotation: trayLayoutItem.rotation - targetRotation },

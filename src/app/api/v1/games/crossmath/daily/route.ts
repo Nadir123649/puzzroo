@@ -18,6 +18,25 @@ export async function GET(request: NextRequest) {
     const pattern = getPatternById(puzzle.patternId)
     const grid = pattern ? patternToGameGrid(pattern) : []
 
+    const blankSet = new Set(puzzle.blanks || [])
+    const solution = puzzle.solution || {}
+    for (const pc of pattern?.cells || []) {
+      if (pc.type === "NUMBER") {
+        const key = `${pc.row}-${pc.col}`
+        const cell = grid[pc.row]?.[pc.col]
+        if (!cell) continue
+        if (blankSet.has(key)) {
+          cell.isEditable = true
+          cell.type = "empty"
+          cell.value = undefined
+        } else {
+          cell.value = solution[key]
+          cell.type = "number"
+          cell.isEditable = false
+        }
+      }
+    }
+
     const headers = cacheHeaders(86400)
 
     return new Response(
@@ -26,14 +45,13 @@ export async function GET(request: NextRequest) {
         payload: {
           id: puzzle.id,
           difficulty: puzzle.difficulty,
-          puzzleId: puzzle.id,
+          patternId: puzzle.patternId,
           rows: pattern?.grid_rows || 0,
           columns: pattern?.grid_cols || 0,
           grid,
           availableNumbers: puzzle.availableNumbers || [],
           maxMistakes: puzzle.maxMistakes || 3,
           solution: puzzle.solution || {},
-          date: dateStr,
         },
         timestamp: Date.now(),
       }),

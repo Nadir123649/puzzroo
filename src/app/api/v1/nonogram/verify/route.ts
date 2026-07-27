@@ -14,11 +14,13 @@ export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {};
   try { body = await request.json(); } catch {}
 
-  const { sessionId, grid } = body as { sessionId?: string; grid?: Array<Array<{ state: string }>> };
+  const { sessionId, grid: rawGrid } = body as { sessionId?: string; grid?: Array<Array<{ state: string } | string>> };
 
-  if (!sessionId || !grid) {
+  if (!sessionId || !rawGrid) {
     return errorResponse(400, 'validation_error', 'sessionId and grid are required');
   }
+
+  const grid = rawGrid.map(row => row.map(cell => typeof cell === 'string' ? cell : cell.state));
 
   await connectDB();
   const userResult = await auth(request);

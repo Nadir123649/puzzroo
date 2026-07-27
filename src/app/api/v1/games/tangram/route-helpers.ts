@@ -36,8 +36,6 @@ function getErrorStatus(code: string): number {
     already_abandoned: 400,
     session_abandoned: 400,
     no_puzzles_available: 404,
-    no_daily_puzzles_available: 404,
-    invalid_pattern: 500,
   }
   return statusMap[code] || 500
 }
@@ -53,8 +51,6 @@ function getErrorMessage(code: string): string {
     already_abandoned: "Session already abandoned.",
     session_abandoned: "Session has been abandoned.",
     no_puzzles_available: "No puzzles available.",
-    no_daily_puzzles_available: "No daily puzzles available.",
-    invalid_pattern: "Invalid puzzle pattern.",
   }
   return msgMap[code] || "An unexpected error occurred."
 }

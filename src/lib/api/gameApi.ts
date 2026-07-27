@@ -15,6 +15,7 @@ export interface GetPuzzleParams {
   exclude?: string;
   id?: string;
   date?: string;
+  signal?: AbortSignal;
 }
 
 export interface SaveProgressPayload {
@@ -40,9 +41,11 @@ export const gameApi = {
   },
 
   async getPuzzle(game: GameId, params: GetPuzzleParams = {}) {
+    const { signal, ...rest } = params;
     const res = await api<unknown>(`/api/v1/games/${game}/puzzle`, {
-      params: params as Record<string, string | number | boolean | undefined>,
+      params: rest as Record<string, string | number | boolean | undefined>,
       suppressToast: true,
+      signal,
     });
     return res.payload as
       | SudokuPuzzleResponse
@@ -51,9 +54,10 @@ export const gameApi = {
       | TangramPuzzleResponse;
   },
 
-  async getPuzzleById(game: GameId, id: string) {
+  async getPuzzleById(game: GameId, id: string, signal?: AbortSignal) {
     const res = await api<unknown>(`/api/v1/games/${game}/puzzle/${encodeURIComponent(id)}`, {
       suppressToast: true,
+      signal,
     });
     return res.payload as
       | SudokuPuzzleResponse
@@ -62,11 +66,12 @@ export const gameApi = {
       | TangramPuzzleResponse;
   },
 
-  async getDailyPuzzle(game: GameId, date?: string) {
+  async getDailyPuzzle(game: GameId, date?: string, signal?: AbortSignal) {
     const params = date ? { date } : undefined;
     const res = await api<unknown>(`/api/v1/games/${game}/daily`, {
       params,
       suppressToast: true,
+      signal,
     });
     return res.payload as
       | SudokuPuzzleResponse
@@ -121,6 +126,37 @@ export const gameApi = {
     const res = await api(`/api/v1/games/${game}/complete`, {
       method: "POST",
       body: JSON.stringify({ ...payload, completed: true }),
+    });
+    return res.payload;
+  },
+
+  // ---- Session management (move-by-move sync) ----
+
+  async createSession(game: GameId, puzzleId: string, difficulty?: string) {
+    const res = await api(`/api/v1/games/${game}/sessions`, {
+      method: 'POST',
+      body: JSON.stringify({ puzzleId, difficulty }),
+      suppressToast: true,
+    });
+    return res.payload;
+  },
+
+  async saveMove(game: GameId, sessionId: string, payload: Record<string, any>, signal?: AbortSignal) {
+    const method = game === 'sudoku' ? 'PUT' : 'POST';
+    const res = await api(`/api/v1/games/${game}/sessions/${sessionId}/save`, {
+      method,
+      body: JSON.stringify(payload),
+      signal,
+      suppressToast: true,
+    });
+    return res.payload;
+  },
+
+  async completeSession(game: GameId, sessionId: string, payload: Record<string, any>) {
+    const res = await api(`/api/v1/games/${game}/sessions/${sessionId}/complete`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      suppressToast: true,
     });
     return res.payload;
   },

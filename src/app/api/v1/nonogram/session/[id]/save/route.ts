@@ -18,16 +18,18 @@ export async function POST(
   let body: Record<string, unknown> = {};
   try { body = await request.json(); } catch {}
 
-  const { grid, elapsedSeconds, hintsUsed, mistakes } = body as {
-    grid?: Array<Array<{ state: string }>>;
+  const { grid: rawGrid, elapsedSeconds, hintsUsed, mistakes } = body as {
+    grid?: Array<Array<{ state: string } | string>>;
     elapsedSeconds?: number;
     hintsUsed?: number;
     mistakes?: number;
   };
 
-  if (!grid || elapsedSeconds === undefined) {
+  if (!rawGrid || elapsedSeconds === undefined) {
     return errorResponse(400, 'validation_error', 'grid and elapsedSeconds are required');
   }
+
+  const grid = rawGrid.map(row => row.map(cell => typeof cell === 'string' ? cell : cell.state));
 
   await connectDB();
   const userResult = await auth(request);

@@ -285,7 +285,7 @@ function LoginPageContent() {
                     })
                   } catch (err: any) {
                     setIsSubmitting(false)
-                    if (err?.code !== 'auth/popup-closed-by-user') {
+                    if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
                       notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
                       setErrors({ general: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }

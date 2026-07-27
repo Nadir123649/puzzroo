@@ -9,14 +9,18 @@ interface StartSessionInput {
 }
 
 interface SaveProgressInput {
-  grid: Array<Array<{ state: string }>>;
+  grid: string[][];
   elapsedSeconds: number;
   hintsUsed?: number;
   mistakes?: number;
 }
 
 export class SessionService {
-  async startSession(input: StartSessionInput) {
+  async startSession(input: {
+    userId: string;
+    puzzleId: string;
+    difficulty: "easy" | "medium" | "hard" | "expert";
+  }) {
     const puzzle = await NonogramPuzzle.findOne({ puzzleId: input.puzzleId });
     if (!puzzle) {
       throw new Error("puzzle_not_found");
@@ -34,14 +38,14 @@ export class SessionService {
 
     const size = puzzle.size;
     const emptyGrid = Array.from({ length: size }, () =>
-      Array.from({ length: size }, () => ({ state: "empty" }))
+      Array.from({ length: size }, () => "empty")
     );
 
     const session = await PlaySession.create({
       userId: input.userId,
       puzzleId: input.puzzleId,
       gameId: "nonogram",
-      difficulty: input.difficulty,
+      difficulty: input.difficulty as "easy" | "medium" | "hard" | "expert",
       grid: emptyGrid,
       status: "active",
       startedAt: new Date(),
@@ -97,7 +101,7 @@ export class SessionService {
   async saveProgress(sessionId: string, userId: string, input: SaveProgressInput) {
     const session = await this.getSessionById(sessionId, userId);
 
-    session.grid = input.grid;
+    (session as any).grid = input.grid;
     session.elapsedSeconds = input.elapsedSeconds;
     session.lastSaveAt = new Date();
 
@@ -122,10 +126,10 @@ export class SessionService {
 
     const size = puzzle.size;
     const emptyGrid = Array.from({ length: size }, () =>
-      Array.from({ length: size }, () => ({ state: "empty" }))
+      Array.from({ length: size }, () => "empty")
     );
 
-    session.grid = emptyGrid;
+    (session as any).grid = emptyGrid;
     session.status = "active";
     session.elapsedSeconds = 0;
     session.hintsUsed = 0;
@@ -136,7 +140,7 @@ export class SessionService {
     session.resumedAt = null;
     session.lastSaveAt = null;
     session.completedAt = null;
-    session.completionResult = undefined;
+    (session as any).completionResult = undefined;
 
     await session.save();
     return session;
@@ -192,7 +196,7 @@ export class SessionService {
 
     session.status = "completed";
     session.completedAt = new Date();
-    session.completionResult = {
+    (session as any).completionResult = {
       isComplete: result.isComplete,
       accuracy: result.accuracy,
       totalCells: result.totalCells,

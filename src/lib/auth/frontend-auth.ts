@@ -93,6 +93,14 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
+function clearClientSession() {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("puzzroo_auth");
+  localStorage.removeItem("puzzroo_user");
+  window.dispatchEvent(new Event("auth-change"));
+  api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
+}
+
 export async function ensureSession(): Promise<void> {
   if (typeof window === "undefined") return;
   const token = localStorage.getItem("accessToken");
@@ -110,10 +118,7 @@ export async function ensureSession(): Promise<void> {
         throw new Error("token_revoked");
       }
     } catch {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("puzzroo_auth");
-      localStorage.removeItem("puzzroo_user");
-      window.dispatchEvent(new Event("auth-change"));
+      clearClientSession();
     }
     return;
   }
@@ -140,10 +145,7 @@ export async function ensureSession(): Promise<void> {
     } catch {}
     window.dispatchEvent(new Event("auth-change"));
   } catch {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("puzzroo_auth");
-    localStorage.removeItem("puzzroo_user");
-    window.dispatchEvent(new Event("auth-change"));
+    clearClientSession();
   }
 }
 

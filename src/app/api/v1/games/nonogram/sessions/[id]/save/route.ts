@@ -4,7 +4,7 @@ import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionSe
 import { sessionSaveSchema } from "@/lib/server/puzzles/nonogram/validators";
 import { successResponse } from "@/lib/server/utils/apiResponse";
 
-export const PUT = withAuth(async (req, user, params) => {
+export const POST = withAuth(async (req, user, params) => {
   const { id } = params;
   const body = await req.json();
   const parsed = sessionSaveSchema.safeParse(body);
