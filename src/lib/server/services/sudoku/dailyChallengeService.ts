@@ -65,7 +65,7 @@ export async function getUserDailyHistory(userId: string): Promise<DailyCompleti
       time: s.elapsedTime || 0,
       score: s.score || 0,
       hintsUsed: s.hintsUsed || 0,
-      mistakes: s.mistakes?.length || 0,
+      mistakes: s.mistakes || 0,
     }));
 }
 

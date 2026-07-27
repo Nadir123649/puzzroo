@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
 import { ChangeNameModal } from '@/components/account/ChangeNameModal'
 import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
@@ -89,29 +89,16 @@ export default function AccountInformationPage() {
     setLocalUser(prev => prev ? { ...prev, name: newName } : prev)
   }
 
+  const fetchedRef = useRef(false)
+
   useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
+
     fetchGameStats().then(setGameStats)
     fetchSessions().then(s => {
       setSessions(s)
       setSessionsLoading(false)
-    })
-    fetchUserProfile().then(profile => {
-      if (!profile) return
-      if (profile.provider) setProvider(profile.provider)
-      if (profile.linkedProviders?.length) setLinkedProviders(profile.linkedProviders)
-      // Sync freshly-fetched fields (e.g. the backfilled publicId) into local
-      // state and the cached user so the Account ID shows the friendly id.
-      if (profile.publicId) {
-        setLocalUser(prev => prev ? { ...prev, publicId: profile.publicId } : prev)
-        const stored = localStorage.getItem('puzzroo_user')
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored)
-            parsed.publicId = profile.publicId
-            localStorage.setItem('puzzroo_user', JSON.stringify(parsed))
-          } catch {}
-        }
-      }
     })
   }, [])
 

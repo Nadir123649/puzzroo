@@ -2,20 +2,6 @@ export type SessionStatus = "playing" | "paused" | "completed" | "abandoned";
 export type SessionResult = "incomplete" | "solved" | "gave_up";
 export type Difficulty = "easy" | "medium" | "hard" | "expert";
 
-export interface MistakeRecord {
-  cell: string;
-  expected: number;
-  received: number;
-  timestamp: Date;
-}
-
-export interface MoveRecord {
-  cell: string;
-  from: number;
-  to: number;
-  timestamp: Date;
-}
-
 export interface BestTimeRecord {
   time: number;
   puzzleId: string;
@@ -31,6 +17,9 @@ export interface SaveProgressInput {
   board: string;
   notes?: string[][];
   elapsedTime: number;
+  hintsUsed?: number;
+  mistakes?: number;
+  moves?: number;
 }
 
 export interface VerifyCompletionInput {
@@ -40,6 +29,10 @@ export interface VerifyCompletionInput {
 export interface CompleteSessionInput {
   board: string;
   elapsedTime: number;
+  hintsUsed?: number;
+  mistakes?: number;
+  moves?: number;
+  score?: number;
 }
 
 export interface DailyCompletionRecord {
@@ -74,14 +67,28 @@ export interface SessionResponse {
   status: SessionStatus;
   currentBoard: string;
   initialBoard: string;
-  notes: string[][];
+  notes: string[][] | null;
   elapsedTime: number;
   hintsUsed: number;
-  mistakes: MistakeRecord[];
+  mistakes: number;
+  moves: number;
   result: SessionResult;
   score: number;
   restartCount: number;
   startedAt: string;
   pausedAt: string | null;
   lastSavedAt: string;
+  isReplay?: boolean;
+}
+
+export interface SudokuPuzzleInfo {
+  puzzleId: string;
+  difficulty: string;
+  puzzle: string;
+  solution: string;
+}
+
+export interface ContinuePlayingResponse {
+  hasActiveSession: boolean;
+  session?: SessionResponse & { puzzle: SudokuPuzzleInfo };
 }

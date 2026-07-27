@@ -1,6 +1,6 @@
 export type CrossMathDifficulty = 'easy' | 'medium' | 'hard'
 
-export type SessionStatus = 'active' | 'paused' | 'completed' | 'abandoned'
+export type SessionStatus = 'playing' | 'paused' | 'completed' | 'abandoned'
 
 export type ValidationStatus = 'correct' | 'incorrect' | 'pending'
 
@@ -15,6 +15,7 @@ export interface CrossMathSession {
   availableNumbers: number[]
   mistakes: number
   hintsUsed: number
+  moves: number
   elapsedTime: number
   startedAt: Date
   pausedAt?: Date | null
@@ -32,6 +33,10 @@ export interface SessionResult {
   accuracy: number
   completedAt: Date
   elapsedTime: number
+  moves: number
+  mistakes: number
+  hintsUsed: number
+  score: number
 }
 
 export interface VerifyGridRequest {
@@ -48,14 +53,24 @@ export interface EquationResult {
   correct: boolean
 }
 
+export interface EquationError {
+  equationId: string
+  direction: 'horizontal' | 'vertical'
+  expectedResult: number
+  actualResult: number
+}
+
 export interface VerifyGridResult {
-  correct: boolean
+  isCorrect: boolean
   completed: boolean
   mistakes: number
   maxMistakes: number
   accuracy: number
   equations: EquationResult[]
-  errors: string[]
+  errors: EquationError[]
+  totalEquations: number
+  correctEquations: number
+  incorrectEquations: number
 }
 
 export interface PuzzleSelectionOptions {
@@ -83,10 +98,11 @@ export interface SafeSessionResponse {
   sessionId: string
   puzzleId: string
   difficulty: CrossMathDifficulty
-  status: SessionStatus
+  sessionStatus: SessionStatus
   grid: Record<string, number>
   blanks: string[]
   availableNumbers: number[]
+  moves: number
   mistakes: number
   hintsUsed: number
   elapsedTime: number
@@ -99,6 +115,62 @@ export interface SafeSessionResponse {
   restartCount: number
   result?: SessionResult | null
   puzzle?: SafePuzzleResponse
+}
+
+export interface SaveProgressResponse {
+  sessionId: string
+  sessionStatus: SessionStatus
+  lastSavedAt: string
+  moves: number
+  mistakes: number
+  hintsUsed: number
+  elapsedTime: number
+  progress: ProgressInfo
+}
+
+export interface ProgressInfo {
+  filledCells: number
+  totalBlanks: number
+  percentage: number
+}
+
+export interface IncompleteSessionInfo {
+  elapsedTime: number
+  moves: number
+  mistakes: number
+  hintsUsed: number
+}
+
+export interface CompleteSessionResponse {
+  isCompleted: boolean
+  result: CompletionResult | null
+  verification: VerificationSummary
+  session?: IncompleteSessionInfo
+}
+
+export interface CompletionResult {
+  sessionId: string
+  puzzleId: string
+  difficulty: CrossMathDifficulty
+  completedAt: string
+  elapsedTime: number
+  moves: number
+  mistakes: number
+  hintsUsed: number
+  score: number
+  accuracy: number
+  totalEquations: number
+  correctEquations: number
+  incorrectEquations: number
+}
+
+export interface VerificationSummary {
+  isCorrect: boolean
+  accuracy: number
+  totalEquations: number
+  correctEquations: number
+  incorrectEquations: number
+  errors: EquationError[]
 }
 
 export interface PlayerStats {
@@ -129,6 +201,7 @@ export interface SessionSummary {
   status: SessionStatus
   elapsedTime: number
   hintsUsed: number
+  moves: number
   mistakes: number
   accuracy: number
   startedAt: string
@@ -151,3 +224,5 @@ export interface DailyChallengeInfo {
   mistakes: number
   completedAt?: string | null
 }
+
+export const API_VERSION = "1.0.0"

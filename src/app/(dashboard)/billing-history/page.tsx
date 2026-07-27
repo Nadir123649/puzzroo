@@ -1,14 +1,17 @@
 'use client'
 
-import { getCurrentUser, fetchBillingHistory, fetchSubscription } from '@/lib/auth/frontend-auth'
+import { getCurrentUser, fetchBillingHistory } from '@/lib/auth/frontend-auth'
 import { Receipt, Calendar, CreditCard } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function BillingHistoryPage() {
   const user = getCurrentUser()
   const [billingData, setBillingData] = useState<any>(null)
+  const fetchedRef = useRef(false)
 
   useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
     fetchBillingHistory().then(setBillingData)
   }, [])
 

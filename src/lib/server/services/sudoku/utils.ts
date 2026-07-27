@@ -33,6 +33,18 @@ export function createEmptyNotes(): string[][] {
   );
 }
 
+export function isEmptyNotes(notes: string[][] | null | undefined): boolean {
+  if (!notes || notes.length === 0) return true;
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    const row = notes[r];
+    if (!row) return true;
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (row[c]) return false;
+    }
+  }
+  return true;
+}
+
 export function isBoardComplete(board: number[][]): boolean {
   return board.every(row => row.every(cell => cell !== 0));
 }
@@ -107,38 +119,6 @@ export function stringToBoard(s: string): number[][] {
     board.push(row);
   }
   return board;
-}
-
-export function calculateScore(
-  difficulty: Difficulty,
-  timeSeconds: number,
-  hintsUsed: number,
-  mistakesCount: number
-): number {
-  const difficultyMultiplier: Record<string, number> = {
-    easy: 1,
-    medium: 1.5,
-    hard: 2,
-    expert: 3,
-  };
-
-  const targetTime: Record<string, number> = {
-    easy: 300,
-    medium: 600,
-    hard: 900,
-    expert: 1200,
-  };
-
-  const baseScore = 1000;
-  const multiplier = difficultyMultiplier[difficulty] ?? 1;
-  const target = targetTime[difficulty] ?? 600;
-  const timeBonus = Math.max(0, (target - timeSeconds) * 10);
-  const flawlessBonus = (mistakesCount === 0 && hintsUsed === 0) ? 500 : 0;
-  const mistakePenalty = mistakesCount * 50;
-  const hintPenalty = hintsUsed * 100;
-
-  const score = (baseScore * multiplier) + timeBonus + flawlessBonus - mistakePenalty - hintPenalty;
-  return Math.max(100, score);
 }
 
 type Difficulty = "easy" | "medium" | "hard" | "expert";

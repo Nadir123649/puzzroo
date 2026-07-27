@@ -6,10 +6,9 @@ import type {
   SessionResult,
   SessionResponse,
   SaveProgressInput,
-  MistakeRecord,
-  MoveRecord,
 } from "./types";
-import { encode81, decode81, cloneBoard, createEmptyNotes } from "./utils";
+import { encode81, decode81, cloneBoard, createEmptyNotes, isEmptyNotes } from "./utils";
+import { verifyCompletion, calculateScore } from "./verificationService";
 
 function toSessionResponse(doc: any): SessionResponse {
   return {
@@ -19,16 +18,18 @@ function toSessionResponse(doc: any): SessionResponse {
     status: doc.status as SessionStatus,
     currentBoard: doc.currentBoard,
     initialBoard: doc.initialBoard,
-    notes: doc.notes || createEmptyNotes(),
+    notes: doc.notes && !isEmptyNotes(doc.notes) ? doc.notes : null,
     elapsedTime: doc.elapsedTime || 0,
     hintsUsed: doc.hintsUsed || 0,
-    mistakes: (doc.mistakes || []) as MistakeRecord[],
+    mistakes: doc.mistakes || 0,
+    moves: doc.moves || 0,
     result: (doc.result || "incomplete") as SessionResult,
     score: doc.score || 0,
     restartCount: doc.restartCount || 0,
     startedAt: doc.startedAt?.toISOString?.() || new Date().toISOString(),
     pausedAt: doc.pausedAt?.toISOString?.() || null,
     lastSavedAt: doc.lastSavedAt?.toISOString?.() || new Date().toISOString(),
+    isReplay: doc.isReplay || false,
   };
 }
 
@@ -45,28 +46,39 @@ export async function createSession(userId: string, puzzleId: string) {
     return toSessionResponse(existing);
   }
 
-  const puzzle = await SudokuPuzzle.findById(puzzleId).lean();
-  if (!puzzle) return null;
+  const puzzle = await SudokuPuzzle.findOne({ puzzleId }).lean();
+  if (!puzzle) throw new Error("puzzle_not_found");
 
-  const session = await PlaySession.create({
-    userId,
-    puzzleId,
-    difficulty: puzzle.difficulty,
-    currentBoard: puzzle.puzzle,
-    initialBoard: puzzle.puzzle,
-    notes: createEmptyNotes(),
-    status: "playing",
-    startedAt: new Date(),
-    lastSavedAt: new Date(),
-  });
-
-  return toSessionResponse(session);
+  try {
+    const session = await PlaySession.create({
+      userId,
+      puzzleId,
+      difficulty: puzzle.difficulty,
+      currentBoard: puzzle.puzzle,
+      initialBoard: puzzle.puzzle,
+      notes: createEmptyNotes(),
+      status: "playing",
+      startedAt: new Date(),
+      lastSavedAt: new Date(),
+    });
+    return toSessionResponse(session);
+  } catch (error: any) {
+    if (error?.code === 11000) {
+      const existing = await PlaySession.findOne({
+        userId,
+        puzzleId,
+        status: { $in: ["playing", "paused"] },
+      }).lean();
+      if (existing) return toSessionResponse(existing);
+    }
+    throw error;
+  }
 }
 
 export async function getSession(sessionId: string, userId: string) {
   await connectDB();
   const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) return null;
+  if (!session) throw new Error("session_not_found");
   return toSessionResponse(session);
 }
 
@@ -85,28 +97,23 @@ export async function getActiveSession(userId: string) {
 export async function pauseSession(sessionId: string, userId: string) {
   await connectDB();
   const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) return null;
-  if (session.status !== "playing") return null;
+  if (!session) throw new Error("session_not_found");
+  if (session.status !== "playing") throw new Error("session_not_active");
 
   const updated = await PlaySession.findOneAndUpdate(
     { _id: sessionId, userId },
     { status: "paused", pausedAt: new Date(), lastSavedAt: new Date() },
     { new: true }
   ).lean();
-  if (!updated) return null;
+  if (!updated) throw new Error("session_not_found");
   return toSessionResponse(updated);
 }
 
 export async function resumeSession(sessionId: string, userId: string) {
   await connectDB();
   const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) return null;
-  if (session.status !== "paused") return null;
-
-  const elapsed = session.elapsedTime || 0;
-  const pausedDuration = session.pausedAt
-    ? Math.floor((Date.now() - new Date(session.pausedAt).getTime()) / 1000)
-    : 0;
+  if (!session) throw new Error("session_not_found");
+  if (session.status !== "paused") throw new Error("session_not_paused");
 
   const updated = await PlaySession.findOneAndUpdate(
     { _id: sessionId, userId },
@@ -117,7 +124,7 @@ export async function resumeSession(sessionId: string, userId: string) {
     },
     { new: true }
   ).lean();
-  if (!updated) return null;
+  if (!updated) throw new Error("session_not_found");
   return toSessionResponse(updated);
 }
 
@@ -127,23 +134,31 @@ export async function saveProgress(
   input: SaveProgressInput
 ) {
   await connectDB();
-  const update: any = {
+
+  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
+  if (!session) throw new Error("session_not_found");
+  if (!["playing", "paused"].includes(session.status)) throw new Error("session_not_active");
+
+  const $set: any = {
     currentBoard: input.board,
     elapsedTime: input.elapsedTime,
     lastSavedAt: new Date(),
   };
 
-  if (input.notes) {
-    update.notes = input.notes;
-  }
+  if (input.hintsUsed !== undefined) $set.hintsUsed = input.hintsUsed;
+  if (input.mistakes !== undefined) $set.mistakes = input.mistakes;
+  if (input.moves !== undefined) $set.moves = input.moves;
+  if (input.notes) $set.notes = input.notes;
+
+  const update: any = { $set };
 
   const updated = await PlaySession.findOneAndUpdate(
     { _id: sessionId, userId, status: { $in: ["playing", "paused"] } },
-    { $set: update },
+    update,
     { new: true }
   ).lean();
 
-  if (!updated) return null;
+  if (!updated) throw new Error("session_not_active");
   return toSessionResponse(updated);
 }
 
@@ -158,8 +173,8 @@ export async function autosave(
 export async function restartSession(sessionId: string, userId: string) {
   await connectDB();
   const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) return null;
-  if (session.status === "completed") return null;
+  if (!session) throw new Error("session_not_found");
+  if (session.status === "completed") throw new Error("already_completed");
 
   const updated = await PlaySession.findOneAndUpdate(
     { _id: sessionId, userId },
@@ -169,10 +184,11 @@ export async function restartSession(sessionId: string, userId: string) {
         notes: createEmptyNotes(),
         elapsedTime: 0,
         hintsUsed: 0,
-        mistakes: [],
-        moves: [],
+        mistakes: 0,
+        moves: 0,
         result: "incomplete",
         score: 0,
+        status: "playing",
         lastSavedAt: new Date(),
       },
       $inc: { restartCount: 1 },
@@ -180,14 +196,27 @@ export async function restartSession(sessionId: string, userId: string) {
     { new: true }
   ).lean();
 
-  if (!updated) return null;
+  if (!updated) throw new Error("session_not_found");
   return toSessionResponse(updated);
 }
 
 export async function replayPuzzle(userId: string, puzzleId: string) {
   await connectDB();
-  const puzzle = await SudokuPuzzle.findById(puzzleId).lean();
-  if (!puzzle) return null;
+
+  const existing = await PlaySession.findOne({
+    userId,
+    puzzleId,
+    status: { $in: ["playing", "paused"] },
+  }).lean();
+  if (existing) {
+    await PlaySession.findOneAndUpdate(
+      { _id: existing._id },
+      { $set: { status: "abandoned", result: "gave_up" } }
+    );
+  }
+
+  const puzzle = await SudokuPuzzle.findOne({ puzzleId }).lean();
+  if (!puzzle) throw new Error("puzzle_not_found");
 
   const session = await PlaySession.create({
     userId,
@@ -197,6 +226,7 @@ export async function replayPuzzle(userId: string, puzzleId: string) {
     initialBoard: puzzle.puzzle,
     notes: createEmptyNotes(),
     status: "playing",
+    isReplay: true,
     startedAt: new Date(),
     lastSavedAt: new Date(),
   });
@@ -207,8 +237,9 @@ export async function replayPuzzle(userId: string, puzzleId: string) {
 export async function abandonSession(sessionId: string, userId: string) {
   await connectDB();
   const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) return null;
-  if (session.status === "completed") return null;
+  if (!session) throw new Error("session_not_found");
+  if (session.status === "completed") throw new Error("already_completed");
+  if (!["playing", "paused"].includes(session.status)) throw new Error("session_not_active");
 
   const updated = await PlaySession.findOneAndUpdate(
     { _id: sessionId, userId },
@@ -222,7 +253,7 @@ export async function abandonSession(sessionId: string, userId: string) {
     { new: true }
   ).lean();
 
-  if (!updated) return null;
+  if (!updated) throw new Error("session_not_found");
   return toSessionResponse(updated);
 }
 
@@ -231,14 +262,18 @@ export async function completeSession(
   userId: string,
   board: string,
   elapsedTime: number,
+  hintsUsed?: number,
+  mistakes?: number,
+  moves?: number,
   score?: number
 ) {
   await connectDB();
   const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) return null;
-  if (session.status === "completed") return null;
+  if (!session) throw new Error("session_not_found");
+  if (session.status === "completed") throw new Error("already_completed");
+  if (!["playing", "paused"].includes(session.status)) throw new Error("session_not_active");
 
-  const update: any = {
+  const $set: any = {
     status: "completed",
     currentBoard: board,
     elapsedTime,
@@ -246,15 +281,18 @@ export async function completeSession(
     completedAt: new Date(),
     lastSavedAt: new Date(),
   };
-  if (score !== undefined) update.score = score;
+  if (hintsUsed !== undefined) $set.hintsUsed = hintsUsed;
+  if (mistakes !== undefined) $set.mistakes = mistakes;
+  if (moves !== undefined) $set.moves = moves;
+  if (score !== undefined) $set.score = score;
 
   const updated = await PlaySession.findOneAndUpdate(
     { _id: sessionId, userId },
-    { $set: update },
+    { $set },
     { new: true }
   ).lean();
 
-  if (!updated) return null;
+  if (!updated) throw new Error("session_not_found");
   return toSessionResponse(updated);
 }
 
@@ -304,6 +342,54 @@ export async function getResumableSession(userId: string) {
   })
     .sort({ lastSavedAt: -1 })
     .lean();
-  if (!session) return null;
-  return toSessionResponse(session);
+  if (!session) return { hasActiveSession: false };
+
+  const puzzle = await SudokuPuzzle.findOne({ puzzleId: session.puzzleId }).lean();
+
+  // If board is fully filled (no '0' cells), verify it. If solved,
+  // auto-complete rather than returning a session the user can't make
+  // progress on. Eliminates the tab-close / network-failure race.
+  const board = session.currentBoard || ""
+  if (puzzle && board.length === 81 && !board.includes("0")) {
+    try {
+      const verification = await verifyCompletion(board, puzzle.solution)
+      if (verification.valid) {
+        const elapsedTime = session.elapsedTime || 0
+        const hintsUsed = session.hintsUsed || 0
+        const mistakes = session.mistakes || 0
+        const moves = session.moves || 0
+        const score = calculateScore(
+          puzzle.difficulty as any,
+          elapsedTime,
+          hintsUsed,
+          mistakes,
+        )
+        await completeSession(
+          String(session._id),
+          userId,
+          board,
+          elapsedTime,
+          hintsUsed,
+          mistakes,
+          moves,
+          score,
+        )
+        return { hasActiveSession: false }
+      }
+    } catch {
+      // Verification failure should not prevent the user from
+      // continuing — fall through to normal session return.
+    }
+  }
+
+  const base = toSessionResponse(session);
+  return {
+    hasActiveSession: true,
+    session: {
+      ...base,
+      puzzle: puzzle
+        ? { puzzleId: puzzle.puzzleId, difficulty: puzzle.difficulty, puzzle: puzzle.puzzle, solution: puzzle.solution }
+        : undefined,
+    },
+  };
 }

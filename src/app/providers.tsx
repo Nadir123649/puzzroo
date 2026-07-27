@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { ensureSession } from '@/lib/auth/frontend-auth'
 
 type Theme = 'light' | 'dark'
@@ -16,8 +16,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light')
   const [mounted, setMounted] = useState(false)
+  const fetchedRef = useRef(false)
 
   useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
+
     // Validate/repair the session on load so navbar + guards reflect reality.
     ensureSession().catch(() => {})
 

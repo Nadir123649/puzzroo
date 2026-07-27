@@ -1,112 +1,106 @@
 
 > puzzroo@0.1.0 dev
-> next dev -p 3000
+> next dev -p 3000 -p 3001
 
-Ôû▓ Next.js 16.2.7 (Turbopack)
-- Local:         http://localhost:3000
-- Network:       http://192.168.100.169:3000
+Γû▓ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.10.229:3001
 - Environments: .env.local
-Ô£ô Ready in 1021ms
-ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+Γ£ô Ready in 1197ms
 
- GET /signup 200 in 1072ms (next.js: 430ms, proxy.ts: 175ms, application-code: 467ms)
- GET / 200 in 292ms (next.js: 62ms, proxy.ts: 14ms, application-code: 216ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 31.4s (next.js: 1349ms, application-code: 30.1s)
- GET / 200 in 121ms (next.js: 8ms, proxy.ts: 15ms, application-code: 98ms)
- GET /manifest.webmanifest 200 in 67ms (next.js: 59ms, application-code: 8ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 17ms (next.js: 3ms, application-code: 14ms)
- GET / 200 in 20ms (next.js: 5ms, proxy.ts: 3ms, application-code: 11ms)
- GET / 200 in 20ms (next.js: 6ms, proxy.ts: 5ms, application-code: 8ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 11ms (next.js: 4ms, application-code: 8ms)
- GET / 200 in 24ms (next.js: 9ms, proxy.ts: 6ms, application-code: 9ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 12ms (next.js: 3ms, application-code: 9ms)
- GET / 200 in 21ms (next.js: 5ms, proxy.ts: 3ms, application-code: 12ms)
- GET / 200 in 19ms (next.js: 5ms, proxy.ts: 2ms, application-code: 11ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 64ms (next.js: 5ms, application-code: 59ms)
- GET / 200 in 18ms (next.js: 6ms, proxy.ts: 3ms, application-code: 9ms)
- GET / 200 in 21ms (next.js: 7ms, proxy.ts: 3ms, application-code: 12ms)
- GET / 200 in 16ms (next.js: 5ms, proxy.ts: 2ms, application-code: 9ms)
- GET / 200 in 16ms (next.js: 5ms, proxy.ts: 3ms, application-code: 9ms)
- GET / 200 in 14ms (next.js: 5ms, proxy.ts: 2ms, application-code: 7ms)
- GET / 200 in 16ms (next.js: 5ms, proxy.ts: 3ms, application-code: 8ms)
- GET / 200 in 28ms (next.js: 10ms, proxy.ts: 4ms, application-code: 14ms)
- GET / 200 in 16ms (next.js: 5ms, proxy.ts: 2ms, application-code: 9ms)
- GET / 200 in 15ms (next.js: 5ms, proxy.ts: 2ms, application-code: 8ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 28ms (next.js: 13ms, application-code: 15ms)
- GET / 200 in 15ms (next.js: 5ms, proxy.ts: 3ms, application-code: 8ms)
- GET / 200 in 15ms (next.js: 5ms, proxy.ts: 3ms, application-code: 7ms)
- GET / 200 in 17ms (next.js: 5ms, proxy.ts: 2ms, application-code: 10ms)
- GET / 200 in 15ms (next.js: 5ms, proxy.ts: 2ms, application-code: 8ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 10ms (next.js: 3ms, application-code: 7ms)
- GET / 200 in 195ms (next.js: 8ms, proxy.ts: 3ms, application-code: 184ms)
- GET /manifest.webmanifest 200 in 22ms (next.js: 7ms, application-code: 15ms)
- GET / 200 in 118ms (next.js: 6ms, proxy.ts: 7ms, application-code: 105ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 28ms (next.js: 5ms, application-code: 23ms)
- GET /manifest.webmanifest 200 in 16ms (next.js: 8ms, application-code: 8ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 12ms (next.js: 4ms, application-code: 8ms)
- GET / 200 in 143ms (next.js: 12ms, proxy.ts: 5ms, application-code: 125ms)
- GET /manifest.webmanifest 200 in 15ms (next.js: 7ms, application-code: 8ms)
- GET / 200 in 20ms (next.js: 10ms, proxy.ts: 2ms, application-code: 7ms)
- GET / 200 in 26ms (next.js: 11ms, proxy.ts: 3ms, application-code: 12ms)
- GET / 200 in 23ms (next.js: 10ms, proxy.ts: 3ms, application-code: 10ms)
- GET / 200 in 24ms (next.js: 6ms, proxy.ts: 6ms, application-code: 12ms)
- GET / 200 in 33ms (next.js: 10ms, proxy.ts: 4ms, application-code: 19ms)
- GET / 200 in 29ms (next.js: 10ms, proxy.ts: 3ms, application-code: 16ms)
- GET / 200 in 32ms (next.js: 12ms, proxy.ts: 4ms, application-code: 16ms)
- GET / 200 in 31ms (next.js: 7ms, proxy.ts: 5ms, application-code: 19ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 27ms (next.js: 10ms, application-code: 17ms)
- GET / 200 in 32ms (next.js: 12ms, proxy.ts: 4ms, application-code: 17ms)
- GET / 200 in 32ms (next.js: 12ms, proxy.ts: 5ms, application-code: 15ms)
- GET / 200 in 31ms (next.js: 10ms, proxy.ts: 5ms, application-code: 16ms)
- GET / 200 in 34ms (next.js: 13ms, proxy.ts: 5ms, application-code: 16ms)
- GET / 200 in 19ms (next.js: 7ms, proxy.ts: 4ms, application-code: 9ms)
- GET / 200 in 24ms (next.js: 10ms, proxy.ts: 3ms, application-code: 11ms)
- GET / 200 in 21ms (next.js: 6ms, proxy.ts: 3ms, application-code: 12ms)
- GET / 200 in 21ms (next.js: 6ms, proxy.ts: 3ms, application-code: 12ms)
- GET / 200 in 17ms (next.js: 6ms, proxy.ts: 3ms, application-code: 8ms)
- GET / 200 in 23ms (next.js: 5ms, proxy.ts: 3ms, application-code: 15ms)
- GET / 200 in 22ms (next.js: 8ms, proxy.ts: 4ms, application-code: 10ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 29ms (next.js: 8ms, application-code: 21ms)
- GET /manifest.webmanifest 200 in 30ms (next.js: 11ms, application-code: 19ms)
- GET / 200 in 49ms (next.js: 21ms, proxy.ts: 10ms, application-code: 18ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 26ms (next.js: 7ms, application-code: 18ms)
- GET /api/v1/health 503 in 251ms (next.js: 239ms, application-code: 12ms)
- GET /game/cross-math 200 in 3.8s (next.js: 3.6s, proxy.ts: 8ms, generate-params: 2.3s, application-code: 216ms)
- GET /manifest.webmanifest 200 in 34ms (next.js: 10ms, application-code: 24ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 27ms (next.js: 15ms, application-code: 13ms)
- GET / 200 in 63ms (next.js: 11ms, proxy.ts: 5ms, application-code: 47ms)
- GET /manifest.webmanifest 200 in 32ms (next.js: 8ms, application-code: 24ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 17ms (next.js: 5ms, application-code: 12ms)
- GET / 200 in 56ms (next.js: 15ms, proxy.ts: 8ms, application-code: 33ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 23ms (next.js: 7ms, application-code: 16ms)
- GET / 200 in 32ms (next.js: 8ms, proxy.ts: 5ms, application-code: 18ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 31ms (next.js: 10ms, application-code: 21ms)
- GET / 200 in 36ms (next.js: 15ms, proxy.ts: 7ms, application-code: 14ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 15ms (next.js: 4ms, application-code: 11ms)
- GET /login 200 in 124ms (next.js: 52ms, proxy.ts: 3ms, application-code: 70ms)
- GET / 200 in 157ms (next.js: 10ms, proxy.ts: 4ms, application-code: 144ms)
- GET /manifest.webmanifest 200 in 20ms (next.js: 7ms, application-code: 13ms)
- GET / 200 in 15ms (next.js: 5ms, proxy.ts: 3ms, application-code: 8ms)
- GET / 200 in 17ms (next.js: 5ms, proxy.ts: 2ms, application-code: 10ms)
- GET / 200 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
- GET / 200 in 16ms (next.js: 6ms, proxy.ts: 2ms, application-code: 8ms)
- GET / 200 in 15ms (next.js: 5ms, proxy.ts: 2ms, application-code: 8ms)
-[track] ingestion error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
- POST /api/v1/track 202 in 16ms (next.js: 4ms, application-code: 11ms)
+ GET /api/v1/games/crossmath/continue 401 in 1731ms (next.js: 1684ms, application-code: 47ms)
+[TRACE] POST /save {
+  sessionId: 'test-lc-178515595092',
+  userId: '6a67516e09',
+  ts: 1785155954270
+}
+[TRACE] saveProgress called {
+  sessionId: 'test-lc-178515595092',
+  userId: '6a67516e09',
+  gridSize: 4,
+  elapsedTime: 120,
+  ts: 1785155954288
+}
+(node:19448) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[TRACE] saveProgress result {
+  sessionId: 'test-lc-178515595092',
+  found: true,
+  status: 'playing',
+  ts: 1785155954531
+}
+[TRACE] POST /save: result {
+  sessionId: 'test-lc-178515595092',
+  status: 'playing',
+  ts: 1785155954533
+}
+ POST /api/v1/games/crossmath/sessions/test-lc-1785155950929/save 200 in 3.4s (next.js: 2.0s, application-code: 1358ms)
+[TRACE] GET /crossmath/continue { userId: '6a67516e09', ts: 1785155954690 }
+[TRACE] getContinuePlaying { userId: '6a67516e09', ts: 1785155954692 }
+[TRACE] getContinuePlaying: session found {
+  sessionId: 'test-lc-178515595092',
+  status: 'playing',
+  puzzleId: 'crossmath-7x7-easy-f',
+  blanksCount: 4,
+  gridKeys: 4,
+  ts: 1785155954813
+}
+[TRACE] getContinuePlaying: auto-complete check {
+  sessionId: 'test-lc-178515595092',
+  filledCount: 4,
+  blanksLength: 4,
+  allFilled: true,
+  shouldAutoComplete: true,
+  ts: 1785155954814
+}
+[DebugVerify] eq=classic_h_0 cell=0-0 type=BLANK?true sol=9 playerPresent=true playerVal=9
+[DebugVerify] eq=classic_h_0 cell=0-2 type=BLANK?false sol=6 playerPresent=false playerVal=6
+[DebugVerify] eq=classic_h_0 cell=0-4 type=BLANK?true sol=3 playerPresent=true playerVal=3
+[DebugVerify] eq=classic_h_0 cell=0-6 type=BLANK?false sol=12 playerPresent=false playerVal=12
+[DebugVerify] eq=classic_h_0 operands=[9,6,3] ops=[+,-] computed=12 expected=12 correct=true
+[DebugVerify] eq=classic_h_2 cell=2-0 type=BLANK?false sol=6 playerPresent=false playerVal=6
+[DebugVerify] eq=classic_h_2 cell=2-2 type=BLANK?true sol=7 playerPresent=true playerVal=7
+[DebugVerify] eq=classic_h_2 cell=2-4 type=BLANK?false sol=6 playerPresent=false playerVal=6
+[DebugVerify] eq=classic_h_2 cell=2-6 type=BLANK?false sol=7 playerPresent=false playerVal=7
+[DebugVerify] eq=classic_h_2 operands=[6,7,6] ops=[+,-] computed=7 expected=7 correct=true
+[DebugVerify] eq=classic_h_4 cell=4-0 type=BLANK?false sol=5 playerPresent=false playerVal=5
+[DebugVerify] eq=classic_h_4 cell=4-2 type=BLANK?true sol=7 playerPresent=true playerVal=7
+[DebugVerify] eq=classic_h_4 cell=4-4 type=BLANK?false sol=4 playerPresent=false playerVal=4
+[DebugVerify] eq=classic_h_4 cell=4-6 type=BLANK?false sol=8 playerPresent=false playerVal=8
+[DebugVerify] eq=classic_h_4 operands=[5,7,4] ops=[+,-] computed=8 expected=8 correct=true
+[DebugVerify] eq=classic_v_0 cell=0-0 type=BLANK?true sol=9 playerPresent=true playerVal=9
+[DebugVerify] eq=classic_v_0 cell=2-0 type=BLANK?false sol=6 playerPresent=false playerVal=6
+[DebugVerify] eq=classic_v_0 cell=4-0 type=BLANK?false sol=5 playerPresent=false playerVal=5
+[DebugVerify] eq=classic_v_0 cell=6-0 type=BLANK?false sol=10 playerPresent=false playerVal=10
+[DebugVerify] eq=classic_v_0 operands=[9,6,5] ops=[+,-] computed=10 expected=10 correct=true
+[DebugVerify] eq=classic_v_2 cell=0-2 type=BLANK?false sol=6 playerPresent=false playerVal=6
+[DebugVerify] eq=classic_v_2 cell=2-2 type=BLANK?true sol=7 playerPresent=true playerVal=7
+[DebugVerify] eq=classic_v_2 cell=4-2 type=BLANK?true sol=7 playerPresent=true playerVal=7
+[DebugVerify] eq=classic_v_2 cell=6-2 type=BLANK?false sol=6 playerPresent=false playerVal=6
+[DebugVerify] eq=classic_v_2 operands=[6,7,7] ops=[+,-] computed=6 expected=6 correct=true
+[DebugVerify] eq=classic_v_4 cell=0-4 type=BLANK?true sol=3 playerPresent=true playerVal=3
+[DebugVerify] eq=classic_v_4 cell=2-4 type=BLANK?false sol=6 playerPresent=false playerVal=6
+[DebugVerify] eq=classic_v_4 cell=4-4 type=BLANK?false sol=4 playerPresent=false playerVal=4
+[DebugVerify] eq=classic_v_4 cell=6-4 type=BLANK?false sol=5 playerPresent=false playerVal=5
+[DebugVerify] eq=classic_v_4 operands=[3,6,4] ops=[+,-] computed=5 expected=5 correct=true
+[TRACE] getContinuePlaying: verify result {
+  sessionId: 'test-lc-178515595092',
+  completed: true,
+  allCorrect: true,
+  ts: 1785155954966
+}
+[TRACE] getContinuePlaying: auto-completing { sessionId: 'test-lc-178515595092', score: 60, ts: 1785155954968 }
+(node:19448) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+[TRACE] getContinuePlaying: auto-complete result {
+  sessionId: 'test-lc-178515595092',
+  success: true,
+  newStatus: 'completed',
+  ts: 1785155955093
+}
+[TRACE] GET /crossmath/continue: response { hasActiveSession: false, ts: 1785155955094 }
+ GET /api/v1/games/crossmath/continue 200 in 427ms (next.js: 9ms, application-code: 418ms)
+[TRACE] GET /crossmath/continue { userId: '6a67516e09', ts: 1785155955235 }
+[TRACE] getContinuePlaying { userId: '6a67516e09', ts: 1785155955235 }
+[TRACE] getContinuePlaying: no active session { userId: '6a67516e09', ts: 1785155955353 }
+[TRACE] GET /crossmath/continue: response { hasActiveSession: false, ts: 1785155955354 }
+ GET /api/v1/games/crossmath/continue 200 in 138ms (next.js: 9ms, application-code: 129ms)

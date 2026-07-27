@@ -42,7 +42,7 @@ async selectRandom(options: SelectRandomOptions, page = 1, pageSize = 20, shapeN
     if (excludeActive) {
       const active = await CrossMathPlaySession.find({
         userId,
-        status: { $in: ["active", "paused"] },
+        status: { $in: ["playing", "paused"] },
       }).distinct("puzzleId")
       excludeIds.push(...active.map(id => id.toString()))
     }
@@ -121,7 +121,7 @@ async selectRandom(options: SelectRandomOptions, page = 1, pageSize = 20, shapeN
     try {
       played = await CrossMathPlaySession.find({
         userId,
-        status: { $in: ["completed", "active", "paused"] },
+        status: { $in: ["completed", "playing", "paused"] },
       }).distinct("puzzleId")
     } catch (e: any) {
       if (e.name !== "CastError") throw e
