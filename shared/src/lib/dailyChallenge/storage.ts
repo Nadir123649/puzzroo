@@ -16,6 +16,20 @@ interface ChallengeProgress {
   }
 }
 
+function getScopedKey(): string {
+  if (typeof window === 'undefined') return STORAGE_KEY
+  try {
+    const userStr = localStorage.getItem("puzzroo_user")
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      if (user && user.id) {
+        return `${STORAGE_KEY}_${user.id}`
+      }
+    }
+  } catch {}
+  return `${STORAGE_KEY}_guest`
+}
+
 /**
  * Get all challenge progress
  */
@@ -23,7 +37,8 @@ export function getChallengeProgress(): ChallengeProgress {
   if (typeof window === 'undefined') return {}
   
   try {
-    const data = localStorage.getItem(STORAGE_KEY)
+    const key = getScopedKey()
+    const data = localStorage.getItem(key)
     return data ? JSON.parse(data) : {}
   } catch {
     return {}
@@ -47,7 +62,8 @@ export function updateChallengeStatus(
       completedAt: status === 'completed' ? Date.now() : undefined,
       ...metadata,
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
+    const key = getScopedKey()
+    localStorage.setItem(key, JSON.stringify(progress))
   } catch (error) {
     console.error('Failed to update challenge status:', error)
   }

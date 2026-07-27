@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Clock, Check, ChevronLeft, ChevronRight } from 'lucide-react'
-import { getPuzzlesByDifficulty } from '@shared/data/nonogram'
 import { getCompletedPuzzleIds } from '@shared/lib/nonogram/completion'
 import { useGameLobby } from '@/contexts/GameLobbyContext'
 import { images } from '@/lib/utils'
@@ -26,10 +25,19 @@ export function NonogramPuzzleGrid() {
     setCompletedIds(getCompletedPuzzleIds())
   }, [])
 
-  const allPuzzles = useMemo(
-    () => getPuzzlesByDifficulty(selectedDifficulty as Difficulty),
-    [selectedDifficulty]
-  )
+  const [allPuzzles, setAllPuzzles] = useState<any[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      const { getPuzzlesByDifficulty } = await import('@shared/data/nonogram')
+      if (!cancelled) {
+        setAllPuzzles(getPuzzlesByDifficulty(selectedDifficulty as Difficulty))
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [selectedDifficulty])
 
   const totalPages = Math.max(1, Math.ceil(allPuzzles.length / ITEMS_PER_PAGE))
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE

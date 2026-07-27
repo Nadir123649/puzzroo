@@ -50,8 +50,14 @@ export function PolygonPiece({
   const dragStartPos = useRef<{ x: number; y: number } | null>(null)
   const pieceStartPos = useRef<{ x: number; y: number } | null>(null)
   const isDraggingRef = useRef(false)
+  const [isDragging, setIsDragging] = useState(false)
   const [showPulse, setShowPulse] = useState(false)
   const [dragRotation, setDragRotation] = useState<number | null>(null)
+
+  const disabledRef = useRef(disabled)
+  useEffect(() => {
+    disabledRef.current = disabled
+  }, [disabled])
 
   // Use transform.x and transform.y as STABLE center (never changes during rotation)
   const cx = piece.transform.x
@@ -80,13 +86,31 @@ export function PolygonPiece({
     dragStartPos.current = { x: e.clientX, y: e.clientY }
     pieceStartPos.current = { x: cx, y: cy }
     isDraggingRef.current = true
+    setIsDragging(true)
 
     // Capture the pointer to handle dragging on mobile/touch screens smoothly
     try {
       (target as HTMLElement).setPointerCapture(e.pointerId)
     } catch (err) {}
 
+    let frameId: number | null = null
+
     const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (disabledRef.current) {
+        isDraggingRef.current = false
+        setIsDragging(false)
+        dragStartPos.current = null
+        pieceStartPos.current = null
+        document.removeEventListener('pointermove', handlePointerMove)
+        document.removeEventListener('pointerup', handlePointerUp)
+        document.removeEventListener('pointercancel', handlePointerUp)
+        try {
+          (target as HTMLElement).releasePointerCapture(e.pointerId)
+        } catch (err) {}
+        if (frameId) cancelAnimationFrame(frameId)
+        return
+      }
+
       if (!dragStartPos.current || !pieceStartPos.current) return
 
       const deltaX = moveEvent.clientX - dragStartPos.current.x
@@ -101,13 +125,19 @@ export function PolygonPiece({
       const clampedX = Math.max(0, Math.min(VIRTUAL_W, newCenterX))
       const clampedY = Math.max(0, Math.min(VIRTUAL_H, newCenterY))
 
-      onMove(clampedX, clampedY, () => {
-        setShowPulse(true)
-        setTimeout(() => setShowPulse(false), 600)
+      if (frameId) cancelAnimationFrame(frameId)
+      frameId = requestAnimationFrame(() => {
+        onMove(clampedX, clampedY, () => {
+          setShowPulse(true)
+          setTimeout(() => setShowPulse(false), 600)
+        })
       })
     }
 
     const handlePointerUp = (upEvent: PointerEvent) => {
+      if (frameId) {
+        cancelAnimationFrame(frameId)
+      }
       try {
         (target as HTMLElement).releasePointerCapture(upEvent.pointerId)
       } catch (err) {}
@@ -119,6 +149,7 @@ export function PolygonPiece({
       dragStartPos.current = null
       pieceStartPos.current = null
       isDraggingRef.current = false
+      setIsDragging(false)
       document.removeEventListener('pointermove', handlePointerMove)
       document.removeEventListener('pointerup', handlePointerUp)
       document.removeEventListener('pointercancel', handlePointerUp)
@@ -136,7 +167,7 @@ export function PolygonPiece({
   const totalRotation = dragRotation !== null ? dragRotation : piece.transform.rotation
   const isRotating = dragRotation !== null
 
-  const isAnimating = !isDraggingRef.current
+  const isAnimating = !isDragging
   const positionTransition = isAnimating
     ? 'left 0.3s cubic-bezier(0.25, 1, 0.5, 1), top 0.3s cubic-bezier(0.25, 1, 0.5, 1)'
     : 'none'

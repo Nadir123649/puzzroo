@@ -24,7 +24,9 @@ interface PastPuzzlesContentProps {
 }
 
 export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
+  const router = useRouter()
   const [puzzles, setPuzzles] = useState<DailyChallenge[]>([])
+  const [isNavigatingBack, setIsNavigatingBack] = useState(false)
   
   // Persist filter + selected date in sessionStorage so navigation doesn't reset them
   const storageKey = `puzzroo_past_filter_${gameId}`
@@ -52,9 +54,9 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [completedPuzzles, setCompletedPuzzles] = useState<Set<string>>(new Set())
   const [authed, setAuthed] = useState(false)
+  const [isPremiumUser, setIsPremiumUser] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 8
-  const accessibleCount = getAccessiblePastChallenges(authed)
   const { theme } = useTheme()
   const [userLoggedIn, setUserLoggedIn] = useState(false)
 
@@ -63,8 +65,13 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   }, [])
 
   useEffect(() => {
-    setAuthed(isLoggedIn())
+    const isUserAuthed = isLoggedIn()
+    setAuthed(isUserAuthed)
+    const user = getCurrentUser()
+    setIsPremiumUser(user?.subscriptionPlan === 'premium' || user?.role === 'premium')
   }, [])
+
+  const accessibleCount = isPremiumUser ? 24 : (authed ? 7 : 3)
 
   // Persist filter changes to sessionStorage
   const handleFilterChange = (newFilter: 'all' | 'not-started' | 'in-progress' | 'completed') => {
@@ -124,23 +131,38 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     
     // Update status from localStorage and apply lock
     const withStatus = generated.map((puzzle, index) => {
-      if (authed) {
+      const actualStatus = getChallengeStatus(puzzle.id)
+      const isCompleted = completedPuzzles.has(puzzle.id)
+      
+      // If it's already in progress or completed, keep its status and do NOT lock
+      if (actualStatus === 'in-progress' || isCompleted) {
         return {
           ...puzzle,
-          status: getChallengeStatus(puzzle.id),
+          status: isCompleted ? 'completed' : actualStatus,
         }
       }
+      
+      // If the user is premium, they can access everything
+      if (isPremiumUser) {
+        return {
+          ...puzzle,
+          status: actualStatus,
+        }
+      }
+      
+      // Otherwise, lock if beyond accessible count
       if (index >= accessibleCount) {
         return { ...puzzle, status: 'locked' as DailyChallengeStatus }
       }
+      
       return {
         ...puzzle,
-        status: getChallengeStatus(puzzle.id),
+        status: actualStatus,
       }
     })
     
     setPuzzles(withStatus)
-  }, [gameId, accessibleCount, authed])
+  }, [gameId, accessibleCount, authed, isPremiumUser, completedPuzzles])
 
   // Filter puzzles
   const filteredPuzzles = puzzles.filter(p => {
@@ -207,6 +229,12 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     }
   }
 
+  const handleBackToHome = async () => {
+    setIsNavigatingBack(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    router.push('/')
+  }
+
   return (
     <>
       <Navbar />
@@ -214,14 +242,16 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
         <div className="w-full px-[20px] max-w-[1380px] mx-auto">
           
           {/* Back Arrow */}
-          <Link href="/" className="hidden md:inline-block">
+          <div className="hidden md:inline-block">
             <button
-              className="w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95"
+              onClick={handleBackToHome}
+              disabled={isNavigatingBack}
+              className="w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
               aria-label="Back to home"
             >
               <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
             </button>
-          </Link>
+          </div>
 
           {/* Main Container with Border */}
           <div className="border-[0.95px] border-[#979797] dark:border-[#E0E0E0] rounded-3xl pt-4 pb-4 pl-3 pr-3 md:p-6 md:pb-6 md:mt-5">
@@ -353,7 +383,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
       />
 
       {/* Loading Overlay */}
-      <GameLoader isOpen={isLoading} text="Loading game..." />
+      <GameLoader isOpen={isLoading || isNavigatingBack} text={isNavigatingBack ? "Navigating..." : "Loading game..."} />
     </>
   )
 }
@@ -468,17 +498,8 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
     onPlayClick(true)
     // Show loading for 1 second
     await new Promise(resolve => setTimeout(resolve, 1000))
-    // Route directly to game page with date in URL
-    const gameUrl = puzzle.gameId === 'sudoku' 
-      ? `/sudoku?date=${puzzle.dateString}` 
-      : puzzle.gameId === 'cross-math' 
-        ? `/cross-math?date=${puzzle.dateString}` 
-        : puzzle.gameId === 'nonogram' 
-          ? `/nonogram?date=${puzzle.dateString}&skipSelection=true` 
-          : puzzle.gameId === 'tangram'
-            ? `/tangram?date=${puzzle.dateString}`
-            : '/sudoku'
-    router.push(gameUrl)
+    // Route directly to daily challenge page with date in URL
+    router.push(`/daily-challenge/${puzzle.gameId}?date=${puzzle.dateString}`)
   }
 
   return (

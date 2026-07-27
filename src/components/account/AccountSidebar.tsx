@@ -55,11 +55,10 @@ export function AccountSidebar() {
 
   const visibleItems = menuItems.filter((item) => !item.adminOnly || isAdmin)
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     notify.successKey('AUTH_LOGOUT_SUCCESS')
-    router.push('/login')
-    router.refresh()
+    window.location.replace('/login')
   }
 
   const isActive = (href: string) => pathname === href

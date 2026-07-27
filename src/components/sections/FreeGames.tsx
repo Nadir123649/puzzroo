@@ -141,6 +141,7 @@ export function FreeGames() {
               key={game.id} 
               game={game} 
               isPlayed={playedGames.has(game.id)}
+              hasHistory={playedGames.size > 0}
             />
           ))}
         </div>
@@ -155,9 +156,10 @@ export function FreeGames() {
 interface GameCardComponentProps {
   game: GameCard
   isPlayed: boolean
+  hasHistory: boolean
 }
 
-function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
+function GameCardComponent({ game, isPlayed, hasHistory }: GameCardComponentProps) {
   const { theme } = useTheme()
   const router = useRouter()
   const isActive = ACTIVE_GAMES.includes(game.id)
@@ -249,7 +251,7 @@ function GameCardComponent({ game, isPlayed }: GameCardComponentProps) {
           <h3 className="font-urbanist font-bold text-[9px] md:text-[clamp(1rem,3vw,1.28rem)] leading-[120%] text-[#212121] dark:text-[#FAFAFA]">
             {game.title}
           </h3>
-          {isPlayed && (
+          {hasHistory && isPlayed && (
             <span className="font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#22C55E]">
               Recently Played
             </span>
