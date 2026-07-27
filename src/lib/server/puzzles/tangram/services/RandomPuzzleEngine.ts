@@ -1,31 +1,15 @@
-import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle"
-import NonogramPlaySession from "@/lib/server/models/NonogramPlaySession"
-import type { NonogramDifficulty } from "../types"
+import TangramPuzzle from "@/lib/server/models/TangramPuzzle"
+import type { TangramDifficulty } from "../types"
 
 interface SelectRandomOptions {
   userId: string
-  difficulty?: NonogramDifficulty
+  difficulty?: TangramDifficulty
   excludeCompleted?: boolean
   excludeActive?: boolean
   excludeRecentAbandons?: boolean
 }
 
 export class RandomPuzzleEngine {
-  async selectDailyPuzzle(dateStr: string, difficulty?: NonogramDifficulty) {
-    const matchFilter: Record<string, any> = { game: "nonogram", dailyIndex: { $exists: true } }
-    if (difficulty) matchFilter.difficulty = difficulty
-
-    const allPuzzles = await NonogramPuzzle.find(matchFilter)
-      .sort({ dailyIndex: 1 })
-      .lean()
-
-    if (allPuzzles.length === 0) throw new Error("no_daily_puzzles_available")
-
-    const dayOfYear = this.getDayOfYear(new Date(dateStr))
-    const puzzleIndex = dayOfYear % allPuzzles.length
-    return allPuzzles[puzzleIndex]
-  }
-
   async selectRandom(options: SelectRandomOptions) {
     const {
       userId,
@@ -35,13 +19,13 @@ export class RandomPuzzleEngine {
       excludeRecentAbandons = true,
     } = options
 
-    const matchFilter: any = { game: "nonogram", isActive: true }
+    const matchFilter: any = { game: "tangram", isActive: true }
     if (difficulty) matchFilter.difficulty = difficulty
 
     const excludeIds: string[] = []
 
     if (excludeCompleted) {
-      const completed = await NonogramPlaySession.find({
+      const completed = await TangramPlaySession.find({
         userId,
         status: "completed",
       }).distinct("puzzleId")
@@ -49,7 +33,7 @@ export class RandomPuzzleEngine {
     }
 
     if (excludeActive) {
-      const active = await NonogramPlaySession.find({
+      const active = await TangramPlaySession.find({
         userId,
         status: { $in: ["playing", "paused"] },
       }).distinct("puzzleId")
@@ -58,7 +42,7 @@ export class RandomPuzzleEngine {
 
     if (excludeRecentAbandons) {
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-      const recentAbandons = await NonogramPlaySession.find({
+      const recentAbandons = await TangramPlaySession.find({
         userId,
         status: "abandoned",
         lastSaveAt: { $gte: twentyFourHoursAgo },
@@ -75,12 +59,12 @@ export class RandomPuzzleEngine {
       { $sample: { size: 1 } },
     ]
 
-    const results = await NonogramPuzzle.aggregate(pipeline)
+    const results = await TangramPuzzle.aggregate(pipeline)
 
     if (results.length === 0) {
-      const fallbackMatch: any = { game: "nonogram", isActive: true }
+      const fallbackMatch: any = { game: "tangram", isActive: true }
       if (difficulty) fallbackMatch.difficulty = difficulty
-      const fallback = await NonogramPuzzle.aggregate([
+      const fallback = await TangramPuzzle.aggregate([
         { $match: fallbackMatch },
         { $sample: { size: 1 } },
       ])
@@ -90,6 +74,22 @@ export class RandomPuzzleEngine {
 
     return results[0]
   }
+
+  async selectDailyPuzzle(dateStr: string, difficulty?: TangramDifficulty) {
+    const matchFilter: Record<string, any> = { game: "tangram", dailyIndex: { $exists: true } }
+    if (difficulty) matchFilter.difficulty = difficulty
+
+    const allPuzzles = await TangramPuzzle.find(matchFilter)
+      .sort({ dailyIndex: 1 })
+      .lean()
+
+    if (allPuzzles.length === 0) throw new Error("no_daily_puzzles_available")
+
+    const dayOfYear = this.getDayOfYear(new Date(dateStr))
+    const puzzleIndex = dayOfYear % allPuzzles.length
+    return allPuzzles[puzzleIndex]
+  }
+
   private getDayOfYear(date: Date): number {
     const start = new Date(date.getFullYear(), 0, 0)
     return Math.floor((date.getTime() - start.getTime()) / 86400000)

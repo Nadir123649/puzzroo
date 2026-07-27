@@ -1,15 +1,6 @@
-export type SessionStatus = 'active' | 'paused' | 'completed' | 'abandoned'
-
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
-
-export interface PlayerCell {
-  state: 'empty' | 'filled' | 'marked'
-}
-
-export interface HintUsage {
-  hintCount: number
-  hintPositions: Array<{ row: number; col: number }>
-}
+export type NonogramDifficulty = 'easy' | 'medium' | 'hard' | 'expert'
+export type SessionStatus = 'playing' | 'paused' | 'completed' | 'abandoned'
+export type CellState = 'empty' | 'filled' | 'marked' | 'crossed'
 
 export interface VerificationResult {
   isComplete: boolean
@@ -18,25 +9,89 @@ export interface VerificationResult {
   incorrectCells: number
   accuracy: number
   mistakes: number
-  rowValidation: ValidationStatus[]
-  columnValidation: ValidationStatus[]
+  rowValidation: Array<'correct' | 'incorrect' | 'pending'>
+  columnValidation: Array<'correct' | 'incorrect' | 'pending'>
 }
 
-export type ValidationStatus = 'correct' | 'incorrect' | 'pending'
-
-export interface SessionResult {
+export interface SafeSessionResponse {
   sessionId: string
   puzzleId: string
-  difficulty: Difficulty
-  status: SessionStatus
-  elapsedSeconds: number
+  difficulty: NonogramDifficulty
+  sessionStatus: SessionStatus
+  grid: string[][]
+  mistakes: number
   hintsUsed: number
-  mistakeCount: number
-  accuracy: number
-  completedAt?: string
+  moves: number
+  elapsedTime: number
+  startedAt: string
+  pausedAt?: string | null
+  completedAt?: string | null
+  abandonedAt?: string | null
+  lastSaveAt: string
+  isReplay: boolean
+  restartCount: number
+  result?: {
+    accuracy: number
+    completedAt?: string | null
+    elapsedTime: number
+    moves: number
+    mistakes: number
+    hintsUsed: number
+    score: number
+  } | null
 }
 
-export interface UserGameStats {
+export interface SaveProgressResponse {
+  sessionId: string
+  sessionStatus: SessionStatus
+  lastSavedAt: string
+  moves: number
+  mistakes: number
+  hintsUsed: number
+  elapsedTime: number
+  progress: { filledCells: number; totalBlanks: number; percentage: number }
+}
+
+export interface CompleteSessionResponse {
+  isCompleted: boolean
+  result: {
+    sessionId: string
+    puzzleId: string
+    difficulty: NonogramDifficulty
+    completedAt: string
+    elapsedTime: number
+    moves: number
+    mistakes: number
+    hintsUsed: number
+    score: number
+    accuracy: number
+  } | null
+  verification: {
+    accuracy: number
+    isComplete: boolean
+    totalCellsRequired: number
+    correctCells: number
+    incorrectCells: number
+  }
+  session?: { elapsedTime: number; moves: number; mistakes: number; hintsUsed: number }
+}
+
+export interface ContinuePlayingInfo {
+  hasActiveSession: boolean
+  session?: SafeSessionResponse
+  puzzle?: {
+    id: string
+    title: string
+    difficulty: NonogramDifficulty
+    size: number
+    category: string
+    estimatedTime: number
+    rowClues: { values: number[] }[]
+    columnClues: { values: number[] }[]
+  }
+}
+
+export interface PlayerStats {
   totalPlayed: number
   totalCompleted: number
   totalAbandoned: number
@@ -46,67 +101,6 @@ export interface UserGameStats {
   bestTime: number
   averageTime: number
   averageAccuracy: number
-  favoriteDifficulty: string | null
-  perDifficulty: Record<string, DifficultyStats>
-}
-
-export interface DifficultyStats {
-  played: number
-  completed: number
-  bestTime: number
-  averageTime: number
-}
-
-export interface PuzzleStats {
-  puzzleId: string
-  difficulty: Difficulty
-  size: number
-  totalAttempts: number
-  totalCompletions: number
-  totalAbandons: number
-  averageTime: number
-  averageAccuracy: number
-  completionRate: number
-}
-
-export interface DailyChallengeInfo {
-  date: string
-  puzzleId: string
-  difficulty: Difficulty
-  title: string
-  status: SessionStatus | 'not_started'
-  elapsedSeconds: number
-  accuracy: number
-  hintsUsed: number
-  mistakes: number
-  completedAt?: string
-}
-
-export interface SessionSummary {
-  sessionId: string
-  puzzleId: string
-  puzzleTitle: string
-  difficulty: Difficulty
-  status: SessionStatus
-  elapsedSeconds: number
-  hintsUsed: number
-  mistakeCount: number
-  accuracy: number
-  createdAt: string
-  completedAt?: string
-}
-
-export interface ContinuePlayingInfo {
-  hasActiveSession: boolean
-  session?: SessionSummary
-  puzzle?: {
-    id: string
-    title: string
-    difficulty: Difficulty
-    size: number
-    category: string
-    estimatedTime: number
-    rowClues: { values: number[] }[]
-    columnClues: { values: number[] }[]
-  }
+  favoriteDifficulty: NonogramDifficulty | null
+  perDifficulty: Record<string, { played: number; completed: number; bestTime: number; averageTime: number }>
 }
