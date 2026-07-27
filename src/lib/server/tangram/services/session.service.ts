@@ -175,7 +175,7 @@ export async function restartSession(sessionId: string, userId: string) {
   session.pieceStates = initialPieceStates as any;
   session.elapsedSeconds = 0;
   session.hintsUsed = 0;
-  session.hints = [];
+  session.hints = [] as any;
   session.mistakes = 0;
   session.status = 'active';
   session.restartCount = (session.restartCount || 0) + 1;
@@ -228,7 +228,7 @@ export async function replaySession(
     userId,
     puzzleId: original.puzzleId,
     gameId: 'tangram',
-    difficulty: difficulty as "easy" | "medium" | "hard",
+    difficulty: original.difficulty as "easy" | "medium" | "hard",
     status: 'active',
     pieceStates: initialPieceStates as any,
     startedAt: new Date(),
