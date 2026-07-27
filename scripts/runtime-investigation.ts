@@ -62,7 +62,10 @@ async function main() {
   const puzzle = puzzleResult as any // Non-null assertion
   const blanks: string[] = puzzle.blanks || []
   const solution: Record<string, number> = puzzle.solution || {}
-  log("PUZZLE", { puzzleId: puzzle.puzzleId, blanksCount: blanks.length })
+  const puzzleId = puzzle.puzzleId
+  const difficulty = puzzle.difficulty
+  const availableNumbers = puzzle.availableNumbers || []
+  log("PUZZLE", { puzzleId, blanksCount: blanks.length })
 
   const fullGrid: Record<string, number> = {}
   for (const key of blanks) fullGrid[key] = solution[key]
@@ -73,12 +76,12 @@ async function main() {
     return {
       sessionId,
       userId: TEST_USER_ID,
-      puzzleId: puzzle.puzzleId,
-      difficulty: puzzle.difficulty,
+      puzzleId,
+      difficulty,
       status: "playing",
       grid: {},
       blanks,
-      availableNumbers: puzzle.availableNumbers || [],
+      availableNumbers,
       moves: 0,
       mistakes: 0,
       hintsUsed: 0,
