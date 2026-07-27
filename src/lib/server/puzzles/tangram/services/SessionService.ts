@@ -63,7 +63,7 @@ export class SessionService {
     const puzzle = await TangramPuzzle.findById(input.puzzleId)
     if (!puzzle) throw new Error("puzzle_not_found")
 
-    const puzzleDoc = await TangramPlaySession.findByUserAndPuzzle(input.userId, input.puzzleId)
+    const puzzleDoc = await playSessionRepository.findByUserAndPuzzle(input.userId, input.puzzleId)
     if (puzzleDoc && puzzleDoc.status === "completed") {
       throw new Error("already_completed")
     }

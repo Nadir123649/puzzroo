@@ -76,7 +76,7 @@ export class SessionService {
     const puzzle = await NonogramPuzzle.findById(input.puzzleId)
     if (!puzzle) throw new Error("puzzle_not_found")
 
-    const puzzleDoc = await NonogramPlaySession.findByUserAndPuzzle(input.userId, input.puzzleId)
+    const puzzleDoc = await playSessionRepository.findByUserAndPuzzle(input.userId, input.puzzleId)
     if (puzzleDoc && puzzleDoc.status === "completed") {
       throw new Error("already_completed")
     }
@@ -85,8 +85,6 @@ export class SessionService {
       userId: input.userId,
       puzzleId: input.puzzleId,
       difficulty: input.difficulty || puzzle.difficulty,
-      blanks: [],
-      availableNumbers: [],
     })
 
     return toSafeSession(newSession)
