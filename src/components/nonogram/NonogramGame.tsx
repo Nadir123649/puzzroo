@@ -771,13 +771,15 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                 )}
               </button>
 
-              {/* Autofill Button - Development Only */}
-              {process.env.NODE_ENV === 'development' && gameStatus === 'playing' && (
+              {/* Autofill Button - Show Solution after Completion/Lose */}
+              {process.env.NODE_ENV === 'development' && (gameStatus === 'won' || gameStatus === 'lost') && (
                 <button
                   onClick={autoFill}
-                  className="flex-1 h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
+                  className="flex-1 h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
+                  title="Show solution"
                 >
-                  Autofill
+                  <Eye size={18} />
+                  Show Solution
                 </button>
               )}
 
