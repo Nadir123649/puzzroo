@@ -96,6 +96,7 @@ export function SudokuGame() {
   }
 
   const handleNewGame = async (isReplay = false) => {
+    setShowModal(false)
     setLoaderText(isReplay ? 'Replaying game...' : 'Loading game...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))

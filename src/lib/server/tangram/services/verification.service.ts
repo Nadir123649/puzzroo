@@ -53,7 +53,7 @@ export async function completeSession(
   }
 
   session.status = 'completed';
-  session.pieceStates = pieceStates;
+  session.pieceStates = pieceStates as any;
   session.elapsedSeconds = elapsedSeconds;
   session.completedAt = new Date();
   session.lastSaveAt = new Date();

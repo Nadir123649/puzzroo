@@ -450,7 +450,7 @@ export function useSudoku() {
       gameApi
         .complete('sudoku', {
           puzzleId,
-          difficulty: difficulty as 'easy' | 'medium' | 'hard',
+          difficulty: difficulty as 'easy' | 'medium' | 'hard' | 'expert',
           score: finalScore,
           time: gameState.time,
           hintsUsed: hintsUsedRef.current,

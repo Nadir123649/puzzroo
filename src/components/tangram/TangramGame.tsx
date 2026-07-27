@@ -521,15 +521,15 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
             )}
 
             {/* Replay / New Game Button Mobile */}
-            {mode === 'normal' && isFromPastPuzzles ? (
+            {isFromPastPuzzles || mode !== 'normal' ? (
               <button
-                onClick={handleRetry}
+                onClick={handleReplay}
                 disabled={isResetting}
                 className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Replay
+                Replay Game
               </button>
-            ) : mode === 'normal' && (
+            ) : (
               <button
                 onClick={handleNewGame}
                 disabled={isResetting}

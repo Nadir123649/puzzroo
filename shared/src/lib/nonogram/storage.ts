@@ -172,3 +172,34 @@ export function getHintLimits(difficulty: string): number {
       return 3
   }
 }
+
+const DIFFICULTY_KEY = 'puzzroo_nonogram_difficulty'
+
+function getDifficultyScopedKey(): string {
+  if (typeof window === 'undefined') return DIFFICULTY_KEY
+  try {
+    const userStr = localStorage.getItem('puzzroo_user')
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      if (user && user.id) return `${DIFFICULTY_KEY}_${user.id}`
+    }
+  } catch {}
+  return `${DIFFICULTY_KEY}_guest`
+}
+
+export function saveDifficultyPreference(difficulty: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(getDifficultyScopedKey(), difficulty)
+  } catch {}
+}
+
+export function loadDifficultyPreference(): string {
+  if (typeof window === 'undefined') return 'easy'
+  try {
+    const saved = localStorage.getItem(getDifficultyScopedKey())
+    return saved || 'easy'
+  } catch {
+    return 'easy'
+  }
+}

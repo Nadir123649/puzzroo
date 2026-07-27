@@ -1,10 +1,10 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { getTodayChallenge, generateDailyChallenge } from '@shared/lib/dailyChallenge/generator'
-import { useEffect, useState } from 'react'
+import { GameLoader } from '@/components/ui/GameLoader'
 import { DailyChallenge } from '@shared/lib/dailyChallenge/types'
 import { SudokuGame } from '@/components/sudoku/SudokuGame'
 import { SudokuHero } from '@/components/sudoku/SudokuHero'
@@ -89,14 +89,24 @@ function DailyChallengeContent() {
 }
 
 export default function DailyChallengePage() {
+  const [initialLoading, setInitialLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setInitialLoading(false), 200)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#181A20]">
-        <Loader2 className="animate-spin text-[var(--color-primary)]" size={48} />
-      </div>
-    }>
-      <DailyChallengeContent />
-    </Suspense>
+    <>
+      <GameLoader isOpen={initialLoading} text="Loading puzzle..." />
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#181A20]">
+          <Loader2 className="animate-spin text-[var(--color-primary)]" size={48} />
+        </div>
+      }>
+        <DailyChallengeContent />
+      </Suspense>
+    </>
   )
 }
 

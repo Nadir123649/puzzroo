@@ -104,7 +104,7 @@ export function markPuzzleCompleted(
   }
 }
 
-const PROGRESS_DIFFICULTIES = ['easy', 'medium', 'hard'] as const
+const PROGRESS_DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'] as const
 
 function syncProgressToBackend(
   gameType: GameType,

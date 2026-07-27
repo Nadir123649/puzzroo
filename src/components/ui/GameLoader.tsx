@@ -18,12 +18,25 @@ export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
     if (isOpen) {
       setMounted(true)
       setVisible(true)
+      // Lock scroll
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+      document.documentElement.style.overflow = 'hidden'
     } else {
       setVisible(false)
+      // Unlock scroll immediately when closing
+      document.body.style.overflow = ''
+      document.body.style.touchAction = ''
+      document.documentElement.style.overflow = ''
       const timer = setTimeout(() => {
         setMounted(false)
       }, 300)
       return () => clearTimeout(timer)
+    }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.touchAction = ''
+      document.documentElement.style.overflow = ''
     }
   }, [isOpen])
 

@@ -36,6 +36,8 @@ import {
   clearGameState,
   updateStatsOnCompletion,
   getHintLimits,
+  saveDifficultyPreference,
+  loadDifficultyPreference,
 } from '@shared/lib/nonogram/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
@@ -99,14 +101,26 @@ function getDailyDateString(dateParam?: string | null): string {
 export function useNonogram(initialPuzzleId?: string) {
   const searchParams = useSearchParams()
   const urlDifficulty = (searchParams.get('difficulty') || 'easy') as Difficulty
+  const savedDifficulty = loadDifficultyPreference() as Difficulty
 
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy')
+  const getInitialDifficulty = (): Difficulty => {
+    if (urlDifficulty && ['easy', 'medium', 'hard', 'expert'].includes(urlDifficulty)) return urlDifficulty as Difficulty
+    return (savedDifficulty || 'easy') as Difficulty
+  }
+
+  const [difficulty, setDifficultyState] = useState<Difficulty>(getInitialDifficulty)
+
+  const setDifficulty = useCallback((d: Difficulty) => {
+    setDifficultyState(d)
+    saveDifficultyPreference(d)
+  }, [])
   const [currentPuzzle, setCurrentPuzzle] = useState<PuzzleData | null>(null)
   const [grid, setGrid] = useState<CellState[][]>([])
   const [selectedCell, setSelectedCell] = useState<CellPosition | null>(null)
   const [selectionHistory, setSelectionHistory] = useState<CellPosition[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const initTokenRef = useRef(0)
 
   // Check if this is from daily challenge
@@ -255,68 +269,71 @@ export function useNonogram(initialPuzzleId?: string) {
     }
 
     setLoading(true)
+    let puzzle: PuzzleData | null = null
     try {
-      let puzzle: PuzzleData
-      try {
-        if (puzzleId) {
-          const cached = readCache(puzzleId)
-          if (cached) {
-            puzzle = cached
-          } else {
-            const res = await gameApi.getPuzzleById('nonogram', puzzleId)
-            if (!res || !(res as any).id) throw new Error('invalid_puzzle')
-            puzzle = res as unknown as PuzzleData
-            writeCache(puzzle.id, puzzle)
-          }
-        } else if (isDailyChallenge) {
-          const res = await gameApi.getDailyPuzzle('nonogram', getDailyDateString(dateParam))
-          if (!res || !(res as any).id) throw new Error('invalid_puzzle')
-          puzzle = res as unknown as PuzzleData
-          writeCache(puzzle.id, puzzle)
+      if (puzzleId) {
+        const cached = readCache(puzzleId)
+        if (cached) {
+          puzzle = cached
         } else {
-          const res = await gameApi.getPuzzle('nonogram', { difficulty: diff })
+          const res = await gameApi.getPuzzleById('nonogram', puzzleId)
           if (!res || !(res as any).id) throw new Error('invalid_puzzle')
           puzzle = res as unknown as PuzzleData
           writeCache(puzzle.id, puzzle)
         }
-      } catch {
-        throw new Error('puzzle_fetch_failed')
+      } else if (isDailyChallenge) {
+        const res = await gameApi.getDailyPuzzle('nonogram', getDailyDateString(dateParam))
+        if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+        puzzle = res as unknown as PuzzleData
+        writeCache(puzzle.id, puzzle)
+      } else {
+        const res = await gameApi.getPuzzle('nonogram', { difficulty: diff })
+        if (!res || !(res as any).id) throw new Error('invalid_puzzle')
+        puzzle = res as unknown as PuzzleData
+        writeCache(puzzle.id, puzzle)
       }
-      if (cancelled) return
-
-      const targetPuzzleId = isDailyChallenge && dateParam ? `daily-nonogram-${dateParam}` : puzzle.id
-
-      if (loadSaved && typeof window !== 'undefined') {
-        const saved = loadGameState()
-        if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === diff) {
-          setCurrentPuzzle(puzzle)
-          setGrid(saved.grid)
-          setMistakeCount(saved.mistakeCount)
-          setElapsedSeconds(saved.elapsedSeconds)
-          setGameStatus('playing') // always resume as playing
-          setHintsUsed(saved.hintsUsed)
-
-          const maxH = getHintLimits(diff)
-          setMaxHints(maxH)
-
-          const colVal = validateAllColumns(saved.grid, puzzle.columnClues)
-          const rowVal = validateAllRows(saved.grid, puzzle.rowClues)
-          setColumnValidation(colVal)
-          setRowValidation(rowVal)
-
-          const prog = calculateProgress(saved.grid, puzzle.solution)
-          setProgress(prog)
-          setDifficulty(diff)
-          initSession(puzzle.id, diff)
-          return
-        }
-      }
-
-      applyPuzzle(puzzle)
-      initSession(puzzle.id, diff)
-    } finally {
-      if (!cancelled) setLoading(false)
+    } catch {
+      setLoading(false)
+      setError('Failed to load puzzle. Please try again.')
+      return
     }
+    if (cancelled || !puzzle) {
+      if (!cancelled) setLoading(false)
+      return
+    }
+
+    const targetPuzzleId = isDailyChallenge && dateParam ? `daily-nonogram-${dateParam}` : puzzle.id
+
+    if (loadSaved && typeof window !== 'undefined') {
+      const saved = loadGameState()
+      if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === diff) {
+        setCurrentPuzzle(puzzle)
+        setGrid(saved.grid)
+        setMistakeCount(saved.mistakeCount)
+        setElapsedSeconds(saved.elapsedSeconds)
+        setGameStatus('playing') // always resume as playing
+        setHintsUsed(saved.hintsUsed)
+
+        const maxH = getHintLimits(diff)
+        setMaxHints(maxH)
+
+        const colVal = validateAllColumns(saved.grid, puzzle.columnClues)
+        const rowVal = validateAllRows(saved.grid, puzzle.rowClues)
+        setColumnValidation(colVal)
+        setRowValidation(rowVal)
+
+        const prog = calculateProgress(saved.grid, puzzle.solution)
+        setProgress(prog)
+        setDifficulty(diff)
+        initSession(puzzle.id, diff)
+        if (!cancelled) setLoading(false)
+        return
+      }
+    }
+
+    applyPuzzle(puzzle)
+    initSession(puzzle.id, diff)
+    if (!cancelled) setLoading(false)
   }, [isDailyChallenge, dateParam])
 
   /**
@@ -962,6 +979,7 @@ export function useNonogram(initialPuzzleId?: string) {
     currentPuzzle,
     isInitialized,
     loading,
+    error,
     gameStatus,
     elapsedSeconds,
     rowValidation,

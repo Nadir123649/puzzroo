@@ -50,6 +50,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     setHoveredCell,
     setMousePosition,
     loading,
+    error,
   } = useNonogram(puzzleId)
 
   const [isResetting, setIsResetting] = useState(false)
@@ -72,6 +73,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   }, [gameStatus])
 
   const handleReplay = async () => {
+    setShowCompletionModal(false)
     setLoaderText('Replaying game...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -313,6 +315,24 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   const isCurrentlyLoading = !isInitialized || !currentPuzzle || !currentPuzzle.rowClues || !currentPuzzle.columnClues || rowValidation.length === 0 || columnValidation.length === 0;
 
   const canUseHint = hintsUsed < maxHints && gameStatus === 'playing'
+
+  if (error) {
+    return (
+      <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300">
+        <div className="w-full px-[20px] py-[60px] flex justify-center">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <span className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD]">{error}</span>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-semibold text-[14px] transition-all duration-200 active:scale-95"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <>
