@@ -17,10 +17,7 @@ export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
   useEffect(() => {
     if (isOpen) {
       setMounted(true)
-      const raf = requestAnimationFrame(() => {
-        setVisible(true)
-      })
-      return () => cancelAnimationFrame(raf)
+      setVisible(true)
     } else {
       setVisible(false)
       const timer = setTimeout(() => {
@@ -30,43 +27,13 @@ export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
     }
   }, [isOpen])
 
-  useEffect(() => {
-    if (mounted) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.overflowY = 'hidden'
-      document.body.style.touchAction = 'none'
-      document.documentElement.style.overflow = 'hidden'
-      document.documentElement.style.overflowY = 'hidden'
-      document.documentElement.style.touchAction = 'none'
-      document.documentElement.style.scrollbarGutter = 'auto'
-      document.body.style.scrollbarGutter = 'auto'
-    } else {
-      document.body.style.overflow = ''
-      document.body.style.overflowY = ''
-      document.body.style.touchAction = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-      document.documentElement.style.scrollbarGutter = ''
-      document.body.style.scrollbarGutter = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.overflowY = ''
-      document.body.style.touchAction = ''
-      document.documentElement.style.overflow = ''
-      document.documentElement.style.overflowY = ''
-      document.documentElement.style.touchAction = ''
-      document.documentElement.style.scrollbarGutter = ''
-      document.body.style.scrollbarGutter = ''
-    }
-  }, [mounted])
-
   if (!mounted) return null
 
   return (
     <div
-      className={`fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-[99999] flex items-center justify-center transition-opacity duration-300 ${
+      className={`fixed inset-0 bg-white dark:bg-[#181A20] z-[99999] flex items-center justify-center ${
+        isOpen ? '' : 'transition-opacity duration-300'
+      } ${
         visible ? 'opacity-100' : 'opacity-0'
       }`}
     >

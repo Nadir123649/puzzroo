@@ -22,6 +22,21 @@ export interface CompletionRecord {
   difficulty?: string
 }
 
+function getScopedKey(gameType: GameType): string {
+  const baseKey = STORAGE_KEYS[gameType]
+  if (typeof window === 'undefined') return baseKey
+  try {
+    const userStr = localStorage.getItem("puzzroo_user")
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      if (user && user.id) {
+        return `${baseKey}_${user.id}`
+      }
+    }
+  } catch {}
+  return `${baseKey}_guest`
+}
+
 /**
  * Get all completed puzzles for a specific game
  * SSR-safe
@@ -30,7 +45,7 @@ export function getCompletedPuzzles(gameType: GameType): CompletionRecord[] {
   if (typeof window === 'undefined') return []
   
   try {
-    const key = STORAGE_KEYS[gameType]
+    const key = getScopedKey(gameType)
     const data = localStorage.getItem(key)
     return data ? JSON.parse(data) : []
   } catch {
@@ -78,7 +93,7 @@ export function markPuzzleCompleted(
     }
 
     completed.push(record)
-    const key = STORAGE_KEYS[gameType]
+    const key = getScopedKey(gameType)
     localStorage.setItem(key, JSON.stringify(completed))
 
     // Best-effort server-side persistence so /api/v1/games/stats populates.
@@ -159,7 +174,7 @@ export function clearCompletionData(gameType: GameType): void {
   if (typeof window === 'undefined') return
   
   try {
-    const key = STORAGE_KEYS[gameType]
+    const key = getScopedKey(gameType)
     localStorage.removeItem(key)
   } catch (error) {
     console.error('Failed to clear completion data:', error)

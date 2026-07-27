@@ -270,6 +270,7 @@ export function useNonogram(initialPuzzleId?: string) {
           }
         } else if (isDailyChallenge) {
           const res = await gameApi.getDailyPuzzle('nonogram', getDailyDateString(dateParam))
+          if (!res || !(res as any).id) throw new Error('invalid_puzzle')
           puzzle = res as unknown as PuzzleData
           writeCache(puzzle.id, puzzle)
         } else {

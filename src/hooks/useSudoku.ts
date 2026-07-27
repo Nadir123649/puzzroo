@@ -546,7 +546,17 @@ export function useSudoku() {
           newBoard[selectedCell.row][selectedCell.col].isCorrect = false
         }
 
-        setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
+        setGameState((prev) => {
+          const newScore = scoreDelta > 0 ? Math.max(0, prev.score + scoreDelta) : prev.score
+          return {
+            ...prev,
+            currentBoard: newBoard,
+            score: newScore,
+          }
+        })
+        if (scoreDelta > 0) {
+          addScoreFeedback(scoreDelta)
+        }
         saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
 
         // Check for win - validate entire board using Sudoku rules

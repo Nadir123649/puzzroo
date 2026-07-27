@@ -63,9 +63,12 @@ export async function completeSession(
 
   session.completionResult = {
     isCorrect: true,
+    isComplete: true,
     accuracy: result.accuracy,
     piecesCorrect: result.piecesCorrect,
     totalPieces: result.totalPieces,
+    correctCells: 0,
+    totalCells: 0,
   };
 
   await session.save();

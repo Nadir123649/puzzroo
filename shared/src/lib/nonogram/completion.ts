@@ -13,6 +13,20 @@ export interface CompletionRecord {
   hintsUsed: number
 }
 
+function getScopedKey(): string {
+  if (typeof window === 'undefined') return COMPLETION_KEY
+  try {
+    const userStr = localStorage.getItem("puzzroo_user")
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      if (user && user.id) {
+        return `${COMPLETION_KEY}_${user.id}`
+      }
+    }
+  } catch {}
+  return `${COMPLETION_KEY}_guest`
+}
+
 /**
  * Get all completed puzzles
  * SSR-safe
@@ -21,7 +35,8 @@ export function getCompletedPuzzles(): CompletionRecord[] {
   if (typeof window === 'undefined') return []
   
   try {
-    const data = localStorage.getItem(COMPLETION_KEY)
+    const key = getScopedKey()
+    const data = localStorage.getItem(key)
     return data ? JSON.parse(data) : []
   } catch {
     return []
@@ -64,7 +79,8 @@ export function markPuzzleCompleted(
     }
 
     completed.push(record)
-    localStorage.setItem(COMPLETION_KEY, JSON.stringify(completed))
+    const key = getScopedKey()
+    localStorage.setItem(key, JSON.stringify(completed))
   } catch (error) {
     console.error('Failed to mark puzzle completed:', error)
   }
@@ -104,7 +120,8 @@ export function clearCompletionData(): void {
   if (typeof window === 'undefined') return
   
   try {
-    localStorage.removeItem(COMPLETION_KEY)
+    const key = getScopedKey()
+    localStorage.removeItem(key)
   } catch (error) {
     console.error('Failed to clear completion data:', error)
   }
