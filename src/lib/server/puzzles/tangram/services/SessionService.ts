@@ -128,12 +128,11 @@ export class SessionService {
   ) {
     const session = await this.getSession(sessionId, userId)
 
-    let result: CompletionResult
+    let result: { isComplete: boolean; accuracy: number; correctCells: number; totalCells: number }
     let verification: TangramVerificationResult
 
     if (grid && grid.length > 0) {
-      const verificationEngine = await import("./VerificationEngine")
-      verification = await verificationEngine.verifyCompletion(session.puzzleId, grid)
+      verification = await verificationEngine.verifyCompletion(session.puzzleId, grid, pieces)
       result = {
         isComplete: verification.isComplete,
         accuracy: verification.accuracy,
@@ -244,7 +243,7 @@ export class SessionService {
     const query: any = { userId }
     if (status) query.status = status
 
-    const sessions = await playSessionRepository.findByUser(userId, { status, limit })
+    const sessions = await playSessionRepository.findByUser(userId, { status: status as any, limit })
     const safeSessions = sessions.sessions.map(toSafeSession)
 
     return {
