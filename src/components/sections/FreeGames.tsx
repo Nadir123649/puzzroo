@@ -91,12 +91,23 @@ const getPlayedGames = (): Set<string> => {
   }
 }
 
+const getLastPlayedGame = (): string | null => {
+  if (typeof window === 'undefined') return null
+  try {
+    return localStorage.getItem('puzzroo_last_played_game')
+  } catch {
+    return null
+  }
+}
+
 export const markGameAsPlayed = (gameId: string): void => {
   if (typeof window === 'undefined') return
   try {
     const playedGames = getPlayedGames()
     playedGames.add(gameId)
     localStorage.setItem('puzzroo_played_games', JSON.stringify([...playedGames]))
+    // Track the last played game
+    localStorage.setItem('puzzroo_last_played_game', gameId)
   } catch (error) {
     console.error('Failed to mark game as played:', error)
   }
@@ -104,10 +115,12 @@ export const markGameAsPlayed = (gameId: string): void => {
 
 export function FreeGames() {
   const [playedGames, setPlayedGames] = useState<Set<string>>(new Set())
+  const [lastPlayedGame, setLastPlayedGame] = useState<string | null>(null)
 
   useEffect(() => {
-    // Load played games from localStorage
+    // Load played games and last played game from localStorage
     setPlayedGames(getPlayedGames())
+    setLastPlayedGame(getLastPlayedGame())
   }, [])
 
   return (
@@ -141,6 +154,7 @@ export function FreeGames() {
               key={game.id} 
               game={game} 
               isPlayed={playedGames.has(game.id)}
+              isLastPlayed={game.id === lastPlayedGame}
               hasHistory={playedGames.size > 0}
             />
           ))}
@@ -156,10 +170,11 @@ export function FreeGames() {
 interface GameCardComponentProps {
   game: GameCard
   isPlayed: boolean
+  isLastPlayed: boolean
   hasHistory: boolean
 }
 
-function GameCardComponent({ game, isPlayed, hasHistory }: GameCardComponentProps) {
+function GameCardComponent({ game, isPlayed, isLastPlayed, hasHistory }: GameCardComponentProps) {
   const { theme } = useTheme()
   const router = useRouter()
   const isActive = ACTIVE_GAMES.includes(game.id)
@@ -251,7 +266,7 @@ function GameCardComponent({ game, isPlayed, hasHistory }: GameCardComponentProp
           <h3 className="font-urbanist font-bold text-[9px] md:text-[clamp(1rem,3vw,1.28rem)] leading-[120%] text-[#212121] dark:text-[#FAFAFA]">
             {game.title}
           </h3>
-          {hasHistory && isPlayed && (
+          {hasHistory && isLastPlayed && (
             <span className="font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#22C55E]">
               Recently Played
             </span>

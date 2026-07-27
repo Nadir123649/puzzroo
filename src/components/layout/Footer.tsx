@@ -24,6 +24,7 @@ export function Footer() {
 
             <Link
               href="/faq"
+              prefetch={false}
               className="font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap"
             >
               FAQ
@@ -31,6 +32,7 @@ export function Footer() {
 
             <Link
               href="/contact-us"
+              prefetch={false}
               className="font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap"
             >
               Contact Us
@@ -38,6 +40,7 @@ export function Footer() {
 
             <Link
               href="/privacy-policy"
+              prefetch={false}
               className="font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap"
             >
               Privacy Policy
@@ -45,6 +48,7 @@ export function Footer() {
 
             <Link
               href="/terms-and-conditions"
+              prefetch={false}
               className="font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap"
             >
               Terms and Conditions
