@@ -21,10 +21,10 @@ export async function POST(
   try {
     const session = await sessionService.pauseSession(id, userResult.user.id);
     return successResponse({
-      sessionId: session._id.toString(),
-      status: session.status,
+      sessionId: session.sessionId,
+      status: session.sessionStatus,
       pausedAt: session.pausedAt,
-      elapsedSeconds: session.elapsedSeconds,
+      elapsedSeconds: session.elapsedTime,
     });
   } catch (error: any) {
     if (error.message === 'Session not found' || error.message === 'session_not_found') {
