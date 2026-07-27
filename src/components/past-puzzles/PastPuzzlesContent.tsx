@@ -52,9 +52,9 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [completedPuzzles, setCompletedPuzzles] = useState<Set<string>>(new Set())
   const [authed, setAuthed] = useState(false)
+  const [isPremiumUser, setIsPremiumUser] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 8
-  const accessibleCount = getAccessiblePastChallenges(authed)
   const { theme } = useTheme()
   const [userLoggedIn, setUserLoggedIn] = useState(false)
 
@@ -63,8 +63,13 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   }, [])
 
   useEffect(() => {
-    setAuthed(isLoggedIn())
+    const isUserAuthed = isLoggedIn()
+    setAuthed(isUserAuthed)
+    const user = getCurrentUser()
+    setIsPremiumUser(user?.subscriptionPlan === 'premium' || user?.role === 'premium')
   }, [])
+
+  const accessibleCount = isPremiumUser ? 24 : (authed ? 7 : 3)
 
   // Persist filter changes to sessionStorage
   const handleFilterChange = (newFilter: 'all' | 'not-started' | 'in-progress' | 'completed') => {
@@ -124,23 +129,38 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     
     // Update status from localStorage and apply lock
     const withStatus = generated.map((puzzle, index) => {
-      if (authed) {
+      const actualStatus = getChallengeStatus(puzzle.id)
+      const isCompleted = completedPuzzles.has(puzzle.id)
+      
+      // If it's already in progress or completed, keep its status and do NOT lock
+      if (actualStatus === 'in-progress' || isCompleted) {
         return {
           ...puzzle,
-          status: getChallengeStatus(puzzle.id),
+          status: isCompleted ? 'completed' : actualStatus,
         }
       }
+      
+      // If the user is premium, they can access everything
+      if (isPremiumUser) {
+        return {
+          ...puzzle,
+          status: actualStatus,
+        }
+      }
+      
+      // Otherwise, lock if beyond accessible count
       if (index >= accessibleCount) {
         return { ...puzzle, status: 'locked' as DailyChallengeStatus }
       }
+      
       return {
         ...puzzle,
-        status: getChallengeStatus(puzzle.id),
+        status: actualStatus,
       }
     })
     
     setPuzzles(withStatus)
-  }, [gameId, accessibleCount, authed])
+  }, [gameId, accessibleCount, authed, isPremiumUser, completedPuzzles])
 
   // Filter puzzles
   const filteredPuzzles = puzzles.filter(p => {
@@ -468,17 +488,8 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
     onPlayClick(true)
     // Show loading for 1 second
     await new Promise(resolve => setTimeout(resolve, 1000))
-    // Route directly to game page with date in URL
-    const gameUrl = puzzle.gameId === 'sudoku' 
-      ? `/sudoku?date=${puzzle.dateString}` 
-      : puzzle.gameId === 'cross-math' 
-        ? `/cross-math?date=${puzzle.dateString}` 
-        : puzzle.gameId === 'nonogram' 
-          ? `/nonogram?date=${puzzle.dateString}&skipSelection=true` 
-          : puzzle.gameId === 'tangram'
-            ? `/tangram?date=${puzzle.dateString}`
-            : '/sudoku'
-    router.push(gameUrl)
+    // Route directly to daily challenge page with date in URL
+    router.push(`/daily-challenge/${puzzle.gameId}?date=${puzzle.dateString}`)
   }
 
   return (

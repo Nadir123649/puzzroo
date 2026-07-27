@@ -154,43 +154,29 @@ export function useSudoku() {
   const [isInitialized, setIsInitialized] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // Initialize game state
-  const initializeGame = useCallback((diff: Difficulty, loadSaved = true) => {
-    // Try to load saved game first (client-side only)
-    if (loadSaved && typeof window !== 'undefined') {
-      const saved = loadGameState()
-      if (saved && saved.difficulty === diff) {
-        return {
-          currentBoard: saved.currentBoard,
-          initialBoard: saved.initialBoard,
-          solution: saved.solution,
-          puzzleId: saved.puzzleId,
-          mistakes: saved.mistakes,
-          score: saved.score,
-          time: saved.time,
-          gameStatus: saved.gameStatus as GameStatus,
-        }
-      }
-    }
-
-    // Empty board — actual puzzle loaded by API via useEffect
-    const empty: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0))
-    const board = convertToSudokuBoard(empty)
+  const [gameState, setGameState] = useState<{
+    currentBoard: SudokuBoard
+    initialBoard: SudokuBoard
+    solution: SudokuBoard
+    puzzleId: string
+    mistakes: number
+    score: number
+    time: number
+    gameStatus: GameStatus
+  }>(() => {
+    const emptyBoard: SudokuBoard = Array.from({ length: 9 }, () =>
+      Array.from({ length: 9 }, () => ({ value: null, fixed: false, notes: [], isCorrect: false, isError: false }))
+    )
     return {
-      currentBoard: board,
-      initialBoard: board,
-      solution: board,
+      currentBoard: emptyBoard,
+      initialBoard: emptyBoard,
+      solution: emptyBoard,
       puzzleId: '',
       mistakes: 0,
       score: 0,
       time: 0,
-      gameStatus: 'playing' as GameStatus,
+      gameStatus: 'playing',
     }
-  }, [])
-
-  const [gameState, setGameState] = useState(() => {
-    // Fallback initializer for initial server render
-    return initializeGame('easy', false)
   })
 
   // Refs
@@ -270,55 +256,55 @@ export function useSudoku() {
     saveDifficultyPreference(currentDiff)
 
     let cancelled = false
-    ;(async () => {
-      setLoading(true)
-      try {
-        // Build exclude param only if non-empty
-        const exclude = gameState.puzzleId || undefined
-        // Fetch or determine the target puzzle first
-        const puzzle = urlId
-          ? await loadSudokuPuzzle({ kind: 'byId', id: urlId })
-          : isDailyChallenge
-            ? await loadSudokuPuzzle({ kind: 'daily', date: dateParamToApi(dateParam), difficulty: currentDiff })
-            : await loadSudokuPuzzle({ kind: 'random', difficulty: currentDiff, exclude })
+      ; (async () => {
+        setLoading(true)
+        try {
+          // Build exclude param only if non-empty
+          const exclude = gameState.puzzleId || undefined
+          // Fetch or determine the target puzzle first
+          const puzzle = urlId
+            ? await loadSudokuPuzzle({ kind: 'byId', id: urlId })
+            : isDailyChallenge
+              ? await loadSudokuPuzzle({ kind: 'daily', date: dateParamToApi(dateParam), difficulty: currentDiff })
+              : await loadSudokuPuzzle({ kind: 'random', difficulty: currentDiff, exclude })
 
-        if (cancelled) return
+          if (cancelled) return
 
-        const targetPuzzleId = isDailyChallenge && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id
+          const targetPuzzleId = isDailyChallenge && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id
 
-        // Only resume saved game if it matches the target puzzle ID
-        const saved = loadGameState()
-        if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === currentDiff) {
-          setGameState({
-            currentBoard: saved.currentBoard,
-            initialBoard: saved.initialBoard,
-            solution: saved.solution,
-            puzzleId: saved.puzzleId,
-            mistakes: saved.mistakes,
-            score: saved.score,
-            time: saved.time,
-            gameStatus: saved.gameStatus as GameStatus,
-          })
-          puzzleIdRef.current = saved.puzzleId
+          // Only resume saved game if it matches the target puzzle ID
+          const saved = loadGameState()
+          if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === currentDiff) {
+            setGameState({
+              currentBoard: saved.currentBoard,
+              initialBoard: saved.initialBoard,
+              solution: saved.solution,
+              puzzleId: saved.puzzleId,
+              mistakes: saved.mistakes,
+              score: saved.score,
+              time: saved.time,
+              gameStatus: saved.gameStatus as GameStatus,
+            })
+            puzzleIdRef.current = saved.puzzleId
+            setIsInitialized(true)
+            initSession(puzzle.id)
+            return
+          }
+
+          const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
+          setGameState(next)
+          puzzleIdRef.current = next.puzzleId
           setIsInitialized(true)
           initSession(puzzle.id)
-          return
+        } catch {
+          /* fall through — API unavailable, keep empty board */
+          if (!cancelled) {
+            setIsInitialized(true)
+          }
+        } finally {
+          if (!cancelled) setLoading(false)
         }
-
-        const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
-        setGameState(next)
-        puzzleIdRef.current = next.puzzleId
-        setIsInitialized(true)
-        initSession(puzzle.id)
-      } catch {
-        /* fall through — API unavailable, keep empty board */
-        if (!cancelled) {
-          setIsInitialized(true)
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
+      })()
 
     return () => {
       cancelled = true
@@ -514,26 +500,29 @@ export function useSudoku() {
         newBoard[selectedCell.row][selectedCell.col]
       )
 
-      // A move is correct ONLY when it matches the puzzle's unique solution.
-      const solutionCell = gameState.solution?.[selectedCell.row]?.[selectedCell.col]
-      const solutionValue =
-        solutionCell && typeof solutionCell === "object"
-          ? (solutionCell as { value?: number }).value
-          : (solutionCell as number | undefined)
-      const isCorrectValue = num === solutionValue
+      // A move is correct if it does not violate Sudoku rules (no duplicate in same row, col, or box)
+      const violatesRules = !isValidMove(gameState.currentBoard, selectedCell, num)
+      const isCorrectValue = !violatesRules
 
-      if (!isCorrectValue) {
-        // Wrong value (even if it doesn't immediately break Sudoku rules).
+      if (violatesRules) {
+        // Wrong value according to Sudoku rules.
         newBoard[selectedCell.row][selectedCell.col].isError = true
         newBoard[selectedCell.row][selectedCell.col].isCorrect = false
 
-        setGameState((prev) => ({
-          ...prev,
-          currentBoard: newBoard,
-          mistakes: prev.mistakes + 1,
-        }))
+        setGameState((prev) => {
+          const newScore = Math.max(0, prev.score - 5)
+          const newMistakes = prev.mistakes + 1
+          const status = newMistakes >= INITIAL_GAME_STATE.maxMistakes ? 'lost' : prev.gameStatus
+          return {
+            ...prev,
+            currentBoard: newBoard,
+            mistakes: newMistakes,
+            score: newScore,
+            gameStatus: status,
+          }
+        })
 
-        updateScore(-5) // -5 for wrong answer
+        addScoreFeedback(-5)
 
         const nextMistakes = gameState.mistakes + 1
         saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, nextMistakes)
@@ -545,10 +534,17 @@ export function useSudoku() {
           saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, nextMistakes)
         }
       } else {
-        // Correct value - matches the solution.
-        newBoard[selectedCell.row][selectedCell.col].isError = false
-        newBoard[selectedCell.row][selectedCell.col].isCorrect = true
-        updateScore(10) // +10 for correct answer
+        // Valid move according to rules
+        let scoreDelta = 0
+        if (isCorrectValue) {
+          newBoard[selectedCell.row][selectedCell.col].isError = false
+          newBoard[selectedCell.row][selectedCell.col].isCorrect = true
+          scoreDelta = 10
+        } else {
+          // Rule-abiding, but not the final solution value yet
+          newBoard[selectedCell.row][selectedCell.col].isError = false
+          newBoard[selectedCell.row][selectedCell.col].isCorrect = false
+        }
 
         setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
         saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
@@ -572,7 +568,7 @@ export function useSudoku() {
 
       setSelectedNumber(num)
     },
-    [selectedCell, gameState, notesMode, updateScore, difficulty, reportWin]
+    [selectedCell, gameState, notesMode, addScoreFeedback, reportWin]
   )
 
   /**

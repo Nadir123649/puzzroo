@@ -47,16 +47,13 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-}
-
-* {
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Custom Branded Scrollbar for Desktop Browsers */

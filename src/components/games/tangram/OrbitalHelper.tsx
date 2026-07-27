@@ -41,6 +41,7 @@ export function OrbitalHelper({
   const lastAngleRef = useRef(0)
   const accumulatedDeltaRef = useRef(0)
   const circleRef = useRef<SVGCircleElement>(null)
+  const frameIdRef = useRef<number | null>(null)
 
   // Store callbacks in refs to avoid stale closures
   const onRotateDragRef = useRef(onRotateDrag)
@@ -105,12 +106,19 @@ export function OrbitalHelper({
 
     const absoluteRotation = dragStartRotationRef.current + accumulatedDeltaRef.current
 
-    if (onRotateDragRef.current) {
-      onRotateDragRef.current(absoluteRotation)
-    }
+    if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current)
+    frameIdRef.current = requestAnimationFrame(() => {
+      if (onRotateDragRef.current) {
+        onRotateDragRef.current(absoluteRotation)
+      }
+    })
   }
 
   const handlePointerUp = (e: React.PointerEvent<SVGCircleElement>) => {
+    if (frameIdRef.current) {
+      cancelAnimationFrame(frameIdRef.current)
+      frameIdRef.current = null
+    }
     if (!isDraggingRef.current) return
 
     e.stopPropagation()
