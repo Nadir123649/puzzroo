@@ -218,7 +218,7 @@ export function useCrossMath(initialPuzzleId?: string) {
 
   const reportWin = useCallback((
     puzzleId: string,
-    diff: string,
+    diff: any,
     finalScore: number,
     elapsed: number,
     finalMistakes: number
