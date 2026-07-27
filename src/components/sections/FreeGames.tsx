@@ -261,7 +261,7 @@ function GameCardComponent({ game, isPlayed, hasHistory }: GameCardComponentProp
         {/* Button Group */}
         <div className="flex flex-col gap-[6px] md:gap-[10px]">
           {game.id === 'chess' ? (
-            <Link href={`/game/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()}>
+            <Link href={`/game/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()} prefetch={false}>
               <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}>
                 Play Chess
               </button>
@@ -269,21 +269,21 @@ function GameCardComponent({ game, isPlayed, hasHistory }: GameCardComponentProp
           ) : (
             <>
               {/* Daily Challenge Button */}
-              <Link href={`/daily-challenge/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()}>
+              <Link href={`/daily-challenge/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()} prefetch={false}>
                 <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Daily Challenge for ${game.title}`}>
                   Daily Challenge
                 </button>
               </Link>
 
               {/* Play Now Button */}
-              <Link href={`/game/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()}>
+              <Link href={`/game/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()} prefetch={false}>
                 <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}>
                   {isPlayed ? 'Play Again' : 'Play Now'}
                 </button>
               </Link>
 
               {/* Past Puzzle Button */}
-              <Link href={`/past-puzzles/${game.id}`} className="w-full group" onClick={(e) => e.stopPropagation()}>
+              <Link href={`/past-puzzles/${game.id}`} className="w-full group" onClick={(e) => e.stopPropagation()} prefetch={false}>
                 <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] hover:text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Past Puzzles for ${game.title}`}>
                   Past Puzzle
                 </button>

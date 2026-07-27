@@ -6,21 +6,15 @@ import Image from 'next/image'
 import { ArrowLeft } from 'lucide-react'
 import { images } from '@/lib/utils'
 import { GameLoader } from '@/components/ui/GameLoader'
-import { useTheme } from '@/hooks/use-theme'
-
 interface NonogramHeroProps {
   backTo?: string // Optional custom back navigation path
 }
 
 export function NonogramHero({ backTo }: NonogramHeroProps = {}) {
   const router = useRouter()
-  const { theme } = useTheme()
   const searchParams = useSearchParams()
   const pathname = usePathname() || ''
   const [isNavigating, setIsNavigating] = useState(false)
-
-  // Get theme-aware nonogram image
-  const nonogramImage = theme === 'light' ? images.gameCards.nonogramWhite : images.gameCards.nonogram
 
   const dateParam = searchParams?.get('date')
   const hasDate = !!dateParam
@@ -66,29 +60,41 @@ export function NonogramHero({ backTo }: NonogramHeroProps = {}) {
   return (
     <>
       <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 py-[10px] md:py-[15px]">
-        <div className="w-full px-[20px]">
-          {/* Back Arrow */}
-          <div className="hidden sm:flex w-full items-center mb-2">
-            <button
-              onClick={handleBackClick}
-              disabled={isNavigating}
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center p-2 hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
-              aria-label="Back to games"
-            >
-              <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
-            </button>
-          </div>
+        <div className="w-full px-[20px] relative">
+          {/* Back Arrow Placeholder to preserve layout flow */}
+          <div className="hidden sm:flex w-full h-10 sm:h-12 items-center mb-2 pointer-events-none" />
+
+          {/* Actual Sticky Back Arrow */}
+          <button
+            onClick={handleBackClick}
+            disabled={isNavigating}
+            className="fixed top-[76px] left-[20px] md:top-[110px] md:left-[20px] min-[1380px]:left-[calc((100vw-1380px)/2+20px)] z-[150] w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center p-2 hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-[background-color,border-color,transform,opacity] duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm hidden sm:flex"
+            aria-label="Back to games"
+          >
+            <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
+          </button>
 
           <div className="flex flex-col items-center gap-4 md:gap-5">
             
             {/* Nonogram Image with background */}
             <div className="w-[129px] h-[129px] relative flex items-center justify-center bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] p-[14px]">
+              {/* Light Theme Image */}
               <Image
-                src={nonogramImage}
-                alt="Nonogram"
+                src={images.gameCards.nonogramWhite}
+                alt="Nonogram Light"
                 width={101}
                 height={101}
-                className="w-[101px] h-[101px] object-contain"
+                className="w-[101px] h-[101px] object-contain dark:hidden"
+                priority
+              />
+              {/* Dark Theme Image */}
+              <Image
+                src={images.gameCards.nonogram}
+                alt="Nonogram Dark"
+                width={101}
+                height={101}
+                className="w-[101px] h-[101px] object-contain hidden dark:block"
+                priority
               />
             </div>
 

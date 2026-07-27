@@ -211,11 +211,11 @@ export default function AccountInformationPage() {
           </div>
 
           {/* Username */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
             <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-2 sm:mb-0">
               Username
             </span>
-            <div className="flex flex-col items-start sm:items-end">
+            <div className="flex flex-col items-start sm:items-end justify-center">
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
                 {localUser?.username || 'N/A'}
               </span>
@@ -285,7 +285,7 @@ export default function AccountInformationPage() {
             </span>
             <div className="flex items-center gap-3">
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
-                {canChangePassword ? '••••••••' : 'N/A'}
+                {canChangePassword ? '********' : 'Not set'}
               </span>
               {canChangePassword ? (
                 <button
@@ -380,7 +380,7 @@ export default function AccountInformationPage() {
           </div>
 
           {/* Delete Account */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-t border-[#E0E0E0] dark:border-[#35383F]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-[#E0E0E0] dark:border-[#35383F]">
             <div className="flex flex-col mb-2 sm:mb-0">
               <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD]">
                 Delete Account

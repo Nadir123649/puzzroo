@@ -259,6 +259,29 @@ export function useSudoku() {
       ; (async () => {
         setLoading(true)
         try {
+          // Check if there is an active saved game state we can resume immediately for random mode
+          if (!urlId && !isDailyChallenge) {
+            const saved = loadGameState()
+            if (saved && saved.difficulty === currentDiff && saved.gameStatus === 'playing') {
+              if (cancelled) return
+              setGameState({
+                currentBoard: saved.currentBoard,
+                initialBoard: saved.initialBoard,
+                solution: saved.solution,
+                puzzleId: saved.puzzleId,
+                mistakes: saved.mistakes,
+                score: saved.score,
+                time: saved.time,
+                gameStatus: saved.gameStatus as GameStatus,
+              })
+              puzzleIdRef.current = saved.puzzleId
+              setIsInitialized(true)
+              initSession(saved.puzzleId)
+              setLoading(false)
+              return
+            }
+          }
+
           // Build exclude param only if non-empty
           const exclude = gameState.puzzleId || undefined
           // Fetch or determine the target puzzle first

@@ -48,8 +48,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://puzzroo.com",
-    title: "Puzzroo - SEO Optimized Landing Page",
-    description: "A production-ready, SEO-optimized landing page built with Next.js, TypeScript, and Tailwind CSS.",
+    title: "Puzzroo - Free Online Games, Chess & Brain Puzzles",
+    description: "Play free online games on Puzzroo! Enjoy Chess, Sudoku, and brain-teasing puzzles. Compete against AI bots or challenge friends with instant browser play.",
     siteName: "Puzzroo",
     images: [
       {
@@ -62,8 +62,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Puzzroo - SEO Optimized Landing Page",
-    description: "A production-ready, SEO-optimized landing page built with Next.js, TypeScript, and Tailwind CSS.",
+    title: "Puzzroo - Free Online Games, Chess & Brain Puzzles",
+    description: "Play free online games on Puzzroo! Enjoy Chess, Sudoku, and brain-teasing puzzles. Compete against AI bots or challenge friends with instant browser play.",
     images: [images.twitterImage],
     creator: "@puzzroo",
   },

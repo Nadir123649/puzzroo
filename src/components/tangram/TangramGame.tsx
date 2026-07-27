@@ -48,6 +48,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     selectedPiece,
     gameStatus,
     timeRemaining,
+    score,
     hintsUsed,
     hintPiece,
     availableHints,
@@ -57,7 +58,6 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     rotateLeft,
     rotateRight,
     requestHint,
-    autoFill,
     newGame,
     replayPuzzle,
     undoMove,
@@ -125,6 +125,15 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     setIsResetting(false)
   }
 
+  const handleRestart = async () => {
+    setIsModalVisible(false)
+    setLoaderText('Restarting...')
+    setIsResetting(true)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    replayPuzzle()
+    setIsResetting(false)
+  }
+
   const handleReplay = async () => {
     setIsModalVisible(false)
     setLoaderText('Replaying game...')
@@ -140,10 +149,6 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
   const handleRedo = () => {
     redoMove()
-  }
-
-  const handleAutoFill = () => {
-    autoFill()
   }
 
   const handleBackToLobby = () => {
@@ -253,10 +258,10 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               style={{ minHeight: `${(desktopBoardWidth * 493) / 750}px` }}
             >
               {/* Premium Controls Card - fills space but doesn't push buttons down */}
-              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 shadow-lg shadow-purple-500/5 flex flex-col gap-5 flex-1 mb-3">
+              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-6 shadow-lg shadow-purple-500/5 flex flex-col gap-5 flex-1 mb-3">
                 {/* Difficulty Heading - centered, bold, larger */}
                 {puzzle && (
-                  <div className="text-center">
+                  <div className="text-center py-1">
                     <span className="font-urbanist text-[11px] text-[#757575] dark:text-[#9E9E9E] uppercase tracking-wider font-bold">
                       Difficulty
                     </span>
@@ -360,17 +365,6 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
               {/* Bottom Actions Section */}
               <div className="w-full flex flex-col gap-[12px]">
-                {/* Auto Fill Button (Development Only) */}
-                {process.env.NODE_ENV === 'development' && (
-                  <button
-                    onClick={handleAutoFill}
-                    disabled={isResetting}
-                    className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Auto Fill
-                  </button>
-                )}
-
                 {/* Replay Game / New Game / Replay Button */}
                 {isFromPastPuzzles ? (
                   <button
@@ -509,17 +503,6 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               </button>
             </div>
 
-            {/* Auto Fill Button Mobile (Development Only) */}
-            {process.env.NODE_ENV === 'development' && (
-              <button
-                onClick={handleAutoFill}
-                disabled={isResetting}
-                className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Auto Fill
-              </button>
-            )}
-
             {/* Replay / New Game Button Mobile */}
             {isFromPastPuzzles || mode !== 'normal' ? (
               <button
@@ -561,11 +544,12 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
         })()}
         mistakes={0}
         hintsUsed={hintsUsed}
-        score={0}
+        score={score}
         difficulty={puzzle?.difficulty || 'easy'}
         timeRemaining={timeRemaining}
         isTimeUp={gameStatus === 'lost'}
         onPlayAgain={handleRetry}
+        onRestart={handleRestart}
         onNewPuzzle={mode === 'normal' && !isFromPastPuzzles ? handleNewGame : undefined}
         onBackToLobby={handleBackToLobby}
         onClose={() => setIsModalVisible(false)}

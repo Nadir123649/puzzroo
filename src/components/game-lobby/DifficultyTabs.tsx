@@ -24,19 +24,31 @@ export function DifficultyTabs({
     return index >= 0 ? index : 0
   }
   
-  const [selected, setSelected] = useState(getInitialIndex)
+  // Initialize with 0 to avoid hydration mismatch, then update in useEffect
+  const [selected, setSelected] = useState(0)
+  const [mounted, setMounted] = useState(false)
   // Start as null to avoid SSR/client mismatch — only set after mount
   const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number } | null>(null)
   const buttonsRef = useRef<(HTMLButtonElement | null)[]>([])
 
+  // Set correct initial index after mount
   useEffect(() => {
+    setMounted(true)
+    const initialIndex = getInitialIndex()
+    setSelected(initialIndex)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
     const newIndex = getInitialIndex()
     if (newIndex !== selected) {
       setSelected(newIndex)
     }
-  }, [selectedDifficulty])
+  }, [selectedDifficulty, mounted])
 
   useEffect(() => {
+    if (!mounted) return
+    
     const updateIndicator = () => {
       const button = buttonsRef.current[selected]
       if (button) {
@@ -57,7 +69,7 @@ export function DifficultyTabs({
     updateIndicator()
     window.addEventListener('resize', updateIndicator)
     return () => window.removeEventListener('resize', updateIndicator)
-  }, [selected])
+  }, [selected, mounted])
 
   const handleClick = (index: number) => {
     setSelected(index)
