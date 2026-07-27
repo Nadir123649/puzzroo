@@ -130,13 +130,7 @@ export function Navbar() {
           {/* RIGHT: Desktop Actions */}
           <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
             {(loggedIn && user) ? (
-              <>
-                <Link href="/subscription" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                  Subscribe Us
-                </Link>
-
-                <ProfileDropdown userName={user.name} userEmail={user.email} />
-              </>
+              <ProfileDropdown userName={user.name} userEmail={user.email} />
             ) : (
               <>
                 <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
@@ -146,26 +140,26 @@ export function Navbar() {
                 <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
                   Login
                 </Link>
+
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
+                  aria-label="Toggle theme"
+                >
+                  <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
+                    {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                  </span>
+                  <img
+                    src={images.darkIcon}
+                    alt="Theme icon"
+                    width={20}
+                    height={20}
+                    className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
+                      }`}
+                  />
+                </button>
               </>
             )}
-
-            <button
-              onClick={toggleTheme}
-              className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
-              aria-label="Toggle theme"
-            >
-              <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
-                {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-              </span>
-              <img
-                src={images.darkIcon}
-                alt="Theme icon"
-                width={20}
-                height={20}
-                className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
-                  }`}
-              />
-            </button>
 
           </div>
 
@@ -222,12 +216,11 @@ export function Navbar() {
                 Subscription
               </Link>
               <button
-                onClick={() => {
-                  logout()
+                onClick={async () => {
+                  await logout()
                   notify.successKey('AUTH_LOGOUT_SUCCESS')
                   setIsMenuOpen(false)
-                  router.push('/login')
-                  router.refresh()
+                  window.location.replace('/login')
                 }}
                 className="font-urbanist font-semibold text-[15px] text-red-600 dark:text-red-400 text-left py-1"
               >

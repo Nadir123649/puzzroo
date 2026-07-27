@@ -264,7 +264,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     onDragEnd={commitHistory}
                     boardContainerWidth={desktopBoardWidth}
                     allPieces={pieces}
-                    disabled={false}
+                    disabled={gameStatus !== 'playing'}
                   />
                 ))}
               </TangramBoard>
@@ -471,7 +471,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     onDragEnd={commitHistory}
                     boardContainerWidth={mobileBoardWidth}
                     allPieces={pieces}
-                    disabled={false}
+                    disabled={gameStatus !== 'playing'}
                   />
                 ))}
               </TangramBoard>

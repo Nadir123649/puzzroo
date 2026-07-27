@@ -30,7 +30,6 @@ import {
   isCellMistake,
   findHintPosition,
 } from '@shared/lib/nonogram/helpers'
-import { getRandomPuzzle, getPuzzleById } from '@shared/data/nonogram'
 import { 
   saveGameState, 
   loadGameState, 
@@ -50,8 +49,6 @@ function getTodayDateParam(): string {
 }
 
 import { gameApi } from '@/lib/api/gameApi'
-
-import { dailyPuzzles } from '@shared/data/nonogram'
 
 const NONOGRAM_CACHE_KEY = 'puzzroo_nonogram_cache_by_id'
 
@@ -95,7 +92,8 @@ function getDailyDateString(dateParam?: string | null): string {
   return `${d.getFullYear()}-${m}-${day}`
 }
 
-function getDailyNonogramPuzzle(date: Date): PuzzleData {
+async function getDailyNonogramPuzzle(date: Date): Promise<PuzzleData> {
+  const { dailyPuzzles } = await import('@shared/data/nonogram')
   const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000)
   const index = Math.abs(dayOfYear) % dailyPuzzles.length
   return dailyPuzzles[index]
@@ -124,6 +122,10 @@ export function useNonogram(initialPuzzleId?: string) {
   
   // Phase 2: Game state
   const [gameStatus, setGameStatus] = useState<GameStatus>('playing')
+  const gameStatusRef = useRef(gameStatus)
+  useEffect(() => {
+    gameStatusRef.current = gameStatus
+  }, [gameStatus])
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [rowValidation, setRowValidation] = useState<ValidationStatus[]>([])
   const [columnValidation, setColumnValidation] = useState<ValidationStatus[]>([])
@@ -155,10 +157,12 @@ export function useNonogram(initialPuzzleId?: string) {
   const startTimeRef = useRef<number | null>(null)
   
   // Guard to prevent duplicate click/tap actions (pointer events vs click event race condition)
+  const pointerHandledRef = useRef(false)
   const lastInteractionRef = useRef<{ row: number; col: number; timestamp: number } | null>(null)
   
   // Track action type during dragging
   const dragActionRef = useRef<'fill' | 'erase' | 'mark' | 'unmark' | null>(null)
+  const processedDragCellsRef = useRef<Set<string>>(new Set())
 
 
   /**
@@ -169,12 +173,17 @@ export function useNonogram(initialPuzzleId?: string) {
     const token = ++initTokenRef.current
     let cancelled = false
 
-    const applyPuzzle = (puzzle: PuzzleData) => {
+    const applyPuzzle = async (puzzle: PuzzleData) => {
       if (token !== initTokenRef.current) return
-      const local = getPuzzleById(puzzle.id)
-      if (local) {
-        puzzle.title = local.title
-        puzzle.category = local.category
+      try {
+        const { getPuzzleById } = await import('@shared/data/nonogram')
+        const local = getPuzzleById(puzzle.id)
+        if (local) {
+          puzzle.title = local.title
+          puzzle.category = local.category
+        }
+      } catch {
+        // ignore
       }
       setCurrentPuzzle(puzzle)
       setGrid(createEmptyGrid(puzzle.size))
@@ -225,6 +234,7 @@ export function useNonogram(initialPuzzleId?: string) {
           writeCache(puzzle.id, puzzle)
         }
       } catch {
+        const { getRandomPuzzle, getPuzzleById } = await import('@shared/data/nonogram')
         // Static fallback
         if (puzzleId) {
           const foundPuzzle = getPuzzleById(puzzleId)
@@ -241,7 +251,7 @@ export function useNonogram(initialPuzzleId?: string) {
             const fullYear = 2000 + parseInt(year)
             dailyDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
           }
-          puzzle = getDailyNonogramPuzzle(dailyDate)
+          puzzle = await getDailyNonogramPuzzle(dailyDate)
         } else {
           puzzle = getRandomPuzzle(diff)
         }
@@ -275,7 +285,7 @@ export function useNonogram(initialPuzzleId?: string) {
         }
       }
 
-      applyPuzzle(puzzle)
+      await applyPuzzle(puzzle)
     } finally {
       if (!cancelled) setLoading(false)
     }
@@ -428,6 +438,12 @@ export function useNonogram(initialPuzzleId?: string) {
   const applyCellAction = useCallback((position: CellPosition, mode: InputMode, isDrag = false): CellState => {
     const currentState = grid[position.row]?.[position.col]
     
+    // Check if cell is correct and filled (part of the solution)
+    const isCorrectAndFilled = currentState === 'filled' && currentPuzzle?.solution[position.row]?.[position.col] === 1
+    if (isCorrectAndFilled) {
+      return 'filled' // Cannot be erased or changed!
+    }
+    
     if (isDrag && dragActionRef.current) {
       const action = dragActionRef.current
       if (action === 'fill') return 'filled'
@@ -441,7 +457,7 @@ export function useNonogram(initialPuzzleId?: string) {
     } else {
       return currentState === 'marked' ? 'empty' : 'marked'
     }
-  }, [grid])
+  }, [grid, currentPuzzle])
 
   /**
    * Handle cell click - apply action based on active input mode
@@ -451,20 +467,24 @@ export function useNonogram(initialPuzzleId?: string) {
     if (wasDraggingRef.current) return
     
     // Prevent double processing from race condition between pointer/drag and click handlers
-    const now = Date.now()
+    if (pointerHandledRef.current) {
+      pointerHandledRef.current = false
+      return
+    }
     if (
       lastInteractionRef.current &&
       lastInteractionRef.current.row === position.row &&
-      lastInteractionRef.current.col === position.col &&
-      now - lastInteractionRef.current.timestamp < 350
+      lastInteractionRef.current.col === position.col
     ) {
+      lastInteractionRef.current = null
       return
     }
-    lastInteractionRef.current = { row: position.row, col: position.col, timestamp: now }
+    lastInteractionRef.current = { row: position.row, col: position.col, timestamp: Date.now() }
 
     setSelectedCell(position)
     
     const newState = applyCellAction(position, inputMode)
+    if (newState === grid[position.row][position.col]) return
     
     // Only validate Fill mode - Mark mode (flags) can be placed anywhere
     // Skip validation if the cell is already an error (don't count same mistake twice)
@@ -532,26 +552,74 @@ export function useNonogram(initialPuzzleId?: string) {
   const handleDragStart = useCallback((position: CellPosition) => {
     if (gameStatus !== 'playing' || !currentPuzzle) return
     
+    pointerHandledRef.current = true
+    lastInteractionRef.current = { row: position.row, col: position.col, timestamp: Date.now() }
+    
     setIsDragging(true)
     setDragDirection(null)
     dragStartPos.current = position
+    processedDragCellsRef.current = new Set([getCellKey(position)])
     
     // Determine the action based on the starting cell state and inputMode
     const startState = grid[position.row]?.[position.col]
+    let action: 'fill' | 'erase' | 'mark' | 'unmark'
     if (inputMode === 'fill') {
-      dragActionRef.current = (startState === 'filled' || startState === 'error') ? 'erase' : 'fill'
+      action = (startState === 'filled' || startState === 'error') ? 'erase' : 'fill'
     } else {
-      dragActionRef.current = startState === 'marked' ? 'unmark' : 'mark'
+      action = startState === 'marked' ? 'unmark' : 'mark'
+    }
+    dragActionRef.current = action
+    
+    // Apply the action immediately to the first cell
+    const newState = applyCellAction(position, inputMode, true)
+    if (newState === startState) {
+      hasDraggedRef.current = false
+      return
     }
     
-    // Show preview for starting cell
-    setDragPreviewCells(new Set([getCellKey(position)]))
+    if (grid[position.row]?.[position.col] === 'error') {
+      hasDraggedRef.current = false
+      return
+    }
+
+    if (inputMode === 'fill' && newState === 'filled' && validationMode === 'assisted') {
+      const isMistake = currentPuzzle.solution[position.row][position.col] === 0
+      if (isMistake) {
+        setMistakeCount((prev) => {
+          const nextMistakes = prev + 1
+          const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+          if (nextMistakes >= limit) {
+            setGameStatus('lost')
+            clearGameState()
+          }
+          return nextMistakes
+        })
+        setGrid((prevGrid) => {
+          const newGrid = prevGrid.map((row) => [...row])
+          newGrid[position.row][position.col] = 'error'
+          return newGrid
+        })
+        hasDraggedRef.current = false
+        return
+      }
+    }
+
+    setGrid((prevGrid) => {
+      const newGrid = prevGrid.map((row) => [...row])
+      newGrid[position.row][position.col] = newState
+      return newGrid
+    })
+    
     hasDraggedRef.current = false
-  }, [currentPuzzle, gameStatus, grid, inputMode])
+  }, [currentPuzzle, gameStatus, grid, inputMode, applyCellAction, validationMode, difficulty])
 
   // Continue drag
   const handleDragEnter = useCallback((position: CellPosition) => {
-    if (!isDragging || !dragStartPos.current || !currentPuzzle) return
+    if (!isDragging || !dragStartPos.current || !currentPuzzle || !dragActionRef.current) return
+    
+    const cellKey = getCellKey(position)
+    // If we already processed this cell in this drag, skip
+    if (processedDragCellsRef.current.has(cellKey)) return
     
     // Determine and enforce direction lock
     const direction = determineDragDirection(dragStartPos.current, position)
@@ -572,26 +640,45 @@ export function useNonogram(initialPuzzleId?: string) {
       return // Ignore cells outside locked column
     }
     
-    const start = dragStartPos.current
-    const newPreviewKeys = new Set<string>()
+    // Mark as processed
+    processedDragCellsRef.current.add(cellKey)
+    hasDraggedRef.current = true
     
-    if (currentDirection === 'horizontal') {
-      const minCol = Math.min(start.col, position.col)
-      const maxCol = Math.max(start.col, position.col)
-      for (let c = minCol; c <= maxCol; c++) {
-        newPreviewKeys.add(`${start.row}-${c}`)
-      }
-    } else {
-      const minRow = Math.min(start.row, position.row)
-      const maxRow = Math.max(start.row, position.row)
-      for (let r = minRow; r <= maxRow; r++) {
-        newPreviewKeys.add(`${r}-${start.col}`)
+    const newState = applyCellAction(position, inputMode, true)
+    
+    const isRowCompleted = rowValidation[position.row] === 'completed'
+    const isColCompleted = columnValidation[position.col] === 'completed'
+    if (grid[position.row]?.[position.col] === 'error' || isRowCompleted || isColCompleted) {
+      return
+    }
+
+    if (inputMode === 'fill' && newState === 'filled' && validationMode === 'assisted') {
+      const isMistake = currentPuzzle.solution[position.row][position.col] === 0
+      if (isMistake) {
+        setMistakeCount((prev) => {
+          const nextMistakes = prev + 1
+          const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+          if (nextMistakes >= limit) {
+            setGameStatus('lost')
+            clearGameState()
+          }
+          return nextMistakes
+        })
+        setGrid((prevGrid) => {
+          const newGrid = prevGrid.map((row) => [...row])
+          newGrid[position.row][position.col] = 'error'
+          return newGrid
+        })
+        return
       }
     }
     
-    setDragPreviewCells(newPreviewKeys)
-    hasDraggedRef.current = newPreviewKeys.size > 1
-  }, [isDragging, dragDirection, currentPuzzle, determineDragDirection])
+    setGrid((prevGrid) => {
+      const newGrid = prevGrid.map((row) => [...row])
+      newGrid[position.row][position.col] = newState
+      return newGrid
+    })
+  }, [isDragging, dragDirection, currentPuzzle, determineDragDirection, inputMode, applyCellAction, validationMode, difficulty, rowValidation, columnValidation])
 
   // Handle pointer move - detect cell under pointer
   const handlePointerMove = useCallback((e: PointerEvent) => {
@@ -623,81 +710,20 @@ export function useNonogram(initialPuzzleId?: string) {
     }
   }, [isDragging, handlePointerMove])
 
-  // End drag - apply changes with sequential flip animation
+  // End drag - clean up drag state
   const handleDragEnd = useCallback(() => {
     if (!isDragging) return
     
-    if (!hasDraggedRef.current) {
-      setIsDragging(false)
-      setDragDirection(null)
-      setDragPreviewCells(new Set())
-      dragStartPos.current = null
-      return
-    }
-
     wasDraggingRef.current = true
     setTimeout(() => {
       wasDraggingRef.current = false
     }, 100)
     
-    const cellsToUpdate = Array.from(dragPreviewCells)
-    
-    // Apply changes sequentially with 30ms stagger for flip effect
-    cellsToUpdate.forEach((cellKey, index) => {
-      setTimeout(() => {
-        const [rowStr, colStr] = cellKey.split('-')
-        const position: CellPosition = { row: parseInt(rowStr), col: parseInt(colStr) }
-        
-        // Mark as handled to prevent click handler from double-firing
-        lastInteractionRef.current = { row: position.row, col: position.col, timestamp: Date.now() }
-        
-        const newState = applyCellAction(position, inputMode, true)
-        
-        // Only validate Fill mode during drag - Mark mode (flags) can be placed anywhere
-        // Skip validation if the cell is already an error (don't count same mistake twice)
-        if (inputMode === 'fill' && newState === 'filled' && validationMode === 'assisted' && currentPuzzle && grid[position.row][position.col] !== 'error') {
-          const tempGrid = grid.map(row => [...row])
-          tempGrid[position.row][position.col] = newState
-          const isMistake = isCellMistake(tempGrid, currentPuzzle.solution, position)
-          
-          if (isMistake) {
-            // Count the mistake and check limit
-            setMistakeCount((prev) => {
-              const nextMistakes = prev + 1
-              const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
-              if (nextMistakes >= limit) {
-                setGameStatus('lost')
-                clearGameState()
-              }
-              return nextMistakes
-            })
-            // Show error feedback permanently (don't revert)
-            setGrid((prevGrid) => {
-              const newGrid = prevGrid.map((row) => [...row])
-              newGrid[position.row][position.col] = 'error'
-              return newGrid
-            })
-            return
-          }
-        }
-        
-        // Apply the state change
-        setGrid((prevGrid) => {
-          const newGrid = prevGrid.map((row) => [...row])
-          newGrid[position.row][position.col] = newState
-          return newGrid
-        })
-      }, index * 30)
-    })
-    
-    // Clean up drag state after all animations start
-    setTimeout(() => {
-      setIsDragging(false)
-      setDragDirection(null)
-      setDragPreviewCells(new Set())
-      dragStartPos.current = null
-    }, cellsToUpdate.length * 30 + 100)
-  }, [isDragging, dragPreviewCells, inputMode, applyCellAction, validationMode, currentPuzzle, grid, difficulty])
+    setIsDragging(false)
+    setDragDirection(null)
+    dragStartPos.current = null
+    processedDragCellsRef.current = new Set()
+  }, [isDragging])
 
   /**
    * Reset the current puzzle

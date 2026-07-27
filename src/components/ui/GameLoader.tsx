@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
 import { images } from '@/lib/utils'
@@ -11,8 +11,27 @@ interface GameLoaderProps {
 }
 
 export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
-  React.useEffect(() => {
+  const [mounted, setMounted] = useState(isOpen)
+  const [visible, setVisible] = useState(isOpen)
+
+  useEffect(() => {
     if (isOpen) {
+      setMounted(true)
+      const raf = requestAnimationFrame(() => {
+        setVisible(true)
+      })
+      return () => cancelAnimationFrame(raf)
+    } else {
+      setVisible(false)
+      const timer = setTimeout(() => {
+        setMounted(false)
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (mounted) {
       document.body.style.overflow = 'hidden'
       document.body.style.overflowY = 'hidden'
       document.body.style.touchAction = 'none'
@@ -41,12 +60,16 @@ export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
       document.documentElement.style.scrollbarGutter = ''
       document.body.style.scrollbarGutter = ''
     }
-  }, [isOpen])
+  }, [mounted])
 
-  if (!isOpen) return null
+  if (!mounted) return null
 
   return (
-    <div className="fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-[99999] flex items-center justify-center transition-opacity duration-300">
+    <div
+      className={`fixed inset-0 bg-white/80 dark:bg-[#181A20]/80 backdrop-blur-sm z-[99999] flex items-center justify-center transition-opacity duration-300 ${
+        visible ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
       <div className="flex flex-col items-center gap-4 text-center select-none pointer-events-auto">
         {/* Puzzroo Logo & Brand */}
         <div className="flex items-center gap-[clamp(8px,1vw,12px)] select-none">

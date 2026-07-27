@@ -9,7 +9,6 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { PolygonPuzzle, TangramPieceId } from '@shared/types/tangram-polygon'
-import { getRandomPuzzle, getPuzzlesByDifficulty } from '@shared/data/tangram'
 import type { TangramDifficulty } from '@shared/data/tangram'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
 
@@ -37,8 +36,9 @@ function getDailyDateString(dateParam?: string | null): string {
   return `${d.getFullYear()}-${m}-${day}`
 }
 
-function getDailyTangramPuzzle(date: Date, diff: TangramDifficulty): PolygonPuzzle {
+async function getDailyTangramPuzzle(date: Date, diff: TangramDifficulty): Promise<PolygonPuzzle> {
   const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
+  const { getPuzzlesByDifficulty } = await import('@shared/data/tangram')
   const pool = getPuzzlesByDifficulty(diff)
   const x = Math.sin(seed) * 10000
   const rand = x - Math.floor(x)
@@ -97,6 +97,17 @@ const writeCache = (p: PolygonPuzzle): void => {
   } catch {
     /* ignore */
   }
+}
+
+const DUMMY_TANGRAM_PUZZLE: PolygonPuzzle = {
+  id: '',
+  sourceId: '',
+  difficulty: 'easy',
+  pieceShapeIds: [],
+  individualPiecePolygons: [],
+  fullPolygon: [],
+  gameType: 'tangram',
+  active: false,
 }
 
 interface PieceState {
@@ -201,12 +212,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const dateParam = searchParams?.get('date')
   const isDailyChallenge = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
 
-  const [puzzle, setPuzzle] = useState<PolygonPuzzle>(() => {
-    if (isDailyChallenge) {
-      return getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
-    }
-    return getRandomPuzzle(difficulty)
-  })
+  const [puzzle, setPuzzle] = useState<PolygonPuzzle>(DUMMY_TANGRAM_PUZZLE)
   const getInitialTime = (diff: TangramDifficulty) => {
     switch (diff) {
       case 'hard': return 90    // 1.5 minutes
@@ -311,14 +317,16 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             p = res as unknown as PolygonPuzzle
           }
         } catch {
+          const { getRandomPuzzle } = await import('@shared/data/tangram')
           p = isDailyChallenge
-            ? getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+            ? await getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
             : getRandomPuzzle(difficulty)
         }
         if (!cancelled) {
           if (!p || !Array.isArray(p.fullPolygon) || !Array.isArray(p.pieceShapeIds)) {
+            const { getRandomPuzzle } = await import('@shared/data/tangram')
             p = isDailyChallenge
-              ? getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+              ? await getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
               : getRandomPuzzle(difficulty)
           }
           writeCache(p)
@@ -709,6 +717,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           if (!res || !(res as any).id) throw new Error('invalid_puzzle')
           p = res as unknown as PolygonPuzzle
         } catch {
+          const { getRandomPuzzle } = await import('@shared/data/tangram')
           p = getRandomPuzzle(difficulty)
         }
         if (!cancelled) {
@@ -749,6 +758,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           if (!res || !(res as any).id) throw new Error('invalid_puzzle')
           p = res as unknown as PolygonPuzzle
         } catch {
+          const { getRandomPuzzle } = await import('@shared/data/tangram')
           p = getRandomPuzzle(difficulty, currentSourceId)
         }
         if (!cancelled) {
@@ -790,7 +800,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             if (!res || !(res as any).id) throw new Error('invalid_puzzle')
             p = res as unknown as PolygonPuzzle
           } catch {
-            p = getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+            p = await getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
           }
         } else if (id) {
           const cached = readCache(id)
@@ -802,26 +812,36 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
               if (!res || !(res as any).id) throw new Error('invalid_puzzle')
               p = res as unknown as PolygonPuzzle
             } catch {
+              const { getRandomPuzzle } = await import('@shared/data/tangram')
               p = current || getRandomPuzzle(difficulty)
             }
           }
         } else {
+          const { getRandomPuzzle } = await import('@shared/data/tangram')
           p = current || getRandomPuzzle(difficulty)
         }
         if (!cancelled) {
           if (!p || !Array.isArray(p.fullPolygon) || !Array.isArray(p.pieceShapeIds)) {
             p = isDailyChallenge
-              ? getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
-              : current || getRandomPuzzle(difficulty)
+              ? await getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+              : current
+            if (!p || p === DUMMY_TANGRAM_PUZZLE) {
+              const { getRandomPuzzle } = await import('@shared/data/tangram')
+              p = getRandomPuzzle(difficulty)
+            }
           }
           writeCache(p)
           setPuzzle(p)
         }
       } catch {
         if (!cancelled) {
-          const p = isDailyChallenge
-            ? getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
-            : current || getRandomPuzzle(difficulty)
+          let p = isDailyChallenge
+            ? await getDailyTangramPuzzle(getDailyDate(dateParam), difficulty)
+            : current
+          if (!p || p === DUMMY_TANGRAM_PUZZLE) {
+            const { getRandomPuzzle } = await import('@shared/data/tangram')
+            p = getRandomPuzzle(difficulty)
+          }
           setPuzzle(p)
         }
       } finally {

@@ -3,12 +3,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Cell, Difficulty, CrossMathPuzzle } from '@shared/lib/crossmath/types'
-import {
-  getRandomPuzzle,
-  getRandomPatternPuzzle,
-  getDailyPatternPuzzle,
-  getPuzzleById,
-} from '@shared/data/crossmath'
 import { gameApi } from '@/lib/api/gameApi'
 import { SCORING } from '@shared/lib/crossmath/constants'
 import {
@@ -53,7 +47,8 @@ function getDailyDateString(dateParam?: string | null): string {
   return `${d.getFullYear()}-${m}-${day}`
 }
 
-function getDailyCrossMathPuzzle(date: Date, diff: Difficulty): CrossMathPuzzle {
+async function getDailyCrossMathPuzzle(date: Date, diff: Difficulty): Promise<CrossMathPuzzle> {
+  const { getDailyPatternPuzzle } = await import('@shared/data/crossmath')
   const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
   return getDailyPatternPuzzle(diff, seed)
 }
@@ -216,7 +211,10 @@ export function useCrossMath(initialPuzzleId?: string) {
             } catch {
               // fall through to local
             }
-            if (!puzzle) puzzle = getPuzzleById(puzzleId) || null
+            if (!puzzle) {
+              const { getPuzzleById } = await import('@shared/data/crossmath')
+              puzzle = getPuzzleById(puzzleId) || null
+            }
           }
         } else if (isDailyChallenge) {
           try {
@@ -227,7 +225,7 @@ export function useCrossMath(initialPuzzleId?: string) {
           } catch {
             // fall through to local
           }
-          if (!puzzle) puzzle = getDailyCrossMathPuzzle(getDailyDate(dateParam), difficulty)
+          if (!puzzle) puzzle = await getDailyCrossMathPuzzle(getDailyDate(dateParam), difficulty)
         } else {
           if (savedGame && savedGame.difficulty === difficulty) {
             const resumeId = savedGame.puzzleId
@@ -242,7 +240,10 @@ export function useCrossMath(initialPuzzleId?: string) {
             } catch {
               // fall through to local
             }
-            if (!puzzle) puzzle = getPuzzleById(resumeId) || (usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty))
+            if (!puzzle) {
+              const { getPuzzleById, getRandomPatternPuzzle, getRandomPuzzle } = await import('@shared/data/crossmath')
+              puzzle = getPuzzleById(resumeId) || (usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty))
+            }
           } else {
             try {
               const resp = await gameApi.getPuzzle('crossmath', { difficulty })
@@ -252,7 +253,10 @@ export function useCrossMath(initialPuzzleId?: string) {
             } catch {
               // fall through to local
             }
-            if (!puzzle) puzzle = usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)
+            if (!puzzle) {
+              const { getRandomPatternPuzzle, getRandomPuzzle } = await import('@shared/data/crossmath')
+              puzzle = usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)
+            }
           }
         }
 
@@ -718,6 +722,7 @@ export function useCrossMath(initialPuzzleId?: string) {
       // fall through
     }
     if (!puzzle) {
+      const { getPuzzleById } = await import('@shared/data/crossmath')
       const sp = getPuzzleById(id)
       puzzle = sp || currentPuzzle
     }
@@ -747,9 +752,12 @@ export function useCrossMath(initialPuzzleId?: string) {
       // fall through to local
     }
     if (!puzzle) {
-      puzzle = isDailyChallenge
-        ? getDailyCrossMathPuzzle(getDailyDate(dateParam), difficulty)
-        : (usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty))
+      if (isDailyChallenge) {
+        puzzle = await getDailyCrossMathPuzzle(getDailyDate(dateParam), difficulty)
+      } else {
+        const { getRandomPatternPuzzle, getRandomPuzzle } = await import('@shared/data/crossmath')
+        puzzle = usePatternMode ? getRandomPatternPuzzle(difficulty) : getRandomPuzzle(difficulty)
+      }
     }
     writePuzzleCache(puzzle)
     setCurrentPuzzle(puzzle)
