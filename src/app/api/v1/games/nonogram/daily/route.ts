@@ -1,85 +1,37 @@
-import { NextRequest } from "next/server";
-import { withAuth } from "../route-helpers";
-import { randomPuzzleEngine } from "@/lib/server/puzzles/nonogram/services/RandomPuzzleEngine";
-import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService";
-import { nonogramToResponse } from "@/lib/server/puzzles/nonogram";
-import DailyChallenge from "@/lib/server/models/DailyChallenge";
-import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle";
-import { dailyQuerySchema } from "@/lib/server/puzzles/nonogram/validators";
-import { successResponse } from "@/lib/server/utils/apiResponse";
-import { dateToSeed } from "@/lib/server/puzzles/daily";
+import { NextRequest } from "next/server"
+import { randomPuzzleEngine } from "@/lib/server/puzzles/nonogram/services/RandomPuzzleEngine"
+import { auth } from "@/lib/server/middleware/auth"
+import { cacheHeaders } from "@/lib/server/utils/http"
+import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
+import { nonogramToResponse } from "@/lib/server/puzzles/nonogram"
 
-export const GET = withAuth(async (req, user) => {
-  const url = new URL(req.url);
-  const parsed = dailyQuerySchema.safeParse(Object.fromEntries(url.searchParams));
-  const difficulty = parsed.success ? parsed.data.difficulty : undefined;
-  const dateParam = parsed.success ? parsed.data.date : undefined;
+export async function GET(request: NextRequest) {
+  const authResult = await auth(request)
+  const userId = "error" in authResult ? null : authResult.user.id
 
-  // Past date: deterministic puzzle by date seed, no challenge/session
-  if (dateParam) {
-    const seed = dateToSeed(dateParam);
-    const matchFilter: any = { game: "nonogram", isActive: true };
-    if (difficulty) matchFilter.difficulty = difficulty;
-    const count = await NonogramPuzzle.countDocuments(matchFilter);
-    if (count === 0) {
-      return Response.json(
-        { success: false, payload: { error: { code: "no_puzzles", message: "No puzzles available" } } },
-        { status: 404 }
-      );
+  const url = new URL(request.url)
+  const dateStr = url.searchParams.get("date") || new Date().toISOString().split("T")[0]
+  const difficulty = url.searchParams.get("difficulty") as any
+
+  try {
+    const doc = await randomPuzzleEngine.selectDailyPuzzle(dateStr, difficulty)
+    const headers = cacheHeaders(86400)
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        payload: {
+          ...nonogramToResponse(doc),
+          date: dateStr,
+        },
+        timestamp: Date.now(),
+      }),
+      { status: 200, headers }
+    )
+  } catch (error: any) {
+    if (error.message === "no_daily_puzzles_available") {
+      return errorResponse(404, "no_daily_puzzle", "No daily puzzle available")
     }
-    const dailyIndex = seed % count;
-    const doc = await NonogramPuzzle.findOne({ ...matchFilter, dailyIndex }).lean();
-    if (!doc) {
-      return Response.json(
-        { success: false, payload: { error: { code: "puzzle_not_found", message: "Puzzle not found" } } },
-        { status: 404 }
-      );
-    }
-    return successResponse({ ...nonogramToResponse(doc), date: dateParam });
+    return errorResponse(500, "internal_error", "Internal Server Error")
   }
-
-  const { puzzle, dailyChallenge } = await randomPuzzleEngine.selectDailyPuzzle(user.id, difficulty);
-
-  const today = new Date().toISOString().split("T")[0];
-
-  let challenge = dailyChallenge;
-  if (!challenge) {
-    challenge = await DailyChallenge.create({
-      date: today,
-      userId: user.id,
-      puzzleId: puzzle.puzzleId,
-      difficulty: puzzle.difficulty,
-      status: "active",
-    });
-  }
-
-  const existingSession = challenge.sessionId
-    ? await sessionService.getSessionById(challenge.sessionId.toString(), user.id).catch(() => null)
-    : null;
-
-let session = existingSession;
-  if (!session) {
-    try {
-      session = await sessionService.startSession({
-        userId: user.id,
-        puzzleId: puzzle.puzzleId,
-        difficulty: puzzle.difficulty,
-      });
-      challenge.sessionId = session._id;
-      await challenge.save();
-    } catch (e: any) {
-      console.error('[nonogram] daily: Failed to create new session:', e.message, e.stack);
-      if (e.message !== "puzzle_not_found") {
-        throw e;
-      }
-    }
-  }
-
-const puzzleResponse = nonogramToResponse(puzzle);
-  return successResponse({
-    ...puzzleResponse,
-    date: today,
-    sessionId: session?._id || challenge.sessionId,
-    status: challenge.status,
-  });
-});
+}

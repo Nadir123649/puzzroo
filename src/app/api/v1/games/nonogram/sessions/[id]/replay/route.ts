@@ -1,27 +1,14 @@
-import { NextRequest } from "next/server";
-import { withAuth } from "../../../route-helpers";
-import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService";
-import { successResponse } from "@/lib/server/utils/apiResponse";
-import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle";
+import { withAuth } from "../../../route-helpers"
+import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService"
+import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
+import { rateLimit } from "@/lib/server/utils/http"
 
 export const POST = withAuth(async (req, user, params) => {
-  const { id } = params;
-  const currentSession = await sessionService.getSessionById(id, user.id);
-  const puzzle = await NonogramPuzzle.findOne({ puzzleId: currentSession.puzzleId }).lean();
-  if (!puzzle) {
-    return Response.json(
-      { success: false, payload: { error: { code: "puzzle_not_found", message: "Puzzle not found." } }, timestamp: Date.now() },
-      { status: 404 }
-    );
+  if (!rateLimit(req, "nonogram-replay", 15)) {
+    return errorResponse(429, "rate_limited", "Too many requests")
   }
 
-  const session = await sessionService.replaySession(user.id, currentSession.puzzleId, currentSession.difficulty);
-  return successResponse({
-    sessionId: session._id,
-    puzzleId: session.puzzleId,
-    difficulty: session.difficulty,
-    status: session.status,
-    grid: session.grid,
-    startedAt: session.startedAt,
-  }, 201);
-});
+  const session = await sessionService.getSession(params.id, user.id)
+  const newSession = await sessionService.replaySession(user.id, session.puzzleId)
+  return successResponse(newSession, 201)
+})

@@ -1,27 +1,22 @@
 import { playSessionRepository } from "./PlaySessionRepository"
 import { verificationEngine } from "./VerificationEngine"
 import { randomPuzzleEngine } from "./RandomPuzzleEngine"
-import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle"
-import NonogramPlaySession from "@/lib/server/models/NonogramPlaySession"
-import type { SafeSessionResponse, SafePuzzleResponse, SaveProgressResponse, ProgressInfo, CompleteSessionResponse, CompletionResult } from "../types"
+import TangramPuzzle from "@/lib/server/models/TangramPuzzle"
+import TangramPlaySession from "@/lib/server/models/TangramPlaySession"
+import type { SafeSessionResponse, SafePuzzleResponse, SaveProgressResponse, ProgressInfo, CompleteSessionResponse, CompletionResult, TangramVerificationResult } from "../types"
 
-function computeProgress(grid: Record<string, number>, blanks: string[]): ProgressInfo {
-  const filled = blanks.filter(b => grid[b] !== undefined).length
+function computeProgress(grid: any[][], pieces: any[]): ProgressInfo {
+  const filled = pieces.filter(p => p.isPlaced).length
   return {
     filledCells: filled,
-    totalBlanks: blanks.length,
-    percentage: blanks.length > 0 ? Math.round((filled / blanks.length) * 100) : 100,
+    totalPieces: pieces.length,
+    percentage: pieces.length > 0 ? Math.round((filled / pieces.length) * 100) : 100,
   }
 }
 
 function toSafeSession(session: Record<string, any>): SafeSessionResponse {
-  const gridRaw = session.grid || {}
-  const grid: Record<string, number> =
-    gridRaw instanceof Map
-      ? Object.fromEntries(gridRaw)
-      : typeof gridRaw === "object" && gridRaw !== null
-        ? gridRaw
-        : {}
+  const gridRaw = session.grid || []
+  const grid: any[][] = Array.isArray(gridRaw) ? gridRaw : []
 
   return {
     sessionId: session._id?.toString() || session.sessionId,
@@ -29,11 +24,9 @@ function toSafeSession(session: Record<string, any>): SafeSessionResponse {
     difficulty: session.difficulty,
     sessionStatus: session.status,
     grid,
-    blanks: session.blanks || [],
-    availableNumbers: session.availableNumbers || [],
-    moves: session.moves || 0,
     mistakes: session.mistakes || 0,
     hintsUsed: session.hintsUsed || 0,
+    moves: session.moves || 0,
     elapsedTime: session.elapsedTime || 0,
     startedAt: session.startedAt?.toISOString?.() || session.startedAt,
     pausedAt: session.pausedAt?.toISOString?.() || session.pausedAt || null,
@@ -43,34 +36,34 @@ function toSafeSession(session: Record<string, any>): SafeSessionResponse {
     isReplay: session.isReplay || false,
     restartCount: session.restartCount || 0,
     result: session.result || null,
+    puzzle: session.puzzle ? {
+      id: session.puzzle.puzzleId,
+      difficulty: session.puzzle.difficulty,
+      pieceShapeIds: session.puzzle.pieceShapeIds || [],
+      individualPiecePolygons: session.puzzle.individualPiecePolygons || [],
+      fullPolygon: session.puzzle.fullPolygon || [],
+      metadata: session.puzzle.metadata,
+    } : undefined,
   }
 }
 
 async function toSafePuzzleResponse(doc: any): Promise<SafePuzzleResponse> {
-  const { rowClues, columnClues } = doc
   return {
     id: doc.puzzleId,
-    game: doc.game || "nonogram",
     difficulty: doc.difficulty,
-    size: doc.size,
-    title: doc.title,
-    category: doc.category,
-    rowClues,
-    columnClues,
-    solution: doc.solution,
-    hash: doc.hash,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-    estimatedTime: doc.estimatedTime || 0,
+    pieceShapeIds: doc.pieceShapeIds || [],
+    individualPiecePolygons: doc.individualPiecePolygons || [],
+    fullPolygon: doc.fullPolygon || [],
+    metadata: doc.metadata,
   }
 }
 
 export class SessionService {
   async startSession(input: any) {
-    const puzzle = await NonogramPuzzle.findById(input.puzzleId)
+    const puzzle = await TangramPuzzle.findById(input.puzzleId)
     if (!puzzle) throw new Error("puzzle_not_found")
 
-    const puzzleDoc = await NonogramPlaySession.findByUserAndPuzzle(input.userId, input.puzzleId)
+    const puzzleDoc = await TangramPlaySession.findByUserAndPuzzle(input.userId, input.puzzleId)
     if (puzzleDoc && puzzleDoc.status === "completed") {
       throw new Error("already_completed")
     }
@@ -79,8 +72,6 @@ export class SessionService {
       userId: input.userId,
       puzzleId: input.puzzleId,
       difficulty: input.difficulty || puzzle.difficulty,
-      blanks: [],
-      availableNumbers: [],
     })
 
     return toSafeSession(newSession)
@@ -101,14 +92,15 @@ export class SessionService {
   async saveProgress(
     sessionId: string,
     userId: string,
-    grid: Record<string, number>,
+    grid: any[][],
+    pieces: any[],
     elapsedTime: number,
     hintsUsed: number,
     mistakes: number,
     moves: number
   ) {
     const session = await this.getSession(sessionId, userId)
-    const progress = computeProgress(grid, session.blanks)
+    const progress = computeProgress(grid, pieces)
 
     const result = await playSessionRepository.saveProgress(
       sessionId,
@@ -126,7 +118,8 @@ export class SessionService {
   async completeSession(
     sessionId: string,
     userId: string,
-    grid: Record<string, number>,
+    grid: any[][],
+    pieces: any[],
     elapsedTime: number,
     hintsUsed: number,
     mistakes: number,
@@ -136,8 +129,11 @@ export class SessionService {
     const session = await this.getSession(sessionId, userId)
 
     let result: CompletionResult
-    if (grid && Object.keys(grid).length > 0) {
-      const verification = await verificationEngine.verifyCompletion(session.puzzleId, grid)
+    let verification: TangramVerificationResult
+
+    if (grid && grid.length > 0) {
+      const verificationEngine = await import("./VerificationEngine")
+      verification = await verificationEngine.verifyCompletion(session.puzzleId, grid)
       result = {
         isComplete: verification.isComplete,
         accuracy: verification.accuracy,
@@ -151,6 +147,17 @@ export class SessionService {
         correctCells: 0,
         totalCells: 0,
       }
+      verification = {
+        isComplete: true,
+        totalCellsRequired: 0,
+        correctCells: 0,
+        incorrectCells: 0,
+        accuracy: 100,
+        mistakes: 0,
+        rowValidation: [],
+        columnValidation: [],
+        pieces: []
+      }
     }
 
     const completionResult = {
@@ -162,8 +169,6 @@ export class SessionService {
     }
 
     const sessionResult = await playSessionRepository.complete(sessionId, {
-      correct: result.correctCells,
-      total: result.totalCells,
       accuracy: result.accuracy,
       elapsedTime,
       moves,
@@ -172,7 +177,11 @@ export class SessionService {
       score,
     })
 
-    return toSafeSession(sessionResult)
+    return {
+      ...toSafeSession(sessionResult),
+      verification,
+      completionResult,
+    }
   }
 
   async pauseSession(sessionId: string, userId: string) {
@@ -203,7 +212,7 @@ export class SessionService {
       await playSessionRepository.incrementRestartCount(sessionId)
     }
 
-    const result = await playSessionRepository.saveGrid(sessionId, {}, 0, 0)
+    const result = await playSessionRepository.saveGrid(sessionId, [], 0, 0)
     await playSessionRepository.updateStatus(sessionId, "playing")
 
     return toSafeSession(result)
@@ -219,30 +228,16 @@ export class SessionService {
   }
 
   async replaySession(userId: string, puzzleId: string) {
-    const puzzleDoc = await NonogramPuzzle.findById(puzzleId)
+    const puzzleDoc = await TangramPuzzle.findById(puzzleId)
     if (!puzzleDoc) throw new Error("puzzle_not_found")
 
     const result = await playSessionRepository.create({
       userId,
       puzzleId,
       difficulty: puzzleDoc.difficulty,
-      blanks: [],
-      availableNumbers: [],
     })
 
     return toSafeSession(result)
-  }
-
-  async getContinuePlaying(userId: string, puzzleId?: string) {
-    if (puzzleId) {
-      const session = await playSessionRepository.findByUserAndPuzzle(userId, puzzleId)
-      if (!session) return null
-      return toSafeSession(session)
-    }
-
-    const session = await playSessionRepository.findByUserAndStatus(userId, ["playing", "paused"])
-    if (!session) return null
-    return toSafeSession(session)
   }
 
   async getSessionByUser(userId: string, status?: string, limit = 20) {

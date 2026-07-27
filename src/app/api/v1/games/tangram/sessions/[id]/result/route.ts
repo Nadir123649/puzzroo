@@ -1,5 +1,5 @@
-import { withAuth } from "../../../route-helpers"
-import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService"
+import { withAuth } from "../../route-helpers"
+import { sessionService } from "@/lib/server/puzzles/tangram/services/SessionService"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 
 export const GET = withAuth(async (_req, user, params) => {

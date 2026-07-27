@@ -6,7 +6,7 @@ import { validate } from "@/lib/server/middleware/validate";
 import { rateLimit } from "@/lib/server/utils/http";
 import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle";
 import { nonogramToResponse } from "@/lib/server/puzzles/nonogram";
-import { Difficulty } from "@/lib/server/puzzles/nonogram/types";
+import type { NonogramDifficulty } from "@/lib/server/puzzles/nonogram/types";
 
 // Validation schemas
 const difficultyQuerySchema = {
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const requestedDifficulty = query.difficulty as Difficulty | undefined;
+    const requestedDifficulty = query.difficulty as NonogramDifficulty | undefined;
     const limit = query.limit ? Math.min(parseInt(query.limit) || 50, 100) : 50;
     const cursor = query.cursor as string | null;
 
