@@ -99,7 +99,11 @@ export class StatisticsService {
     )
     stats.favoriteDifficulty = maxCompleted && maxCompleted.count > 0 ? maxCompleted.key : null
 
-    await stats.save()
+    try {
+      await stats.save()
+    } catch (err) {
+      console.error("[crossmath] stats save failed", err)
+    }
   }
 
   private calculateCurrentStreak(
@@ -180,7 +184,11 @@ export class StatisticsService {
       ? Math.round((stats.totalCompletions / stats.totalAttempts) * 100) / 100
       : 0
 
-    await stats.save()
+    try {
+      await stats.save()
+    } catch (err) {
+      console.error("[crossmath] puzzle stats save failed", err)
+    }
   }
 
   async getUserStats(userId: string) {

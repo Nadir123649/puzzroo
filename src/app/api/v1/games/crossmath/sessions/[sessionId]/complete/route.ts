@@ -1,53 +1,50 @@
 import { NextRequest } from "next/server"
 import { withAuth } from "../../../route-helpers"
 import { sessionService } from "@/lib/server/puzzles/crossmath/services/SessionService"
-import { verificationEngine } from "@/lib/server/puzzles/crossmath/services/VerificationEngine"
 import { statisticsService } from "@/lib/server/puzzles/crossmath/services/StatisticsService"
-import { verifyGridSchema } from "@/lib/server/puzzles/crossmath/validators"
-import { successResponse } from "@/lib/server/utils/apiResponse"
+import { completeSessionSchema } from "@/lib/server/puzzles/crossmath/validators"
+import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
+import { rateLimit } from "@/lib/server/utils/http"
 
 export const POST = withAuth(async (req, user, params) => {
+  console.log('[TRACE] POST /complete', { sessionId: params.sessionId?.substring(0,20), userId: user.id?.substring(0,10), ts: Date.now() })
+  if (!rateLimit(req, "crossmath-complete", 15)) {
+    return errorResponse(429, "rate_limited", "Too many requests")
+  }
   const { sessionId } = params
   const body = await req.json()
-  const parsed = verifyGridSchema.safeParse(body)
+  const parsed = completeSessionSchema.safeParse(body)
   if (!parsed.success) {
     return Response.json(
-      { success: false, payload: { error: { code: "validation_error", message: parsed.error.issues[0].message } }, timestamp: Date.now() },
+      { success: false, version: "1.0.0", payload: { error: { code: "validation_error", message: parsed.error.issues[0].message } }, serverTimestamp: new Date().toISOString() },
       { status: 400 }
     )
   }
 
-  const result = await sessionService.completeSession(sessionId, user.id, parsed.data.grid)
-
-  if (!result.completed) {
-    return successResponse({
-      completed: false,
-      message: "Puzzle is not complete.",
-      verifyResult: {
-        correct: result.verifyResult.correct,
-        accuracy: result.verifyResult.accuracy,
-        mistakes: result.verifyResult.mistakes,
-        errors: result.verifyResult.errors,
-      },
-    })
-  }
-
-  await statisticsService.updateOnSessionComplete(
+  const result = await sessionService.completeSession(
+    sessionId,
     user.id,
-    result.session.puzzleId,
-    result.session.difficulty,
-    result.session.elapsedTime,
-    result.session.hintsUsed,
-    result.session.mistakes,
-    result.verifyResult.accuracy
+    parsed.data.grid,
+    parsed.data.elapsedTime,
+    parsed.data.hintsUsed,
+    parsed.data.mistakes,
+    parsed.data.moves,
+    parsed.data.score
   )
 
-  return successResponse({
-    completed: true,
-    sessionId: result.session.sessionId,
-    accuracy: result.verifyResult.accuracy,
-    elapsedTime: result.session.elapsedTime,
-    mistakes: result.session.mistakes,
-    completedAt: result.session.completedAt,
-  })
+  console.log('[TRACE] POST /complete: result', { sessionId: sessionId?.substring(0,20), isCompleted: result.isCompleted, ts: Date.now() })
+
+  if (result.isCompleted && result.result) {
+    statisticsService.updateOnSessionComplete(
+      user.id,
+      result.result.puzzleId,
+      result.result.difficulty,
+      result.result.elapsedTime,
+      result.result.hintsUsed,
+      result.result.mistakes,
+      result.result.accuracy
+    ).catch(err => console.error('[crossmath] stats update failed', err))
+  }
+
+  return successResponse(result)
 })

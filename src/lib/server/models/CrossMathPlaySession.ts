@@ -17,14 +17,15 @@ const crossMathPlaySessionSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "paused", "completed", "abandoned"],
-      default: "active",
+      enum: ["playing", "paused", "completed", "abandoned"],
+      default: "playing",
     },
     grid: { type: Map, of: Number, default: {} },
     blanks: { type: [String], default: [] },
     availableNumbers: { type: [Number], default: [] },
     mistakes: { type: Number, default: 0 },
     hintsUsed: { type: Number, default: 0 },
+    moves: { type: Number, default: 0 },
     elapsedTime: { type: Number, default: 0 },
     startedAt: { type: Date, default: Date.now },
     pausedAt: { type: Date, default: null },
@@ -39,12 +40,23 @@ const crossMathPlaySessionSchema = new mongoose.Schema(
       accuracy: { type: Number, default: 0 },
       completedAt: { type: Date, default: null },
       elapsedTime: { type: Number, default: 0 },
+      moves: { type: Number, default: 0 },
+      mistakes: { type: Number, default: 0 },
+      hintsUsed: { type: Number, default: 0 },
+      score: { type: Number, default: 0 },
     },
   },
   { timestamps: true }
 )
 
 crossMathPlaySessionSchema.index({ userId: 1, puzzleId: 1 })
+crossMathPlaySessionSchema.index(
+  { userId: 1, puzzleId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["playing", "paused"] } },
+  }
+)
 crossMathPlaySessionSchema.index({ userId: 1, status: 1 })
 crossMathPlaySessionSchema.index({ userId: 1, status: 1, lastSaveAt: -1 })
 crossMathPlaySessionSchema.index({ puzzleId: 1, status: 1 })

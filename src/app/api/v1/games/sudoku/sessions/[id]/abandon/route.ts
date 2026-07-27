@@ -2,25 +2,15 @@ import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
 import { abandonSession } from "@/lib/server/services/sudoku/sessionService";
 import { updateUserStatsOnAbandon } from "@/lib/server/services/sudoku/statisticsService";
-import { auth } from "@/lib/server/middleware/auth";
+import { rateLimit } from "@/lib/server/utils/http";
+import { withAuth } from "../../../route-helpers";
 
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const userResult = await auth(_request);
-  if ("error" in userResult) return userResult.error;
-
-  try {
-    const { id } = await params;
-    const session = await abandonSession(id, userResult.user.id);
-    if (!session) return errorResponse(400, "cannot_abandon", "Session cannot be abandoned");
-
-    await updateUserStatsOnAbandon(id, userResult.user.id);
-
-    return successResponse(session);
-  } catch (error: any) {
-    console.error("[sudoku/abandon]", error);
-    return errorResponse(500, "internal_error", "Internal Server Error");
+export const POST = withAuth(async (req: NextRequest, user, params) => {
+  if (!rateLimit(req, "sudoku-abandon", 30)) {
+    return errorResponse(429, "rate_limited", "Too many requests");
   }
-}
+
+  const session = await abandonSession(params.id, user.id);
+  updateUserStatsOnAbandon(params.id, user.id).catch(() => {});
+  return successResponse(session);
+});

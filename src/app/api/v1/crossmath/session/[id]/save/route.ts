@@ -18,11 +18,12 @@ export async function POST(
   let body: Record<string, unknown> = {};
   try { body = await request.json(); } catch {}
 
-  const { grid, elapsedSeconds, hintsUsed, mistakes } = body as {
+  const { grid, elapsedSeconds, hintsUsed, mistakes, moves } = body as {
     grid?: Record<string, number>;
     elapsedSeconds?: number;
     hintsUsed?: number;
     mistakes?: number;
+    moves?: number;
   };
 
   if (!grid || elapsedSeconds === undefined) {
@@ -39,8 +40,9 @@ export async function POST(
       userResult.user.id,
       grid,
       elapsedSeconds,
-      hintsUsed,
-      mistakes
+      hintsUsed || 0,
+      mistakes || 0,
+      moves || 0
     );
     return successResponse(session);
   } catch (error: any) {

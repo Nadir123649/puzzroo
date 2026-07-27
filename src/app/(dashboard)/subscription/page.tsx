@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Check, Zap, Loader2 } from 'lucide-react'
 import { api } from '@/lib/api/client'
 import { fetchSubscription } from '@/lib/auth/frontend-auth'
@@ -50,58 +50,15 @@ export default function SubscriptionPage() {
     return 'USD'
   })
 
-  useEffect(() => {
-    const detectCurrency = async () => {
-      let detectedCountry = ''
-      
-      // Try IP-based detection via XMLHttpRequest (bypasses Next.js dev-overlay fetch interceptor)
-      try {
-        const data = await new Promise<any>((resolve, reject) => {
-          const xhr = new XMLHttpRequest()
-          xhr.open('GET', 'https://ipapi.co/json/', true)
-          xhr.timeout = 4000
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                resolve(JSON.parse(xhr.responseText))
-              } catch (e) {
-                reject(e)
-              }
-            } else {
-              reject(new Error(`HTTP ${xhr.status}`))
-            }
-          }
-          xhr.onerror = () => reject(new Error('Network error'))
-          xhr.ontimeout = () => reject(new Error('Timeout'))
-          xhr.send()
-        })
-        
-        if (data && data.country_code) {
-          detectedCountry = data.country_code
-        }
-      } catch (err) {
-        console.warn('IP-based currency detection failed, falling back to timezone:', err)
-      }
-
-      if (detectedCountry) {
-        const euCountries = ['FR', 'DE', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'FI', 'IE', 'GR', 'LU', 'MT', 'CY', 'EE', 'LV', 'LT', 'SK', 'SI']
-        if (detectedCountry === 'PK') {
-          setCurrency('PKR')
-        } else if (euCountries.includes(detectedCountry)) {
-          setCurrency('EUR')
-        } else {
-          setCurrency('USD')
-        }
-      }
-    }
-
-    detectCurrency()
-  }, [])
+  // Currency detected via timezone on initial render; no extra API call needed.
 
   const [loading, setLoading] = useState<string | null>(null)
   const [currentSub, setCurrentSub] = useState<any>(null)
+  const fetchedSubRef = useRef(false)
 
   useEffect(() => {
+    if (fetchedSubRef.current) return
+    fetchedSubRef.current = true
     fetchSubscription().then(setCurrentSub)
   }, [])
 

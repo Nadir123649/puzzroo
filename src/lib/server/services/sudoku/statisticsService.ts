@@ -104,7 +104,7 @@ export async function getUserStats(userId: string): Promise<UserStatsResponse | 
   const totalScore = completed.reduce((sum, s) => sum + (s.score || 0), 0);
   const highestScore = completed.reduce((max, s) => Math.max(max, s.score || 0), 0);
   const totalHints = completed.reduce((sum, s) => sum + (s.hintsUsed || 0), 0);
-  const totalMistakes = completed.reduce((sum, s) => sum + (s.mistakes?.length || 0), 0);
+  const totalMistakes = completed.reduce((sum, s) => sum + (s.mistakes || 0), 0);
   const avgTime = completed.length > 0
     ? Math.round(completed.reduce((sum, s) => sum + (s.elapsedTime || 0), 0) / completed.length)
     : 0;
@@ -156,7 +156,7 @@ export async function updateUserStatsOnComplete(sessionId: string, userId: strin
     totalPlayTime: session.elapsedTime || 0,
     totalScore: session.score || 0,
     totalHintsUsed: session.hintsUsed || 0,
-    totalMistakes: session.mistakes?.length || 0,
+    totalMistakes: session.mistakes || 0,
     lastPlayedAt: new Date(),
   };
 
@@ -256,7 +256,7 @@ export async function updatePuzzleStatsOnComplete(sessionId: string) {
       totalPlays: 1,
       totalCompletions: 1,
       averageSolveTime: session.elapsedTime || 0,
-      averageMistakes: session.mistakes?.length || 0,
+      averageMistakes: session.mistakes || 0,
       averageHints: session.hintsUsed || 0,
       fastestSolve: {
         time: session.elapsedTime || 0,
@@ -280,8 +280,8 @@ export async function updatePuzzleStatsOnComplete(sessionId: string) {
 
   const prevAvgMistakes = stats.averageMistakes;
   stats.averageMistakes = prevCount > 0
-    ? Math.round(((prevAvgMistakes * prevCount) + (session.mistakes?.length || 0)) / stats.totalCompletions * 10) / 10
-    : (session.mistakes?.length || 0);
+    ? Math.round(((prevAvgMistakes * prevCount) + (session.mistakes || 0)) / stats.totalCompletions * 10) / 10
+    : (session.mistakes || 0);
 
   const prevAvgHints = stats.averageHints;
   stats.averageHints = prevCount > 0

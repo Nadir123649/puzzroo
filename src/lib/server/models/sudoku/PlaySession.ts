@@ -15,28 +15,8 @@ const playSessionSchema = new mongoose.Schema(
     notes: { type: [[String]], default: () => Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => "")) },
     elapsedTime: { type: Number, default: 0 },
     hintsUsed: { type: Number, default: 0 },
-    mistakes: {
-      type: [
-        {
-          cell: String,
-          expected: Number,
-          received: Number,
-          timestamp: { type: Date, default: Date.now },
-        },
-      ],
-      default: [],
-    },
-    moves: {
-      type: [
-        {
-          cell: String,
-          from: Number,
-          to: Number,
-          timestamp: { type: Date, default: Date.now },
-        },
-      ],
-      default: [],
-    },
+    mistakes: { type: Number, default: 0 },
+    moves: { type: Number, default: 0 },
     result: {
       type: String,
       enum: ["incomplete", "solved", "gave_up"],
@@ -44,6 +24,7 @@ const playSessionSchema = new mongoose.Schema(
     },
     score: { type: Number, default: 0 },
     restartCount: { type: Number, default: 0 },
+    isReplay: { type: Boolean, default: false },
     startedAt: { type: Date, default: Date.now },
     lastSavedAt: { type: Date, default: Date.now },
     pausedAt: { type: Date, default: null },
@@ -54,6 +35,10 @@ const playSessionSchema = new mongoose.Schema(
 
 playSessionSchema.index({ userId: 1, status: 1 });
 playSessionSchema.index({ userId: 1, puzzleId: 1 });
+playSessionSchema.index({ userId: 1, puzzleId: 1, status: 1 }, {
+  partialFilterExpression: { status: { $in: ["playing", "paused"] } },
+  unique: true,
+});
 playSessionSchema.index({ userId: 1, status: 1, startedAt: -1 });
 playSessionSchema.index({ userId: 1, completedAt: -1 });
 

@@ -1,7 +1,7 @@
 import { getPatternById } from "@shared/data/crossmath/patterns"
 import type { BoardPattern } from "@shared/data/crossmath/patterns"
 import CrossMathPuzzle from "@/lib/server/models/CrossMathPuzzle"
-import type { EquationResult, VerifyGridResult } from "../types"
+import type { EquationResult, VerifyGridResult, EquationError } from "../types"
 
 interface CrossMathDoc {
   puzzleId: string
@@ -45,7 +45,7 @@ export class VerificationEngine {
     if (!pattern) throw new Error("invalid_pattern")
 
     const equationResults: EquationResult[] = []
-    const errors: string[] = []
+    const errors: EquationError[] = []
     let totalMistakes = 0
 
     for (const equation of pattern.equations) {
@@ -59,10 +59,10 @@ export class VerificationEngine {
         if (!pc) continue
 
         const key = `${row}-${col}`
-        const solutionValue = puzzle.solution[key]
-        if (solutionValue === undefined) continue
 
         if (pc.type === 'NUMBER') {
+          const solutionValue = puzzle.solution[key]
+          if (solutionValue === undefined) continue
           const isBlank = puzzle.blanks.includes(key)
           const playerValue = playerGrid[key] !== undefined ? playerGrid[key] : solutionValue
 
@@ -99,7 +99,12 @@ export class VerificationEngine {
       })
 
       if (!isCorrect) {
-        errors.push(`Equation ${equation.id} is incorrect: expected ${expectedResult}, got ${computedResult}`)
+        errors.push({
+          equationId: equation.id,
+          direction: equation.direction,
+          expectedResult: expectedResult,
+          actualResult: computedResult,
+        })
       }
     }
 
@@ -109,22 +114,24 @@ export class VerificationEngine {
     const allBlanksFilled = filledBlanks.length === puzzle.blanks.length
     const completed = allCorrect && allBlanksFilled
 
-    const totalBlanks = puzzle.blanks.length
-    const correctBlanks = puzzle.blanks.filter(
-      b => playerGrid[b] !== undefined && playerGrid[b] === puzzle.solution[b]
-    ).length
-    const accuracy = totalBlanks > 0
-      ? Math.round((correctBlanks / totalBlanks) * 100)
+    const totalEquations = equationResults.length
+    const correctEquations = equationResults.filter(eq => eq.correct).length
+    const incorrectEquations = totalEquations - correctEquations
+    const equationAccuracy = totalEquations > 0
+      ? Math.round((correctEquations / totalEquations) * 100)
       : 100
 
     return {
-      correct: allCorrect,
+      isCorrect: allCorrect,
       completed,
       mistakes: totalMistakes,
       maxMistakes: puzzle.maxMistakes,
-      accuracy,
+      accuracy: equationAccuracy,
       equations: equationResults,
       errors,
+      totalEquations,
+      correctEquations,
+      incorrectEquations,
     }
   }
 }

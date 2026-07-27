@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Mail, Shield, Bell, BookOpen } from 'lucide-react'
 import { notify } from '@/lib/toast'
 
@@ -69,7 +69,11 @@ export default function EmailPreferencesPage() {
   const [preferences, setPreferences] = useState<EmailPreference[]>(defaultPreferences)
   const [mounted, setMounted] = useState(false)
 
+  const fetchedRef = useRef(false)
+
   useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
     setMounted(true)
     import('@/lib/auth/frontend-auth').then(({ fetchEmailPreferences }) =>
       fetchEmailPreferences().then((data: any) => {
