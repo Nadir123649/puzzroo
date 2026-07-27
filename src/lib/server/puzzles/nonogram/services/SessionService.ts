@@ -230,8 +230,6 @@ export class SessionService {
       userId,
       puzzleId,
       difficulty: puzzleDoc.difficulty,
-      blanks: [],
-      availableNumbers: [],
     })
 
     return toSafeSession(result)
