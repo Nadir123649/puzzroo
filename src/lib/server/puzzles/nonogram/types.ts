@@ -120,3 +120,16 @@ export interface SafePuzzleResponse {
   updatedAt?: Date | string
   estimatedTime: number
 }
+
+export interface ProgressInfo {
+  filledCells: number
+  totalBlanks: number
+  percentage: number
+}
+
+export interface CompletionResult {
+  isComplete: boolean
+  accuracy: number
+  correctCells: number
+  totalCells: number
+}
