@@ -32,3 +32,5 @@ export const POST = withAuth(async (req, user, params) => {
   console.log('[TRACE] POST /save: result', { sessionId: sessionId?.substring(0,20), status: result.sessionStatus, ts: Date.now() })
   return successResponse(result)
 })
+
+export const PUT = POST

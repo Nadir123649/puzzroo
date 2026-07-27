@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { withAuth } from "../../route-helpers"
+import { withAuth } from "../../../route-helpers"
 import { sessionService } from "@/lib/server/puzzles/tangram/services/SessionService"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { rateLimit } from "@/lib/server/utils/http"

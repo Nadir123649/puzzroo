@@ -1,4 +1,4 @@
-import { withAuth } from "../../route-helpers"
+import { withAuth } from "../../../route-helpers"
 import { sessionService } from "@/lib/server/puzzles/tangram/services/SessionService"
 import { successResponse } from "@/lib/server/utils/apiResponse"
 
