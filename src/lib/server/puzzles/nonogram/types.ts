@@ -104,3 +104,19 @@ export interface PlayerStats {
   favoriteDifficulty: NonogramDifficulty | null
   perDifficulty: Record<string, { played: number; completed: number; bestTime: number; averageTime: number }>
 }
+
+export interface SafePuzzleResponse {
+  id: string
+  game: string
+  difficulty: NonogramDifficulty
+  size: number
+  title?: string
+  category?: string
+  rowClues: any
+  columnClues: any
+  solution: number[][]
+  hash?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  estimatedTime: number
+}
