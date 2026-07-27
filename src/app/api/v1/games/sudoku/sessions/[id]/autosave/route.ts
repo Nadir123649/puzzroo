@@ -1,1 +1,1 @@
-export { PUT } from "../save/route";
+export { PUT, POST } from "../save/route";

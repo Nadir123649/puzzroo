@@ -6,7 +6,7 @@ import { saveProgress } from "@/lib/server/services/sudoku/sessionService";
 import { rateLimit } from "@/lib/server/utils/http";
 import { withAuth } from "../../../route-helpers";
 
-export const PUT = withAuth(async (req: NextRequest, user, params) => {
+const handler = withAuth(async (req: NextRequest, user, params) => {
   if (!rateLimit(req, "sudoku-save", 60)) {
     return errorResponse(429, "rate_limited", "Too many requests");
   }
@@ -20,3 +20,6 @@ export const PUT = withAuth(async (req: NextRequest, user, params) => {
   const session = await saveProgress(params.id, user.id, val.data!);
   return successResponse(session);
 });
+
+export const PUT = handler;
+export const POST = handler;

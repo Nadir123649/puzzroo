@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { withAuth } from "../../route-helpers"
+import { withAuth } from "../../../route-helpers"
 import { verificationEngine } from "@/lib/server/puzzles/tangram/services/VerificationEngine"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { sessionService } from "@/lib/server/puzzles/tangram/services/SessionService"
