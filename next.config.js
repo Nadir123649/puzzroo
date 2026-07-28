@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    // Disable automatic prefetching to prevent unnecessary API calls
-    prefetchesDisabled: true,
-  },
   allowedDevOrigins: [
     'enhance-wrinkle-disjoin.ngrok-free.dev',
     '*.ngrok-free.dev',
