@@ -2,8 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import Navbar from '@/components/layout/navbar'
-import { Footer } from '@/components/layout/Footer'
+import { AppLayout } from '@/components/layout/AppLayout'
 import { ChessHero } from '@/components/chess/ChessHero'
 import { ChessGame } from '@/components/chess/ChessGame'
 import { markGameAsPlayed } from '@/components/sections/FreeGames'
@@ -64,16 +63,12 @@ function ChessContent() {
 
 export default function ChessPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-      <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[50px]">
-        <Navbar />
-        <main className="flex-grow flex flex-col">
-          <Suspense fallback={<div className="flex-grow" />}>
-            <ChessContent />
-          </Suspense>
-        </main>
-      </div>
-      <Footer />
-    </div>
+    <AppLayout>
+      <main className="flex-grow flex flex-col">
+        <Suspense fallback={<div className="flex-grow" />}>
+          <ChessContent />
+        </Suspense>
+      </main>
+    </AppLayout>
   )
 }

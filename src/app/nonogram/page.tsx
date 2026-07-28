@@ -2,8 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Navbar from '@/components/layout/navbar'
-import { Footer } from '@/components/layout/Footer'
+import { AppLayout } from '@/components/layout/AppLayout'
 import { NonogramHero } from '@/components/nonogram/NonogramHero'
 import { NonogramGame } from '@/components/nonogram/NonogramGame'
 import { GameLoader } from '@/components/ui/GameLoader'
@@ -42,17 +41,13 @@ export default function NonogramPage() {
   return (
     <>
       <GameLoader isOpen={initialLoading} text="Loading game..." />
-      <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-        <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[50px]">
-          <Navbar />
-          <main className="flex-grow flex flex-col">
-            <Suspense fallback={<div className="flex-grow" />}>
-              <NonogramContent />
-            </Suspense>
-          </main>
-        </div>
-        <Footer />
-      </div>
+      <AppLayout>
+        <main className="flex-grow flex flex-col">
+          <Suspense fallback={<div className="flex-grow" />}>
+            <NonogramContent />
+          </Suspense>
+        </main>
+      </AppLayout>
     </>
   )
 }

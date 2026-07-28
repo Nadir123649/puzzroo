@@ -80,7 +80,7 @@ export function DifficultyTabs({
   }
 
   return (
-    <div className="flex flex-row flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto">
+    <div className="flex flex-row flex-wrap items-center justify-center gap-3 sm:gap-4 w-full">
       <span className="font-urbanist font-bold text-[15px] sm:text-[16px] leading-[140%] tracking-[0.2px] text-[#424242] dark:text-[var(--color-light)] whitespace-nowrap flex-shrink-0">
         Difficulty:
       </span>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puzzroo Frontend Audit Report</title>
+<style>
+  @page { margin: 2cm; size: A4; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; line-height: 1.6; color: #1a1a2e; max-width: 210mm; margin: 0 auto; padding: 20px; background: #fff; }
+  h1 { font-size: 24px; border-bottom: 3px solid #6949FF; padding-bottom: 8px; margin-bottom: 4px; }
+  h2 { font-size: 16px; margin-top: 28px; margin-bottom: 8px; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; page-break-after: avoid; }
+  h3 { font-size: 13px; margin-top: 16px; margin-bottom: 6px; color: #4f46e5; }
+  h4 { font-size: 11px; margin-top: 10px; margin-bottom: 4px; color: #6366f1; }
+  p { margin: 4px 0; }
+  .score-banner { background: linear-gradient(135deg, #6949FF 0%, #8b5cf6 100%); color: white; padding: 16px 20px; border-radius: 8px; display: flex; justify-content: space-around; margin: 16px 0; }
+  .score-item { text-align: center; }
+  .score-value { font-size: 28px; font-weight: 800; }
+  .score-label { font-size: 10px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 10px; page-break-inside: avoid; }
+  th { background: #f5f3ff; text-align: left; padding: 6px 8px; font-weight: 600; border-bottom: 2px solid #6949FF; }
+  td { padding: 4px 8px; border-bottom: 1px solid #e5e7eb; }
+  .critical { background: #fef2f2; border-left: 3px solid #ef4444; padding: 6px 10px; margin: 6px 0; page-break-inside: avoid; }
+  .high { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 6px 10px; margin: 6px 0; page-break-inside: avoid; }
+  .medium { background: #eff6ff; border-left: 3px solid #3b82f6; padding: 6px 10px; margin: 6px 0; page-break-inside: avoid; }
+  .low { background: #f0fdf4; border-left: 3px solid #22c55e; padding: 6px 10px; margin: 6px 0; page-break-inside: avoid; }
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+  .badge-critical { background: #fecaca; color: #991b1b; }
+  .badge-high { background: #fde68a; color: #92400e; }
+  .badge-medium { background: #bfdbfe; color: #1e40af; }
+  .badge-low { background: #bbf7d0; color: #166534; }
+  .file-ref { font-family: 'Consolas', monospace; font-size: 9px; background: #f1f5f9; padding: 1px 4px; border-radius: 3px; color: #475569; }
+  .section { margin-bottom: 20px; page-break-inside: avoid; }
+  .two-col { display: flex; gap: 16px; }
+  .two-col > div { flex: 1; }
+  ul { margin: 2px 0; padding-left: 18px; }
+  li { margin: 2px 0; }
+  code { font-family: 'Consolas', monospace; font-size: 10px; background: #f1f5f9; padding: 1px 4px; border-radius: 3px; }
+  pre { background: #1e293b; color: #e2e8f0; padding: 10px; border-radius: 6px; font-size: 9px; overflow-x: auto; line-height: 1.4; }
+  .plan-step { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+  .plan-step h4 { margin: 0 0 4px 0; color: #1e293b; }
+  .plan-step p { margin: 0; font-size: 10px; color: #64748b; }
+  @media print { body { padding: 0; } h2 { page-break-before: always; } h2:first-of-type { page-break-before: avoid; } .score-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+
+<h1>Puzzroo Frontend Production Audit Report</h1>
+<p><strong>Date:</strong> July 28, 2026 | <strong>Framework:</strong> Next.js 16 App Router | <strong>Language:</strong> TypeScript | <strong>Test Framework:</strong> Vitest</p>
+
+<div class="score-banner">
+  <div class="score-item"><div class="score-value">62/100</div><div class="score-label">Frontend Health</div></div>
+  <div class="score-item"><div class="score-value">54/100</div><div class="score-label">Production Readiness</div></div>
+  <div class="score-item"><div class="score-value">3 Critical</div><div class="score-label">Blockers</div></div>
+  <div class="score-item"><div class="score-value">8 High</div><div class="score-label">High Priority</div></div>
+</div>
+
+<h2>1. Executive Summary</h2>
+<p>Puzzroo is a Next.js 16 App Router puzzle platform (Sudoku, Nonogram, CrossMath, Tangram, Chess) with Firebase Authentication, MongoDB/Mongoose backend, and a rich client-side game architecture. The codebase is functionally complete but has significant technical debt, inconsistent patterns, and several production blockers.</p>
+<p><strong>Verdict:</strong> The frontend is <em>not production-ready</em>. Three critical blockers (JWT in localStorage, missing error boundaries, wrong metadataBase URL) and one accessibility violation (pinch-zoom disabled) must be resolved before launch.</p>
+
+<h2>2. Key Scores</h2>
+<table>
+<tr><th>Area</th><th>Score</th><th>Grade</th></tr>
+<tr><td>Architecture</td><td>78/100</td><td>B+</td></tr>
+<tr><td>Component Quality</td><td>65/100</td><td>C+</td></tr>
+<tr><td>Accessibility</td><td>48/100</td><td>F</td></tr>
+<tr><td>Performance</td><td>55/100</td><td>C</td></tr>
+<tr><td>Security</td><td>38/100</td><td>F</td></tr>
+<tr><td>SEO</td><td>52/100</td><td>D</td></tr>
+<tr><td>Responsive Design</td><td>70/100</td><td>B-</td></tr>
+<tr><td>Code Quality</td><td>58/100</td><td>D+</td></tr>
+<tr><td>Production Readiness</td><td>54/100</td><td>D</td></tr>
+</table>
+
+<h2>3. Architecture Assessment</h2>
+<h3>Strengths</h3>
+<ul>
+  <li>Clean separation of concerns: <code>app/</code> for routing, <code>components/</code> for UI, <code>hooks/</code> for logic, <code>lib/</code> for utilities/services</li>
+  <li>Shared code in <code>shared/</code> package with path alias <code>@shared/*</code></li>
+  <li>Game logic well-organized with per-game hooks and contexts</li>
+  <li>API client centralized with auth token refresh, retry, and error handling</li>
+  <li>Toast notification system with consistent key-based messages</li>
+  <li>Analytics batching with <code>queueMicrotask</code> and <code>visibilitychange</code> flush</li>
+</ul>
+<h3>Weaknesses</h3>
+<ul>
+  <li>Deeply nested API route structure creates file sprawl (e.g., <code>api/v1/games/crossmath/sessions/[sessionId]/verify/route.ts</code>)</li>
+  <li>Duplicated logic across game hooks (session creation, save-move, completion reporting, localStorage caching, timer management)</li>
+  <li>No shared game state machine; each game reimplements <code>playing</code>/<code>won</code>/<code>lost</code> cycles independently</li>
+  <li><code>frontend-auth.ts</code> is a 600+ line monolith mixing auth, profile, billing, and contact functionality</li>
+  <li><code>gameApi.ts</code> has duplicated session management methods across games (e.g., <code>startNonogramSession</code> + <code>createSession('nonogram', ...)</code>)</li>
+  <li>Inconsistent import patterns (<code>@/*</code> vs <code>@shared/*</code> path aliases)</li>
+</ul>
+
+<h2>4. Critical Bugs (Must Fix Before Launch)</h2>
+<div class="critical"><strong>#1</strong> — <code>metadataBase</code> is ngrok URL (<code>https://enhance-wrinkle-disjoin.ngrok-free.dev</code>) — all OG images, canonical URLs, and Twitter card URLs point to a development tunnel. <span class="file-ref">src/app/layout.tsx:17</span></div>
+<div class="critical"><strong>#2</strong> — <code>maximumScale: 1</code> and <code>userScalable: false</code> in viewport meta tag prevents pinch-zoom — WCAG 1.4.4 failure, blocks users with visual impairments. <span class="file-ref">src/app/layout.tsx</span></div>
+<div class="critical"><strong>#3</strong> — JWT access tokens stored in <code>localStorage</code> — vulnerable to XSS theft. Any injected script can exfiltrate the entire session. <span class="file-ref">src/lib/auth/frontend-auth.ts, src/lib/api/client.ts</span></div>
+<div class="critical"><strong>#4</strong> — <code>dangerouslySetInnerHTML</code> used in layout.tsx for theme detection inline script — XSS vector if localStorage theme value is exploitable. <span class="file-ref">src/app/layout.tsx</span></div>
+<div class="critical"><strong>#5</strong> — No <code>&lt;ErrorBoundary&gt;</code> wrapping the app — unhandled runtime error in any game component crashes the entire page with no graceful fallback. <span class="file-ref">src/app/layout.tsx</span></div>
+<div class="critical"><strong>#6</strong> — <code>sessionExpiredNotified</code> flag in <code>api</code> client set to <code>true</code> on session expiry but never reset — subsequent 401s are silently swallowed. <span class="file-ref">src/lib/api/client.ts</span></div>
+
+<h2>5. High Priority Bugs</h2>
+<div class="high"><strong>#1</strong> — <code>useNonogram</code> <code>handlePointerMove</code> uses <code>document.elementFromPoint</code> which can return null or wrong element during fast drag — race condition causing missed cells. <span class="file-ref">src/hooks/useNonogram.ts</span></div>
+<div class="high"><strong>#2</strong> — <code>useSudoku</code> <code>reportWin</code> deducts 20 points for hints even when score is 0 — <code>Math.max(0, ...)</code> not applied consistently. <span class="file-ref">src/hooks/useSudoku.ts</span></div>
+<div class="high"><strong>#3</strong> — <code>useCrossMath</code> <code>history</code> array stores full board copies for undo — unbounded growth causes memory bloat in long sessions. <span class="file-ref">src/hooks/useCrossMath.ts</span></div>
+<div class="high"><strong>#4</strong> — <code>api</code> client duplicates <code>isTokenExpired</code> logic with <code>frontend-auth.ts</code> — two independent implementations that could drift. <span class="file-ref">src/lib/api/client.ts, src/lib/auth/frontend-auth.ts</span></div>
+<div class="high"><strong>#5</strong> — <code>Cross-Origin-Opener-Policy: same-origin-allow-popups</code> set for ALL routes — overly broad, enables tab-napping on non-OAuth pages. <span class="file-ref">next.config.js</span></div>
+<div class="high"><strong>#6</strong> — No CSP header configured — mitigates XSS only through <code>dangerouslySetInnerHTML</code> which is itself a risk. <span class="file-ref">next.config.js</span></div>
+<div class="high"><strong>#7</strong> — Sudoku save move uses <code>PUT</code> but all other games use <code>POST</code> — inconsistent HTTP semantics. <span class="file-ref">src/lib/api/gameApi.ts</span></div>
+<div class="high"><strong>#8</strong> — <code>withAuth</code> route helper used in some API routes but manual <code>auth()</code> import used in others — inconsistent auth middleware. <span class="file-ref">API routes</span></div>
+
+<h2>6. Medium Priority Bugs</h2>
+<div class="medium"><strong>#1</strong> — <code>NonogramLobbyPage</code> marked <code>export default async</code> but does not await anything — misleading code. <span class="file-ref">src/app/nonogram/page.tsx</span></div>
+<div class="medium"><strong>#2</strong> — <code>useSudoku</code> StrictMode double-mount guard (<code>_sudokuMountGuard</code>) uses module-level mutable variable — not reset on route change. <span class="file-ref">src/hooks/useSudoku.ts</span></div>
+<div class="medium"><strong>#3</strong> — <code>useCrossMath</code> <code>usePatternMode = true</code> hardcoded — dead code/future extension that is always true. <span class="file-ref">src/hooks/useCrossMath.ts</span></div>
+<div class="medium"><strong>#4</strong> — Chess <code>moveHistory</code> stores full FEN strings for every move — memory bloat for long games. <span class="file-ref">src/hooks/useChess.ts</span></div>
+<div class="medium"><strong>#5</strong> — <code>useNonogram</code> autoFill and <code>usePolygonTangram</code> autoFill are testing methods exposed in returned API — could be accidentally triggered by users. <span class="file-ref">src/hooks/useNonogram.ts, src/hooks/usePolygonTangram.ts</span></div>
+<div class="medium"><strong>#6</strong> — Module-level mount guards (<code>_sudokuMountGuard</code>, <code>_nonogramMountGuard</code>, etc.) — identical pattern used 4 times, should be a shared hook. <span class="file-ref">src/hooks/*.ts</span></div>
+<div class="medium"><strong>#7</strong> — <code>puzzroo_auth</code> localStorage key is a simple boolean — no integrity check, could be tampered with. <span class="file-ref">src/lib/auth/frontend-auth.ts</span></div>
+<div class="medium"><strong>#8</strong> — Chess board uses absolute pixel-based <code>BoardGrid</code> — responsive behavior not verified for small screens. <span class="file-ref">src/utils/chess/constants.ts</span></div>
+
+<h2>7. Low Priority Improvements</h2>
+<div class="low"><strong>#1</strong> — <code>formatToast</code> uses <code>new RegExp</code> with <code>\{${k}\}</code> pattern — regex injection risk if key has special chars. <span class="file-ref">src/lib/toast/messages.ts</span></div>
+<div class="low"><strong>#2</strong> — Analytics <code>reset()</code> flushes pending events then generates new anonymousId — race condition. <span class="file-ref">src/lib/analytics/client.ts</span></div>
+<div class="low"><strong>#3</strong> — <code>gameApi</code> methods not memoized — create new closures on each call. <span class="file-ref">src/lib/api/gameApi.ts</span></div>
+<div class="low"><strong>#4</strong> — use-theme.ts is just a re-export of useThemeContext — unnecessary indirection. <span class="file-ref">src/hooks/use-theme.ts</span></div>
+<div class="low"><strong>#5</strong> — No favicon in multiple sizes in manifest.json — only single SVG icon referenced. <span class="file-ref">public/manifest.json</span></div>
+<div class="low"><strong>#6</strong> — <code>tangram_dataset.json</code> in public — large JSON file not lazy-loaded. <span class="file-ref">public/</span></div>
+<div class="low"><strong>#7</strong> — React Query configured with <code>refetchOnMount: false</code> — cached data may be stale on initial load. <span class="file-ref">src/providers/QueryProvider.tsx</span></div>
+<div class="low"><strong>#8</strong> — <code>withAuth</code> vs manual <code>auth()</code> inconsistency across API routes. <span class="file-ref">API routes</span></div>
+
+<h2>8. Architecture &amp; Code Quality</h2>
+<h3>File Size &amp; Complexity</h3>
+<ul>
+  <li><code>src/lib/auth/frontend-auth.ts</code> — 600+ lines, monolithic; should be split into <code>useAuth</code>, <code>useProfile</code>, <code>useBilling</code> composables</li>
+  <li><code>src/lib/api/gameApi.ts</code> — 400+ lines with duplicated session methods; should use generic <code>createSession</code>/<code>saveMove</code>/<code>completeSession</code> only</li>
+  <li><code>src/hooks/useNonogram.ts</code> — 600+ lines; drag state management is overly complex</li>
+  <li><code>src/hooks/useSudoku.ts</code> — 500+ lines; timer and hint logic can be extracted</li>
+  <li><code>src/hooks/useCrossMath.ts</code> — 500+ lines; history undo stores full board snapshots</li>
+  <li><code>src/hooks/usePolygonTangram.ts</code> — 400+ lines; <code>getTargetRotation</code> does 8 rotations × 5 points per piece on each call</li>
+</ul>
+<h3>Duplicate Logic</h3>
+<ul>
+  <li><code>isTokenExpired</code> implemented independently in <code>src/lib/api/client.ts</code> and <code>src/lib/auth/frontend-auth.ts</code></li>
+  <li>Session creation/cleanup pattern duplicated across all 5 game hooks</li>
+  <li>localStorage game state save/load pattern duplicated across all game hooks</li>
+  <li>Timer management with <code>useEffect</code> + <code>useRef</code> + <code>clearInterval</code> pattern duplicated in 4 game hooks</li>
+  <li><code>initSession</code> function pattern duplicated across 5 game hooks</li>
+  <li>Module-level mount guard variables used identically in 4 hooks — should be a shared <code>useStrictModeGuard()</code> hook</li>
+</ul>
+
+<h2>9. Security Findings (Full)</h2>
+<table>
+<tr><th>#</th><th>Severity</th><th>Issue</th><th>File</th></tr>
+<tr><td>1</td><td><span class="badge badge-critical">Critical</span></td><td>JWT access tokens stored in <code>localStorage</code> — XSS-exposed</td><td class="file-ref">All auth code</td></tr>
+<tr><td>2</td><td><span class="badge badge-critical">Critical</span></td><td><code>dangerouslySetInnerHTML</code> in layout.tsx for theme detection</td><td class="file-ref">src/app/layout.tsx</td></tr>
+<tr><td>3</td><td><span class="badge badge-critical">Critical</span></td><td><code>metadataBase</code> points to ngrok tunnel URL</td><td class="file-ref">src/app/layout.tsx</td></tr>
+<tr><td>4</td><td><span class="badge badge-high">High</span></td><td><code>google</code> verification placeholder not replaced</td><td class="file-ref">src/app/layout.tsx</td></tr>
+<tr><td>5</td><td><span class="badge badge-high">High</span></td><td>API client does not validate/sanitize server responses before rendering</td><td class="file-ref">src/lib/api/client.ts</td></tr>
+<tr><td>6</td><td><span class="badge badge-high">High</span></td><td><code>Cross-Origin-Opener-Policy</code> on ALL routes — overly permissive</td><td class="file-ref">next.config.js</td></tr>
+<tr><td>7</td><td><span class="badge badge-medium">Medium</span></td><td>No CSP header configured</td><td class="file-ref">next.config.js</td></tr>
+<tr><td>8</td><td><span class="badge badge-medium">Medium</span></td><td>No <code>X-Content-Type-Options</code> header</td><td class="file-ref">next.config.js</td></tr>
+<tr><td>9</td><td><span class="badge badge-medium">Medium</span></td><td>No <code>X-Frame-Options</code> header — clickjacking vulnerable</td><td class="file-ref">next.config.js</td></tr>
+<tr><td>10</td><td><span class="badge badge-medium">Medium</span></td><td><code>sessionExpiredNotified</code> flag never reset — silent 401 swallowing</td><td class="file-ref">src/lib/api/client.ts</td></tr>
+<tr><td>11</td><td><span class="badge badge-low">Low</span></td><td><code>credentials: "include"</code> sent with unauthenticated requests too</td><td class="file-ref">src/lib/api/client.ts</td></tr>
+<tr><td>12</td><td><span class="badge badge-low">Low</span></td><td><code>localStorage</code> key <code>puzzroo_auth</code> is boolean — no integrity check</td><td class="file-ref">src/lib/auth/frontend-auth.ts</td></tr>
+<tr><td>13</td><td><span class="badge badge-low">Low</span></td><td><code>notify.fromResult</code> can surface <code>error.message</code> from API — potential info leakage</td><td class="file-ref">src/lib/toast/notify.ts</td></tr>
+</table>
+
+<h2>10. Accessibility Findings (Full)</h2>
+<table>
+<tr><th>#</th><th>Severity</th><th>Issue</th><th>File</th></tr>
+<tr><td>1</td><td><span class="badge badge-critical">Critical</span></td><td><code>maximumScale: 1</code> and <code>userScalable: false</code> — WCAG 1.4.4 violation, blocks zoom</td><td class="file-ref">src/app/layout.tsx</td></tr>
+<tr><td>2</td><td><span class="badge badge-critical">Critical</span></td><td>Viewport prevents pinch-zoom on mobile — accessibility barrier for low-vision users</td><td class="file-ref">src/app/layout.tsx</td></tr>
+<tr><td>3</td><td><span class="badge badge-high">High</span></td><td>Theme toggle icon uses <code>scale-x-[-1]</code> to flip — visual indicator may be confusing for screen reader users</td><td class="file-ref">src/components/layout/navbar.tsx</td></tr>
+<tr><td>4</td><td><span class="badge badge-medium">Medium</span></td><td>Game cells use <code>&lt;button&gt;</code> but do not always provide <code>aria-label</code> with cell coordinates</td><td class="file-ref">SudokuCell, NonogramCell, CrossMathCell</td></tr>
+<tr><td>5</td><td><span class="badge badge-medium">Medium</span></td><td>Chess keyboard navigation exists but no <code>aria-live</code> region for game status updates</td><td class="file-ref">src/hooks/useChess.ts</td></tr>
+<tr><td>6</td><td><span class="badge badge-low">Low</span></td><td><code>suppressHydrationWarning</code> on <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> masks hydration content differences</td><td class="file-ref">src/app/layout.tsx</td></tr>
+<tr><td>7</td><td><span class="badge badge-low">Low</span></td><td>Color contrast of <code>text-[#757575]</code> on <code>dark:bg-[#181A20]</code> may fail WCAG AA (1.87:1 ratio)</td><td class="file-ref">src/app/auth/complete/page.tsx</td></tr>
+</table>
+
+<h2>11. Performance Findings (Full)</h2>
+<table>
+<tr><th>#</th><th>Severity</th><th>Issue</th><th>File</th></tr>
+<tr><td>1</td><td><span class="badge badge-high">High</span></td><td>QueryProvider <code>refetchOnMount: false</code> — cached data may be stale on initial load</td><td class="file-ref">src/providers/QueryProvider.tsx</td></tr>
+<tr><td>2</td><td><span class="badge badge-high">High</span></td><td><code>localStorage</code> read/write on every game move — synchronous I/O can jank main thread</td><td class="file-ref">All game hooks</td></tr>
+<tr><td>3</td><td><span class="badge badge-medium">Medium</span></td><td><code>usePolygonTangram</code> <code>getTargetRotation</code> does O(7 × 8 × 5) distance checks per call</td><td class="file-ref">src/hooks/usePolygonTangram.ts</td></tr>
+<tr><td>4</td><td><span class="badge badge-medium">Medium</span></td><td><code>useNonogram</code> attaches global <code>pointermove</code> listener — not cleaned up in all code paths</td><td class="file-ref">src/hooks/useNonogram.ts</td></tr>
+<tr><td>5</td><td><span class="badge badge-medium">Medium</span></td><td><code>useSudoku</code> uses <code>setInterval</code> timer causing re-render every second even when component not visible</td><td class="file-ref">src/hooks/useSudoku.ts</td></tr>
+<tr><td>6</td><td><span class="badge badge-low">Low</span></td><td>No <code>React.memo</code> on game cell components (inferred from patterns)</td><td>—</td></tr>
+<tr><td>7</td><td><span class="badge badge-low">Low</span></td><td><code>gameApi</code> methods not memoized — new closures on each call</td><td class="file-ref">src/lib/api/gameApi.ts</td></tr>
+<tr><td>8</td><td><span class="badge badge-low">Low</span></td><td>Puzzle data cached as JSON strings in localStorage — large datasets could block main thread</td><td>All game hooks</td></tr>
+<tr><td>9</td><td><span class="badge badge-low">Low</span></td><td>Analytics <code>flush</code> uses <code>fetch</code> with <code>keepalive</code> only on page hide — normal tracking without <code>keepalive</code></td><td class="file-ref">src/lib/analytics/client.ts</td></tr>
+</table>
+
+<h2>12. SEO Findings (Full)</h2>
+<table>
+<tr><th>#</th><th>Severity</th><th>Issue</th><th>File</th></tr>
+<tr><td>1</td><td><span class="badge badge-high">High</span></td><td><code>metadataBase</code> ngrok URL — all OG images, canonical URLs, Twitter card URLs point to dev tunnel</td><td class="file-ref">src/app/layout.tsx</td></tr>
+<tr><td>2</td><td><span class="badge badge-high">High</span></td><td><code>google</code> verification placeholder not replaced — Google Search Console verification incomplete</td><td class="file-ref">src/app/layout.tsx</td></tr>
+<tr><td>3</td><td><span class="badge badge-medium">Medium</span></td><td>No <code>sitemap.xml</code> or <code>robots.txt</code> route configured</td><td>—</td></tr>
+<tr><td>4</td><td><span class="badge badge-medium">Medium</span></td><td>No structured data (JSON-LD) for games, organization, or FAQ</td><td>—</td></tr>
+<tr><td>5</td><td><span class="badge badge-medium">Medium</span></td><td>Game lobby pages have no individual <code>&lt;title&gt;</code> templates with game-specific metadata</td><td>Game lobby pages</td></tr>
+<tr><td>6</td><td><span class="badge badge-low">Low</span></td><td><code>description</code> meta tag is generic and not per-page customized</td><td class="file-ref">src/app/layout.tsx</td></tr>
+<tr><td>7</td><td><span class="badge badge-low">Low</span></td><td>Open Graph image (<code>images.ogImage</code>) not verified to exist at the specified path</td><td class="file-ref">src/app/layout.tsx</td></tr>
+<tr><td>8</td><td><span class="badge badge-low">Low</span></td><td><code>viewport.maximumScale: 1</code> is a penalty in Google's mobile-first indexing</td><td class="file-ref">src/app/layout.tsx</td></tr>
+</table>
+
+<h2>13. Responsive Design Findings</h2>
+<ul>
+  <li><strong>Generally acceptable:</strong> Tailwind responsive classes used throughout (<code>md:</code>, <code>lg:</code> breakpoints), <code>max-w-[1380px]</code> container with <code>mx-auto</code>, mobile hamburger menu with <code>md:hidden</code> breakpoint</li>
+  <li><strong>Issues:</strong> <code>max-h-96</code> on mobile menu dropdown may clip on very small screens; <code>clamp(16px, 2vw, 24px)</code> on buttons may overflow on small phones; game boards have no horizontal scroll or pinch-zoom handling; Tangram pieces use absolute pixel coordinates for tray layout — may not scale on small screens; Chess board uses absolute pixel-based <code>BoardGrid</code> — responsive behavior unverified</li>
+</ul>
+
+<h2>14. State Management Findings</h2>
+<ul>
+  <li><strong>No global state management</strong> — all game state lives in component-local <code>useState</code> within custom hooks</li>
+  <li><strong>Auth state scattered</strong> across <code>localStorage</code>, <code>window.dispatchEvent('auth-change')</code>, React context, and React Query — no single source of truth</li>
+  <li><strong><code>ThemeContext</code></strong> only tracks theme; auth state is not in context despite both being in the same layout</li>
+  <li><strong>React Query</strong> configured with <code>staleTime: 5min</code> and <code>gcTime: 10min</code> but <code>refetchOnMount: false</code> means initial load always shows stale/cached data</li>
+  <li><strong>Timer state</strong> uses <code>setInterval</code> + <code>useState</code> pattern causing re-renders every second — should use <code>useRef</code> for interval and debounced state updates</li>
+  <li><strong><code>history</code> state in <code>useCrossMath</code></strong> stores full board snapshots for undo — could grow unboundedly for long sessions</li>
+</ul>
+
+<h2>15. API Integration Findings (Full)</h2>
+<table>
+<tr><th>#</th><th>Severity</th><th>Issue</th><th>File</th></tr>
+<tr><td>1</td><td><span class="badge badge-high">High</span></td><td><code>api</code> client duplicates <code>isTokenExpired</code> logic with <code>frontend-auth.ts</code></td><td class="file-ref">src/lib/api/client.ts</td></tr>
+<tr><td>2</td><td><span class="badge badge-high">High</span></td><td><code>api</code> client's <code>refreshAccessToken</code> does not use <code>AbortController</code> — cannot be cancelled</td><td class="file-ref">src/lib/api/client.ts</td></tr>
+<tr><td>3</td><td><span class="badge badge-high">High</span></td><td><code>sessionExpiredNotified</code> flag never reset after successful token refresh</td><td class="file-ref">src/lib/api/client.ts</td></tr>
+<tr><td>4</td><td><span class="badge badge-medium">Medium</span></td><td><code>gameApi</code> has both generic <code>createSession</code> and game-specific aliases (<code>startNonogramSession</code>, etc.) — API surface is redundant</td><td class="file-ref">src/lib/api/gameApi.ts</td></tr>
+<tr><td>5</td><td><span class="badge badge-medium">Medium</span></td><td>Sudoku <code>saveMove</code> uses <code>PUT</code> while all others use <code>POST</code> — inconsistent HTTP semantics</td><td class="file-ref">src/lib/api/gameApi.ts</td></tr>
+<tr><td>6</td><td><span class="badge badge-medium">Medium</span></td><td>No request timeout on <code>fetch</code> calls — slow networks can hang indefinitely</td><td class="file-ref">src/lib/api/client.ts</td></tr>
+<tr><td>7</td><td><span class="badge badge-medium">Medium</span></td><td><code>api</code> client's <code>credentials: "include"</code> sends cookies with every request including unauthenticated ones</td><td class="file-ref">src/lib/api/client.ts</td></tr>
+<tr><td>8</td><td><span class="badge badge-low">Low</span></td><td>No request deduplication — duplicate puzzle fetches if two components request same puzzle simultaneously</td><td class="file-ref">src/lib/api/client.ts</td></tr>
+<tr><td>9</td><td><span class="badge badge-low">Low</span></td><td><code>api</code> client's error response parsing (<code>res.json().catch(...)</code>) could fail silently on malformed JSON</td><td class="file-ref">src/lib/api/client.ts</td></tr>
+<tr><td>10</td><td><span class="badge badge-low">Low</span></td><td><code>withAuth</code> route helper vs manual <code>auth()</code> — inconsistent auth middleware pattern</td><td>API routes</td></tr>
+</table>
+
+<h2>20. Performance Optimization Opportunities</h2>
+<ol>
+  <li><strong>Replace <code>setInterval</code> timer re-renders</strong> with <code>useRef</code>-based interval that doesn't trigger React re-renders every second</li>
+  <li><strong>Add <code>React.memo</code></strong> to game cell components (<code>SudokuCell</code>, <code>NonogramCell</code>, <code>CrossMathCell</code>)</li>
+  <li><strong>Implement request deduplication</strong> in the <code>api</code> client — avoid duplicate puzzle fetches</li>
+  <li><strong>Add <code>AbortController</code> cancellation</strong> to all <code>fetch</code> calls in the <code>api</code> client</li>
+  <li><strong>Use <code>requestIdleCallback</code></strong> or Web Workers for puzzle validation computation in Nonogram and CrossMath</li>
+  <li><strong>Add code splitting</strong> — game components should be lazy-loaded with <code>next/dynamic</code></li>
+  <li><strong>Switch from <code>localStorage</code> synchronous I/O</strong> to IndexedDB for game state caching</li>
+  <li><strong>Reduce <code>history</code> snapshot size</strong> in <code>useCrossMath</code> — store diffs instead of full board copies</li>
+  <li><strong>Add <code>will-change</code></strong> CSS hints on animated/transformed elements</li>
+  <li><strong>Add <code>prefetch</code></strong> to game lobby links so game data loads on hover</li>
+</ol>
+
+<h2>21. Refactoring Opportunities</h2>
+<ol>
+  <li><strong>Extract shared <code>useGameSession</code> hook</strong> — handles createSession, saveMove, completeSession, cleanup — reduces code duplication across 5 game hooks (~2000 lines saved)</li>
+  <li><strong>Split <code>frontend-auth.ts</code></strong> into <code>useAuth</code>, <code>useProfile</code>, <code>useBilling</code> composables</li>
+  <li><strong>Create shared <code>useStrictModeGuard()</code> hook</strong> — replaces 4 identical module-level mount guard patterns</li>
+  <li><strong>Standardize auth middleware</strong> across all API routes — use <code>withAuth</code> consistently</li>
+  <li><strong>Consolidate <code>gameApi</code> methods</strong> — remove game-specific aliases in favor of generic <code>createSession</code>/<code>saveMove</code>/etc.</li>
+  <li><strong>Consolidate <code>isTokenExpired</code></strong> into a single utility used by both <code>api</code> client and <code>frontend-auth</code></li>
+  <li><strong>Create shared <code>useTimer</code> hook</strong> — properly handles visibility API pauses, cleanup, and does not cause re-renders</li>
+  <li><strong>Create shared <code>useUndo</code> hook</strong> — for the undo/redo pattern used in CrossMath and Tangram</li>
+  <li><strong>Create shared <code>usePuzzleLoader</code> hook</strong> — handles caching, daily challenge detection, and error states</li>
+</ol>
+
+<h2>22. Missing Production Features</h2>
+<ul>
+  <li>No <code>&lt;ErrorBoundary&gt;</code> — any runtime error in a game component crashes the entire page</li>
+  <li>No <code>&lt;Suspense&gt;</code> boundaries for async data (past puzzles, analytics, daily challenge data)</li>
+  <li>No loading skeleton components for game lobby pages or past puzzles grid</li>
+  <li>No empty state components — when a user has no past puzzles, no feedback is shown</li>
+  <li>No <code>robots.txt</code> route — search engines may not crawl correctly</li>
+  <li>No <code>sitemap.xml</code> route</li>
+  <li>No structured data (JSON-LD) for puzzles, games, or organization</li>
+  <li>No offline mode beyond the self-destructing service worker (no offline game play)</li>
+  <li>No keyboard shortcut help modal accessible from within games</li>
+  <li>No interactive tutorial — only static text descriptions</li>
+  <li>No <code>manifest.json</code> icons in multiple sizes — only a single SVG icon referenced</li>
+  <li>No Web Share API integration for sharing daily challenge results</li>
+  <li>No <code>aria-live</code> regions for dynamic game status updates (score changes, win/lose)</li>
+  <li>No focus trap in modal dialogs (promotion, win/lose, draw modals in Chess)</li>
+  <li>No <code>prefers-reduced-motion</code> respect — CSS animations play even for users who prefer reduced motion</li>
+</ul>
+
+<h2>23. Risk Assessment</h2>
+<table>
+<tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr>
+<tr><td>XSS token theft via <code>localStorage</code></td><td>Medium</td><td>Critical</td><td>Move tokens to httpOnly cookies</td></tr>
+<tr><td>Session hijacking via ngrok-URL metadata</td><td>Low</td><td>High</td><td>Fix <code>metadataBase</code> URL</td></tr>
+<tr><td>Game logic desync from incorrect scoring</td><td>Medium</td><td>Medium</td><td>Add unit tests for game hooks</td></tr>
+<tr><td>Race conditions in nonogram drag handling</td><td>Medium</td><td>Medium</td><td>Add proper drag state machine</td></tr>
+<tr><td>Memory leak from unbounded undo history</td><td>Medium</td><td>Low</td><td>Cap history at 50 steps</td></tr>
+<tr><td>Service worker stale content (self-destructing)</td><td>Low</td><td>Medium</td><td>Monitor for complaints; currently mitigated</td></tr>
+<tr><td>CSP bypass via <code>dangerouslySetInnerHTML</code></td><td>Low</td><td>High</td><td>Replace with safer DOM API</td></tr>
+<tr><td>Accessibility lawsuit from zoom prevention</td><td>Medium</td><td>High</td><td>Remove <code>maximumScale: 1</code></td></tr>
+</table>
+
+<h2>24. Prioritized Action Plan</h2>
+
+<h3>Phase 1 — Blockers (Before Launch) — Est: 1 day</h3>
+<div class="plan-step"><h4>1. Fix <code>metadataBase</code> URL → production domain</h4><p>Replace ngrok URL with <code>https://puzzroo.com</code>. Affects all canonical URLs, OG images, Twitter cards. | est: 3 min</p></div>
+<div class="plan-step"><h4>2. Remove <code>maximumScale: 1</code> and <code>userScalable: false</code> from viewport</h4><p>Allows pinch-zoom, fixes WCAG 1.4.4. | est: 2 min</p></div>
+<div class="plan-step"><h4>3. Replace <code>google</code> verification placeholder with real code</h4><p>Google Search Console verification. | est: 5 min</p></div>
+<div class="plan-step"><h4>4. Add <code>&lt;ErrorBoundary&gt;</code> wrapper around main content</h4><p>Graceful error recovery instead of white screen. | est: 15 min</p></div>
+<div class="plan-step"><h4>5. Move JWT from <code>localStorage</code> to httpOnly cookies</h4><p>XSS-proof session storage. | est: 30 min</p></div>
+<div class="plan-step"><h4>6. Add CSP and security headers to <code>next.config.js</code></h4><p>Mitigates XSS even with localStorage tokens. | est: 20 min</p></div>
+<div class="plan-step"><h4>7. Reset <code>sessionExpiredNotified</code> flag after successful token refresh</h4><p>Ensures session expiry toasts work consistently. | est: 5 min</p></div>
+
+<h3>Phase 2 — Critical Fixes (Week 1) — Est: 3 days</h3>
+<div class="plan-step"><h4>8. Add <code>AbortController</code> to all API calls</h4><span class="file-ref">src/lib/api/client.ts</span></div>
+<div class="plan-step"><h4>9. Add request deduplication in <code>api</code> client</h4></div>
+<div class="plan-step"><h4>10. Fix <code>sessionExpiredNotified</code> never resetting</h4></div>
+<div class="plan-step"><h4>11. Add keyboard navigation &amp; focus management to game cells</h4></div>
+<div class="plan-step"><h4>12. Respect <code>prefers-reduced-motion</code> in CSS animations</h4><span class="file-ref">tailwind.config.ts, src/styles/globals.css</span></div>
+<div class="plan-step"><h4>13. Fix <code>reportWin</code> double-adding in Sudoku</h4><span class="file-ref">src/hooks/useSudoku.ts</span></div>
+<div class="plan-step"><h4>14. Add <code>aria-live</code> regions for game status updates</h4></div>
+
+<h3>Phase 3 — Major Refactors (Weeks 2-3) — Est: 5 days</h3>
+<div class="plan-step"><h4>15. Extract shared <code>useGameSession</code> hook</h4><p>Reduces code duplication across 5 game hooks (~2000 lines saved).</p></div>
+<div class="plan-step"><h4>16. Split <code>frontend-auth.ts</code> into focused composables</h4></div>
+<div class="plan-step"><h4>17. Standardize auth middleware across all API routes</h4></div>
+<div class="plan-step"><h4>18. Replace <code>setInterval</code> timer pattern with <code>useRef</code>-based approach</h4></div>
+<div class="plan-step"><h4>19. Add <code>React.memo</code> to game cell components</h4></div>
+<div class="plan-step"><h4>20. Implement code splitting for game components</h4></div>
+<div class="plan-step"><h4>21. Consolidate <code>gameApi</code> redundant methods</h4></div>
+
+<h3>Phase 4 — Improvements (Month 2) — Est: 3 days</h3>
+<div class="plan-step"><h4>22. Add <code>&lt;Suspense&gt;</code> boundaries for async routes</h4></div>
+<div class="plan-step"><h4>23. Add loading skeletons for lobby pages</h4></div>
+<div class="plan-step"><h4>24. Add empty state components</h4></div>
+<div class="plan-step"><h4>25. Create <code>useStrictModeGuard</code> shared hook</h4></div>
+<div class="plan-step"><h4>26. Add structured data (JSON-LD)</h4></div>
+<div class="plan-step"><h4>27. Add <code>robots.txt</code> and <code>sitemap.xml</code></h4></div>
+<div class="plan-step"><h4>28. Cap undo history at 50 steps</h4></div>
+
+<h3>Phase 5 — Polish (Month 3+) — Ongoing</h3>
+<div class="plan-step"><h4>29. Add unit tests for game hooks</h4></div>
+<div class="plan-step"><h4>30. Add E2E tests for game flows</h4></div>
+<div class="plan-step"><h4>31. Add Web Share API for daily challenges</h4></div>
+<div class="plan-step"><h4>32. Add interactive "How to Play" tutorial</h4></div>
+<div class="plan-step"><h4>33. Add multiple PWA icon sizes</h4></div>
+<div class="plan-step"><h4>34. Add focus traps in modals</h4></div>
+<div class="plan-step"><h4>35. Add request timeouts to API client</h4></div>
+<div class="plan-step"><h4>36. Add monitoring/alerting for API errors</h4></div>
+
+<h2>25. Final Verdict</h2>
+<p><strong>The frontend is NOT production-ready.</strong> The most critical issues are security-sensitive (JWT in localStorage, missing CSP headers, XSS vectors via <code>dangerouslySetInnerHTML</code>) and accessibility-breaking (<code>maximumScale: 1</code> prevents zoom). These must be resolved before any public launch.</p>
+<p>The codebase is functionally complete with good architecture intentions, but significant code duplication, inconsistent patterns, and missing production features (error boundaries, loading states, SEO infrastructure) need to be addressed.</p>
+<p><strong>Estimated time to production readiness:</strong> 2-3 weeks with a focused effort on Phase 1 + Phase 2 items.</p>
+
+<p style="text-align: center; color: #94a3b8; font-size: 9px; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+  Puzzroo Frontend Audit Report — Generated July 28, 2026 — Confidential
+</p>
+
+</body>
+</html>

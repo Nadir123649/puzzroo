@@ -148,6 +148,7 @@ export async function ensureSession(): Promise<void> {
     return;
   }
 
+  // Token is expired, try to refresh
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/auth/refresh`, {
       method: "POST",

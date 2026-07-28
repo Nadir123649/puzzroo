@@ -17,6 +17,7 @@ import { TangramModal } from '@/components/games/tangram/TangramModal'
 import { CountdownTimer } from '@/components/games/tangram/CountdownTimer'
 import { PolygonHintGhost } from '@/components/games/tangram/PolygonHintGhost'
 import { notify } from '@/lib/toast'
+import { Button } from '@/components/ui/button'
 
 import { TangramPieceId } from '@shared/types/tangram-polygon'
 import { TangramDifficulty } from '@shared/data/tangram'
@@ -199,7 +200,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   return (
     <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}>
       <div className="w-full max-w-[1380px] mx-auto px-[20px] flex justify-center overflow-visible">
-        <div className="w-full flex flex-col gap-[20px] pb-0 md:pb-[10px] max-w-full overflow-visible">
+        <div className="w-full flex flex-col gap-[20px] pb-[20px] max-w-full overflow-visible">
 
           {/* Puzzle Metadata */}
           <div className="text-center space-y-1 w-full mt-4">
@@ -254,11 +255,10 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
             {/* RIGHT SIDE - CONTROLS PANEL */}
             <div 
-              className="flex-shrink-0 w-[360px] flex flex-col gap-4 sticky top-[100px]"
-              style={{ minHeight: `${(desktopBoardWidth * 493) / 750}px` }}
+              className="flex-shrink-0 w-[360px] flex flex-col gap-5 sticky top-[100px] self-stretch"
             >
               {/* Premium Controls Card - fills space but doesn't push buttons down */}
-              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-6 shadow-lg shadow-purple-500/5 flex flex-col gap-5 flex-1 mb-3">
+              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-6 shadow-lg shadow-purple-500/5 flex flex-col gap-5 flex-1">
                 {/* Difficulty Heading - centered, bold, larger */}
                 {puzzle && (
                   <div className="text-center py-1">
@@ -367,21 +367,25 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               <div className="w-full flex flex-col gap-[12px]">
                 {/* Replay Game / New Game / Replay Button */}
                 {isFromPastPuzzles ? (
-                  <button
+                  <Button
                     onClick={handleReplay}
                     disabled={isResetting}
-                    className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    fullWidth
+                    size="md"
+                    className="h-[46px]"
                   >
                     Replay Game
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
                     onClick={mode === 'normal' ? handleNewGame : handleReplay}
                     disabled={isResetting}
-                    className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    fullWidth
+                    size="md"
+                    className="h-[46px]"
                   >
                     {mode === 'normal' ? 'New Game' : 'Replay'}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -505,21 +509,25 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
             {/* Replay / New Game Button Mobile */}
             {isFromPastPuzzles || mode !== 'normal' ? (
-              <button
+              <Button
                 onClick={handleReplay}
                 disabled={isResetting}
-                className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                fullWidth
+                size="md"
+                className="h-[46px]"
               >
                 Replay Game
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 onClick={handleNewGame}
                 disabled={isResetting}
-                className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                fullWidth
+                size="md"
+                className="h-[46px]"
               >
                 New Game
-              </button>
+              </Button>
             )}
           </div>
 

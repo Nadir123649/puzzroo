@@ -8,8 +8,7 @@ import { notify } from '@/lib/toast'
 import { images } from '@/lib/utils'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import Navbar from '@/components/layout/navbar'
-import { Footer } from '@/components/layout/Footer'
+import { AppLayout } from '@/components/layout/AppLayout'
 import { getCurrentUser, isLoggedIn, setUsername as setUsernameApi, linkAndMerge } from '@/lib/auth/frontend-auth'
 
 export default function ChooseUsernamePage() {
@@ -83,9 +82,7 @@ export default function ChooseUsernamePage() {
   if (!mounted) return spinner
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-      <Navbar />
-
+    <AppLayout>
       <main className="flex-grow flex items-center justify-center px-[20px] py-[40px] md:py-[60px]">
         <div className="w-full max-w-[420px] bg-white dark:bg-[#1F222A] rounded-[24px] p-4 sm:p-5 border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-lg shadow-purple-500/5 transition-all duration-300">
 
@@ -156,9 +153,7 @@ export default function ChooseUsernamePage() {
 
         </div>
       </main>
-
-      <Footer />
-
+      
       {/* Link Accounts Modal */}
       {showLinkModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-black/60 dark:bg-black/80 animate-fadeIn">
@@ -207,6 +202,6 @@ export default function ChooseUsernamePage() {
           </div>
         </div>
       )}
-    </div>
+    </AppLayout>
   )
 }
