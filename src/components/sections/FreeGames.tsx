@@ -155,8 +155,6 @@ export function FreeGames() {
               game={game} 
               isPlayed={playedGames.has(game.id)}
               isLastPlayed={lastPlayedGame === game.id}
-              isLastPlayed={game.id === lastPlayedGame}
-              hasHistory={playedGames.size > 0}
             />
           ))}
         </div>
