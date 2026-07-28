@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import { Mail, Shield, Bell, BookOpen } from 'lucide-react'
 import { notify } from '@/lib/toast'
 import { useEmailPreferences } from '@/hooks/useEmailPreferences'
@@ -22,24 +21,6 @@ const getIcon = (iconName: string) => {
 
 export default function EmailPreferencesPage() {
   const { preferences, updatePreferences, isUpdating } = useEmailPreferences()
-  const [mounted, setMounted] = useState(false)
-
-  const fetchedRef = useRef(false)
-
-  useEffect(() => {
-    if (fetchedRef.current) return
-    fetchedRef.current = true
-    setMounted(true)
-    import('@/lib/auth/frontend-auth').then(({ fetchEmailPreferences }) =>
-      fetchEmailPreferences().then((data: any) => {
-        if (data?.preferences) {
-          setPreferences(data.preferences)
-        } else {
-          setPreferences(defaultPreferences)
-        }
-      })
-    )
-  }, [])
 
   const togglePreference = async (id: string) => {
     const updated = preferences.map(pref =>
