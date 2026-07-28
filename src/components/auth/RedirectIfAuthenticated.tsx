@@ -5,6 +5,7 @@ import { isLoggedIn } from '@/lib/auth/frontend-auth'
 
 export function RedirectIfAuthenticated({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
+  const [validated, setValidated] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -42,8 +43,9 @@ export function RedirectIfAuthenticated({ children }: { children: React.ReactNod
     </div>
   )
 
-  // Show spinner briefly while checking auth state
-  if (!mounted) return spinner
+  // Hold the spinner until mounted AND session-validated, so a stale token is
+  // cleared before we decide to show the form or bounce to home.
+  if (!mounted || !validated) return spinner
 
   return <>{children}</>
 }
