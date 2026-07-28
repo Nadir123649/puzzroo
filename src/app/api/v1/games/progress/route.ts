@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   if ("error" in userResult) return userResult.error;
 
   try {
-    const { gameId, puzzleId, difficulty, completed, score, time, hintsUsed, mistakes, moves, resumeState } =
+    const { gameId, puzzleId, difficulty, completed, time, hintsUsed, mistakes, moves, resumeState } =
       val.data!;
 
     const update: any = {
@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
       puzzleId,
       difficulty,
       completed: completed || false,
-      score: score || 0,
       time: time || 0,
       hintsUsed: hintsUsed || 0,
       mistakes: mistakes || 0,
@@ -53,7 +52,7 @@ export async function POST(request: NextRequest) {
     await trackServer({
       userId: userResult.user.id,
       event: completed ? "game_completed" : "game_progress",
-      properties: { gameId, puzzleId, difficulty, score: score || 0, time: time || 0 },
+      properties: { gameId, puzzleId, difficulty, time: time || 0 },
       request,
     });
 

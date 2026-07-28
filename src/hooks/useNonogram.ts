@@ -51,6 +51,7 @@ function getTodayDateParam(): string {
 }
 
 import { gameApi } from '@/lib/api/gameApi'
+import { getAccessToken } from '@/lib/auth/frontend-auth'
 
 // Module-level guard to cancel StrictMode double-mount in dev
 let _nonogramMountGuard = false
@@ -184,7 +185,7 @@ export function useNonogram(initialPuzzleId?: string) {
     if (sessionCreatedRef.current) return null
     completionCalledRef.current = false
     if (typeof window === 'undefined') return null
-    if (!localStorage.getItem('accessToken')) return null
+    if (!getAccessToken()) return null
     try {
       const res = await gameApi.createSession('nonogram', puzzleId, diff)
       if (res && (res.sessionId || res._id || res.id)) {
@@ -456,7 +457,7 @@ export function useNonogram(initialPuzzleId?: string) {
       }
 
       // Also report completion to the API when logged in (fire-and-forget)
-      if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
+      if (getAccessToken()) {
         void gameApi.complete('nonogram', {
           puzzleId: currentPuzzle.id,
           difficulty: currentPuzzle.difficulty as 'easy' | 'medium' | 'hard' | 'expert',

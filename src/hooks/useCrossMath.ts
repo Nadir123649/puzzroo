@@ -18,6 +18,7 @@ import {
 } from '@shared/lib/crossmath/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
+import { getAccessToken } from '@/lib/auth/frontend-auth'
 
 // Module-level guard to cancel StrictMode double-mount in dev
 let _crossmathMountGuard = false
@@ -171,7 +172,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     movesRef.current = 0
     completionCalledRef.current = false
     if (typeof window === 'undefined') return null
-    if (!localStorage.getItem('accessToken')) return null
+    if (!getAccessToken()) return null
     try {
       const res = await gameApi.createSession('crossmath', puzzleId, diff)
       if (res && (res.sessionId || res._id || res.id)) {
@@ -223,7 +224,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     elapsed: number,
     finalMistakes: number
   ) => {
-    if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
+    if (getAccessToken()) {
       gameApi.complete('crossmath', {
         puzzleId,
         difficulty: diff,

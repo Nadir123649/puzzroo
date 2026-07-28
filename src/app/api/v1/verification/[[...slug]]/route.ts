@@ -13,6 +13,7 @@ import { formatUser } from "@/lib/server/utils/formatUser";
 import { isFirebaseReady, issueSession } from "@/lib/server/utils/authHelpers";
 import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
+import { checkRateLimit } from "@/lib/server/utils/http";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug || [];
@@ -29,6 +30,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     // ──── POST /api/v1/verification/email/verify ────
     if (resource === "email" && action === "verify") {
+      const rl = checkRateLimit(request, "verification:email:verify", 10, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests. Try again later.");
       const token = body.token;
       if (!token) return errorResponse(400, "validation_error", "Token is required");
       const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
@@ -46,12 +49,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/verification/email/resend ────
     if (resource === "email" && action === "resend") {
+      const rl = checkRateLimit(request, "verification:email:resend", 3, 900_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many resend requests. Try again later.");
       const val = validate(forgotPasswordSchema, body);
       if (val.error) return val.error;
       const { email } = val.data!;
       const user = await User.findOne({ email });
-      if (!user) return errorResponse(404, "user_not_found", "No account found with this email");
-      if (user.isVerified) return errorResponse(400, "already_verified", "Email is already verified");
+      if (!user) {
+        return successResponse({ message: "Verification email sent. Check your inbox." });
+      }
+      if (user.isVerified) return successResponse({ message: "Email is already verified." });
       const verificationToken = crypto.randomBytes(32).toString("hex");
       const hashedToken = crypto.createHash("sha256").update(verificationToken).digest("hex");
       user.emailVerificationToken = hashedToken;
@@ -72,7 +79,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/verification/phone ────
     if (resource === "phone") {
-      if (!isFirebaseReady) return errorResponse(500, "firebase_not_configured", "Firebase is not configured");
+      const rl = checkRateLimit(request, "verification:phone", 5, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests. Try again later.");
+      if (!isFirebaseReady()) return errorResponse(500, "firebase_not_configured", "Firebase is not configured");
       const { firebaseToken } = body;
       if (!firebaseToken) return errorResponse(400, "validation_error", "Firebase token is required");
       const firebaseAuth = await getFirebaseAuth();

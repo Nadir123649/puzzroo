@@ -15,14 +15,13 @@ export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {};
   try { body = await request.json(); } catch {}
 
-  const { sessionId, grid, elapsedSeconds, hintsUsed, mistakes, moves, score } = body as {
+  const { sessionId, grid, elapsedSeconds, hintsUsed, mistakes, moves } = body as {
     sessionId?: string;
     grid?: Record<string, number>;
     elapsedSeconds?: number;
     hintsUsed?: number;
     mistakes?: number;
     moves?: number;
-    score?: number;
   };
 
   if (!sessionId) {
@@ -41,8 +40,7 @@ export async function POST(request: NextRequest) {
       elapsedSeconds || 0,
       hintsUsed || 0,
       mistakes || 0,
-      moves || 0,
-      score || 0
+      moves || 0
     );
 
     if (result.isCompleted && result.result) {

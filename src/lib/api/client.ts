@@ -1,4 +1,5 @@
 import { notify } from '@/lib/toast'
+import { getAccessToken, setAccessToken } from '@/lib/auth/frontend-auth'
 
 type RefreshCallback = (token: string) => void;
 let onRefresh: RefreshCallback | null = null;
@@ -58,11 +59,19 @@ export async function api<T = any>(
     ...(fetchOptions.headers as Record<string, string>),
   };
 
-  let accessToken = localStorage.getItem("accessToken");
-  if (accessToken && isTokenExpired(accessToken)) {
+  let accessToken = getAccessToken();
+
+  if (!accessToken && isClient && localStorage.getItem("puzzroo_auth")) {
     const newToken = await refreshAccessToken();
     if (newToken) {
-      localStorage.setItem("accessToken", newToken);
+      setAccessToken(newToken);
+      if (onRefresh) onRefresh(newToken);
+      accessToken = newToken;
+    }
+  } else if (accessToken && isTokenExpired(accessToken)) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      setAccessToken(newToken);
       if (onRefresh) onRefresh(newToken);
       accessToken = newToken;
     }
@@ -79,10 +88,11 @@ export async function api<T = any>(
     let res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });
 
     // Auto-refresh on 401
-    if (res.status === 401 && accessToken) {
+    const mightBeLoggedIn = accessToken || (isClient && localStorage.getItem("puzzroo_auth"));
+    if (res.status === 401 && mightBeLoggedIn) {
       const newToken = await refreshAccessToken();
       if (newToken) {
-        localStorage.setItem("accessToken", newToken);
+        setAccessToken(newToken);
         if (onRefresh) onRefresh(newToken);
         headers["Authorization"] = `Bearer ${newToken}`;
         res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });

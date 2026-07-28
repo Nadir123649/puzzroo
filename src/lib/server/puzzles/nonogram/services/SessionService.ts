@@ -135,7 +135,7 @@ export class SessionService {
     hintsUsed: number,
     mistakes: number,
     moves: number,
-    score: number
+    _score?: number
   ) {
     const session = await this.getSession(sessionId, userId)
 
@@ -164,6 +164,10 @@ export class SessionService {
       totalCells: result.totalCells,
       completedAt: new Date(),
     }
+
+    const difficultyMultiplier: Record<string, number> = { easy: 1, medium: 1.5, hard: 2, expert: 3 };
+    const multiplier = difficultyMultiplier[session.difficulty] ?? 1;
+    const score = Math.max(0, Math.round(result.accuracy * 10 * multiplier - hintsUsed * 50 - mistakes * 25));
 
     const sessionResult = await playSessionRepository.complete(sessionId, {
       correct: result.correctCells,

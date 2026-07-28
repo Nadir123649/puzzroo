@@ -16,6 +16,9 @@ import { authPayload, issueSession } from "@/lib/server/utils/authHelpers";
 import { generatePublicId } from "@/lib/server/utils/publicId";
 import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
+import { checkRateLimit } from "@/lib/server/utils/http";
+import { checkBruteForce, recordFailure, resetBruteForce } from "@/lib/server/utils/bruteForce";
+import { getSessionTokenVersion } from "@/lib/server/utils/authHelpers";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
@@ -31,6 +34,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     // ──── POST /api/v1/auth/register ────
     if (action === "register") {
+      const rl = checkRateLimit(request, "auth:register", 3, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many registration attempts. Try again later.");
       const val = validate(registerSchema, body);
       if (val.error) return val.error;
       const { name, password } = val.data!;
@@ -62,7 +67,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         return successResponse({ linking: true, message: "Verification email sent. After verifying, choose a username or link an existing account." }, 201);
       }
 
-      if (existingUser) return errorResponse(409, "email_taken", "A user with this email already exists");
+      if (existingUser) {
+        return successResponse({ message: "Registration successful. Please check your email to verify your account." }, 201);
+      }
       const placeholderUsername = await generateUniqueUsername(name || email.split("@")[0] || "user");
       const hashedPassword = await bcrypt.hash(password, 10);
       const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -84,17 +91,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/auth/login ────
     if (action === "login") {
+      const rl = checkRateLimit(request, "auth:login", 10, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many login attempts. Try again later.");
       const val = validate(loginSchema, body);
       if (val.error) return val.error;
       const { identifier, password } = val.data!;
       const rememberMe = body.rememberMe === true;
       const lookup = identifier.trim().toLowerCase();
+      const bf = checkBruteForce(request, `login:${lookup}`);
+      if (bf.blocked) return errorResponse(429, "account_locked", "Too many failed login attempts. Please wait before trying again.");
       const user = await User.findOne({ $or: [{ email: lookup }, { pendingEmail: lookup }, { username: lookup }] });
-      const looksLikeEmail = lookup.includes("@");
-      if (!user) return errorResponse(401, looksLikeEmail ? "invalid_email" : "invalid_credentials", looksLikeEmail ? "Invalid email" : "Invalid email or password");
-      if (!user.password) return errorResponse(401, "invalid_credentials", "Invalid email or password");
+      if (!user) {
+        recordFailure(request, `login:${lookup}`);
+        return errorResponse(401, "invalid_credentials", "Invalid email or password");
+      }
+      if (!user.password) {
+        recordFailure(request, `login:${lookup}`);
+        return errorResponse(401, "invalid_credentials", "Invalid email or password");
+      }
       const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) return errorResponse(401, "invalid_credentials", "Invalid email or password");
+      if (!isMatch) {
+        recordFailure(request, `login:${lookup}`);
+        return errorResponse(401, "invalid_credentials", "Invalid email or password");
+      }
+      resetBruteForce(request, `login:${lookup}`);
       user.lastLoginAt = new Date();
       if (!user.linkedProviders) user.linkedProviders = [];
       if (!user.linkedProviders.includes("email")) user.linkedProviders.push("email");
@@ -115,6 +135,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/auth/logout ────
     if (action === "logout") {
+      const rl = checkRateLimit(request, "auth:logout", 30, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const who = await auth(request);
       if (!("error" in who)) {
         await trackServer({ userId: who.user.id, event: "logout", request });
@@ -129,6 +151,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/auth/logout-all ────
     if (action === "logout-all") {
+      const rl = checkRateLimit(request, "auth:logout-all", 10, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
       await LoginSession.deleteMany({ userId: userResult.user.id });
@@ -139,14 +163,44 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/auth/refresh ────
     if (action === "refresh") {
+      const rl = checkRateLimit(request, "auth:refresh", 20, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const refreshToken = request.cookies.get("refreshToken")?.value;
       if (!refreshToken) return errorResponse(401, "token_missing", "Refresh token not found");
       const jwt = await import("jsonwebtoken");
       try {
-        const decoded = jwt.default.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { id: string; jti?: string };
+        const decoded = jwt.default.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { id: string; jti?: string; ver?: number };
         const user = await User.findById(decoded.id);
         if (!user) return errorResponse(401, "user_not_found", "User not found");
-        const tokenPayload = buildTokenPayload(user, decoded.jti);
+
+        // ── Refresh token rotation ──
+        let tokenVersion: number | undefined;
+        if (decoded.jti) {
+          const session = await LoginSession.findById(decoded.jti);
+          if (!session) {
+            return errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.");
+          }
+          const currentVersion = (session as any).tokenVersion ?? 0;
+          const presentedVersion = decoded.ver ?? 0;
+
+          if (presentedVersion !== currentVersion) {
+            // Token reuse detected — revoke ALL sessions for this user.
+            await LoginSession.deleteMany({ userId: user._id });
+            await trackServer({
+              userId: user._id.toString(),
+              event: "refresh_token_reuse",
+              properties: { expectedVersion: currentVersion, receivedVersion: presentedVersion },
+              request,
+            });
+            return errorResponse(401, "token_reused", "Refresh token has already been used. All sessions revoked for security.");
+          }
+
+          (session as any).tokenVersion = currentVersion + 1;
+          await (session as any).save();
+          tokenVersion = currentVersion + 1;
+        }
+
+        const tokenPayload = buildTokenPayload(user, decoded.jti, tokenVersion);
         const res = NextResponse.json({ success: true, payload: { token: tokenPayload }, timestamp: Date.now() }, { status: 200 });
         res.cookies.set("refreshToken", tokenPayload.refreshToken, cookieOptions);
         return res;
@@ -157,6 +211,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/auth/change-password ────
     if (action === "change-password") {
+      const rl = checkRateLimit(request, "auth:change-password", 5, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
       const jti = userResult.user.jti;
@@ -173,13 +229,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.password = await bcrypt.hash(newPassword, 10);
       await user.save();
       await trackServer({ userId: user._id.toString(), event: "password_changed", request });
-      const res = NextResponse.json({ success: true, payload: { message: "Password changed successfully", token: buildTokenPayload(user, jti) }, timestamp: Date.now() }, { status: 200 });
-      res.cookies.set("refreshToken", buildTokenPayload(user, jti).refreshToken, cookieOptions);
+      const tokenVersion = jti ? await getSessionTokenVersion(jti) : undefined;
+      const newTokens = buildTokenPayload(user, jti, tokenVersion);
+      const res = NextResponse.json({ success: true, payload: { message: "Password changed successfully", token: newTokens }, timestamp: Date.now() }, { status: 200 });
+      res.cookies.set("refreshToken", newTokens.refreshToken, cookieOptions);
       return res;
     }
 
     // ──── POST /api/v1/auth/set-username (one-time, for OAuth users) ────
     if (action === "set-username") {
+      const rl = checkRateLimit(request, "auth:set-username", 10, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
       const jti = userResult.user.jti;
@@ -209,13 +269,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
       await user.save();
       await trackServer({ userId: user._id.toString(), event: "username_set", request });
-      const res = NextResponse.json({ success: true, payload: authPayload(user, jti), timestamp: Date.now() }, { status: 200 });
-      res.cookies.set("refreshToken", buildTokenPayload(user, jti).refreshToken, cookieOptions);
+      const tokenVersion = jti ? await getSessionTokenVersion(jti) : undefined;
+      const res = NextResponse.json({ success: true, payload: authPayload(user, jti, tokenVersion), timestamp: Date.now() }, { status: 200 });
+      res.cookies.set("refreshToken", buildTokenPayload(user, jti, tokenVersion).refreshToken, cookieOptions);
       return res;
     }
 
     // ──── POST /api/v1/auth/link-and-merge ────
     if (action === "link-and-merge") {
+      const rl = checkRateLimit(request, "auth:link-and-merge", 5, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
       const user = await User.findById(userResult.user.id);
@@ -258,6 +321,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/auth/unlink-provider ────
     if (action === "unlink-provider") {
+      const rl = checkRateLimit(request, "auth:unlink-provider", 10, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
       const val = validate(unlinkProviderSchema, body);
@@ -288,6 +353,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/auth/manage-email ────
     if (action === "manage-email") {
+      const rl = checkRateLimit(request, "auth:manage-email", 5, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
       const val = validate(manageEmailSchema, body);
@@ -319,6 +386,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/auth/upgrade (guest → free) ────
     if (action === "upgrade") {
+      const rl = checkRateLimit(request, "auth:upgrade", 5, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
       const { email, password } = body;
@@ -360,6 +429,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     // ──── GET /api/v1/auth/me ────
     if (action === "me") {
+      const rl = checkRateLimit(request, "auth:me", 30, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
       const user = await User.findById(userResult.user.id).select("-password");

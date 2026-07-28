@@ -28,8 +28,7 @@ export const POST = withAuth(async (req, user, params) => {
     parsed.data.elapsedTime,
     parsed.data.hintsUsed,
     parsed.data.mistakes,
-    parsed.data.moves,
-    parsed.data.score
+    parsed.data.moves
   )
 
   console.log('[TRACE] POST /complete: result', { sessionId: sessionId?.substring(0,20), isCompleted: result.isCompleted, ts: Date.now() })

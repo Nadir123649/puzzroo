@@ -12,10 +12,10 @@ export const POST = withAuth(async (req, user, params) => {
   let body: any = {}
   try { body = await req.json() } catch {}
 
-  const { grid, pieces, elapsedTime, hintsUsed, mistakes, moves, score } = body
+  const { grid, pieces, elapsedTime, hintsUsed, mistakes, moves } = body
 
   const result = await sessionService.completeSession(
-    params.id, user.id, grid, pieces, elapsedTime, hintsUsed, mistakes, moves, score
+    params.id, user.id, grid, pieces, elapsedTime, hintsUsed, mistakes, moves
   )
 
   return successResponse(result)

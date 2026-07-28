@@ -165,7 +165,7 @@ export class SessionService {
     hintsUsed: number,
     mistakes: number,
     moves: number,
-    score: number
+    _score?: number
   ): Promise<CompleteSessionResponse> {
     console.log('[TRACE] completeSession', { sessionId: sessionId?.substring(0,20), userId: userId?.substring(0,10), gridSize: Object.keys(grid).length, ts: Date.now() })
     const session = await this.getSession(sessionId, userId)
@@ -195,6 +195,10 @@ export class SessionService {
         },
       }
     }
+
+    const difficultyMultiplier: Record<string, number> = { easy: 1, medium: 1.5, hard: 2 };
+    const multiplier = difficultyMultiplier[session.difficulty] ?? 1;
+    const score = Math.max(0, Math.round(verifyResult.correctEquations * 10 * multiplier - mistakes * 5 - hintsUsed * 20));
 
     const updated = await playSessionRepository.complete(sessionId, {
       correct: verifyResult.correctEquations,
