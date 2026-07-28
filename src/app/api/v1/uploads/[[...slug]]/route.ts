@@ -17,6 +17,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const file = (formData.get("image") || formData.get("file")) as File | null;
       if (!file) return errorResponse(400, "no_file", "No image uploaded");
       if (!file.type.startsWith("image/")) return errorResponse(400, "invalid_file", "Only image files are allowed");
+      if (file.size > 5 * 1024 * 1024) return errorResponse(400, "file_too_large", "File size exceeds 5MB limit");
 
       const cloudinary = (await import("@/lib/server/config/cloudinary")).default;
 

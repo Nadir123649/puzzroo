@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, lowercase: true, trim: true, default: null, unique: true, sparse: true },
     password: { type: String, default: null },
     phone: { type: String, default: null },
-    firebaseUid: { type: String, default: null },
+    firebaseUid: { type: String, default: null, index: true },
     firebaseProvider: { type: String, default: null },
     provider: {
       type: String,
@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
       default: "active",
     },
     isSuperUser: { type: Boolean, default: false },
-    lastLoginAt: { type: Date, default: null },
+    lastLoginAt: { type: Date, default: null, index: true },
     lastActiveAt: { type: Date, default: null },
     isVerified: { type: Boolean, default: false },
     emailVerificationToken: String,

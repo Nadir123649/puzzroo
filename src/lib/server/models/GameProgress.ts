@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const gameProgressSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    profileId: { type: mongoose.Schema.Types.ObjectId, ref: "AccountProfile", default: null },
+    profileId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     gameId: { type: String, enum: ["sudoku", "crossmath", "nonogram", "tangram"], required: true },
     puzzleId: { type: String, required: true },
     difficulty: { type: String, enum: ["easy", "medium", "hard"], required: true },
@@ -23,6 +23,7 @@ const gameProgressSchema = new mongoose.Schema(
 
 gameProgressSchema.index({ userId: 1, profileId: 1, gameId: 1, puzzleId: 1 }, { unique: true });
 gameProgressSchema.index({ userId: 1, gameId: 1, completed: 1 });
-gameProgressSchema.index({ userId: 1, profileId: 1, gameId: 1, status: 1 });
+gameProgressSchema.index({ userId: 1, profileId: 1, gameId: 1, completed: 1 });
+gameProgressSchema.index({ userId: 1, updatedAt: -1 });
 
 export default mongoose.models.GameProgress || mongoose.model("GameProgress", gameProgressSchema);

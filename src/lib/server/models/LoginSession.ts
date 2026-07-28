@@ -13,10 +13,13 @@ const loginSessionSchema = new mongoose.Schema(
     provider: { type: String, default: null },
     tokenVersion: { type: Number, default: 0 },
     lastSeenAt: { type: Date, default: Date.now },
+    deviceFingerprint: { type: String, default: null },
+    status: { type: String, enum: ["active", "expired", "logged_out", "revoked"], default: "active" },
   },
   { timestamps: true }
 );
 
 loginSessionSchema.index({ lastSeenAt: 1 }, { expireAfterSeconds: 7 * 24 * 60 * 60 });
+loginSessionSchema.index({ userId: 1, deviceFingerprint: 1, status: 1 });
 
 export default mongoose.models.LoginSession || mongoose.model("LoginSession", loginSessionSchema);

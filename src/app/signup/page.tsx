@@ -99,11 +99,15 @@ export default function SignupPage() {
       if (!result.linking) notify.successKey('AUTH_SIGNUP_SUCCESS')
       setIsSuccess(true)
     } else {
-      notify.errorFromResult(result, 'AUTH_SIGNUP_FAILED')
-      if (result.code === 'email_taken') {
+      if (result.code === 'account_already_exists') {
         setErrors({ email: result.error })
       } else {
-        setErrors({ general: result.error || 'Registration failed' })
+        notify.errorFromResult(result, 'AUTH_SIGNUP_FAILED')
+        if (result.code === 'email_taken') {
+          setErrors({ email: result.error })
+        } else {
+          setErrors({ general: result.error || 'Registration failed' })
+        }
       }
     }
   }

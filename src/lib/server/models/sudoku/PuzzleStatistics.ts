@@ -19,7 +19,9 @@ const puzzleStatisticsSchema = new mongoose.Schema(
     },
     lastPlayedAt: { type: Date, default: null },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "sudoku_puzzlestatistics" }
 );
 
-export default mongoose.models.PuzzleStatistics || mongoose.model("PuzzleStatistics", puzzleStatisticsSchema);
+puzzleStatisticsSchema.index({ puzzleId: 1 }, { unique: true });
+
+export default mongoose.models.SudokuPuzzleStatistics || mongoose.model("SudokuPuzzleStatistics", puzzleStatisticsSchema);
