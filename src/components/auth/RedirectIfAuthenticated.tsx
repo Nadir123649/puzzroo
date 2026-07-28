@@ -9,21 +9,24 @@ export function RedirectIfAuthenticated({ children }: { children: React.ReactNod
   useEffect(() => {
     setMounted(true)
 
-    // Session is already validated by ThemeProvider's ensureSession call
-    // Just check if logged in and redirect if necessary
+    // Check if user is already logged in
     const checkAndRedirect = () => {
       if (isLoggedIn()) {
         window.location.replace('/')
+      } else {
+        // Not logged in - show the login/signup form
+        setValidated(true)
       }
     }
-    
-    // Small delay to let ensureSession from providers complete
-    const timer = setTimeout(checkAndRedirect, 100)
+
+    // Wait for ensureSession from providers.tsx to complete (max 200ms)
+    const timer = setTimeout(checkAndRedirect, 200)
 
     // bfcache restores (e.g. pressing Back after an OAuth login) do not re-run
     // the effect body, so re-check on pageshow to avoid a stuck blank screen.
     const onPageShow = () => {
-      setTimeout(checkAndRedirect, 100)
+      setValidated(false)
+      setTimeout(checkAndRedirect, 200)
     }
     window.addEventListener('pageshow', onPageShow)
     

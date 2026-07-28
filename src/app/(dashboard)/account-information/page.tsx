@@ -278,9 +278,6 @@ export default function AccountInformationPage() {
               Password
             </span>
             <div className="flex items-center gap-3">
-              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
-                {canChangePassword ? 'Set' : 'Not set'}
-              </span>
               {canChangePassword ? (
                 <Button
                   size="xs"

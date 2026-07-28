@@ -5,6 +5,9 @@ type RefreshCallback = (token: string) => void;
 let onRefresh: RefreshCallback | null = null;
 let sessionExpiredNotified = false;
 
+// Track pending API requests to prevent duplicate calls
+const pendingRequests = new Map<string, Promise<any>>();
+
 export function setOnRefresh(cb: RefreshCallback) {
   onRefresh = cb;
 }
@@ -55,6 +58,15 @@ export async function api<T = any>(
     url += `?${qs}`;
   }
 
+  // Create a unique key for this request (GET requests only, for deduplication)
+  const method = (fetchOptions.method || 'GET').toUpperCase();
+  const requestKey = `${method}:${url}`;
+  
+  // For GET requests, check if there's already a pending request
+  if (method === 'GET' && pendingRequests.has(requestKey)) {
+    return pendingRequests.get(requestKey)!;
+  }
+
   const headers: Record<string, string> = {
     ...(fetchOptions.headers as Record<string, string>),
   };
@@ -84,43 +96,58 @@ export async function api<T = any>(
     headers["Content-Type"] = "application/json";
   }
 
-  try {
-    let res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });
+  // Create the promise for this request
+  const requestPromise = (async () => {
+    try {
+      let res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });
 
-    // Auto-refresh on 401
-    const mightBeLoggedIn = accessToken || (isClient && localStorage.getItem("puzzroo_auth"));
-    if (res.status === 401 && mightBeLoggedIn) {
-      const newToken = await refreshAccessToken();
-      if (newToken) {
-        setAccessToken(newToken);
-        if (onRefresh) onRefresh(newToken);
-        headers["Authorization"] = `Bearer ${newToken}`;
-        res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });
-      } else if (!sessionExpiredNotified) {
-        sessionExpiredNotified = true;
-        notify.errorKey("SYSTEM_SESSION_EXPIRED");
+      // Auto-refresh on 401
+      const mightBeLoggedIn = accessToken || (isClient && localStorage.getItem("puzzroo_auth"));
+      if (res.status === 401 && mightBeLoggedIn) {
+        const newToken = await refreshAccessToken();
+        if (newToken) {
+          setAccessToken(newToken);
+          if (onRefresh) onRefresh(newToken);
+          headers["Authorization"] = `Bearer ${newToken}`;
+          res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });
+        } else if (!sessionExpiredNotified) {
+          sessionExpiredNotified = true;
+          notify.errorKey("SYSTEM_SESSION_EXPIRED");
+        }
+      }
+
+      if (res.status === 429 && !sessionExpiredNotified) {
+        notify.errorKey("SYSTEM_RATE_LIMITED");
+      }
+
+      if (!res.ok) {
+        // Server returned an error (4xx/5xx) — return the body as-is so callers
+        // can check !res.success and read payload.error. Don't throw: the catch
+        // block below is for true network failures.
+        return await res.json().catch(() => ({ success: false, payload: { error: { message: `HTTP ${res.status}` } } }));
+      }
+      const json = await res.json();
+      return json;
+    } catch (err) {
+      // Silent abort — StrictMode double-mount or race condition
+      if (err instanceof DOMException && err.name === 'AbortError') throw err
+      // True network-level failure (offline / unreachable).
+      if (typeof navigator !== "undefined" && navigator.onLine) {
+        notify.errorKey("SYSTEM_GENERIC_ERROR");
+      }
+      throw new Error("Network request failed");
+    } finally {
+      // Clean up the pending request after it completes
+      if (method === 'GET') {
+        pendingRequests.delete(requestKey);
       }
     }
+  })();
 
-    if (res.status === 429 && !sessionExpiredNotified) {
-      notify.errorKey("SYSTEM_RATE_LIMITED");
-    }
-
-    if (!res.ok) {
-      // Server returned an error (4xx/5xx) — return the body as-is so callers
-      // can check !res.success and read payload.error. Don't throw: the catch
-      // block below is for true network failures.
-      return await res.json().catch(() => ({ success: false, payload: { error: { message: `HTTP ${res.status}` } } }));
-    }
-    const json = await res.json();
-    return json;
-  } catch (err) {
-    // Silent abort — StrictMode double-mount or race condition
-    if (err instanceof DOMException && err.name === 'AbortError') throw err
-    // True network-level failure (offline / unreachable).
-    if (typeof navigator !== "undefined" && navigator.onLine) {
-      notify.errorKey("SYSTEM_GENERIC_ERROR");
-    }
-    throw new Error("Network request failed");
+  // Store the promise for GET requests to prevent duplicates
+  if (method === 'GET') {
+    pendingRequests.set(requestKey, requestPromise);
   }
+
+  return requestPromise;
 }
