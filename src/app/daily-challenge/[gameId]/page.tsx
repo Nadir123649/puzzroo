@@ -15,8 +15,7 @@ import { NonogramGame } from '@/components/nonogram/NonogramGame'
 import { NonogramHero } from '@/components/nonogram/NonogramHero'
 import { TangramGame } from '@/components/tangram/TangramGame'
 import { TangramHero } from '@/components/tangram/TangramHero'
-import Navbar from '@/components/layout/navbar'
-import Footer from '@/components/layout/Footer'
+import { AppLayout } from '@/components/layout/AppLayout'
 
 function formatTime(seconds?: number): string {
   if (!seconds && seconds !== 0) return 'N/A'
@@ -90,106 +89,98 @@ function DailyChallengeContent() {
 
   if (completionCheck === 'completed') {
     return (
-      <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-        <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[50px]">
-          <Navbar />
-          <main className="flex-grow flex items-center justify-center px-4">
-            <div className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] p-6 md:p-8 text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check size={32} className="text-green-600" strokeWidth={3} />
-              </div>
-
-              <h1 className="font-urbanist font-bold text-[22px] text-[#212121] dark:text-white mb-2">
-                Challenge Completed
-              </h1>
-              <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] mb-6">
-                {dateParam || "Today's Daily Challenge"}
-              </p>
-
-              {(completionStats?.elapsedSeconds !== undefined || completionStats?.score) && (
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                  {completionStats.elapsedSeconds !== undefined && (
-                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-                      <Clock size={16} className="text-[#6949FF] mx-auto mb-1" />
-                      <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD]">Time</p>
-                      <p className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white">
-                        {formatTime(completionStats.elapsedSeconds)}
-                      </p>
-                    </div>
-                  )}
-                  {completionStats.accuracy !== undefined && (
-                    <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                      <Target size={16} className="text-green-600 mx-auto mb-1" />
-                      <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD]">Accuracy</p>
-                      <p className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white">
-                        {Math.round(completionStats.accuracy)}%
-                      </p>
-                    </div>
-                  )}
-                  {completionStats.score !== undefined && completionStats.score > 0 && (
-                    <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
-                      <Brain size={16} className="text-orange-600 mx-auto mb-1" />
-                      <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD]">Score</p>
-                      <p className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white">
-                        {completionStats.score}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <button
-                onClick={() => router.push(backPath)}
-                className="w-full h-[48px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
-              >
-                <ArrowLeft size={18} />
-                Back to Past Puzzles
-              </button>
+      <AppLayout>
+        <main className="flex-grow flex items-center justify-center px-4">
+          <div className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] p-6 md:p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check size={32} className="text-green-600" strokeWidth={3} />
             </div>
-          </main>
-        </div>
-        <Footer />
-      </div>
+
+            <h1 className="font-urbanist font-bold text-[22px] text-[#212121] dark:text-white mb-2">
+              Challenge Completed
+            </h1>
+            <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] mb-6">
+              {dateParam || "Today's Daily Challenge"}
+            </p>
+
+            {(completionStats?.elapsedSeconds !== undefined || completionStats?.score) && (
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                {completionStats.elapsedSeconds !== undefined && (
+                  <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+                    <Clock size={16} className="text-[#6949FF] mx-auto mb-1" />
+                    <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD]">Time</p>
+                    <p className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white">
+                      {formatTime(completionStats.elapsedSeconds)}
+                    </p>
+                  </div>
+                )}
+                {completionStats.accuracy !== undefined && (
+                  <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                    <Target size={16} className="text-green-600 mx-auto mb-1" />
+                    <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD]">Accuracy</p>
+                    <p className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white">
+                      {Math.round(completionStats.accuracy)}%
+                    </p>
+                  </div>
+                )}
+                {completionStats.score !== undefined && completionStats.score > 0 && (
+                  <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
+                    <Brain size={16} className="text-orange-600 mx-auto mb-1" />
+                    <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD]">Score</p>
+                    <p className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white">
+                      {completionStats.score}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={() => router.push(backPath)}
+              className="w-full h-[48px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={18} />
+              Back to Past Puzzles
+            </button>
+          </div>
+        </main>
+      </AppLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-      <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[50px]">
-        <Navbar />
-        <main className="flex-grow flex flex-col">
-          
-          {/* Reuse existing Hero components with custom back navigation */}
-          {gameId === 'sudoku' ? (
-            <>
-              <SudokuHero backTo={backPath} />
-              <SudokuGame />
-            </>
-          ) : gameId === 'cross-math' ? (
-            <>
-              <CrossMathHero backTo={backPath} />
-              <CrossMathGame />
-            </>
-          ) : gameId === 'nonogram' ? (
-            <>
-              <NonogramHero backTo={backPath} />
-              <NonogramGame />
-            </>
-          ) : gameId === 'tangram' ? (
-            <>
-              <TangramHero backTo={backPath} />
-              <TangramGame />
-            </>
-          ) : (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <p className="text-2xl">Game not found</p>
-            </div>
-          )}
-          
-        </main>
-      </div>
-      <Footer />
-    </div>
+    <AppLayout>
+      <main className="flex-grow flex flex-col">
+        
+        {/* Reuse existing Hero components with custom back navigation */}
+        {gameId === 'sudoku' ? (
+          <>
+            <SudokuHero backTo={backPath} />
+            <SudokuGame />
+          </>
+        ) : gameId === 'cross-math' ? (
+          <>
+            <CrossMathHero backTo={backPath} />
+            <CrossMathGame />
+          </>
+        ) : gameId === 'nonogram' ? (
+          <>
+            <NonogramHero backTo={backPath} />
+            <NonogramGame />
+          </>
+        ) : gameId === 'tangram' ? (
+          <>
+            <TangramHero backTo={backPath} />
+            <TangramGame />
+          </>
+        ) : (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <p className="text-2xl">Game not found</p>
+          </div>
+        )}
+        
+      </main>
+    </AppLayout>
   )
 }
 

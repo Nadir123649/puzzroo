@@ -10,8 +10,7 @@ import { images } from '@/lib/utils'
 import { RedirectIfAuthenticated } from '@/components/auth/RedirectIfAuthenticated'
 import { GameLoader } from '@/components/ui/GameLoader'
 import { Button } from '@/components/ui/button'
-import Navbar from '@/components/layout/navbar'
-import { Footer } from '@/components/layout/Footer'
+import { AppLayout } from '@/components/layout/AppLayout'
 import { register } from '@/lib/auth/frontend-auth'
 import { auth, isFirebaseConfigured } from '@/lib/config/firebase-client'
 import { signInOAuthPopup, startOAuthRedirect, consumeOAuthRedirect, completeOAuthLogin } from '@/lib/auth/oauth'
@@ -117,9 +116,7 @@ export default function SignupPage() {
     <>
       <GameLoader isOpen={initialLoading} text="Loading..." />
       <RedirectIfAuthenticated>
-      <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-        <Navbar />
-      
+      <AppLayout>
       <main className="flex-grow flex items-center justify-center px-[20px] py-[40px] md:py-[60px]">
         <div className="w-full max-w-[420px] bg-white dark:bg-[#1F222A] rounded-[24px] p-4 sm:p-5 border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-lg shadow-purple-500/5 transition-all duration-300">
           
@@ -360,10 +357,8 @@ export default function SignupPage() {
 
         </div>
       </main>
-      
-      <Footer />
-      </div>
-    </RedirectIfAuthenticated>
+      </AppLayout>
+      </RedirectIfAuthenticated>
     </>
   )
 }

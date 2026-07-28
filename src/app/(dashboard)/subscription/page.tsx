@@ -50,6 +50,73 @@ export default function SubscriptionPage() {
     return 'USD'
   })
 
+  useEffect(() => {
+    const detectCurrency = async () => {
+      let detectedCountry = ''
+      
+      // Fallback 1: Try browser timezone first (no API call, instant)
+      try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+        if (timezone.includes('Karachi') || timezone.includes('Pakistan')) {
+          setCurrency('PKR')
+          return
+        } else if (timezone.includes('Europe/')) {
+          const euTimezones = ['Europe/Paris', 'Europe/Berlin', 'Europe/Rome', 'Europe/Madrid', 'Europe/Amsterdam', 'Europe/Brussels', 'Europe/Vienna', 'Europe/Lisbon', 'Europe/Helsinki', 'Europe/Dublin', 'Europe/Athens', 'Europe/Luxembourg', 'Europe/Malta', 'Europe/Nicosia', 'Europe/Tallinn', 'Europe/Riga', 'Europe/Vilnius', 'Europe/Bratislava', 'Europe/Ljubljana']
+          if (euTimezones.some(tz => timezone.includes(tz))) {
+            setCurrency('EUR')
+            return
+          }
+        }
+      } catch (e) {
+        // Timezone detection failed, continue to IP-based detection
+      }
+      
+      // Fallback 2: Try IP-based detection (may be blocked)
+      // Silently fail if API is blocked or rate limited
+      try {
+        const data = await new Promise<any>((resolve) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('GET', 'https://ipapi.co/json/', true)
+          xhr.timeout = 2000 // 2 seconds timeout
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                resolve(JSON.parse(xhr.responseText))
+              } catch (e) {
+                resolve(null)
+              }
+            } else {
+              resolve(null) // Silent fail on 403, 429, etc.
+            }
+          }
+          xhr.onerror = () => resolve(null)
+          xhr.ontimeout = () => resolve(null)
+          xhr.send()
+        })
+        
+        if (data && data.country_code) {
+          detectedCountry = data.country_code
+        }
+      } catch (err) {
+        // Silently fail - no console messages
+        detectedCountry = ''
+      }
+
+      if (detectedCountry) {
+        const euCountries = ['FR', 'DE', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'FI', 'IE', 'GR', 'LU', 'MT', 'CY', 'EE', 'LV', 'LT', 'SK', 'SI']
+        if (detectedCountry === 'PK') {
+          setCurrency('PKR')
+        } else if (euCountries.includes(detectedCountry)) {
+          setCurrency('EUR')
+        } else {
+          setCurrency('USD')
+        }
+      }
+      // If all detection fails, default USD from initial state is used
+    }
+
+    detectCurrency()
+  }, [])
   // Currency detected via timezone on initial render; no extra API call needed.
 
   const [loading, setLoading] = useState<string | null>(null)

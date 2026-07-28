@@ -1,54 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import { Mail, Shield, Bell, BookOpen } from 'lucide-react'
 import { notify } from '@/lib/toast'
-
-interface EmailPreference {
-  id: string
-  title: string
-  description: string
-  iconName: 'mail' | 'bell' | 'shield' | 'book'
-  enabled: boolean
-}
-
-const defaultPreferences: EmailPreference[] = [
-  {
-    id: 'updates',
-    title: 'Puzzroo Updates',
-    description: 'Get notified about new features, games, and platform updates',
-    iconName: 'mail',
-    enabled: true,
-  },
-  {
-    id: 'daily-challenge',
-    title: 'Daily Challenge Reminder',
-    description: 'Receive a daily email reminder to solve today\'s puzzle',
-    iconName: 'bell',
-    enabled: true,
-  },
-  {
-    id: 'competition',
-    title: 'Competition & Social Alerts',
-    description: 'Updates about leaderboards, achievements, and community events',
-    iconName: 'shield',
-    enabled: false,
-  },
-  {
-    id: 'tips',
-    title: 'Game Tips & Tutorials',
-    description: 'Learn new strategies and improve your puzzle-solving skills',
-    iconName: 'book',
-    enabled: true,
-  },
-  {
-    id: 'security',
-    title: 'Account Security Notices',
-    description: 'Important alerts about login activity and security updates',
-    iconName: 'shield',
-    enabled: true,
-  },
-]
+import { useEmailPreferences } from '@/hooks/useEmailPreferences'
 
 const getIcon = (iconName: string) => {
   switch (iconName) {
@@ -66,36 +20,17 @@ const getIcon = (iconName: string) => {
 }
 
 export default function EmailPreferencesPage() {
-  const [preferences, setPreferences] = useState<EmailPreference[]>(defaultPreferences)
-  const [mounted, setMounted] = useState(false)
-
-  const fetchedRef = useRef(false)
-
-  useEffect(() => {
-    if (fetchedRef.current) return
-    fetchedRef.current = true
-    setMounted(true)
-    import('@/lib/auth/frontend-auth').then(({ fetchEmailPreferences }) =>
-      fetchEmailPreferences().then((data: any) => {
-        if (data?.preferences) {
-          setPreferences(data.preferences)
-        } else {
-          setPreferences(defaultPreferences)
-        }
-      })
-    )
-  }, [])
+  const { preferences, updatePreferences, isUpdating } = useEmailPreferences()
 
   const togglePreference = async (id: string) => {
     const updated = preferences.map(pref =>
       pref.id === id ? { ...pref, enabled: !pref.enabled } : pref
     )
-    setPreferences(updated)
-    const { updateEmailPreferences } = await import('@/lib/auth/frontend-auth')
     const prefsMap: Record<string, boolean> = {}
     updated.forEach(p => { prefsMap[p.id] = p.enabled })
+    
     try {
-      const res = await updateEmailPreferences(prefsMap)
+      const res = await updatePreferences(prefsMap)
       if (res) {
         notify.successKey('ACCOUNT_PREFS_SAVED')
       } else {

@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Lock, Calendar, Loader2, X, Check, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Lock, Calendar, X, Check, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { generatePastPuzzles } from '@shared/lib/dailyChallenge/generator'
-import { getChallengeStatus, getAccessiblePastChallenges } from '@shared/lib/dailyChallenge/storage'
+import { getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
 import { DailyChallenge, DailyChallengeStatus } from '@shared/lib/dailyChallenge/types'
 import { AccessModal } from './AccessModal'
 import { FilterDropdown } from './FilterDropdown'
@@ -15,10 +15,10 @@ import { images } from '@/lib/utils'
 import { useTheme } from '@/hooks/use-theme'
 import { getCompletedPuzzleIds } from '@shared/lib/completion/universal'
 import { api } from '@/lib/api/client'
-import Navbar from '@/components/layout/navbar'
-import Footer from '@/components/layout/Footer'
+import { AppLayout } from '@/components/layout/AppLayout'
 import { GameLoader } from '@/components/ui/GameLoader'
 import { isLoggedIn, getCurrentUser } from '@/lib/auth/frontend-auth'
+import { Button } from '@/components/ui/button'
 
 interface PastPuzzlesContentProps {
   gameId: 'sudoku' | 'cross-math' | 'nonogram' | 'tangram'
@@ -59,11 +59,6 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 8
   const { theme } = useTheme()
-  const [userLoggedIn, setUserLoggedIn] = useState(false)
-
-  useEffect(() => {
-    setUserLoggedIn(isLoggedIn())
-  }, [])
 
   useEffect(() => {
     const isUserAuthed = isLoggedIn()
@@ -81,9 +76,6 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
       sessionStorage.setItem(storageKey, newFilter)
     }
   }
-
-  // Format game title
-  const gameTitle = gameId === 'cross-math' ? 'CrossMath' : gameId === 'sudoku' ? 'Sudoku' : gameId === 'nonogram' ? 'Nonogram' : gameId === 'tangram' ? 'Tangram' : gameId
 
   // Get game icon - theme aware for nonogram
   const gameIcon = gameId === 'cross-math' 
@@ -255,7 +247,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
 
   return (
     <>
-      <Navbar />
+      <AppLayout>
       <section className="w-full min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 pt-4 pb-0 md:pb-10">
         <div className="w-full px-[20px] max-w-[1380px] mx-auto">
           
@@ -281,23 +273,26 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
                   <FilterDropdown value={filter} onChange={handleFilterChange} />
                 </div>
                 
-                <button 
-                  className="w-full md:w-auto flex items-center justify-center gap-2 px-4 h-[46px] md:h-auto md:py-2 rounded-lg bg-white dark:bg-[#1F222A] border-[1px] border-[#6949FF] text-[#6949FF] font-urbanist font-medium text-[14px] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Calendar size={18} />}
                   onClick={() => setShowCalendarModal(true)}
+                  className="w-full md:w-auto h-[46px] md:h-auto"
                 >
-                  <Calendar size={18} />
-                  <span>Select Date</span>
-                </button>
+                  Select Date
+                </Button>
 
                 {/* Clear Date Filter Button (if date selected) */}
                 {selectedDate && (
-                  <button 
-                    className="w-full md:w-auto flex items-center justify-center gap-2 px-4 h-[46px] md:h-auto md:py-2 rounded-lg bg-[#6949FF] text-white font-urbanist font-medium text-[14px] hover:bg-[#5536E6] transition-all"
+                  <Button
+                    size="sm"
+                    leftIcon={<X size={18} />}
                     onClick={clearDateFilter}
+                    className="w-full md:w-auto h-[46px] md:h-auto"
                   >
-                    <X size={18} />
-                    <span>Clear Date ({selectedDate})</span>
-                  </button>
+                    Clear Date ({selectedDate})
+                  </Button>
                 )}
               </div>
 
@@ -314,11 +309,12 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
                   </div>
                   
                   <Link href="/signup">
-                    <button 
-                      className="px-6 py-2 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[14px] md:text-[16px] transition-all duration-200 active:scale-95 whitespace-nowrap"
+                    <Button
+                      size="md"
+                      className="whitespace-nowrap"
                     >
                       Register Now
-                    </button>
+                    </Button>
                   </Link>
                 </div>
               )}
@@ -382,7 +378,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
 
         </div>
       </section>
-      <Footer />
+      </AppLayout>
 
       {/* Lock Click Modal */}
       <AccessModal 

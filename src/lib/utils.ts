@@ -82,6 +82,9 @@ export const images = {
   eraser: '/Eraser.svg',
   edit: '/Edit.svg',
   arrowCounterClockwise: '/Arrow Counter Clockwise.svg',
+  
+  // Social Provider Icons
+  gmailIcon: '/gmail-icon-logo-svgrepo-com.svg',
 } as const
 
 // Image dimensions for optimization

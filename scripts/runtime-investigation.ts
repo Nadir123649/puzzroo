@@ -57,8 +57,9 @@ async function main() {
   const sessionsCol = db.collection("crossmathplaysessions")
 
   // ── 1. Get a puzzle ──────────────────────────────────────────────
-  const puzzle = await puzzlesCol.findOne({ game: "crossmath", difficulty: "easy" })
-  if (!puzzle) throw new Error("No puzzle found")
+  const puzzleResult = await puzzlesCol.findOne({ game: "crossmath", difficulty: "easy" })
+  if (!puzzleResult) throw new Error("No puzzle found")
+  const puzzle = puzzleResult as any // Non-null assertion
   const blanks: string[] = puzzle.blanks || []
   const solution: Record<string, number> = puzzle.solution || {}
   const puzzleId = puzzle.puzzleId

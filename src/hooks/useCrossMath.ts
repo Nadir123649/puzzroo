@@ -619,7 +619,6 @@ export function useCrossMath(initialPuzzleId?: string) {
       if (isDailyChallenge) {
         updateChallengeStatus(puzzleId, 'completed')
       }
-      reportWin(puzzleId, difficulty, score, time, mistakes)
       completePuzzle(newBoard, time, difficulty)
 
       // Clear selection on win
@@ -713,7 +712,6 @@ export function useCrossMath(initialPuzzleId?: string) {
         score: score + SCORING.CORRECT_ANSWER,
         difficulty: difficulty,
       })
-      reportWin(puzzleId, difficulty, score, time, mistakes)
       completePuzzle(newBoard, time, difficulty)
 
       // Clear selection on win
@@ -975,7 +973,6 @@ export function useCrossMath(initialPuzzleId?: string) {
         score: newScore,
         difficulty: difficulty,
       })
-      reportWin(puzzleId, difficulty, newScore, time, mistakes)
       completePuzzle(newBoard, time, difficulty)
 
       setSelectedCell(null)
@@ -1116,7 +1113,6 @@ export function useCrossMath(initialPuzzleId?: string) {
         if (isDailyChallenge) {
           updateChallengeStatus(puzzleId, 'completed')
         }
-        reportWin(puzzleId, difficulty, winScore, time, mistakes)
         completePuzzle(newBoard, time, difficulty)
 
         // Clear selection on win

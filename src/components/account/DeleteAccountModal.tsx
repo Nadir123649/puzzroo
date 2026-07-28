@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { X, AlertTriangle } from 'lucide-react'
 import { notify } from '@/lib/toast'
 import { deleteAccount } from '@/lib/auth/frontend-auth'
+import { Button } from '@/components/ui/button'
 
 interface DeleteAccountModalProps {
   isOpen: boolean
@@ -86,29 +87,28 @@ export function DeleteAccountModal({ isOpen, onClose, onDeleted }: DeleteAccount
           </label>
 
           <div className="flex flex-col gap-3">
-            <button
+            <Button
               type="button"
+              variant="danger"
+              size="lg"
+              fullWidth
               onClick={handleDelete}
-              disabled={!confirmed || isLoading}
-              className="w-full h-[56px] bg-red-600 hover:bg-red-700 text-white rounded-full font-urbanist font-bold text-[16px] shadow-lg shadow-red-500/20 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              isLoading={isLoading}
+              disabled={!confirmed}
+              className="h-[56px] shadow-lg shadow-red-500/20"
             >
-              {isLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                'Delete My Account'
-              )}
-            </button>
-            <button
+              Delete My Account
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
+              fullWidth
               onClick={handleClose}
               disabled={isLoading}
-              className="w-full h-[48px] bg-gray-100 dark:bg-[#2A2D35] hover:bg-gray-200 dark:hover:bg-[#35383F] text-[#424242] dark:text-[#E0E0E0] rounded-full font-urbanist font-semibold text-[15px] transition-all duration-200 disabled:opacity-50"
+              className="h-[48px]"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </div>

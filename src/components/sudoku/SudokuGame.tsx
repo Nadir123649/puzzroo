@@ -13,6 +13,7 @@ import { SudokuStats } from '@/components/games/sudoku/SudokuStats'
 import { SudokuModal } from '@/components/games/sudoku/SudokuModal'
 import { FloatingScoreFeedback } from '@/components/games/sudoku/FloatingScoreFeedback'
 import { images } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 export function SudokuGame() {
   const router = useRouter()
@@ -167,21 +168,25 @@ export function SudokuGame() {
 
               {/* Action Button - New Game or Replay Game */}
               {isFromPastPuzzles ? (
-                <button
+                <Button
                   onClick={() => handleNewGame(true)}
                   disabled={isResetting}
-                  className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  fullWidth
+                  size="md"
+                  className="h-[46px]"
                 >
                   Replay Game
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   onClick={() => handleNewGame(false)}
                   disabled={isResetting}
-                  className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  fullWidth
+                  size="md"
+                  className="h-[46px]"
                 >
                   New Game
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -242,21 +247,25 @@ export function SudokuGame() {
 
              {/* Action Button Mobile - New Game or Replay Game */}
               {isFromPastPuzzles ? (
-                <button
+                <Button
                   onClick={() => handleNewGame(true)}
                   disabled={isResetting}
-                  className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  fullWidth
+                  size="md"
+                  className="h-[46px]"
                 >
                   Replay Game
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   onClick={() => handleNewGame(false)}
                   disabled={isResetting}
-                  className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  fullWidth
+                  size="md"
+                  className="h-[46px]"
                 >
                   New Game
-                </button>
+                </Button>
               )}
           </div>
 

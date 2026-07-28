@@ -749,7 +749,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
 
             {/* Controls */}
             <div 
-              className="flex flex-row gap-2 w-full justify-center items-center flex-wrap"
+              className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full justify-center items-center"
               style={{ 
                 maxWidth: `${Math.max(320, cornerWidth + (currentPuzzle.size * cellSize))}px`,
                 minWidth: '280px'
@@ -759,7 +759,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
               <button
                 onClick={useHint}
                 disabled={!canUseHint}
-                className="w-[46px] h-[46px] rounded-full bg-[#F5F6FA] dark:bg-[#35383F] hover:bg-[#E8DFFF] dark:hover:bg-[#424242] disabled:bg-gray-300 dark:disabled:bg-[#2A2D35] text-[#6949FF] dark:text-[#8B6EFF] disabled:text-gray-400 font-urbanist font-bold transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center relative"
+                className="w-full sm:w-[46px] h-[46px] rounded-full bg-[#F5F6FA] dark:bg-[#35383F] hover:bg-[#E8DFFF] dark:hover:bg-[#424242] disabled:bg-gray-300 dark:disabled:bg-[#2A2D35] text-[#6949FF] dark:text-[#8B6EFF] disabled:text-gray-400 font-urbanist font-bold transition-all duration-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center relative"
                 aria-label={`Use hint, ${maxHints - hintsUsed} remaining`}
                 title={`Hint (${maxHints - hintsUsed})`}
               >
@@ -771,29 +771,23 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                 )}
               </button>
 
-              {/* Autofill Button - Development Only */}
-              {process.env.NODE_ENV === 'development' && gameStatus === 'playing' && (
+              {/* Show Solution Button - Only when game is won or lost (Development only) */}
+              {process.env.NODE_ENV === 'development' && (gameStatus === 'won' || gameStatus === 'lost') && (
                 <button
-                  onClick={autoFill}
-                  className="flex-1 h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
+                  onClick={revealSolution}
+                  className="w-full sm:flex-1 h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[15px] transition-all duration-300 active:scale-95 flex items-center justify-center gap-2"
+                  title="Show solution (Development only)"
                 >
-                  Autofill
+                  <Eye size={18} />
+                  <span className="block sm:inline">Show Solution</span>
                 </button>
               )}
-
-              {/* Reset Button */}
-              <button
-                onClick={resetPuzzle}
-                className="flex-1 h-[46px] rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] hover:bg-[#D4C5F9] dark:hover:bg-[#4A3A8C] text-[#6949FF] dark:text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
-              >
-                Reset
-              </button>
               
-              {/* Action Button - Replay or New Puzzle */}
+              {/* Action Buttons - Replay or New Puzzle */}
               {isFromPastPuzzles ? (
                 <button
                   onClick={handleReplay}
-                  className="flex-1 h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
+                  className="col-span-2 sm:col-span-1 sm:flex-1 h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-300 active:scale-95"
                 >
                   Replay Game
                 </button>
@@ -801,13 +795,13 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                 <>
                   <button
                     onClick={handleReplay}
-                    className="flex-1 h-[46px] rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] hover:bg-[#D4C5F9] dark:hover:bg-[#4A3A8C] text-[#6949FF] dark:text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
+                    className="w-full sm:flex-1 h-[46px] rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] hover:bg-[#D4C5F9] dark:hover:bg-[#4A3A8C] text-[#6949FF] dark:text-white font-urbanist font-bold text-[15px] transition-all duration-300 active:scale-95"
                   >
                     Replay
                   </button>
                   <button
                     onClick={handleNewPuzzle}
-                    className="flex-1 h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-95"
+                    className="w-full sm:flex-1 h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-300 active:scale-95"
                   >
                     New Puzzle
                   </button>

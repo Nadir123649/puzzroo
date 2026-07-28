@@ -2,9 +2,30 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+/* Prevent white flash on dark mode - apply dark styles immediately if user has dark theme */
 html {
   scrollbar-gutter: stable;
   overflow-y: scroll;
+  background-color: #ffffff;
+}
+
+html.dark {
+  background-color: #181A20 !important;
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #181A20 !important;
+}
+
+/* Prevent navbar flash - apply dark styles immediately */
+html.dark header {
+  background-color: #181A20 !important;
+}
+
+/* Disable transitions on page load to prevent flash */
+html:not(.hydrated) * {
+  transition: none !important;
 }
 
 :root {
@@ -48,6 +69,18 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Consistent dark mode transition for all elements */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Prevent transition on page load */
+.no-transitions * {
+  transition: none !important;
 }
 
 @layer utilities {

@@ -2,9 +2,8 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Check, Clock, ArrowLeft, Target } from 'lucide-react'
-import Navbar from '@/components/layout/navbar'
-import { Footer } from '@/components/layout/Footer'
+import { Check, Clock, ArrowLeft, Target } from 'lucide-react'
+import { AppLayout } from '@/components/layout/AppLayout'
 import { TangramGame } from '@/components/tangram/TangramGame'
 import { TangramHero } from '@/components/tangram/TangramHero'
 import { markGameAsPlayed } from '@/components/sections/FreeGames'
@@ -106,16 +105,12 @@ function TangramDailyChallengeContent() {
 
 export default function TangramDailyChallengePage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-      <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[50px]">
-        <Navbar />
-        <main className="flex-grow flex flex-col">
-          <Suspense fallback={<div className="flex-grow" />}>
-            <TangramDailyChallengeContent />
-          </Suspense>
-        </main>
-      </div>
-      <Footer />
-    </div>
+    <AppLayout>
+      <main className="flex-grow flex flex-col">
+        <Suspense fallback={<div className="flex-grow" />}>
+          <TangramDailyChallengeContent />
+        </Suspense>
+      </main>
+    </AppLayout>
   )
 }

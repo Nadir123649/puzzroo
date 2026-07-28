@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from '../../hooks/use-theme'
@@ -9,15 +9,16 @@ import { isLoggedIn, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
 
-let globalMounted = false
+let globalMounted = false;
 
 export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const touchStartX = useRef<number>(0)
 
-  // Initialise synchronously from localStorage so the very first render already
-  // shows the correct auth state — this prevents the "Sign up/Login" ↔ "Subscribe/Profile"
-  // width-difference from flashing and shifting the navbar on every navigation.
+  // Synchronous init from localStorage so the very first render reflects the
+  // real auth state — prevents flash/layout-shift on SPA navigation.
   const [loggedIn, setLoggedIn] = useState<boolean>(() => {
     if (typeof window === 'undefined' || !globalMounted) return false
     return isLoggedIn()
@@ -28,13 +29,12 @@ export function Navbar() {
     if (!userData) return null
     return { name: userData.name || userData.username, email: userData.email, avatar: userData.avatar }
   })
-
   const [navbarMounted, setNavbarMounted] = useState(globalMounted)
   const pathname = usePathname()
   const router = useRouter()
 
   useEffect(() => {
-    globalMounted = true
+    globalMounted = true;
     setNavbarMounted(true)
 
     const checkAuth = () => {
@@ -82,6 +82,50 @@ export function Navbar() {
       setUser(null)
     }
   }, [pathname])
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isMenuOpen])
+
+  // Close menu on swipe up
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientY
+    }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touchEndX = e.changedTouches[0].clientY
+      const diff = touchStartX.current - touchEndX
+
+      // If swipe up more than 50px, close menu
+      if (diff > 50) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    const menuElement = mobileMenuRef.current
+    if (menuElement) {
+      menuElement.addEventListener('touchstart', handleTouchStart)
+      menuElement.addEventListener('touchend', handleTouchEnd)
+
+      return () => {
+        menuElement.removeEventListener('touchstart', handleTouchStart)
+        menuElement.removeEventListener('touchend', handleTouchEnd)
+      }
+    }
+  }, [isMenuOpen])
 
   return (
     <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-300 z-[200]">
@@ -131,36 +175,48 @@ export function Navbar() {
 
           {/* RIGHT: Desktop Actions */}
           <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
-            {(loggedIn && user) ? (
-              <ProfileDropdown userName={user.name} userEmail={user.email} userAvatar={user.avatar} />
+            {navbarMounted ? (
+              (loggedIn && user) ? (
+                <>
+                  <Link 
+                    href="/subscription" 
+                    className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
+                  >
+                    Subscribe Us
+                  </Link>
+                  <ProfileDropdown userName={user.name} userEmail={user.email} userAvatar={user.avatar} />
+                </>
+              ) : (
+                <>
+                  <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
+                    Sign up
+                  </Link>
+
+                  <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
+                    Login
+                  </Link>
+
+                  <button
+                    onClick={toggleTheme}
+                    className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-300 active:scale-95"
+                    aria-label="Toggle theme"
+                  >
+                    <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
+                      {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                    </span>
+                    <img
+                      src={images.darkIcon}
+                      alt="Theme icon"
+                      width={20}
+                      height={20}
+                      className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
+                        }`}
+                    />
+                  </button>
+                </>
+              )
             ) : (
-              <>
-                <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                  Sign up
-                </Link>
-
-                <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
-                  Login
-                </Link>
-
-                <button
-                  onClick={toggleTheme}
-                  className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
-                  aria-label="Toggle theme"
-                >
-                  <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
-                    {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-                  </span>
-                  <img
-                    src={images.darkIcon}
-                    alt="Theme icon"
-                    width={20}
-                    height={20}
-                    className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
-                      }`}
-                  />
-                </button>
-              </>
+              <div className="h-[38px] w-[280px]" />
             )}
 
           </div>
@@ -199,9 +255,14 @@ export function Navbar() {
         </div>
       </div>
       {/* Mobile Menu Dropdown */}
-      {isMenuOpen && navbarMounted && (
-        <div className="md:hidden w-full bg-white dark:bg-[#181A20] px-[20px] pb-4 flex flex-col gap-3 border-t border-gray-100 dark:border-gray-800 transition-all duration-300">
-          {loggedIn && user ? (
+      <div 
+        ref={mobileMenuRef}
+        className={`md:hidden w-full bg-white dark:bg-[#181A20] px-[20px] border-t border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-300 ease-in-out ${
+          isMenuOpen && navbarMounted ? 'max-h-96 pb-4 opacity-100' : 'max-h-0 pb-0 opacity-0'
+        }`}
+      >
+        <div className="flex flex-col gap-3 pt-4">
+          {navbarMounted && loggedIn && user ? (
             <>
               <div className="py-2 border-b border-gray-100 dark:border-gray-800">
                 <p className="font-urbanist font-bold text-[16px] text-[#212121] dark:text-white truncate">
@@ -240,7 +301,7 @@ export function Navbar() {
             </>
           )}
         </div>
-      )}
+      </div>
     </header>
   )
 }

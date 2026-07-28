@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Urbanist } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/app/providers";
+import { QueryProvider } from "@/providers/QueryProvider";
 import { images, imageDimensions } from "@/lib/utils";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
@@ -91,13 +92,26 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={urbanist.variable}>
       <head>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* Critical CSS to prevent flash - loaded immediately */
+            html { background-color: #ffffff; transition: none !important; }
+            html.dark { background-color: #181A20 !important; color-scheme: dark; }
+            html.dark body { background-color: #181A20 !important; }
+            html.dark header { background-color: #181A20 !important; }
+            body { transition: none !important; }
+          `
+        }} />
         <script dangerouslySetInnerHTML={{
           __html: `
             (function() {
               try {
                 var theme = localStorage.getItem('theme');
-                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                var isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) {
                   document.documentElement.classList.add('dark');
+                  document.documentElement.style.backgroundColor = '#181A20';
+                  document.documentElement.style.colorScheme = 'dark';
                 }
               } catch(e) {}
             })();
@@ -105,32 +119,35 @@ export default function RootLayout({
         }} />
       </head>
       <body className="antialiased" suppressHydrationWarning>
-        <ThemeProvider>
-          <ScrollToTop />
-          <AnalyticsProvider />
-          {children}
-          <NetworkToastListener />
-          <Toaster
-            position="top-center"
-            containerStyle={{ top: 16, left: '50%', transform: 'translateX(-50%)' }}
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#1F222A',
-                color: '#fff',
-                borderRadius: '12px',
-                fontFamily: 'var(--font-urbanist)',
-                fontSize: '14px',
-              },
-              success: {
-                iconTheme: { primary: '#22C55E', secondary: '#fff' },
-              },
-              error: {
-                iconTheme: { primary: '#EF4444', secondary: '#fff' },
-              },
-            }}
-          />
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <ScrollToTop />
+            <AnalyticsProvider />
+            {children}
+            <NetworkToastListener />
+            <Toaster
+              position="top-center"
+              containerStyle={{ top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 999999 }}
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#1F222A',
+                  color: '#fff',
+                  borderRadius: '12px',
+                  fontFamily: 'var(--font-urbanist)',
+                  fontSize: '14px',
+                  zIndex: 999999,
+                },
+                success: {
+                  iconTheme: { primary: '#22C55E', secondary: '#fff' },
+                },
+                error: {
+                  iconTheme: { primary: '#EF4444', secondary: '#fff' },
+                },
+              }}
+            />
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );
