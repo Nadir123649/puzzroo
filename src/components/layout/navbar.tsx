@@ -9,36 +9,33 @@ import { isLoggedIn, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
 
-let globalMounted = false
-
 export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number>(0)
 
-  // Initialise synchronously from localStorage so the very first render already
-  // shows the correct auth state — this prevents the "Sign up/Login" ↔ "Subscribe/Profile"
-  // width-difference from flashing and shifting the navbar on every navigation.
+  // Initialize with localStorage value to prevent flicker
   const [loggedIn, setLoggedIn] = useState<boolean>(() => {
-    if (typeof window === 'undefined' || !globalMounted) return false
-    return isLoggedIn()
+    if (typeof window === 'undefined') return false
+    return !!localStorage.getItem('puzzroo_auth')
   })
+  
   const [user, setUser] = useState<{ name: string; email: string } | null>(() => {
-    if (typeof window === 'undefined' || !globalMounted) return null
+    if (typeof window === 'undefined') return null
     const userData = getCurrentUser()
     if (!userData) return null
     return { name: userData.name || userData.username, email: userData.email }
   })
 
-  const [navbarMounted, setNavbarMounted] = useState(globalMounted)
+  const [hydrated, setHydrated] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
   useEffect(() => {
-    globalMounted = true
-    setNavbarMounted(true)
-
+    // Mark as hydrated after first client render
+    setHydrated(true)
+    
     const checkAuth = () => {
       const isAuth = isLoggedIn()
       setLoggedIn(isAuth)
@@ -68,6 +65,8 @@ export function Navbar() {
 
   // Sync auth state on page navigation
   useEffect(() => {
+    if (!hydrated) return
+    
     const isAuth = isLoggedIn()
     setLoggedIn(isAuth)
     if (isAuth) {
@@ -81,7 +80,7 @@ export function Navbar() {
     } else {
       setUser(null)
     }
-  }, [pathname])
+  }, [pathname, hydrated])
 
   // Close menu on outside click
   useEffect(() => {

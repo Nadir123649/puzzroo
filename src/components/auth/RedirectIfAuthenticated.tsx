@@ -1,34 +1,36 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { isLoggedIn, ensureSession } from '@/lib/auth/frontend-auth'
+import { isLoggedIn } from '@/lib/auth/frontend-auth'
 
 export function RedirectIfAuthenticated({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
-  const [validated, setValidated] = useState(false)
 
   useEffect(() => {
     setMounted(true)
 
-    // Validate the session first: a stale/expired accessToken must be cleared
-    // (so we don't bounce a logged-OUT user away from /login), while a live
-    // session is refreshed. Only then decide whether to redirect.
-    const run = async () => {
-      await ensureSession()
+    // Session is already validated by ThemeProvider's ensureSession call
+    // Just check if logged in and redirect if necessary
+    const checkAndRedirect = () => {
       if (isLoggedIn()) {
         window.location.replace('/')
-      } else {
-        // Session was stale/expired and cleared — reveal the login form.
-        setValidated(true)
       }
     }
-    run()
+    
+    // Small delay to let ensureSession from providers complete
+    const timer = setTimeout(checkAndRedirect, 100)
 
     // bfcache restores (e.g. pressing Back after an OAuth login) do not re-run
     // the effect body, so re-check on pageshow to avoid a stuck blank screen.
-    const onPageShow = () => run()
+    const onPageShow = () => {
+      setTimeout(checkAndRedirect, 100)
+    }
     window.addEventListener('pageshow', onPageShow)
-    return () => window.removeEventListener('pageshow', onPageShow)
+    
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('pageshow', onPageShow)
+    }
   }, [])
 
   const spinner = (
@@ -37,9 +39,8 @@ export function RedirectIfAuthenticated({ children }: { children: React.ReactNod
     </div>
   )
 
-  // Hold the spinner until mounted AND session-validated, so a stale token is
-  // cleared before we decide to show the form or bounce to home.
-  if (!mounted || !validated) return spinner
+  // Show spinner briefly while checking auth state
+  if (!mounted) return spinner
 
   return <>{children}</>
 }
