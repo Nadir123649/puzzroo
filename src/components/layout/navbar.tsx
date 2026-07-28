@@ -9,20 +9,32 @@ import { isLoggedIn, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
 
+let globalMounted = false;
+
 export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number>(0)
 
-  // Start with false to avoid hydration mismatch, then update on mount
-  const [loggedIn, setLoggedIn] = useState<boolean>(false)
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
-  const [navbarMounted, setNavbarMounted] = useState(false)
+  // Synchronous init from localStorage so the very first render reflects the
+  // real auth state — prevents flash/layout-shift on SPA navigation.
+  const [loggedIn, setLoggedIn] = useState<boolean>(() => {
+    if (typeof window === 'undefined' || !globalMounted) return false
+    return isLoggedIn()
+  })
+  const [user, setUser] = useState<{ name: string; email: string; avatar?: string | null } | null>(() => {
+    if (typeof window === 'undefined' || !globalMounted) return null
+    const userData = getCurrentUser()
+    if (!userData) return null
+    return { name: userData.name || userData.username, email: userData.email, avatar: userData.avatar }
+  })
+  const [navbarMounted, setNavbarMounted] = useState(globalMounted)
   const pathname = usePathname()
   const router = useRouter()
 
   useEffect(() => {
+    globalMounted = true;
     setNavbarMounted(true)
 
     const checkAuth = () => {
@@ -35,6 +47,7 @@ export function Navbar() {
           setUser({
             name: userData.name || userData.username,
             email: userData.email,
+            avatar: userData.avatar,
           })
         }
       } else {
@@ -64,6 +77,7 @@ export function Navbar() {
         setUser({
           name: userData.name || userData.username,
           email: userData.email,
+          avatar: userData.avatar,
         })
       }
     } else {
@@ -166,14 +180,13 @@ export function Navbar() {
             {navbarMounted ? (
               (loggedIn && user) ? (
                 <>
-                  {/* Subscribe Us Button - Only for logged in users */}
                   <Link 
                     href="/subscription" 
                     className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
                   >
                     Subscribe Us
                   </Link>
-                  <ProfileDropdown userName={user.name} userEmail={user.email} />
+                  <ProfileDropdown userName={user.name} userEmail={user.email} userAvatar={user.avatar} />
                 </>
               ) : (
                 <>
@@ -205,7 +218,6 @@ export function Navbar() {
                 </>
               )
             ) : (
-              // Placeholder with same width to prevent layout shift
               <div className="h-[38px] w-[280px]" />
             )}
 

@@ -15,4 +15,7 @@ const contactMessageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+contactMessageSchema.index({ userId: 1 });
+contactMessageSchema.index({ status: 1 });
+
 export default mongoose.models.ContactMessage || mongoose.model("ContactMessage", contactMessageSchema);

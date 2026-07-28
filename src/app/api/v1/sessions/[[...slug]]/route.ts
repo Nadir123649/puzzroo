@@ -21,6 +21,8 @@ function mapSession(s: any) {
     lastSeen: s.lastSeenAt,
     isCurrent: s.isCurrent,
     provider: s.provider,
+    deviceFingerprint: s.deviceFingerprint,
+    status: s.status,
   };
 }
 
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     // GET /api/v1/sessions/current
     if (action === "current") {
-      const session = await LoginSession.findOne({ userId: userResult.userId, isCurrent: true })
+      const session = await LoginSession.findOne({ userId: userResult.userId, isCurrent: true, status: "active" })
         .sort({ lastSeenAt: -1 })
         .lean();
       if (!session) return errorResponse(404, "not_found", "No current session found");
@@ -45,7 +47,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // GET /api/v1/sessions
     if (!action) {
-      const sessions = await LoginSession.find({ userId: userResult.userId })
+      const sessions = await LoginSession.find({ userId: userResult.userId, status: "active" })
         .sort({ lastSeenAt: -1 })
         .lean();
       return successResponse(sessions.map(mapSession));
@@ -70,14 +72,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   try {
     // DELETE /api/v1/sessions — revoke all sessions
     if (!sessionId) {
-      await LoginSession.deleteMany({ userId: userResult.userId });
+      await LoginSession.updateMany({ userId: userResult.userId }, { status: "revoked", isCurrent: false });
       return successResponse({ message: "All sessions revoked successfully" });
     }
 
     // DELETE /api/v1/sessions/:id — revoke a specific session
     const session = await LoginSession.findOne({ _id: sessionId, userId: userResult.userId });
     if (!session) return errorResponse(404, "not_found", "Session not found");
-    await session.deleteOne();
+    await session.updateOne({ status: "revoked", isCurrent: false });
     return successResponse({ message: "Session revoked successfully" });
   } catch (error: any) {
     console.error(error);

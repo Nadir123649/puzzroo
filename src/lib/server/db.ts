@@ -53,6 +53,8 @@ export async function connectDB() {
     autoIndex: false,
     serverSelectionTimeoutMS: 15000,
     connectTimeoutMS: 15000,
+    maxPoolSize: 10,
+    socketTimeoutMS: 45000,
   });
   cached = (global as any)._mongooseConnection;
   try {

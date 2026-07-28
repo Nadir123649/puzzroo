@@ -25,6 +25,8 @@ const nextConfig = {
   reactStrictMode: true,
   serverExternalPackages: ['firebase-admin'],
   async headers() {
+    const production = process.env.NODE_ENV === 'production'
+
     return [
       {
         source: '/:path*',
@@ -33,6 +35,53 @@ const nextConfig = {
           // storage-partitioning that breaks Firebase's redirect state on
           // mobile (Vercel/Next apply Cross-Origin-Opener-Policy: same-origin).
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
+
+          // ── production-only security headers ──
+          ...(production
+            ? [
+                {
+                  key: 'Strict-Transport-Security',
+                  value: 'max-age=63072000; includeSubDomains; preload',
+                },
+                {
+                  key: 'X-Frame-Options',
+                  value: 'DENY',
+                },
+                {
+                  key: 'X-Content-Type-Options',
+                  value: 'nosniff',
+                },
+                {
+                  key: 'Referrer-Policy',
+                  value: 'strict-origin-when-cross-origin',
+                },
+                {
+                  key: 'Permissions-Policy',
+                  value:
+                    'camera=(), display-capture=(), geolocation=(), microphone=(), usb=()',
+                },
+                {
+                  key: 'Cross-Origin-Resource-Policy',
+                  value: 'same-origin',
+                },
+                {
+                  key: 'Content-Security-Policy',
+                  value: [
+                    "default-src 'self'",
+                    "base-uri 'self'",
+                    "connect-src 'self' https://res.cloudinary.com https://*.cloudinary.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://api.stripe.com",
+                    "font-src 'self' data:",
+                    "form-action 'self'",
+                    "frame-ancestors 'none'",
+                    "frame-src 'self' https://accounts.google.com https://www.facebook.com https://connect.facebook.net https://*.stripe.com",
+                    "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://puzzroo-64f53.firebasestorage.app https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://*.fbcdn.net",
+                    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://connect.facebook.net https://*.stripe.com",
+                    "style-src 'self' 'unsafe-inline'",
+                    'upgrade-insecure-requests',
+                  ].join('; '),
+                },
+              ]
+            : []),
         ],
       },
       {

@@ -22,7 +22,9 @@ const userStatisticsSchema = new mongoose.Schema(
     highestScore: { type: Number, default: 0 },
     lastPlayedAt: { type: Date, default: null },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "sudoku_userstatistics" }
 );
 
-export default mongoose.models.UserStatistics || mongoose.model("UserStatistics", userStatisticsSchema);
+userStatisticsSchema.index({ userId: 1 }, { unique: true });
+
+export default mongoose.models.SudokuUserStatistics || mongoose.model("SudokuUserStatistics", userStatisticsSchema);

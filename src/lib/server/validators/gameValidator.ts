@@ -11,5 +11,5 @@ export const saveProgressSchema = z.object({
   hintsUsed: z.number().min(0).optional(),
   mistakes: z.number().min(0).optional(),
   moves: z.number().min(0).optional(),
-  resumeState: z.any().optional(),
+  resumeState: z.record(z.string(), z.unknown()).optional(),
 });
