@@ -22,7 +22,6 @@ const getIcon = (iconName: string) => {
 
 export default function EmailPreferencesPage() {
   const { preferences, updatePreferences, isUpdating } = useEmailPreferences()
-  const [preferences, setPreferences] = useState<EmailPreference[]>(defaultPreferences)
   const [mounted, setMounted] = useState(false)
 
   const fetchedRef = useRef(false)

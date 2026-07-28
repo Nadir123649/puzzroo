@@ -175,10 +175,6 @@ interface GameCardComponentProps {
 }
 
 function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentProps) {
-  hasHistory: boolean
-}
-
-function GameCardComponent({ game, isPlayed, isLastPlayed, hasHistory }: GameCardComponentProps) {
   const { theme } = useTheme()
   const router = useRouter()
   const isActive = ACTIVE_GAMES.includes(game.id)
@@ -271,7 +267,6 @@ function GameCardComponent({ game, isPlayed, isLastPlayed, hasHistory }: GameCar
             {game.title}
           </h3>
           {isLastPlayed && (
-          {hasHistory && isLastPlayed && (
             <span className="font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#22C55E]">
               Recently Played
             </span>
