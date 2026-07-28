@@ -31,7 +31,7 @@ export async function POST(
   if ("error" in userResult) return userResult.error;
 
   try {
-    const { puzzleId, difficulty, score, time, hintsUsed, mistakes, moves } = val.data!;
+    const { puzzleId, difficulty, time, hintsUsed, mistakes, moves } = val.data!;
 
     const existing = await GameProgress.findOne({
       userId: userResult.user.id,
@@ -51,7 +51,6 @@ export async function POST(
         puzzleId,
         difficulty,
         completed: true,
-        score: score || 0,
         time: time || 0,
         hintsUsed: hintsUsed || 0,
         mistakes: mistakes || 0,
@@ -66,7 +65,7 @@ export async function POST(
     await trackServer({
       userId: userResult.user.id,
       event: "game_completed",
-      properties: { gameId: game, puzzleId, difficulty, score: score || 0, time: time || 0, hintsUsed, mistakes },
+      properties: { gameId: game, puzzleId, difficulty, time: time || 0, hintsUsed, mistakes },
       request,
     });
 

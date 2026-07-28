@@ -106,6 +106,7 @@ export const markGameAsPlayed = (gameId: string): void => {
     const playedGames = getPlayedGames()
     playedGames.add(gameId)
     localStorage.setItem('puzzroo_played_games', JSON.stringify([...playedGames]))
+    // Track the last played game
     localStorage.setItem('puzzroo_last_played_game', gameId)
   } catch (error) {
     console.error('Failed to mark game as played:', error)
@@ -154,6 +155,8 @@ export function FreeGames() {
               game={game} 
               isPlayed={playedGames.has(game.id)}
               isLastPlayed={lastPlayedGame === game.id}
+              isLastPlayed={game.id === lastPlayedGame}
+              hasHistory={playedGames.size > 0}
             />
           ))}
         </div>
@@ -172,6 +175,10 @@ interface GameCardComponentProps {
 }
 
 function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentProps) {
+  hasHistory: boolean
+}
+
+function GameCardComponent({ game, isPlayed, isLastPlayed, hasHistory }: GameCardComponentProps) {
   const { theme } = useTheme()
   const router = useRouter()
   const isActive = ACTIVE_GAMES.includes(game.id)
@@ -264,6 +271,7 @@ function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentPr
             {game.title}
           </h3>
           {isLastPlayed && (
+          {hasHistory && isLastPlayed && (
             <span className="font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#22C55E]">
               Recently Played
             </span>

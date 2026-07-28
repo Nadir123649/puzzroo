@@ -1,8 +1,4 @@
-/**
- * Universal Puzzle Completion Tracking System
- * Stores completed puzzles for all games in localStorage
- * SSR-safe with hydration protection
- */
+import { getAccessToken } from '@/lib/auth/frontend-auth'
 
 export type GameType = 'sudoku' | 'crossmath' | 'nonogram' | 'tangram'
 
@@ -114,7 +110,7 @@ function syncProgressToBackend(
 ): void {
   try {
     if (typeof window === 'undefined') return
-    const token = localStorage.getItem('accessToken')
+    const token = getAccessToken()
     if (!token) return
     if (!PROGRESS_DIFFICULTIES.includes(metadata.difficulty as any)) return
     fetch('/api/v1/games/progress', {

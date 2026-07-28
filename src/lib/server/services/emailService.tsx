@@ -11,33 +11,48 @@ import {
   AccountNotification,
 } from "@/emails";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: Number(process.env.SMTP_PORT) === 465,
-  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-});
+let transporter: nodemailer.Transporter | null = null;
+
+function getTransporter(): nodemailer.Transporter {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: Number(process.env.SMTP_PORT) === 465,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+  }
+  return transporter;
+}
 
 const FROM = process.env.EMAIL_FROM || "Puzzroo <noreply@puzzroo.com>";
 
+export function validateSmtpEnv(): string | null {
+  const required = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS"] as const;
+  for (const key of required) {
+    if (!process.env[key]) return `Missing SMTP env var: ${key}`;
+  }
+  return null;
+}
+
 export async function sendVerificationEmail(to: string, verifyUrl: string) {
   const html = await render(<VerifyEmail verifyUrl={verifyUrl} />);
-  await transporter.sendMail({ from: FROM, to, subject: "Verify your email — Puzzroo", html });
+  await getTransporter().sendMail({ from: FROM, to, subject: "Verify your email — Puzzroo", html });
 }
 
 export async function sendResetPasswordEmail(to: string, resetUrl: string, expiresInMinutes = 15) {
   const html = await render(<PasswordReset resetUrl={resetUrl} expiresInMinutes={expiresInMinutes} />);
-  await transporter.sendMail({ from: FROM, to, subject: "Reset your Puzzroo password", html });
+  await getTransporter().sendMail({ from: FROM, to, subject: "Reset your Puzzroo password", html });
 }
 
 export async function sendPasswordChangedEmail(to: string, userName: string) {
   const html = await render(<PasswordChanged userName={userName} />);
-  await transporter.sendMail({ from: FROM, to, subject: "Your Puzzroo password was changed", html });
+  await getTransporter().sendMail({ from: FROM, to, subject: "Your Puzzroo password was changed", html });
 }
 
 export async function sendWelcomeEmail(to: string, userName: string, dashboardUrl: string) {
   const html = await render(<Welcome userName={userName} dashboardUrl={dashboardUrl} />);
-  await transporter.sendMail({ from: FROM, to, subject: "Welcome to Puzzroo!", html });
+  await getTransporter().sendMail({ from: FROM, to, subject: "Welcome to Puzzroo!", html });
 }
 
 export async function sendSecurityAlertEmail(
@@ -48,20 +63,20 @@ export async function sendSecurityAlertEmail(
   device?: string,
 ) {
   const html = await render(<SecurityAlert event={event} time={time} location={location} device={device} />);
-  await transporter.sendMail({ from: FROM, to, subject: "Security alert — Puzzroo", html });
+  await getTransporter().sendMail({ from: FROM, to, subject: "Security alert — Puzzroo", html });
 }
 
 export async function sendEmailChangedEmail(to: string, userName: string, newEmail: string) {
   const html = await render(<EmailChanged userName={userName} newEmail={newEmail} />);
-  await transporter.sendMail({ from: FROM, to, subject: "Your Puzzroo email has been updated", html });
+  await getTransporter().sendMail({ from: FROM, to, subject: "Your Puzzroo email has been updated", html });
 }
 
 export async function sendUsernameChangedEmail(to: string, userName: string, newUsername: string) {
   const html = await render(<UsernameChanged userName={userName} newUsername={newUsername} />);
-  await transporter.sendMail({ from: FROM, to, subject: "Your Puzzroo username has been updated", html });
+  await getTransporter().sendMail({ from: FROM, to, subject: "Your Puzzroo username has been updated", html });
 }
 
 export async function sendAccountNotificationEmail(to: string, userName: string, subject: string, message: string) {
   const html = await render(<AccountNotification userName={userName} subject={subject} message={message} />);
-  await transporter.sendMail({ from: FROM, to, subject, html });
+  await getTransporter().sendMail({ from: FROM, to, subject, html });
 }

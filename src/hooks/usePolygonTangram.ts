@@ -45,6 +45,7 @@ import { calculateCentroid, polygonToPoints } from '@shared/lib/tangram/polygon-
 import { validatePuzzle } from '@shared/lib/tangram/polygon-validation'
 import { attemptSnap, geometricallyMatches } from '@shared/lib/tangram/polygon-snapping'
 import { PIECE_CONFIG } from '@shared/lib/tangram/pieceConfig'
+import { getAccessToken } from '@/lib/auth/frontend-auth'
 
 const PIECE_COLORS: Record<TangramPieceId, string> = {
   baseTriangle1: '#4A90E2',
@@ -269,7 +270,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     if (sessionCreatedRef.current) return null
     completionCalledRef.current = false
     if (typeof window === 'undefined') return null
-    if (!localStorage.getItem('accessToken')) return null
+    if (!getAccessToken()) return null
     try {
       const res = await gameApi.createSession('tangram', puzzleId, diff)
       if (res && (res.sessionId || res._id || res.id)) {
@@ -622,7 +623,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             if (isDailyChallenge) {
               updateChallengeStatus(puzzleId, 'completed')
             }
-            if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
+            if (getAccessToken()) {
               gameApi.complete('tangram', {
                 puzzleId,
                 difficulty,

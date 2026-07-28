@@ -12,6 +12,9 @@ export const saveProgressSchema = z.object({
   board: z.string().regex(board81Regex, "board must be 81-char string (0-9)"),
   notes: z.array(z.array(z.string())).length(9).optional(),
   elapsedTime: z.number().min(0).max(86400).default(0),
+  hintsUsed: z.number().min(0).optional(),
+  mistakes: z.number().min(0).optional(),
+  moves: z.number().min(0).optional(),
 });
 
 export const verifyMoveSchema = z.object({
@@ -27,6 +30,13 @@ export const verifyCompletionSchema = z.object({
 export const completeSessionSchema = z.object({
   board: z.string().regex(board81Regex, "board must be 81-char string (0-9)"),
   elapsedTime: z.number().min(0).max(86400),
+  hintsUsed: z.number().min(0).optional(),
+  mistakes: z.number().min(0).optional(),
+  moves: z.number().min(0).optional(),
+});
+
+export const replaySessionSchema = z.object({
+  puzzleId: z.string().min(1, "puzzleId is required"),
 });
 
 export const historyQuerySchema = z.object({

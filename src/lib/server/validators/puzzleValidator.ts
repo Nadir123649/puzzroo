@@ -39,7 +39,6 @@ export const saveProgressSchema = z.object({
   puzzleId: z.string().min(1),
   difficulty: z.enum(PROGRESS_DIFFICULTIES),
   completed: z.boolean().optional(),
-  score: z.number().min(0).optional(),
   time: z.number().min(0).optional(),
   hintsUsed: z.number().min(0).optional(),
   mistakes: z.number().min(0).optional(),
@@ -51,7 +50,6 @@ export const saveProgressSchema = z.object({
 export const completeSchema = z.object({
   puzzleId: z.string().min(1),
   difficulty: z.enum(PROGRESS_DIFFICULTIES),
-  score: z.number().min(0).optional(),
   time: z.number().min(0).optional(),
   hintsUsed: z.number().min(0).optional(),
   mistakes: z.number().min(0).optional(),

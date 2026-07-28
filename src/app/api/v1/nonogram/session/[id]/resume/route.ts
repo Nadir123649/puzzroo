@@ -21,9 +21,9 @@ export async function POST(
   try {
     const session = await sessionService.resumeSession(id, userResult.user.id);
     return successResponse({
-      sessionId: session._id.toString(),
-      status: session.status,
-      elapsedSeconds: session.elapsedSeconds,
+      sessionId: session.sessionId,
+      status: session.sessionStatus,
+      elapsedSeconds: session.elapsedTime,
     });
   } catch (error: any) {
     if (error.message === 'Session not found' || error.message === 'session_not_found') {

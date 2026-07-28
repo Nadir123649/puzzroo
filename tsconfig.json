@@ -30,8 +30,14 @@
     "node_modules",
     "validateAllTangramSolutions.ts",
     "verifyTangramPuzzles.ts",
+    "validateTangramDataset.ts",
     "src/scripts",
     "src/test",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "scripts",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx"
   ]
 }

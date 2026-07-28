@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
           puzzleId: puzzle.puzzleId,
           difficulty: puzzle.difficulty,
         });
-        challenge.sessionId = session._id;
+        challenge.sessionId = session.sessionId;
         await challenge.save();
       } catch (error: any) {
         console.error('[nonogram] daily: Failed to create new session:', error.message, error.stack);
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     return successResponse({
       date: today,
       puzzle: nonogramToResponse(puzzle as any),
-      sessionId: session?._id?.toString() || challenge.sessionId?.toString(),
+      sessionId: session?.sessionId || challenge.sessionId?.toString(),
       status: challenge.status,
     });
   } catch (error: any) {

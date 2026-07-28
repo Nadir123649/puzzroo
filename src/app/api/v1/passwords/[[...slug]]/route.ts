@@ -11,6 +11,7 @@ import { trackServer } from "@/lib/server/utils/trackEvent";
 import { authPayload, issueSession } from "@/lib/server/utils/authHelpers";
 import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
 import { cookieOptions } from "@/lib/server/utils/cookieOptions";
+import { checkRateLimit } from "@/lib/server/utils/http";
 
 // Reset links are short-lived for security.
 const RESET_TOKEN_MINUTES = 15;
@@ -29,11 +30,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     // ──── POST /api/v1/passwords/forgot ────
     if (action === "forgot") {
+      const rl = checkRateLimit(request, "passwords:forgot", 3, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many password reset requests. Try again later.");
       const val = validate(forgotPasswordSchema, body);
       if (val.error) return val.error;
       const { email } = val.data!;
       const user = await User.findOne({ email });
-      if (!user) return errorResponse(404, "email_not_found", "Invalid email");
+      if (!user) {
+        return successResponse({ message: "If an account with that email exists, a reset link has been sent." });
+      }
       const resetToken = crypto.randomBytes(32).toString("hex");
       const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
       user.resetPasswordToken = hashedToken;
@@ -55,6 +60,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/passwords/reset ────
     if (action === "reset") {
+      const rl = checkRateLimit(request, "passwords:reset", 5, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many password reset attempts. Try again later.");
       const token = body.token;
       if (!token) return errorResponse(400, "validation_error", "Token is required");
       const val = validate(resetPasswordSchema, body);

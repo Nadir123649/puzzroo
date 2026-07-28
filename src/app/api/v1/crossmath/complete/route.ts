@@ -15,12 +15,13 @@ export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {};
   try { body = await request.json(); } catch {}
 
-  const { sessionId, grid, elapsedSeconds, hintsUsed, mistakes } = body as {
+  const { sessionId, grid, elapsedSeconds, hintsUsed, mistakes, moves } = body as {
     sessionId?: string;
     grid?: Record<string, number>;
     elapsedSeconds?: number;
     hintsUsed?: number;
     mistakes?: number;
+    moves?: number;
   };
 
   if (!sessionId) {
@@ -32,21 +33,26 @@ export async function POST(request: NextRequest) {
   if ('error' in userResult) return userResult.error;
 
   try {
-    const result = await sessionService.completeSession(sessionId, userResult.user.id, grid || {});
+    const result = await sessionService.completeSession(
+      sessionId,
+      userResult.user.id,
+      grid || {},
+      elapsedSeconds || 0,
+      hintsUsed || 0,
+      mistakes || 0,
+      moves || 0
+    );
 
-    if (result.completed) {
-      const puzzleId = result.session.puzzleId;
-      const difficulty = result.session.difficulty;
-
-      await statisticsService.updateOnSessionComplete(
+    if (result.isCompleted && result.result) {
+      statisticsService.updateOnSessionComplete(
         userResult.user.id,
-        puzzleId,
-        difficulty,
-        elapsedSeconds || 0,
-        hintsUsed || 0,
-        mistakes || 0,
-        result.verifyResult.accuracy
-      );
+        result.result.puzzleId,
+        result.result.difficulty,
+        result.result.elapsedTime,
+        result.result.hintsUsed,
+        result.result.mistakes,
+        result.result.accuracy
+      ).catch(err => console.error('[crossmath] stats update failed', err));
 
       const today = new Date().toISOString().split('T')[0];
       await DailyChallenge.findOneAndUpdate(
@@ -54,34 +60,23 @@ export async function POST(request: NextRequest) {
         {
           date: today,
           userId: userResult.user.id,
-          puzzleId,
-          difficulty,
+          puzzleId: result.result.puzzleId,
+          difficulty: result.result.difficulty,
           sessionId,
           status: 'completed',
           completedAt: new Date(),
-          elapsedSeconds: elapsedSeconds || 0,
-          accuracy: result.verifyResult.accuracy,
-          hintsUsed: hintsUsed || 0,
-          mistakes: mistakes || 0,
+          elapsedSeconds: result.result.elapsedTime,
+          accuracy: result.result.accuracy,
+          hintsUsed: result.result.hintsUsed,
+          mistakes: result.result.mistakes,
         },
         { upsert: true, new: true }
       );
 
-      return successResponse({
-        completed: true,
-        accuracy: result.verifyResult.accuracy,
-        equations: result.verifyResult.equations,
-        sessionId: result.session.sessionId,
-        elapsedSeconds: elapsedSeconds || 0,
-        hintsUsed: hintsUsed || 0,
-      });
+      return successResponse(result);
     }
 
-    return successResponse({
-      completed: false,
-      accuracy: result.verifyResult.accuracy,
-      equations: result.verifyResult.equations,
-    });
+    return successResponse(result);
   } catch (error: any) {
     if (error.message === 'session_not_found') {
       return errorResponse(404, 'session_not_found', error.message);

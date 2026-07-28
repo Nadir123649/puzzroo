@@ -16,7 +16,7 @@ export async function verifyMove(
   if (!session) return { error: "session_not_found" };
   if (session.status !== "playing") return { error: "session_not_active" };
 
-  const puzzle = await SudokuPuzzle.findById(session.puzzleId).lean();
+  const puzzle = await SudokuPuzzle.findOne({ puzzleId: session.puzzleId }).lean();
   if (!puzzle) return { error: "puzzle_not_found" };
 
   const solution = decode81(puzzle.solution);

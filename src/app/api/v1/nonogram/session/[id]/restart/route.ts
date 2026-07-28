@@ -21,8 +21,8 @@ export async function POST(
   try {
     const session = await sessionService.restartSession(id, userResult.user.id);
     return successResponse({
-      sessionId: session._id.toString(),
-      status: session.status,
+      sessionId: session.sessionId,
+      status: session.sessionStatus,
       restartCount: session.restartCount,
       startedAt: session.startedAt,
     });

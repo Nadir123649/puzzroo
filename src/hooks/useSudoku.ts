@@ -43,6 +43,7 @@ import {
 } from '@shared/lib/sudoku/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
+import { getAccessToken } from '@/lib/auth/frontend-auth'
 
 function getTodayDateParam(): string {
   const d = new Date()
@@ -186,6 +187,7 @@ export function useSudoku() {
   const abortRef = useRef<AbortController | null>(null)
   const sessionCreatedRef = useRef(false)
   const completionCalledRef = useRef(false)
+  const movesRef = useRef(0)
 
   function sudokuBoardToString(board: SudokuBoard): string {
     return board.map(row => row.map(cell => cell.value || 0).join('')).join('')
@@ -194,8 +196,9 @@ export function useSudoku() {
   async function initSession(puzzleId?: string): Promise<any> {
     if (sessionCreatedRef.current) return null
     completionCalledRef.current = false
+    movesRef.current = 0
     if (typeof window === 'undefined') return null
-    if (!localStorage.getItem('accessToken')) return null
+    if (!getAccessToken()) return null
     const pid = puzzleId || gameState.puzzleId
     if (!pid) return null
     try {
@@ -211,17 +214,39 @@ export function useSudoku() {
 
   function saveMoveNow(board: SudokuBoard, elapsed: number, hints: number, mists: number) {
     if (!sessionIdRef.current) return
+    movesRef.current++
     abortRef.current?.abort()
     const ac = new AbortController()
     abortRef.current = ac
     gameApi.saveMove('sudoku', sessionIdRef.current, {
       board: sudokuBoardToString(board),
-      elapsedTime: elapsed,
-      hintsUsed: hints,
-      mistakes: mists,
+      elapsedTime: Number(elapsed),
+      hintsUsed: Number(hints),
+      mistakes: Number(mists),
+      moves: Number(movesRef.current),
     }, ac.signal).catch(err => {
       if (err?.name !== 'AbortError') console.error('[sudoku] save move failed', err)
     })
+  }
+
+  function sudokuRestoreFromSession(sessionData: any, puzzlePuzzle: number[][], puzzleSolution: number[][]): SudokuBoard | null {
+    if (!sessionData.currentBoard || sessionData.currentBoard.length !== 81) return null
+    const board81: string = sessionData.currentBoard
+    const fresh = convertToSudokuBoard(puzzlePuzzle)
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const val = Number(board81[r * 9 + c])
+        const cell = fresh[r][c]
+        if (!cell.fixed) {
+          if (val !== 0) {
+            cell.value = val
+            cell.isCorrect = val === puzzleSolution[r][c]
+            cell.isError = val !== 0 && val !== puzzleSolution[r][c]
+          }
+        }
+      }
+    }
+    return fresh
   }
 
   async function completePuzzle(board: SudokuBoard) {
@@ -230,7 +255,11 @@ export function useSudoku() {
     try {
       await gameApi.completeSession('sudoku', sessionIdRef.current, {
         board: sudokuBoardToString(board),
-        elapsedTime: timeRef.current,
+        elapsedTime: Number(timeRef.current),
+        hintsUsed: Number(hintsUsedRef.current),
+        mistakes: Number(mistakesRef.current),
+        moves: Number(movesRef.current),
+        score: Number(scoreRef.current),
       })
     } catch { /* ignore */ }
   }
@@ -467,8 +496,7 @@ export function useSudoku() {
       updateChallengeStatus(challengeId, 'completed')
     }
 
-    const token =
-      typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+    const token = getAccessToken()
     if (token) {
       gameApi
         .complete('sudoku', {
@@ -591,10 +619,11 @@ export function useSudoku() {
           const puzzleId = dateParam ? `daily-sudoku-${dateParam}` : gameState.puzzleId
           reportWin(puzzleId, gameState.score + 10, newBoard)
 
+          setGameState((prev) => ({ ...prev, gameStatus: 'won' }))
+          clearGameState()
+
           setTimeout(() => {
-            setGameState((prev) => ({ ...prev, gameStatus: 'won' }))
             setIsWinAnimating(false)
-            clearGameState()
           }, 1500)
         }
       }
@@ -696,10 +725,11 @@ export function useSudoku() {
       const puzzleId = dateParam ? `daily-sudoku-${dateParam}` : gameState.puzzleId
       reportWin(puzzleId, gameState.score - 20, newBoard)
 
+      setGameState((prev) => ({ ...prev, gameStatus: 'won' }))
+      clearGameState()
+
       setTimeout(() => {
-        setGameState((prev) => ({ ...prev, gameStatus: 'won' }))
         setIsWinAnimating(false)
-        clearGameState()
       }, 1500)
     }
   }, [selectedCell, gameState, updateScore, reportWin])
@@ -724,6 +754,7 @@ export function useSudoku() {
     setScoreFeedbacks([])
     startTimeRef.current = null
     hintsUsedRef.current = 0
+    movesRef.current = 0
 
     setLoading(true)
     let cancelled = false
@@ -755,6 +786,7 @@ export function useSudoku() {
     setScoreFeedbacks([])
     startTimeRef.current = null
     hintsUsedRef.current = 0
+    movesRef.current = 0
 
     setLoading(true)
     let cancelled = false

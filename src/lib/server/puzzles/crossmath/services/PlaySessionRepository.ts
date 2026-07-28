@@ -23,7 +23,7 @@ export class PlaySessionRepository {
       userId: input.userId,
       puzzleId: input.puzzleId,
       difficulty: input.difficulty,
-      status: "active",
+      status: "playing",
       grid: {},
       blanks: input.blanks,
       availableNumbers: input.availableNumbers,
@@ -41,11 +41,14 @@ export class PlaySessionRepository {
   }
 
   async findActiveByUserAndPuzzle(userId: string, puzzleId: string) {
-    return CrossMathPlaySession.findOne({
+    console.log('[D] findActiveByUserAndPuzzle', { userId: userId?.substring(0,10), puzzleId: puzzleId?.substring(0,20), ts: Date.now() })
+    const doc = await CrossMathPlaySession.findOne({
       userId,
       puzzleId,
-      status: { $in: ["active", "paused"] },
+      status: { $in: ["playing", "paused"] },
     })
+    console.log('[D] findActiveByUserAndPuzzle: result', { found: !!doc, status: doc?.status, ts: Date.now() })
+    return doc
   }
 
   async findByUserAndStatus(
@@ -91,37 +94,78 @@ export class PlaySessionRepository {
     )
   }
 
-  async saveGrid(sessionId: string, grid: Record<string, number>, elapsedTime: number) {
+  async saveProgress(
+    sessionId: string,
+    userId: string,
+    grid: Record<string, number>,
+    elapsedTime: number,
+    hintsUsed: number,
+    mistakes: number,
+    moves: number
+  ) {
     return CrossMathPlaySession.findOneAndUpdate(
-      { sessionId },
+      {
+        sessionId,
+        userId: userId,
+        status: { $in: ["playing", "paused"] },
+      },
       {
         $set: {
           grid,
           elapsedTime,
+          hintsUsed,
+          mistakes,
           lastSaveAt: new Date(),
         },
+        $max: { moves },
       },
+      { new: true }
+    )
+  }
+
+  async saveGrid(sessionId: string, grid: Record<string, number>, elapsedTime: number, moves?: number) {
+    const update: Record<string, any> = {
+      $set: {
+        grid,
+        elapsedTime,
+        lastSaveAt: new Date(),
+      },
+    }
+    if (moves !== undefined) {
+      update.$max = { moves }
+    }
+    return CrossMathPlaySession.findOneAndUpdate(
+      { sessionId },
+      update,
       { new: true }
     )
   }
 
   async complete(
     sessionId: string,
-    result: { correct: number; total: number; accuracy: number; elapsedTime: number }
+    result: { correct: number; total: number; accuracy: number; elapsedTime: number; moves: number; mistakes: number; hintsUsed: number; score: number }
   ) {
+    const now = new Date()
     return CrossMathPlaySession.findOneAndUpdate(
-      { sessionId },
+      { sessionId, status: { $in: ["playing", "paused"] } },
       {
         $set: {
           status: "completed",
-          completedAt: new Date(),
+          completedAt: now,
           "result.correct": result.correct,
           "result.total": result.total,
           "result.accuracy": result.accuracy,
-          "result.completedAt": new Date(),
+          "result.completedAt": now,
           "result.elapsedTime": result.elapsedTime,
+          "result.moves": result.moves,
+          "result.mistakes": result.mistakes,
+          "result.hintsUsed": result.hintsUsed,
+          "result.score": result.score,
           elapsedTime: result.elapsedTime,
-          lastSaveAt: new Date(),
+          moves: result.moves,
+          mistakes: result.mistakes,
+          hintsUsed: result.hintsUsed,
+          lastSaveAt: now,
         },
       },
       { new: true }
@@ -130,7 +174,7 @@ export class PlaySessionRepository {
 
   async abandon(sessionId: string) {
     return CrossMathPlaySession.findOneAndUpdate(
-      { sessionId },
+      { sessionId, status: { $in: ["playing", "paused"] } },
       {
         $set: {
           status: "abandoned",

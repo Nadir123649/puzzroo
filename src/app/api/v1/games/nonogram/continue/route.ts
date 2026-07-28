@@ -1,32 +1,9 @@
-import { NextRequest } from "next/server";
-import { withAuth } from "../route-helpers";
-import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService";
-import { nonogramToResponse } from "@/lib/server/puzzles/nonogram";
-import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle";
-import { successResponse } from "@/lib/server/utils/apiResponse";
+import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService"
+import { successResponse } from "@/lib/server/utils/apiResponse"
+import { withAuth } from "../route-helpers"
 
-export const GET = withAuth(async (req, user) => {
-  const activeSession = await sessionService.getActiveSession(user.id);
+export const GET = withAuth(async (_req, user) => {
+  const result = await sessionService.getContinuePlaying(user.id)
+  return successResponse(result)
+})
 
-  if (!activeSession) {
-    return successResponse({ hasActiveSession: false });
-  }
-
-  const puzzle = await NonogramPuzzle.findOne({ puzzleId: activeSession.puzzleId }).lean();
-
-  return successResponse({
-    hasActiveSession: true,
-    session: {
-      sessionId: activeSession._id,
-      puzzleId: activeSession.puzzleId,
-      difficulty: activeSession.difficulty,
-      status: activeSession.status,
-      elapsedSeconds: activeSession.elapsedSeconds,
-      hintsUsed: activeSession.hintsUsed,
-      mistakes: activeSession.mistakes,
-      startedAt: activeSession.startedAt,
-      pausedAt: activeSession.pausedAt,
-    },
-    puzzle: puzzle ? nonogramToResponse(puzzle) : undefined,
-  });
-});

@@ -1,5 +1,29 @@
 import { api } from "@/lib/api/client";
 
+let currentAccessToken: string | null = null;
+
+if (typeof window !== "undefined") {
+  try {
+    const legacy = localStorage.getItem("accessToken");
+    if (legacy) {
+      currentAccessToken = legacy;
+      localStorage.removeItem("accessToken");
+    }
+  } catch {}
+}
+
+export function getAccessToken(): string | null {
+  return currentAccessToken;
+}
+
+export function setAccessToken(token: string): void {
+  currentAccessToken = token;
+}
+
+export function clearAccessToken(): void {
+  currentAccessToken = null;
+}
+
 export interface User {
   id: string
   publicId?: string
@@ -30,7 +54,7 @@ export async function login(identifier: string, password: string, rememberMe: bo
       return { success: false, error: err?.message || "Invalid email or password", code: err?.code };
     }
     const payload = res.payload as any;
-    localStorage.setItem("accessToken", payload.token.accessToken);
+    setAccessToken(payload.token.accessToken);
     localStorage.setItem("puzzroo_auth", "true");
     localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
     window.dispatchEvent(new Event("auth-change"));
@@ -42,7 +66,7 @@ export async function login(identifier: string, password: string, rememberMe: bo
 
 export async function logout(): Promise<void> {
   // Clear client state immediately so the UI reflects logged-out instantly.
-  localStorage.removeItem("accessToken");
+  clearAccessToken();
   localStorage.removeItem("puzzroo_auth");
   localStorage.removeItem("puzzroo_user");
   window.dispatchEvent(new Event("auth-change"));
@@ -60,7 +84,7 @@ export async function logout(): Promise<void> {
 
 export function isLoggedIn(): boolean {
   if (typeof window === "undefined") return false;
-  return !!localStorage.getItem("accessToken");
+  return !!currentAccessToken || !!localStorage.getItem("puzzroo_auth");
 }
 
 /**
@@ -94,7 +118,7 @@ function isTokenExpired(token: string): boolean {
 }
 
 function clearClientSession() {
-  localStorage.removeItem("accessToken");
+  clearAccessToken();
   localStorage.removeItem("puzzroo_auth");
   localStorage.removeItem("puzzroo_user");
   window.dispatchEvent(new Event("auth-change"));
@@ -103,11 +127,24 @@ function clearClientSession() {
 
 export async function ensureSession(): Promise<void> {
   if (typeof window === "undefined") return;
-  const token = localStorage.getItem("accessToken");
-  if (!token) return;
+  const token = getAccessToken();
+  const hasFlag = !!localStorage.getItem("puzzroo_auth");
+  if (!token && !hasFlag) return;
 
-  // Don't make any API calls if token is still valid
-  if (!isTokenExpired(token)) {
+  if (token && !isTokenExpired(token)) {
+    try {
+      const meRes = await api("/api/v1/users/me");
+      if (meRes.success) {
+        const current = getCurrentUser();
+        const updated = mapUser(meRes.payload as any);
+        localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
+        window.dispatchEvent(new Event("auth-change"));
+      } else {
+        throw new Error("token_revoked");
+      }
+    } catch {
+      clearClientSession();
+    }
     return;
   }
 
@@ -121,7 +158,17 @@ export async function ensureSession(): Promise<void> {
     const data = await res.json();
     const accessToken = data?.payload?.token?.accessToken;
     if (!accessToken) throw new Error("no_token");
-    localStorage.setItem("accessToken", accessToken);
+    setAccessToken(accessToken);
+    // Re-read the profile so server-side changes (e.g. being promoted to
+    // admin, subscription upgrades) take effect without a full re-login.
+    try {
+      const meRes = await api("/api/v1/users/me");
+      if (meRes.success) {
+        const current = getCurrentUser();
+        const updated = mapUser(meRes.payload as any);
+        localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
+      }
+    } catch {}
     window.dispatchEvent(new Event("auth-change"));
   } catch {
     clearClientSession();
@@ -160,7 +207,7 @@ export async function changePassword(oldPassword: string, newPassword: string): 
     }
     const payload = res.payload as any;
     if (payload.token?.accessToken) {
-      localStorage.setItem("accessToken", payload.token.accessToken);
+      setAccessToken(payload.token.accessToken);
     }
     return { success: true };
   } catch {
@@ -244,7 +291,7 @@ export async function setUsername(username: string): Promise<{ success: boolean;
     }
     const payload = res.payload as any;
     if (payload.token?.accessToken) {
-      localStorage.setItem("accessToken", payload.token.accessToken);
+      setAccessToken(payload.token.accessToken);
     }
     localStorage.setItem("puzzroo_auth", "true");
     localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
@@ -266,7 +313,7 @@ export async function linkAndMerge(username: string): Promise<{ success: boolean
     }
     const payload = res.payload as any;
     if (payload.token?.accessToken) {
-      localStorage.setItem("accessToken", payload.token.accessToken);
+      setAccessToken(payload.token.accessToken);
       localStorage.setItem("puzzroo_auth", "true");
       localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
       window.dispatchEvent(new Event("auth-change"));
@@ -286,7 +333,7 @@ export async function bootstrapSession(): Promise<User | null> {
     const refreshData = await refreshRes.json();
     const accessToken = refreshData?.payload?.token?.accessToken;
     if (!accessToken) return null;
-    localStorage.setItem("accessToken", accessToken);
+    setAccessToken(accessToken);
     localStorage.setItem("puzzroo_auth", "true");
     const meRes = await api("/api/v1/users/me");
     if (!meRes.success) return null;
@@ -327,7 +374,7 @@ export async function resetPassword(token: string, password: string): Promise<{ 
     }
     const payload = res.payload as any;
     if (payload.token?.accessToken) {
-      localStorage.setItem("accessToken", payload.token.accessToken);
+      setAccessToken(payload.token.accessToken);
       localStorage.setItem("puzzroo_auth", "true");
       localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
       window.dispatchEvent(new Event("auth-change"));
@@ -374,7 +421,7 @@ export async function deleteAccount(): Promise<{ success: boolean; error?: strin
     if (!res.success) {
       return { success: false, error: (res.payload as any)?.error?.message || "Failed to delete account" };
     }
-    localStorage.removeItem("accessToken");
+    clearAccessToken();
     localStorage.removeItem("puzzroo_auth");
     localStorage.removeItem("puzzroo_user");
     window.dispatchEvent(new Event("auth-change"));

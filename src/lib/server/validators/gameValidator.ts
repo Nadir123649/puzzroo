@@ -7,7 +7,6 @@ export const saveProgressSchema = z.object({
   profileId: z.string().optional(),
   status: z.enum(["not-started", "in-progress", "completed"]).optional(),
   completed: z.boolean().optional(),
-  score: z.number().min(0).optional(),
   time: z.number().min(0).optional(),
   hintsUsed: z.number().min(0).optional(),
   mistakes: z.number().min(0).optional(),

@@ -24,11 +24,11 @@ export async function POST(
 
   try {
     const reason = (body.reason as string) || undefined;
-    const session = await sessionService.abandonSession(id, userResult.user.id, reason);
+    const session = await sessionService.abandonSession(id, userResult.user.id);
     return successResponse({
-      sessionId: session._id.toString(),
-      status: session.status,
-      abandonReason: session.abandonReason,
+      sessionId: session.sessionId,
+      status: session.sessionStatus,
+      abandonReason: null,
     });
   } catch (error: any) {
     if (error.message === 'Session not found' || error.message === 'session_not_found') {

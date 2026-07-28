@@ -1,46 +1,22 @@
 import { NextRequest } from "next/server"
 import { withAuth } from "../../../route-helpers"
-import PlaySession from "@/lib/server/models/PlaySession"
-import { successResponse } from "@/lib/server/utils/apiResponse"
-import { completeSession } from "@/lib/server/tangram/services/verification.service"
+import { sessionService } from "@/lib/server/puzzles/tangram/services/SessionService"
+import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
+import { rateLimit } from "@/lib/server/utils/http"
 
 export const POST = withAuth(async (req, user, params) => {
-  const { id } = params
-  const body = await req.json().catch(() => ({}))
-  const { pieceStates, elapsedSeconds, hintsUsed, mistakes } = body
-
-  const session = await PlaySession.findOne({ _id: id, userId: user.id })
-  if (!session) {
-    return Response.json(
-      { success: false, payload: { error: { code: "session_not_found", message: "Session not found." } }, timestamp: Date.now() },
-      { status: 404 }
-    )
+  if (!rateLimit(req, "tangram-complete", 30)) {
+    return errorResponse(429, "rate_limited", "Too many requests")
   }
 
-  const result = await completeSession(
-    id,
-    user.id,
-    pieceStates || session.pieceStates,
-    elapsedSeconds ?? session.elapsedSeconds ?? 0,
-    hintsUsed ?? session.hintsUsed ?? 0,
-    mistakes ?? session.mistakes ?? 0,
+  let body: any = {}
+  try { body = await req.json() } catch {}
+
+  const { grid, pieces, elapsedTime, hintsUsed, mistakes, moves } = body
+
+  const result = await sessionService.completeSession(
+    params.id, user.id, grid, pieces, elapsedTime, hintsUsed, mistakes, moves
   )
 
-  if (!result.success) {
-    return successResponse({
-      completed: false,
-      accuracy: result.result.accuracy,
-      message: "Puzzle is not complete.",
-    })
-  }
-
-  const updated = result.session!
-  return successResponse({
-    completed: true,
-    sessionId: updated._id.toString(),
-    elapsedSeconds: updated.elapsedSeconds || 0,
-    hintsUsed: updated.hintsUsed || 0,
-    mistakes: updated.mistakes || 0,
-    completedAt: updated.completedAt?.toISOString?.() || new Date().toISOString(),
-  })
+  return successResponse(result)
 })

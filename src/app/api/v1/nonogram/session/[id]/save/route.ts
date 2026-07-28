@@ -36,18 +36,21 @@ export async function POST(
   if ('error' in userResult) return userResult.error;
 
   try {
-    const session = await sessionService.saveProgress(id, userResult.user.id, {
+    const session = await sessionService.saveProgress(
+      id,
+      userResult.user.id,
       grid,
       elapsedSeconds,
-      hintsUsed,
-      mistakes,
-    });
+      hintsUsed || 0,
+      mistakes || 0,
+      0
+    );
 
     return successResponse({
-      sessionId: session._id.toString(),
-      status: session.status,
+      sessionId: session.sessionId,
+      status: session.sessionStatus,
       lastSaveAt: session.lastSaveAt,
-      elapsedSeconds: session.elapsedSeconds,
+      elapsedSeconds: session.elapsedTime,
     });
   } catch (error: any) {
     if (error.message === 'Session not found' || error.message === 'session_not_found') {

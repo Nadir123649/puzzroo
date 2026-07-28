@@ -31,10 +31,10 @@ export async function POST(request: NextRequest) {
     });
 
     return successResponse({
-      sessionId: session._id.toString(),
+      sessionId: session.sessionId,
       puzzleId: session.puzzleId,
       difficulty: session.difficulty,
-      status: session.status,
+      status: session.sessionStatus,
       startedAt: session.startedAt,
     });
   } catch (error: any) {

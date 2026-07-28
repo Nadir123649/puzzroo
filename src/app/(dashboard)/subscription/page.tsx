@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Check, Zap, Loader2 } from 'lucide-react'
 import { api } from '@/lib/api/client'
 import { fetchSubscription } from '@/lib/auth/frontend-auth'
@@ -100,11 +100,15 @@ export default function SubscriptionPage() {
 
     detectCurrency()
   }, [])
+  // Currency detected via timezone on initial render; no extra API call needed.
 
   const [loading, setLoading] = useState<string | null>(null)
   const [currentSub, setCurrentSub] = useState<any>(null)
+  const fetchedSubRef = useRef(false)
 
   useEffect(() => {
+    if (fetchedSubRef.current) return
+    fetchedSubRef.current = true
     fetchSubscription().then(setCurrentSub)
   }, [])
 

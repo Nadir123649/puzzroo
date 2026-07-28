@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
 import { ChangeNameModal } from '@/components/account/ChangeNameModal'
 import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
 import { SetEmailModal } from '@/components/account/SetEmailModal'
-import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider } from '@/lib/auth/frontend-auth'
+import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider, clearAccessToken } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { Check, Activity, BarChart3, Monitor, Smartphone, Tablet, MapPin, Laptop, Trash2, Clock, Mail, Phone, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -90,29 +90,16 @@ export default function AccountInformationPage() {
     setLocalUser(prev => prev ? { ...prev, name: newName } : prev)
   }
 
+  const fetchedRef = useRef(false)
+
   useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
+
     fetchGameStats().then(setGameStats)
     fetchSessions().then(s => {
       setSessions(s)
       setSessionsLoading(false)
-    })
-    fetchUserProfile().then(profile => {
-      if (!profile) return
-      if (profile.provider) setProvider(profile.provider)
-      if (profile.linkedProviders?.length) setLinkedProviders(profile.linkedProviders)
-      // Sync freshly-fetched fields (e.g. the backfilled publicId) into local
-      // state and the cached user so the Account ID shows the friendly id.
-      if (profile.publicId) {
-        setLocalUser(prev => prev ? { ...prev, publicId: profile.publicId } : prev)
-        const stored = localStorage.getItem('puzzroo_user')
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored)
-            parsed.publicId = profile.publicId
-            localStorage.setItem('puzzroo_user', JSON.stringify(parsed))
-          } catch {}
-        }
-      }
     })
   }, [])
 
@@ -123,7 +110,7 @@ export default function AccountInformationPage() {
       // If the revoked session was the current one, log out
       const wasCurrent = sessions.find(s => s.id === id)?.isCurrent
       if (wasCurrent) {
-        localStorage.removeItem('accessToken')
+        clearAccessToken()
         localStorage.removeItem('puzzroo_auth')
         localStorage.removeItem('puzzroo_user')
         window.location.href = '/login'

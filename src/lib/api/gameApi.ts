@@ -7,6 +7,11 @@ import type {
   PuzzleSummary,
   CatalogEntry,
 } from "@/lib/server/puzzles/types";
+import type {
+  SaveProgressResponse,
+  CompleteSessionResponse,
+  ContinuePlayingInfo,
+} from "@/lib/server/puzzles/crossmath/types";
 
 export type GameId = "sudoku" | "nonogram" | "crossmath" | "tangram";
 
@@ -133,17 +138,29 @@ export const gameApi = {
   // ---- Session management (move-by-move sync) ----
 
   async createSession(game: GameId, puzzleId: string, difficulty?: string) {
+    console.log('[D] createSession API call', { game, puzzleId: puzzleId?.substring(0,20), difficulty, ts: Date.now() });
     const res = await api(`/api/v1/games/${game}/sessions`, {
       method: 'POST',
       body: JSON.stringify({ puzzleId, difficulty }),
       suppressToast: true,
     });
+    console.log('[D] createSession API response', { success: res?.success, hasPayload: !!res?.payload, sessionId: res?.payload?.sessionId?.substring(0,20), ts: Date.now() });
+    return res.payload;
+  },
+
+  async getContinueCrossMath() {
+    const res = await api<ContinuePlayingInfo>('/api/v1/games/crossmath/continue');
+    return res.payload;
+  },
+
+  async getContinue(game: GameId) {
+    const res = await api<any>(`/api/v1/games/${game}/continue`);
     return res.payload;
   },
 
   async saveMove(game: GameId, sessionId: string, payload: Record<string, any>, signal?: AbortSignal) {
     const method = game === 'sudoku' ? 'PUT' : 'POST';
-    const res = await api(`/api/v1/games/${game}/sessions/${sessionId}/save`, {
+    const res = await api<{ payload: SaveProgressResponse }>(`/api/v1/games/${game}/sessions/${sessionId}/save`, {
       method,
       body: JSON.stringify(payload),
       signal,
@@ -153,7 +170,7 @@ export const gameApi = {
   },
 
   async completeSession(game: GameId, sessionId: string, payload: Record<string, any>) {
-    const res = await api(`/api/v1/games/${game}/sessions/${sessionId}/complete`, {
+    const res = await api<{ payload: CompleteSessionResponse }>(`/api/v1/games/${game}/sessions/${sessionId}/complete`, {
       method: 'POST',
       body: JSON.stringify(payload),
       suppressToast: true,
@@ -415,7 +432,7 @@ export const gameApi = {
   },
 
   async abandonCrossMathSession(sessionId: string) {
-    const res = await api(`/api/v1/crossmath/session/${sessionId}/abandon`, { method: 'POST' });
+    const res = await api(`/api/v1/games/crossmath/sessions/${sessionId}/abandon`, { method: 'POST' });
     return res.payload;
   },
 

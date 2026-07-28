@@ -9,16 +9,24 @@ export const startSessionSchema = z.object({
 export const saveProgressSchema = z.object({
   grid: z.record(z.string(), z.number()),
   elapsedTime: z.number().min(0),
-  hintsUsed: z.number().min(0).optional(),
-  mistakes: z.number().min(0).optional(),
+  hintsUsed: z.number().min(0),
+  mistakes: z.number().min(0),
+  moves: z.number().min(0),
 })
 
 export const verifyGridSchema = z.object({
   grid: z.record(z.string(), z.number()),
 })
 
+export const completeSessionSchema = verifyGridSchema.extend({
+  elapsedTime: z.number().min(0),
+  hintsUsed: z.number().min(0),
+  mistakes: z.number().min(0),
+  moves: z.number().min(0),
+})
+
 export const sessionListQuerySchema = z.object({
-  status: z.enum(["active", "paused", "completed", "abandoned"]).optional(),
+  status: z.enum(["playing", "paused", "completed", "abandoned"]).optional(),
   limit: z.coerce.number().min(1).max(100).default(20),
   skip: z.coerce.number().min(0).default(0),
 })
@@ -35,7 +43,7 @@ export const dailyQuerySchema = z.object({
 })
 
 export const sessionHistoryQuerySchema = z.object({
-  status: z.enum(["active", "paused", "completed", "abandoned"]).optional(),
+  status: z.enum(["playing", "paused", "completed", "abandoned"]).optional(),
   difficulty: crossMathDifficultySchema.optional(),
   limit: z.coerce.number().min(1).max(100).default(20),
   skip: z.coerce.number().min(0).default(0),

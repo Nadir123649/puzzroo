@@ -1,25 +1,24 @@
-import { NextRequest } from "next/server";
-import { withAuth } from "../../../route-helpers";
-import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService";
-import { sessionSaveSchema } from "@/lib/server/puzzles/nonogram/validators";
-import { successResponse } from "@/lib/server/utils/apiResponse";
+import { NextRequest } from "next/server"
+import { withAuth } from "../../../route-helpers"
+import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService"
+import { saveProgressSchema } from "@/lib/server/puzzles/nonogram/validators"
+import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
+import { rateLimit } from "@/lib/server/utils/http"
 
-export const POST = withAuth(async (req, user, params) => {
-  const { id } = params;
-  const body = await req.json();
-  const parsed = sessionSaveSchema.safeParse(body);
-  if (!parsed.success) {
-    return Response.json(
-      { success: false, payload: { error: { code: "validation_error", message: parsed.error.issues[0].message } }, timestamp: Date.now() },
-      { status: 400 }
-    );
+export const PUT = withAuth(async (req, user, params) => {
+  if (!rateLimit(req, "nonogram-save", 60)) {
+    return errorResponse(429, "rate_limited", "Too many requests")
   }
 
-  const session = await sessionService.saveProgress(id, user.id, parsed.data);
-  return successResponse({
-    sessionId: session._id,
-    status: session.status,
-    lastSaveAt: session.lastSaveAt,
-    elapsedSeconds: session.elapsedSeconds,
-  });
-});
+  let body: any = {}
+  try { body = await req.json() } catch {}
+
+  const val = saveProgressSchema.safeParse(body)
+  if (!val.success) {
+    return errorResponse(400, "validation_error", val.error.issues[0].message)
+  }
+
+  const { grid, elapsedTime, hintsUsed, mistakes, moves } = val.data
+  const result = await sessionService.saveProgress(params.id, user.id, grid, elapsedTime, hintsUsed, mistakes, moves)
+  return successResponse(result)
+})

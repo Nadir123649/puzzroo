@@ -1,14 +1,8 @@
-import { NextRequest } from "next/server"
 import { withAuth } from "../../../route-helpers"
-import { resumeSession } from "@/lib/server/tangram/services/session.service"
+import { sessionService } from "@/lib/server/puzzles/tangram/services/SessionService"
 import { successResponse } from "@/lib/server/utils/apiResponse"
 
-export const POST = withAuth(async (req, user, params) => {
-  const { id } = params
-  const session = await resumeSession(id, user.id)
-  return successResponse({
-    _id: session._id.toString(),
-    status: session.status,
-    resumedAt: session.resumedAt?.toISOString?.() || new Date().toISOString(),
-  })
+export const PATCH = withAuth(async (_req, user, params) => {
+  const session = await sessionService.resumeSession(params.id, user.id)
+  return successResponse(session)
 })
