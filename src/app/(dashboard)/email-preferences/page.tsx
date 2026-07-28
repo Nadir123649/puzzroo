@@ -2,7 +2,7 @@
 
 import { Mail, Shield, Bell, BookOpen } from 'lucide-react'
 import { notify } from '@/lib/toast'
-import { useEmailPreferences } from '@/hooks/useEmailPreferences'
+import { useEmailPreferences, type EmailPreference } from '@/hooks/useEmailPreferences'
 
 const getIcon = (iconName: string) => {
   switch (iconName) {
@@ -23,11 +23,11 @@ export default function EmailPreferencesPage() {
   const { preferences, updatePreferences, isUpdating } = useEmailPreferences()
 
   const togglePreference = async (id: string) => {
-    const updated = preferences.map(pref =>
+    const updated = preferences.map((pref: EmailPreference) =>
       pref.id === id ? { ...pref, enabled: !pref.enabled } : pref
     )
     const prefsMap: Record<string, boolean> = {}
-    updated.forEach(p => { prefsMap[p.id] = p.enabled })
+    updated.forEach((p: EmailPreference) => { prefsMap[p.id] = p.enabled })
     
     try {
       const res = await updatePreferences(prefsMap)
@@ -55,7 +55,7 @@ export default function EmailPreferencesPage() {
 
       {/* Preferences List */}
       <div className="bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] overflow-hidden">
-        {preferences.map((pref, index) => {
+        {preferences.map((pref: EmailPreference, index: number) => {
           const Icon = getIcon(pref.iconName)
           return (
             <div
