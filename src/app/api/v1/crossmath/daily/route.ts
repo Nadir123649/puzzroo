@@ -4,6 +4,7 @@ import { successResponse, errorResponse } from '@/lib/server/utils/apiResponse';
 import { auth } from '@/lib/server/middleware/auth';
 import { rateLimit } from '@/lib/server/utils/http';
 import { randomPuzzleEngine } from '@/lib/server/puzzles/crossmath/services/RandomPuzzleEngine';
+import DailyChallenge from '@/lib/server/models/DailyChallenge';
 
 export async function GET(request: NextRequest) {
   if (!rateLimit(request, 'crossmath-daily', 60)) {
@@ -19,12 +20,26 @@ export async function GET(request: NextRequest) {
 
   try {
     const dateStr = date || new Date().toISOString().split('T')[0];
+
+    if (userId) {
+      const existingCompleted = await DailyChallenge.findOne({ date: dateStr, userId, status: 'completed' }).lean();
+      if (existingCompleted) {
+        return successResponse({
+          completed: true,
+          date: dateStr,
+          elapsedSeconds: existingCompleted.elapsedSeconds,
+          accuracy: existingCompleted.accuracy,
+        });
+      }
+    }
+
     const puzzle = await randomPuzzleEngine.selectDailyPuzzle(dateStr);
     const { getPatternById, patternToGameGrid } = await import('@shared/data/crossmath/patterns');
     const pattern = getPatternById(puzzle.patternId);
     const grid = pattern ? patternToGameGrid(pattern) : [];
 
     return successResponse({
+      completed: false,
       date: dateStr,
       puzzle: {
         id: puzzle.id,

@@ -26,19 +26,35 @@ export async function GET(request: NextRequest) {
       return errorResponse(401, 'unauthorized', 'Authentication required');
     }
 
-    const { puzzle, dailyChallenge } = await randomPuzzleEngine.selectDailyPuzzle(userId, difficulty as any);
-
     const today = new Date().toISOString().split('T')[0];
+
+    const existingCompleted = await DailyChallenge.findOne({ date: today, userId, status: 'completed' }).lean();
+    if (existingCompleted) {
+      return successResponse({
+        completed: true,
+        date: today,
+        elapsedSeconds: existingCompleted.elapsedSeconds,
+        accuracy: existingCompleted.accuracy,
+        hintsUsed: existingCompleted.hintsUsed,
+        mistakes: existingCompleted.mistakes,
+      });
+    }
+
+    const { puzzle, dailyChallenge } = await randomPuzzleEngine.selectDailyPuzzle(userId, difficulty as any);
 
     let challenge = dailyChallenge;
     if (!challenge) {
-      challenge = await DailyChallenge.create({
-        date: today,
-        userId,
-        puzzleId: puzzle.puzzleId,
-        difficulty: puzzle.difficulty,
-        status: 'active',
-      });
+      challenge = await DailyChallenge.findOneAndUpdate(
+        { date: today, userId },
+        {
+          $setOnInsert: {
+            puzzleId: puzzle.puzzleId,
+            difficulty: puzzle.difficulty,
+            status: 'active',
+          },
+        },
+        { upsert: true, new: true },
+      );
     }
 
     let session = null;
@@ -50,7 +66,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (!session) {
+    if (!session && challenge.status !== 'completed') {
       try {
         session = await sessionService.startSession({
           userId,
@@ -65,6 +81,7 @@ export async function GET(request: NextRequest) {
     }
 
     return successResponse({
+      completed: false,
       date: today,
       puzzle: nonogramToResponse(puzzle as any),
       sessionId: session?.sessionId || challenge.sessionId?.toString(),

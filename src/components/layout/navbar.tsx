@@ -22,11 +22,11 @@ export function Navbar() {
     if (typeof window === 'undefined' || !globalMounted) return false
     return isLoggedIn()
   })
-  const [user, setUser] = useState<{ name: string; email: string } | null>(() => {
+  const [user, setUser] = useState<{ name: string; email: string; avatar?: string | null } | null>(() => {
     if (typeof window === 'undefined' || !globalMounted) return null
     const userData = getCurrentUser()
     if (!userData) return null
-    return { name: userData.name || userData.username, email: userData.email }
+    return { name: userData.name || userData.username, email: userData.email, avatar: userData.avatar }
   })
 
   const [navbarMounted, setNavbarMounted] = useState(globalMounted)
@@ -47,6 +47,7 @@ export function Navbar() {
           setUser({
             name: userData.name || userData.username,
             email: userData.email,
+            avatar: userData.avatar,
           })
         }
       } else {
@@ -74,6 +75,7 @@ export function Navbar() {
         setUser({
           name: userData.name || userData.username,
           email: userData.email,
+          avatar: userData.avatar,
         })
       }
     } else {
@@ -130,7 +132,7 @@ export function Navbar() {
           {/* RIGHT: Desktop Actions */}
           <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
             {(loggedIn && user) ? (
-              <ProfileDropdown userName={user.name} userEmail={user.email} />
+              <ProfileDropdown userName={user.name} userEmail={user.email} userAvatar={user.avatar} />
             ) : (
               <>
                 <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">

@@ -287,12 +287,16 @@ export async function completeSession(
   if (score !== undefined) $set.score = score;
 
   const updated = await PlaySession.findOneAndUpdate(
-    { _id: sessionId, userId },
+    { _id: sessionId, userId, status: { $in: ["playing", "paused"] } },
     { $set },
     { new: true }
   ).lean();
 
-  if (!updated) throw new Error("session_not_found");
+  if (!updated) {
+    const existing = await PlaySession.findOne({ _id: sessionId, userId }).lean();
+    if (!existing) throw new Error("session_not_found");
+    throw new Error("already_completed");
+  }
   return toSessionResponse(updated);
 }
 

@@ -4,6 +4,7 @@ import { getAccessToken, setAccessToken } from '@/lib/auth/frontend-auth'
 type RefreshCallback = (token: string) => void;
 let onRefresh: RefreshCallback | null = null;
 let sessionExpiredNotified = false;
+let refreshPromise: Promise<string | null> | null = null;
 
 export function setOnRefresh(cb: RefreshCallback) {
   onRefresh = cb;
@@ -25,15 +26,23 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
-async function refreshAccessToken(): Promise<string | null> {
-  try {
-    const res = await fetch(`${API_BASE}/api/v1/auth/refresh`, { method: "POST", credentials: "include" });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.payload?.token?.accessToken || null;
-  } catch {
-    return null;
-  }
+export async function refreshAccessToken(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/auth/refresh`, { method: "POST", credentials: "include" });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.payload?.token?.accessToken || null;
+    } catch {
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 export async function api<T = any>(
@@ -99,6 +108,8 @@ export async function api<T = any>(
       } else if (!sessionExpiredNotified) {
         sessionExpiredNotified = true;
         notify.errorKey("SYSTEM_SESSION_EXPIRED");
+        localStorage.removeItem("puzzroo_auth");
+        setTimeout(() => { window.location.href = "/login"; }, 1500);
       }
     }
 

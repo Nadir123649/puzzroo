@@ -47,6 +47,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           .catch(() => {})
       }
     }
+
+    // Periodic auth health check — refreshes the access token every 10 min,
+    // which also validates that the session is still active on the server.
+    const healthInterval = setInterval(() => {
+      fetch("/api/v1/auth/refresh", { method: "POST", credentials: "include" })
+        .catch(() => {});
+    }, 10 * 60 * 1000);
+
+    return () => clearInterval(healthInterval);
   }, [])
 
   const toggleTheme = () => {

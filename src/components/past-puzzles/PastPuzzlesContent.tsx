@@ -14,6 +14,7 @@ import { CalendarModal } from './CalendarModal'
 import { images } from '@/lib/utils'
 import { useTheme } from '@/hooks/use-theme'
 import { getCompletedPuzzleIds } from '@shared/lib/completion/universal'
+import { api } from '@/lib/api/client'
 import Navbar from '@/components/layout/navbar'
 import Footer from '@/components/layout/Footer'
 import { GameLoader } from '@/components/ui/GameLoader'
@@ -117,10 +118,27 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     }
   }, [gameId])
 
-  // Load completed puzzles from universal completion system
+  // Load completed puzzles from universal completion system + server API
   useEffect(() => {
     const gameType = gameId === 'cross-math' ? 'crossmath' : gameId === 'sudoku' ? 'sudoku' : gameId === 'nonogram' ? 'nonogram' : 'tangram'
-    setCompletedPuzzles(getCompletedPuzzleIds(gameType))
+    const localIds = getCompletedPuzzleIds(gameType)
+    setCompletedPuzzles(localIds)
+
+    // Verify today's challenge with server
+    const apiGameId = gameId === 'cross-math' ? 'crossmath' : gameId === 'sudoku' ? 'sudoku' : gameId
+    api(`/api/v1/${apiGameId}/daily/completion`).then(res => {
+      if (res.success) {
+        const payload = res.payload as any
+        if (payload?.completed) {
+          const today = new Date()
+          const m = String(today.getMonth() + 1).padStart(2, '0')
+          const d = String(today.getDate()).padStart(2, '0')
+          const y = String(today.getFullYear()).slice(-2)
+          const todayId = `${gameId}-${m}-${d}-${y}`
+          setCompletedPuzzles(prev => new Set([...prev, todayId]))
+        }
+      }
+    }).catch(() => {})
   }, [gameId])
 
   useEffect(() => {

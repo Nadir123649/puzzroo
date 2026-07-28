@@ -20,6 +20,7 @@ const puzzleStatisticsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+puzzleStatisticsSchema.index({ puzzleId: 1 }, { unique: true });
 puzzleStatisticsSchema.index({ difficulty: 1 });
 
 export default mongoose.models.PuzzleStatistics ||

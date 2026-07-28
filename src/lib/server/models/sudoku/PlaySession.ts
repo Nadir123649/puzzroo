@@ -41,5 +41,6 @@ playSessionSchema.index({ userId: 1, puzzleId: 1, status: 1 }, {
 });
 playSessionSchema.index({ userId: 1, status: 1, startedAt: -1 });
 playSessionSchema.index({ userId: 1, completedAt: -1 });
+playSessionSchema.index({ completedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
 export default mongoose.models.SudokuPlaySession || mongoose.model("SudokuPlaySession", playSessionSchema);

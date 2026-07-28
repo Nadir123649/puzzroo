@@ -70,12 +70,12 @@ const playSessionSchema = new mongoose.Schema(
 playSessionSchema.index({ userId: 1, puzzleId: 1 });
 playSessionSchema.index({ userId: 1, status: 1 });
 playSessionSchema.index({ userId: 1, status: 1, updatedAt: -1 });
+playSessionSchema.index({ userId: 1, status: 1, completedAt: -1 });
 playSessionSchema.index({ puzzleId: 1, status: 1 });
 playSessionSchema.index({ userId: 1, gameId: 1, status: 1 });
 
-// Ensure fresh registration — delete stale model if another module registered it with wrong schema
-if (mongoose.models.PlaySession) {
-  delete mongoose.models.PlaySession;
-}
-const PlaySession = mongoose.model("PlaySession", playSessionSchema);
+playSessionSchema.index({ completedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+
+const PlaySession =
+  mongoose.models.PlaySession || mongoose.model("PlaySession", playSessionSchema);
 export default PlaySession;

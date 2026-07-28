@@ -9,9 +9,9 @@ const dailyChallengeSchema = new mongoose.Schema(
     completionCount: { type: Number, default: 0 },
     averageSolveTime: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "sudoku_dailychallenges" }
 );
 
 dailyChallengeSchema.index({ date: 1 }, { unique: true });
 
-export default mongoose.models.DailyChallenge || mongoose.model("DailyChallenge", dailyChallengeSchema);
+export default mongoose.models.SudokuDailyChallenge || mongoose.model("SudokuDailyChallenge", dailyChallengeSchema);

@@ -69,6 +69,7 @@ tangramPlaySessionSchema.index(
 tangramPlaySessionSchema.index({ userId: 1, status: 1 })
 tangramPlaySessionSchema.index({ userId: 1, status: 1, lastSaveAt: -1 })
 tangramPlaySessionSchema.index({ puzzleId: 1, status: 1 })
+tangramPlaySessionSchema.index({ completedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
 
 export default mongoose.models.TangramPlaySession ||
   mongoose.model("TangramPlaySession", tangramPlaySessionSchema)

@@ -24,7 +24,17 @@ export async function GET(request: NextRequest) {
       return errorResponse(404, 'no_daily_puzzle', 'No daily puzzle available');
     }
 
+    if (result.dailyStatus?.completed) {
+      return successResponse({
+        completed: true,
+        date: date || new Date().toISOString().split('T')[0],
+        elapsedSeconds: result.dailyStatus.elapsedSeconds,
+        accuracy: result.dailyStatus.accuracy,
+      });
+    }
+
     return successResponse({
+      completed: false,
       puzzle: tangramToResponse(result.puzzle),
       dailyStatus: result.dailyStatus,
       date: date || new Date().toISOString().split('T')[0],

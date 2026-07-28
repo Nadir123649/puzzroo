@@ -17,4 +17,7 @@ const transactionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+transactionSchema.index({ userId: 1 });
+transactionSchema.index({ stripePaymentIntentId: 1 }, { sparse: true });
+
 export default mongoose.models.Transaction || mongoose.model("Transaction", transactionSchema);

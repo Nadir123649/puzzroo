@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET /api/v1/games/progress?gameId=&puzzleId= — fetch saved progress / resume state.
- * Auth required.
+ * GET /api/v1/games/progress?gameId=&puzzleId=&limit=&skip= — fetch saved progress / resume state.
+ * Auth required. Falls back to paginated listing when puzzleId omitted.
  */
 export async function GET(request: NextRequest) {
   await connectDB();
@@ -76,6 +76,8 @@ export async function GET(request: NextRequest) {
     const params = Object.fromEntries(new URL(request.url).searchParams);
     const gameId = params.gameId;
     const puzzleId = params.puzzleId;
+    const limit = Math.min(parseInt(params.limit || "50"), 100);
+    const skip = parseInt(params.skip || "0");
 
     if (puzzleId && gameId) {
       const rec = await GameProgress.findOne({
@@ -88,8 +90,11 @@ export async function GET(request: NextRequest) {
 
     const filter: any = { userId: userResult.user.id };
     if (gameId) filter.gameId = gameId;
-    const recs = await GameProgress.find(filter).sort({ updatedAt: -1 }).lean();
-    return successResponse(recs);
+    const [recs, total] = await Promise.all([
+      GameProgress.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
+      GameProgress.countDocuments(filter),
+    ]);
+    return successResponse({ items: recs, total, limit, skip });
   } catch (error: any) {
     console.error(error);
     return errorResponse(500, "internal_error", "Internal Server Error");
