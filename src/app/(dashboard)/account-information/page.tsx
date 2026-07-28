@@ -8,6 +8,7 @@ import { SetEmailModal } from '@/components/account/SetEmailModal'
 import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { Check, Activity, BarChart3, Monitor, Smartphone, Tablet, MapPin, Laptop, Trash2, Clock, Mail, Phone, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const PROVIDER_META: Record<string, { label: string; badge: string; badgeClass: string }> = {
   google: { label: 'Google', badge: 'G', badgeClass: 'text-[#4285F4]' },
@@ -171,12 +172,12 @@ export default function AccountInformationPage() {
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
                 {localUser?.name || 'N/A'}
               </span>
-              <button 
+              <Button 
+                size="xs"
                 onClick={() => setIsNameModalOpen(true)}
-                className="px-5 py-1.5 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95"
               >
                 Change
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -285,22 +286,22 @@ export default function AccountInformationPage() {
             </span>
             <div className="flex items-center gap-3">
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
-                {canChangePassword ? '********' : 'Not set'}
+                {canChangePassword ? 'Set' : 'Not set'}
               </span>
               {canChangePassword ? (
-                <button
+                <Button
+                  size="xs"
                   onClick={() => setIsPasswordModalOpen(true)}
-                  className="px-5 py-1.5 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95"
                 >
                   Change
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
+                  size="xs"
                   onClick={() => setIsEmailModalOpen(true)}
-                  className="px-5 py-1.5 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95"
                 >
                   Set Password
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -389,12 +390,14 @@ export default function AccountInformationPage() {
                 Permanently remove your account and all data
               </span>
             </div>
-            <button
+            <Button
+              variant="danger"
+              size="xs"
               onClick={() => setIsDeleteModalOpen(true)}
-              className="w-full sm:w-auto px-5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95"
+              className="w-full sm:w-auto"
             >
               Delete Account
-            </button>
+            </Button>
           </div>
         </div>
       </div>

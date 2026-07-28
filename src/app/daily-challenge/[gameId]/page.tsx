@@ -14,8 +14,7 @@ import { NonogramGame } from '@/components/nonogram/NonogramGame'
 import { NonogramHero } from '@/components/nonogram/NonogramHero'
 import { TangramGame } from '@/components/tangram/TangramGame'
 import { TangramHero } from '@/components/tangram/TangramHero'
-import Navbar from '@/components/layout/navbar'
-import Footer from '@/components/layout/Footer'
+import { AppLayout } from '@/components/layout/AppLayout'
 
 function DailyChallengeContent() {
   const params = useParams()
@@ -49,42 +48,38 @@ function DailyChallengeContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 flex flex-col">
-      <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[50px]">
-        <Navbar />
-        <main className="flex-grow flex flex-col">
-          
-          {/* Reuse existing Hero components with custom back navigation */}
-          {gameId === 'sudoku' ? (
-            <>
-              <SudokuHero backTo="/past-puzzles/sudoku" />
-              <SudokuGame />
-            </>
-          ) : gameId === 'cross-math' ? (
-            <>
-              <CrossMathHero backTo="/past-puzzles/cross-math" />
-              <CrossMathGame />
-            </>
-          ) : gameId === 'nonogram' ? (
-            <>
-              <NonogramHero backTo="/past-puzzles/nonogram" />
-              <NonogramGame />
-            </>
-          ) : gameId === 'tangram' ? (
-            <>
-              <TangramHero backTo="/past-puzzles/tangram" />
-              <TangramGame />
-            </>
-          ) : (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <p className="text-2xl">Game not found</p>
-            </div>
-          )}
-          
-        </main>
-      </div>
-      <Footer />
-    </div>
+    <AppLayout>
+      <main className="flex-grow flex flex-col">
+        
+        {/* Reuse existing Hero components with custom back navigation */}
+        {gameId === 'sudoku' ? (
+          <>
+            <SudokuHero backTo="/past-puzzles/sudoku" />
+            <SudokuGame />
+          </>
+        ) : gameId === 'cross-math' ? (
+          <>
+            <CrossMathHero backTo="/past-puzzles/cross-math" />
+            <CrossMathGame />
+          </>
+        ) : gameId === 'nonogram' ? (
+          <>
+            <NonogramHero backTo="/past-puzzles/nonogram" />
+            <NonogramGame />
+          </>
+        ) : gameId === 'tangram' ? (
+          <>
+            <TangramHero backTo="/past-puzzles/tangram" />
+            <TangramGame />
+          </>
+        ) : (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <p className="text-2xl">Game not found</p>
+          </div>
+        )}
+        
+      </main>
+    </AppLayout>
   )
 }
 

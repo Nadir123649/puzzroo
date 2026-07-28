@@ -189,14 +189,14 @@ export function NonogramModal({
                 <>
                   <button
                     onClick={onPlayAgain}
-                    className="w-full h-[40px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
+                    className="w-full h-[40px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
                   >
                     Replay
                   </button>
                   {onNewPuzzle && (
                     <button
                       onClick={onNewPuzzle}
-                      className="w-full h-[40px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
+                      className="w-full h-[40px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
                     >
                       New Game
                     </button>
@@ -206,14 +206,14 @@ export function NonogramModal({
                 <>
                   <button
                     onClick={onPlayAgain}
-                    className="w-full h-[40px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
+                    className="w-full h-[40px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-sm transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
                   >
                     Try Again
                   </button>
                   {onNewPuzzle && (
                     <button
                       onClick={onNewPuzzle}
-                      className="w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] hover:bg-[#6949FF]/10 font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none"
+                      className="w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] hover:bg-[#6949FF]/10 font-urbanist font-bold text-sm transition-all duration-300 active:scale-[0.98] focus:outline-none"
                     >
                       New Game
                     </button>
@@ -223,7 +223,7 @@ export function NonogramModal({
               {onBackToGames && (
                 <button
                   onClick={onBackToGames}
-                  className="w-full h-[40px] rounded-full bg-white dark:bg-[#35383F] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] dark:text-white hover:text-white font-urbanist font-bold text-sm transition-all duration-200 active:scale-[0.98] focus:outline-none border border-[#E0E0E0] dark:border-[#424242] hover:border-[#6949FF]"
+                  className="w-full h-[40px] rounded-full bg-white dark:bg-[#35383F] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] dark:text-white hover:text-white font-urbanist font-bold text-sm transition-all duration-300 active:scale-[0.98] focus:outline-none border border-[#E0E0E0] dark:border-[#424242] hover:border-[#6949FF]"
                 >
                   Back to Games
                 </button>

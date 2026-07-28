@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from '../../hooks/use-theme'
@@ -14,6 +14,8 @@ let globalMounted = false
 export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const touchStartX = useRef<number>(0)
 
   // Initialise synchronously from localStorage so the very first render already
   // shows the correct auth state — this prevents the "Sign up/Login" ↔ "Subscribe/Profile"
@@ -81,6 +83,50 @@ export function Navbar() {
     }
   }, [pathname])
 
+  // Close menu on outside click
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isMenuOpen])
+
+  // Close menu on swipe up
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientY
+    }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touchEndX = e.changedTouches[0].clientY
+      const diff = touchStartX.current - touchEndX
+
+      // If swipe up more than 50px, close menu
+      if (diff > 50) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    const menuElement = mobileMenuRef.current
+    if (menuElement) {
+      menuElement.addEventListener('touchstart', handleTouchStart)
+      menuElement.addEventListener('touchend', handleTouchEnd)
+
+      return () => {
+        menuElement.removeEventListener('touchstart', handleTouchStart)
+        menuElement.removeEventListener('touchend', handleTouchEnd)
+      }
+    }
+  }, [isMenuOpen])
+
   return (
     <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-300 z-[200]">
       <div className="w-full max-w-[1380px] mx-auto px-[20px] py-[8px] md:py-[22px]">
@@ -130,20 +176,29 @@ export function Navbar() {
           {/* RIGHT: Desktop Actions */}
           <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
             {(loggedIn && user) ? (
-              <ProfileDropdown userName={user.name} userEmail={user.email} />
+              <>
+                {/* Subscribe Us Button - Only for logged in users */}
+                <Link 
+                  href="/subscription" 
+                  className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
+                >
+                  Subscribe Us
+                </Link>
+                <ProfileDropdown userName={user.name} userEmail={user.email} />
+              </>
             ) : (
               <>
-                <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
                   Sign up
                 </Link>
 
-                <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95">
+                <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
                   Login
                 </Link>
 
                 <button
                   onClick={toggleTheme}
-                  className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
+                  className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-300 active:scale-95"
                   aria-label="Toggle theme"
                 >
                   <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
@@ -197,8 +252,13 @@ export function Navbar() {
         </div>
       </div>
       {/* Mobile Menu Dropdown */}
-      {isMenuOpen && navbarMounted && (
-        <div className="md:hidden w-full bg-white dark:bg-[#181A20] px-[20px] pb-4 flex flex-col gap-3 border-t border-gray-100 dark:border-gray-800 transition-all duration-300">
+      <div 
+        ref={mobileMenuRef}
+        className={`md:hidden w-full bg-white dark:bg-[#181A20] px-[20px] border-t border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-300 ease-in-out ${
+          isMenuOpen && navbarMounted ? 'max-h-96 pb-4 opacity-100' : 'max-h-0 pb-0 opacity-0'
+        }`}
+      >
+        <div className="flex flex-col gap-3 pt-4">
           {loggedIn && user ? (
             <>
               <div className="py-2 border-b border-gray-100 dark:border-gray-800">
@@ -238,7 +298,7 @@ export function Navbar() {
             </>
           )}
         </div>
-      )}
+      </div>
     </header>
   )
 }

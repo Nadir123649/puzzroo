@@ -41,7 +41,7 @@ export function SudokuControls({
           className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Reset"
         >
-          <Image src={images.arrowCounterClockwise} alt="Reset" width={20} height={20} className="text-[#424242]" />
+          <RotateCcw size={20} strokeWidth={2} className="text-[#424242]" />
         </button>
 
         {/* Erase Button */}
@@ -110,7 +110,7 @@ export function SudokuControls({
         className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Reset"
       >
-        <Image src={images.arrowCounterClockwise} alt="Reset" width={27} height={27} className="text-[#424242]" />
+        <RotateCcw size={27} strokeWidth={2} className="text-[#424242]" />
       </button>
 
       {/* Erase Button */}

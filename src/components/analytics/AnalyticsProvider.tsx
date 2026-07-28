@@ -3,9 +3,13 @@
 import { useEffect, useRef, Suspense } from "react";
 import { analytics } from "@/lib/analytics/client";
 import { getCurrentUser } from "@/lib/auth/frontend-auth";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 function AnalyticsTracker() {
   const lastIdentified = useRef<string | null>(null);
+
+  // Track page views (once per route change)
+  usePageTracking();
 
   // Identify the current user on mount + whenever auth changes.
   useEffect(() => {

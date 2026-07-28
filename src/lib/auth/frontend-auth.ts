@@ -106,23 +106,12 @@ export async function ensureSession(): Promise<void> {
   const token = localStorage.getItem("accessToken");
   if (!token) return;
 
+  // Don't make any API calls if token is still valid
   if (!isTokenExpired(token)) {
-    try {
-      const meRes = await api("/api/v1/users/me");
-      if (meRes.success) {
-        const current = getCurrentUser();
-        const updated = mapUser(meRes.payload as any);
-        localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
-        window.dispatchEvent(new Event("auth-change"));
-      } else {
-        throw new Error("token_revoked");
-      }
-    } catch {
-      clearClientSession();
-    }
     return;
   }
 
+  // Token is expired, try to refresh
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/auth/refresh`, {
       method: "POST",
@@ -133,16 +122,6 @@ export async function ensureSession(): Promise<void> {
     const accessToken = data?.payload?.token?.accessToken;
     if (!accessToken) throw new Error("no_token");
     localStorage.setItem("accessToken", accessToken);
-    // Re-read the profile so server-side changes (e.g. being promoted to
-    // admin, subscription upgrades) take effect without a full re-login.
-    try {
-      const meRes = await api("/api/v1/users/me");
-      if (meRes.success) {
-        const current = getCurrentUser();
-        const updated = mapUser(meRes.payload as any);
-        localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
-      }
-    } catch {}
     window.dispatchEvent(new Event("auth-change"));
   } catch {
     clearClientSession();

@@ -91,12 +91,22 @@ const getPlayedGames = (): Set<string> => {
   }
 }
 
+const getLastPlayedGame = (): string | null => {
+  if (typeof window === 'undefined') return null
+  try {
+    return localStorage.getItem('puzzroo_last_played_game')
+  } catch {
+    return null
+  }
+}
+
 export const markGameAsPlayed = (gameId: string): void => {
   if (typeof window === 'undefined') return
   try {
     const playedGames = getPlayedGames()
     playedGames.add(gameId)
     localStorage.setItem('puzzroo_played_games', JSON.stringify([...playedGames]))
+    localStorage.setItem('puzzroo_last_played_game', gameId)
   } catch (error) {
     console.error('Failed to mark game as played:', error)
   }
@@ -104,10 +114,12 @@ export const markGameAsPlayed = (gameId: string): void => {
 
 export function FreeGames() {
   const [playedGames, setPlayedGames] = useState<Set<string>>(new Set())
+  const [lastPlayedGame, setLastPlayedGame] = useState<string | null>(null)
 
   useEffect(() => {
-    // Load played games from localStorage
+    // Load played games and last played game from localStorage
     setPlayedGames(getPlayedGames())
+    setLastPlayedGame(getLastPlayedGame())
   }, [])
 
   return (
@@ -141,7 +153,7 @@ export function FreeGames() {
               key={game.id} 
               game={game} 
               isPlayed={playedGames.has(game.id)}
-              hasHistory={playedGames.size > 0}
+              isLastPlayed={lastPlayedGame === game.id}
             />
           ))}
         </div>
@@ -156,10 +168,10 @@ export function FreeGames() {
 interface GameCardComponentProps {
   game: GameCard
   isPlayed: boolean
-  hasHistory: boolean
+  isLastPlayed: boolean
 }
 
-function GameCardComponent({ game, isPlayed, hasHistory }: GameCardComponentProps) {
+function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentProps) {
   const { theme } = useTheme()
   const router = useRouter()
   const isActive = ACTIVE_GAMES.includes(game.id)
@@ -232,7 +244,7 @@ function GameCardComponent({ game, isPlayed, hasHistory }: GameCardComponentProp
   return (
     <div 
       onClick={() => router.push(`/game/${game.id}`)}
-      className="flex flex-col bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[16px] lg:p-[24px] gap-[12px] md:gap-[16px] lg:gap-[24px] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group md:min-h-auto cursor-pointer"
+      className="flex flex-col bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[16px] lg:p-[24px] gap-[12px] md:gap-[16px] lg:gap-[24px] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group cursor-pointer h-full"
     >
       {/* Game Image - Fluid and responsive */}
       <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F0EDFF] dark:bg-[#1F222A]">
@@ -251,7 +263,7 @@ function GameCardComponent({ game, isPlayed, hasHistory }: GameCardComponentProp
           <h3 className="font-urbanist font-bold text-[9px] md:text-[clamp(1rem,3vw,1.28rem)] leading-[120%] text-[#212121] dark:text-[#FAFAFA]">
             {game.title}
           </h3>
-          {hasHistory && isPlayed && (
+          {isLastPlayed && (
             <span className="font-urbanist font-semibold text-[7px] md:text-[clamp(0.8rem,2.5vw,1.03rem)] leading-[140%] tracking-[0.21px] text-[#22C55E]">
               Recently Played
             </span>
@@ -262,7 +274,7 @@ function GameCardComponent({ game, isPlayed, hasHistory }: GameCardComponentProp
         <div className="flex flex-col gap-[6px] md:gap-[10px]">
           {game.id === 'chess' ? (
             <Link href={`/game/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()} prefetch={false}>
-              <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}>
+              <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}>
                 Play Chess
               </button>
             </Link>
@@ -270,21 +282,21 @@ function GameCardComponent({ game, isPlayed, hasHistory }: GameCardComponentProp
             <>
               {/* Daily Challenge Button */}
               <Link href={`/daily-challenge/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()} prefetch={false}>
-                <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Daily Challenge for ${game.title}`}>
+                <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Daily Challenge for ${game.title}`}>
                   Daily Challenge
                 </button>
               </Link>
 
               {/* Play Now Button */}
               <Link href={`/game/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()} prefetch={false}>
-                <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}>
+                <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}>
                   {isPlayed ? 'Play Again' : 'Play Now'}
                 </button>
               </Link>
 
               {/* Past Puzzle Button */}
               <Link href={`/past-puzzles/${game.id}`} className="w-full group" onClick={(e) => e.stopPropagation()} prefetch={false}>
-                <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] hover:text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-200 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Past Puzzles for ${game.title}`}>
+                <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] hover:text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Past Puzzles for ${game.title}`}>
                   Past Puzzle
                 </button>
               </Link>

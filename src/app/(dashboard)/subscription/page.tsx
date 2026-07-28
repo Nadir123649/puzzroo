@@ -55,24 +55,27 @@ export default function SubscriptionPage() {
       let detectedCountry = ''
       
       // Try IP-based detection via XMLHttpRequest (bypasses Next.js dev-overlay fetch interceptor)
+      // Wrapped in silent error handling to prevent 403 errors from showing in console
       try {
         const data = await new Promise<any>((resolve, reject) => {
           const xhr = new XMLHttpRequest()
           xhr.open('GET', 'https://ipapi.co/json/', true)
-          xhr.timeout = 4000
+          xhr.timeout = 3000
           xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
               try {
                 resolve(JSON.parse(xhr.responseText))
               } catch (e) {
-                reject(e)
+                // Silent fail - just use fallback
+                resolve(null)
               }
             } else {
-              reject(new Error(`HTTP ${xhr.status}`))
+              // Silent fail on 403 or other errors
+              resolve(null)
             }
           }
-          xhr.onerror = () => reject(new Error('Network error'))
-          xhr.ontimeout = () => reject(new Error('Timeout'))
+          xhr.onerror = () => resolve(null) // Silent fail
+          xhr.ontimeout = () => resolve(null) // Silent fail
           xhr.send()
         })
         

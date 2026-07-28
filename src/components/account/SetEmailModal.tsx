@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { X, Mail, Eye, EyeOff } from 'lucide-react'
 import { notify } from '@/lib/toast'
 import { manageEmail } from '@/lib/auth/frontend-auth'
+import { Button } from '@/components/ui/button'
 
 interface SetEmailModalProps {
   isOpen: boolean
@@ -236,22 +237,16 @@ export function SetEmailModal({ isOpen, onClose, currentEmail, hasPassword }: Se
               </>
             )}
 
-            <button
+            <Button
               type="submit"
-              disabled={isLoading || success}
-              className="w-full h-[56px] mt-4 bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-bold text-[16px] shadow-lg shadow-[#6949FF]/20 transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              size="lg"
+              fullWidth
+              isLoading={isLoading}
+              disabled={success}
+              className="mt-4 h-[56px] shadow-lg shadow-[#6949FF]/20"
             >
-              {isLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Saving...
-                </>
-              ) : success ? (
-                'Saved Successfully!'
-              ) : (
-                'Save Changes'
-              )}
-            </button>
+              {success ? 'Saved Successfully!' : 'Save Changes'}
+            </Button>
           </form>
         </div>
       </div>

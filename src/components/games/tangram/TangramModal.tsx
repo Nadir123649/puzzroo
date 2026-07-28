@@ -184,35 +184,25 @@ export function TangramModal({
               <>
                 <button
                   onClick={onPlayAgain}
-                  className="w-full h-[42px] sm:h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+                  className="w-full h-[42px] sm:h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                 >
                   Play Again
                 </button>
                 
-                {/* Restart and New Game in one row */}
-                <div className="flex gap-2.5 sm:gap-3">
-                  {onRestart && (
-                    <button
-                      onClick={onRestart}
-                      className="flex-1 h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                    >
-                      Restart
-                    </button>
-                  )}
-                  {onNewPuzzle && (
-                    <button
-                      onClick={onNewPuzzle}
-                      className="flex-1 h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                    >
-                      New Game
-                    </button>
-                  )}
-                </div>
+                {/* New Game button only */}
+                {onNewPuzzle && (
+                  <button
+                    onClick={onNewPuzzle}
+                    className="w-full h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+                  >
+                    New Game
+                  </button>
+                )}
                 
                 {onBackToLobby && (
                   <button
                     onClick={onBackToLobby}
-                    className="w-full h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+                    className="w-full h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                   >
                     Back to Lobby
                   </button>

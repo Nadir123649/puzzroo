@@ -2,11 +2,12 @@ import React, { forwardRef } from 'react'
 import { cn } from '../../lib/utils'
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link'
-  size?: 'sm' | 'md' | 'lg'
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'white'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
   isLoading?: boolean
   leftIcon?: React.ReactNode
   rightIcon?: React.ReactNode
+  fullWidth?: boolean
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -18,26 +19,29 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       isLoading = false,
       leftIcon,
       rightIcon,
+      fullWidth = false,
       children,
       disabled,
       ...props
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center font-display font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50 select-none'
+    const baseStyles = 'inline-flex items-center justify-center font-urbanist font-semibold rounded-full transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed select-none'
     
     const variants = {
-      primary: 'bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-600/20 dark:bg-brand-500 dark:hover:bg-brand-600 hover:-translate-y-0.5 active:translate-y-0 dark:shadow-brand-500/10',
-      secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100',
-      outline: 'bg-transparent border-2 border-slate-200 text-slate-900 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-100 dark:hover:bg-slate-900/50',
-      ghost: 'bg-transparent hover:bg-slate-100 text-slate-900 dark:text-slate-100 dark:hover:bg-slate-900/50',
-      link: 'bg-transparent text-brand-600 dark:text-brand-400 hover:underline px-0 py-0 rounded-none active:scale-100',
+      primary: 'bg-[#6949FF] hover:bg-[#5536E6] text-white',
+      secondary: 'bg-gray-100 hover:bg-gray-200 text-[#212121] dark:bg-[#35383F] dark:hover:bg-[#424242] dark:text-white',
+      outline: 'bg-white dark:bg-[#1F222A] border-[1.5px] border-[#6949FF] text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640]',
+      ghost: 'bg-transparent hover:bg-gray-100 dark:hover:bg-[#35383F] text-[#212121] dark:text-white',
+      danger: 'bg-red-600 hover:bg-red-700 text-white',
+      white: 'bg-white hover:bg-gray-50 text-[#212121] border-[1.5px] border-[#E0E0E0] dark:bg-[#1F222A] dark:hover:bg-[#2D2640] dark:text-white dark:border-[#35383F]',
     }
 
     const sizes = {
-      sm: 'text-xs px-3.5 py-2 gap-1.5',
-      md: 'text-sm px-5 py-2.5 gap-2',
-      lg: 'text-base px-7 py-3.5 gap-2.5 rounded-2xl',
+      xs: 'text-[13px] px-5 py-1.5 gap-1.5',
+      sm: 'text-[14px] px-5 py-2 gap-2',
+      md: 'text-[14px] md:text-[16px] px-6 py-2.5 md:py-3 gap-2',
+      lg: 'text-[16px] md:text-[18px] px-8 py-3.5 gap-2.5',
     }
 
     return (
@@ -48,14 +52,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           baseStyles,
           variants[variant],
           sizes[size],
-          isLoading && 'cursor-not-allowed opacity-80',
+          fullWidth && 'w-full',
           className
         )}
         {...props}
       >
         {isLoading && (
           <svg
-            className="animate-spin -ml-1 mr-2 h-4 w-4 text-current"
+            className="animate-spin h-4 w-4 text-current"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -76,7 +80,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           </svg>
         )}
         {!isLoading && leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
-        <span className="truncate">{children}</span>
+        <span>{children}</span>
         {!isLoading && rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
       </button>
     )
