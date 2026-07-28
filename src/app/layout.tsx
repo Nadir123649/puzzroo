@@ -92,13 +92,26 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={urbanist.variable}>
       <head>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* Critical CSS to prevent flash - loaded immediately */
+            html { background-color: #ffffff; transition: none !important; }
+            html.dark { background-color: #181A20 !important; color-scheme: dark; }
+            html.dark body { background-color: #181A20 !important; }
+            html.dark header { background-color: #181A20 !important; }
+            body { transition: none !important; }
+          `
+        }} />
         <script dangerouslySetInnerHTML={{
           __html: `
             (function() {
               try {
                 var theme = localStorage.getItem('theme');
-                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                var isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) {
                   document.documentElement.classList.add('dark');
+                  document.documentElement.style.backgroundColor = '#181A20';
+                  document.documentElement.style.colorScheme = 'dark';
                 }
               } catch(e) {}
             })();
