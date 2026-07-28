@@ -8,6 +8,7 @@ import { cookieOptions } from "@/lib/server/utils/cookieOptions";
 import { authPayload, issueSession, handleOAuth } from "@/lib/server/utils/authHelpers";
 import { auth } from "@/lib/server/middleware/auth";
 import { trackServer } from "@/lib/server/utils/trackEvent";
+import { checkRateLimit } from "@/lib/server/utils/http";
 
 const PROVIDER_MAP: Record<string, string> = {
   google: "google.com",
@@ -28,6 +29,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     // ──── POST /api/v1/oauth/guest ────
     if (provider === "guest") {
+      const rl = checkRateLimit(request, "oauth:guest", 5, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many guest account requests. Try again later.");
       const guestId = crypto.randomBytes(4).toString("hex");
       const user = await User.create({ username: `guest_${guestId}`, usernameSet: true, role: "guest" });
       await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "guest" }, request });
@@ -38,6 +41,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // ──── POST /api/v1/oauth/google | /api/v1/oauth/facebook ────
     const firebaseProvider = provider ? PROVIDER_MAP[provider] : undefined;
     if (firebaseProvider) {
+      const rl = checkRateLimit(request, `oauth:${provider}`, 10, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests. Try again later.");
       const { firebaseToken } = body;
       if (!firebaseToken) return errorResponse(400, "validation_error", "Firebase token is required");
       try {

@@ -11,6 +11,7 @@ const loginSessionSchema = new mongoose.Schema(
     location: { type: String, default: null },
     isCurrent: { type: Boolean, default: true },
     provider: { type: String, default: null },
+    tokenVersion: { type: Number, default: 0 },
     lastSeenAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

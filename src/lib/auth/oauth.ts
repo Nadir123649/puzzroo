@@ -3,6 +3,7 @@
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
 import { auth, googleProvider, facebookProvider } from '@/lib/config/firebase-client'
 import { api } from '@/lib/api/client'
+import { setAccessToken } from '@/lib/auth/frontend-auth'
 import { notify, ToastMessages } from '@/lib/toast'
 
 export type OAuthProvider = 'google' | 'facebook'
@@ -80,7 +81,7 @@ export async function completeOAuthLogin(
     }
     const payload = res.payload as any
     const userData = mapUserData(payload, provider)
-    localStorage.setItem('accessToken', payload.token.accessToken)
+    setAccessToken(payload.token.accessToken)
     localStorage.setItem('puzzroo_auth', 'true')
     localStorage.setItem('puzzroo_user', JSON.stringify(userData))
     window.dispatchEvent(new Event('auth-change'))

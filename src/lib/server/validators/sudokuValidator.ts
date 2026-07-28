@@ -33,7 +33,6 @@ export const completeSessionSchema = z.object({
   hintsUsed: z.number().min(0).optional(),
   mistakes: z.number().min(0).optional(),
   moves: z.number().min(0).optional(),
-  score: z.number().min(0).optional(),
 });
 
 export const replaySessionSchema = z.object({

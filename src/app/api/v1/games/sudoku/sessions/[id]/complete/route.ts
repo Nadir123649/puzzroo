@@ -38,7 +38,7 @@ export const POST = withAuth(async (req: NextRequest, user, params) => {
 
   const hintsUsed = val.data!.hintsUsed ?? session.hintsUsed ?? 0;
   const mistakes = val.data!.mistakes ?? session.mistakes ?? 0;
-  const score = val.data!.score ?? calculateScore(
+  const score = calculateScore(
     puzzle.difficulty as any,
     val.data!.elapsedTime,
     hintsUsed,

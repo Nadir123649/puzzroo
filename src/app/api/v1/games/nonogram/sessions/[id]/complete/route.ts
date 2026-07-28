@@ -18,10 +18,10 @@ export const POST = withAuth(async (req, user, params) => {
     return errorResponse(400, "validation_error", val.error.issues[0].message)
   }
 
-  const { grid, elapsedTime, hintsUsed, mistakes, moves, score } = val.data
+  const { grid, elapsedTime, hintsUsed, mistakes, moves } = val.data
 
   const result = await sessionService.completeSession(
-    params.id, user.id, grid, elapsedTime, hintsUsed, mistakes, moves, score
+    params.id, user.id, grid, elapsedTime, hintsUsed, mistakes, moves
   )
 
   return successResponse(result)

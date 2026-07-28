@@ -5,7 +5,7 @@ import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
 import { ChangeNameModal } from '@/components/account/ChangeNameModal'
 import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
 import { SetEmailModal } from '@/components/account/SetEmailModal'
-import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider } from '@/lib/auth/frontend-auth'
+import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider, clearAccessToken } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { Check, Activity, BarChart3, Monitor, Smartphone, Tablet, MapPin, Laptop, Trash2, Clock, Mail, Phone, X } from 'lucide-react'
 
@@ -109,7 +109,7 @@ export default function AccountInformationPage() {
       // If the revoked session was the current one, log out
       const wasCurrent = sessions.find(s => s.id === id)?.isCurrent
       if (wasCurrent) {
-        localStorage.removeItem('accessToken')
+        clearAccessToken()
         localStorage.removeItem('puzzroo_auth')
         localStorage.removeItem('puzzroo_user')
         window.location.href = '/login'

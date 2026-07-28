@@ -43,6 +43,7 @@ import {
 } from '@shared/lib/sudoku/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
+import { getAccessToken } from '@/lib/auth/frontend-auth'
 
 function getTodayDateParam(): string {
   const d = new Date()
@@ -197,7 +198,7 @@ export function useSudoku() {
     completionCalledRef.current = false
     movesRef.current = 0
     if (typeof window === 'undefined') return null
-    if (!localStorage.getItem('accessToken')) return null
+    if (!getAccessToken()) return null
     const pid = puzzleId || gameState.puzzleId
     if (!pid) return null
     try {
@@ -495,8 +496,7 @@ export function useSudoku() {
       updateChallengeStatus(challengeId, 'completed')
     }
 
-    const token =
-      typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+    const token = getAccessToken()
     if (token) {
       gameApi
         .complete('sudoku', {

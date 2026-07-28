@@ -23,7 +23,6 @@ export const completeSessionSchema = verifyGridSchema.extend({
   hintsUsed: z.number().min(0),
   mistakes: z.number().min(0),
   moves: z.number().min(0),
-  score: z.number().min(0),
 })
 
 export const sessionListQuerySchema = z.object({

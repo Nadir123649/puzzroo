@@ -6,11 +6,13 @@ import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { generatePublicId } from "@/lib/server/utils/publicId";
 import { createSession } from "@/lib/server/utils/createSession";
 
-export const isFirebaseReady = Boolean(
-  process.env.FIREBASE_PROJECT_ID &&
-    process.env.FIREBASE_CLIENT_EMAIL &&
-    process.env.FIREBASE_PRIVATE_KEY
-);
+export function isFirebaseReady(): boolean {
+  return Boolean(
+    process.env.FIREBASE_PROJECT_ID &&
+      process.env.FIREBASE_CLIENT_EMAIL &&
+      process.env.FIREBASE_PRIVATE_KEY
+  );
+}
 
 // Safely append a provider to a user's linkedProviders array, tolerating the
 // field being undefined on documents created before it existed.
@@ -22,10 +24,10 @@ function addLinkedProvider(user: any, provider: string) {
 // Builds the auth payload returned to the client. When `sessionId` is provided
 // the issued tokens are bound to that login session (via the JWT `jti` claim),
 // so deleting the session invalidates the tokens — making logout real.
-export function authPayload(user: any, sessionId?: string) {
+export function authPayload(user: any, sessionId?: string, tokenVersion?: number) {
   return {
     user: formatUser(user),
-    token: buildTokenPayload(user, sessionId),
+    token: buildTokenPayload(user, sessionId, tokenVersion),
     access: {
       additionalPermissions: [],
       roles: user.role === "admin" ? ["admin"] : [],
@@ -40,7 +42,15 @@ export function authPayload(user: any, sessionId?: string) {
 export async function issueSession(request: any, user: any, provider?: string) {
   const session = await createSession(request, user._id.toString(), provider);
   const sessionId = session._id.toString();
-  return { sessionId, payload: authPayload(user, sessionId) };
+  const tokenVersion = (session as any).tokenVersion ?? 0;
+  return { sessionId, payload: authPayload(user, sessionId, tokenVersion) };
+}
+
+/** Read the current tokenVersion from a LoginSession. */
+export async function getSessionTokenVersion(sessionId: string): Promise<number> {
+  const { default: LoginSession } = await import("@/lib/server/models/LoginSession");
+  const session = await LoginSession.findById(sessionId).select("tokenVersion").lean();
+  return (session as any)?.tokenVersion ?? 0;
 }
 
 export async function handleOAuth(
@@ -49,7 +59,7 @@ export async function handleOAuth(
   currentUserId?: string,
   request?: any
 ): Promise<{ payload: any; refreshToken: string; converted: boolean; sessionId?: string } | undefined> {
-  if (!isFirebaseReady) {
+  if (!isFirebaseReady()) {
     return undefined;
   }
   const firebaseAuth = await getFirebaseAuth();
@@ -132,9 +142,16 @@ export async function handleOAuth(
   user.lastLoginAt = new Date();
   await user.save({ validateBeforeSave: false });
   let sessionId: string | undefined;
+  let tokenVersion: number | undefined;
   if (request) {
     const session = await createSession(request, user._id.toString(), mappedProvider);
     sessionId = session._id.toString();
+    tokenVersion = (session as any).tokenVersion ?? 0;
   }
-  return { payload: authPayload(user, sessionId), refreshToken: buildTokenPayload(user, sessionId).refreshToken, converted, sessionId };
+  return {
+    payload: authPayload(user, sessionId, tokenVersion),
+    refreshToken: buildTokenPayload(user, sessionId, tokenVersion).refreshToken,
+    converted,
+    sessionId
+  };
 }

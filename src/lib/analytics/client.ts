@@ -1,5 +1,7 @@
 "use client";
 
+import { getAccessToken } from "@/lib/auth/frontend-auth";
+
 type CallType = "page" | "track" | "identify";
 
 interface QueuedEvent {
@@ -111,7 +113,7 @@ async function flush(useKeepalive = false) {
   const events = queue.splice(0, queue.length);
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (token) headers["Authorization"] = `Bearer ${token}`;
   } catch {}
   try {
