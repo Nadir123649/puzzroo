@@ -54,6 +54,8 @@ export function Navbar() {
 
   // Sync auth state on page navigation
   useEffect(() => {
+    if (!hydrated) return
+    
     const isAuth = isLoggedIn()
     setLoggedIn(isAuth)
     if (isAuth) {
@@ -67,7 +69,7 @@ export function Navbar() {
     } else {
       setUser(null)
     }
-  }, [pathname])
+  }, [pathname, hydrated])
 
   // Close menu on outside click
   useEffect(() => {
