@@ -87,15 +87,6 @@ export function isLoggedIn(): boolean {
   return !!currentAccessToken || !!localStorage.getItem("puzzroo_auth");
 }
 
-/**
- * Validates (and repairs) the client session on app load.
- * - No token at all → nothing to do (user is logged out).
- * - Token present → attempt to refresh via the httpOnly refresh cookie.
- *   On success we store the fresh access token; on failure the session is
- *   stale/expired, so we clear localStorage and let the UI reflect logged-out.
- * This prevents a dead/expired accessToken from permanently bouncing users
- * away from /login (the RedirectIfAuthenticated guard keys off isLoggedIn()).
- */
 function isTokenExpired(token: string): boolean {
   try {
     const parts = token.split('.');
@@ -125,54 +116,83 @@ function clearClientSession() {
   api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
 }
 
+/**
+ * Validates (and repairs) the client session on app load.
+ * - No token at all → nothing to do (user is logged out).
+ * - Token present → attempt to refresh via the httpOnly refresh cookie.
+ *   On success we store the fresh access token; on failure the session is
+ *   stale/expired, so we clear localStorage and let the UI reflect logged-out.
+ * This prevents a dead/expired accessToken from permanently bouncing users
+ * away from /login (the RedirectIfAuthenticated guard keys off isLoggedIn()).
+ */
+
+// Prevent parallel refresh calls (race condition protection)
+let refreshPromise: Promise<void> | null = null;
+
 export async function ensureSession(): Promise<void> {
   if (typeof window === "undefined") return;
+  
+  // If a refresh is already in progress, wait for it
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+  
   const token = getAccessToken();
   const hasFlag = !!localStorage.getItem("puzzroo_auth");
   if (!token && !hasFlag) return;
 
   if (token && !isTokenExpired(token)) {
-    try {
-      const meRes = await api("/api/v1/users/me");
-      if (meRes.success) {
-        const current = getCurrentUser();
-        const updated = mapUser(meRes.payload as any);
-        localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
-        window.dispatchEvent(new Event("auth-change"));
-      } else {
-        throw new Error("token_revoked");
+    refreshPromise = (async () => {
+      try {
+        const meRes = await api("/api/v1/users/me");
+        if (meRes.success) {
+          const current = getCurrentUser();
+          const updated = mapUser(meRes.payload as any);
+          localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
+          window.dispatchEvent(new Event("auth-change"));
+        } else {
+          throw new Error("token_revoked");
+        }
+      } catch {
+        clearClientSession();
+      } finally {
+        refreshPromise = null;
       }
-    } catch {
-      clearClientSession();
-    }
-    return;
+    })();
+    return refreshPromise;
   }
 
   // Token is expired, try to refresh
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/auth/refresh`, {
-      method: "POST",
-      credentials: "include",
-    });
-    if (!res.ok) throw new Error("refresh_failed");
-    const data = await res.json();
-    const accessToken = data?.payload?.token?.accessToken;
-    if (!accessToken) throw new Error("no_token");
-    setAccessToken(accessToken);
-    // Re-read the profile so server-side changes (e.g. being promoted to
-    // admin, subscription upgrades) take effect without a full re-login.
+  refreshPromise = (async () => {
     try {
-      const meRes = await api("/api/v1/users/me");
-      if (meRes.success) {
-        const current = getCurrentUser();
-        const updated = mapUser(meRes.payload as any);
-        localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
-      }
-    } catch {}
-    window.dispatchEvent(new Event("auth-change"));
-  } catch {
-    clearClientSession();
-  }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("refresh_failed");
+      const data = await res.json();
+      const accessToken = data?.payload?.token?.accessToken;
+      if (!accessToken) throw new Error("no_token");
+      setAccessToken(accessToken);
+      // Re-read the profile so server-side changes (e.g. being promoted to
+      // admin, subscription upgrades) take effect without a full re-login.
+      try {
+        const meRes = await api("/api/v1/users/me");
+        if (meRes.success) {
+          const current = getCurrentUser();
+          const updated = mapUser(meRes.payload as any);
+          localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
+        }
+      } catch {}
+      window.dispatchEvent(new Event("auth-change"));
+    } catch {
+      clearClientSession();
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+  
+  return refreshPromise;
 }
 
 export function getCurrentUser(): User | null {
