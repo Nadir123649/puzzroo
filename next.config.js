@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable automatic prefetching to prevent unnecessary API calls
-  // prefetchesDisabled removed — invalid/removed experimental key in Next.js 16
   allowedDevOrigins: [
     'enhance-wrinkle-disjoin.ngrok-free.dev',
     '*.ngrok-free.dev',
