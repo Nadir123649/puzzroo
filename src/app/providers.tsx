@@ -16,19 +16,26 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light')
   const [mounted, setMounted] = useState(false)
-  const fetchedRef = useRef(false)
+  const sessionValidated = useRef(false)
 
   useEffect(() => {
-    if (fetchedRef.current) return
-    fetchedRef.current = true
-
-    // Validate/repair the session on load so navbar + guards reflect reality.
-    ensureSession().catch(() => {})
+    // Only validate session once per app load
+    if (!sessionValidated.current) {
+      sessionValidated.current = true
+      // Validate/repair the session on load so navbar + guards reflect reality.
+      ensureSession().catch(() => {})
+    }
 
     // When the component mounts on the client, we check what class is active on the HTML tag.
     // The HTML tag is pre-configured by an inline block script in layout.tsx to avoid FOUC.
     const isDark = document.documentElement.classList.contains('dark')
     setTheme(isDark ? 'dark' : 'light')
+    
+    // Enable transitions after initial render
+    requestAnimationFrame(() => {
+      document.documentElement.classList.add('hydrated')
+    })
+    
     setMounted(true)
 
     // Service worker handling.

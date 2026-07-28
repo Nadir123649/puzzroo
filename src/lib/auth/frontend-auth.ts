@@ -128,6 +128,8 @@ function clearClientSession() {
 
 // Prevent parallel refresh calls (race condition protection)
 let refreshPromise: Promise<void> | null = null;
+let lastRefreshTime = 0;
+const REFRESH_COOLDOWN = 2000; // 2 seconds cooldown between refreshes
 
 export async function ensureSession(): Promise<void> {
   if (typeof window === "undefined") return;
@@ -137,6 +139,12 @@ export async function ensureSession(): Promise<void> {
     return refreshPromise;
   }
   
+  // Prevent rapid successive calls (cooldown period)
+  const now = Date.now();
+  if (now - lastRefreshTime < REFRESH_COOLDOWN) {
+    return;
+  }
+  
   const token = getAccessToken();
   const hasFlag = !!localStorage.getItem("puzzroo_auth");
   if (!token && !hasFlag) return;
@@ -144,6 +152,7 @@ export async function ensureSession(): Promise<void> {
   if (token && !isTokenExpired(token)) {
     refreshPromise = (async () => {
       try {
+        lastRefreshTime = Date.now();
         const meRes = await api("/api/v1/users/me");
         if (meRes.success) {
           const current = getCurrentUser();
@@ -165,6 +174,7 @@ export async function ensureSession(): Promise<void> {
   // Token is expired, try to refresh
   refreshPromise = (async () => {
     try {
+      lastRefreshTime = Date.now();
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/auth/refresh`, {
         method: "POST",
         credentials: "include",

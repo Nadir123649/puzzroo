@@ -9,34 +9,20 @@ import { isLoggedIn, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
 
-let globalMounted = false
-
 export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number>(0)
 
-  // Initialise synchronously from localStorage so the very first render already
-  // shows the correct auth state — this prevents the "Sign up/Login" ↔ "Subscribe/Profile"
-  // width-difference from flashing and shifting the navbar on every navigation.
-  const [loggedIn, setLoggedIn] = useState<boolean>(() => {
-    if (typeof window === 'undefined' || !globalMounted) return false
-    return isLoggedIn()
-  })
-  const [user, setUser] = useState<{ name: string; email: string } | null>(() => {
-    if (typeof window === 'undefined' || !globalMounted) return null
-    const userData = getCurrentUser()
-    if (!userData) return null
-    return { name: userData.name || userData.username, email: userData.email }
-  })
-
-  const [navbarMounted, setNavbarMounted] = useState(globalMounted)
+  // Start with false to avoid hydration mismatch, then update on mount
+  const [loggedIn, setLoggedIn] = useState<boolean>(false)
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+  const [navbarMounted, setNavbarMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
   useEffect(() => {
-    globalMounted = true
     setNavbarMounted(true)
 
     const checkAuth = () => {
@@ -175,45 +161,50 @@ export function Navbar() {
 
           {/* RIGHT: Desktop Actions */}
           <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
-            {(loggedIn && user) ? (
-              <>
-                {/* Subscribe Us Button - Only for logged in users */}
-                <Link 
-                  href="/subscription" 
-                  className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
-                >
-                  Subscribe Us
-                </Link>
-                <ProfileDropdown userName={user.name} userEmail={user.email} />
-              </>
+            {navbarMounted ? (
+              (loggedIn && user) ? (
+                <>
+                  {/* Subscribe Us Button - Only for logged in users */}
+                  <Link 
+                    href="/subscription" 
+                    className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
+                  >
+                    Subscribe Us
+                  </Link>
+                  <ProfileDropdown userName={user.name} userEmail={user.email} />
+                </>
+              ) : (
+                <>
+                  <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
+                    Sign up
+                  </Link>
+
+                  <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
+                    Login
+                  </Link>
+
+                  <button
+                    onClick={toggleTheme}
+                    className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-300 active:scale-95"
+                    aria-label="Toggle theme"
+                  >
+                    <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
+                      {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                    </span>
+                    <img
+                      src={images.darkIcon}
+                      alt="Theme icon"
+                      width={20}
+                      height={20}
+                      className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
+                        }`}
+                    />
+                  </button>
+                </>
+              )
             ) : (
-              <>
-                <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
-                  Sign up
-                </Link>
-
-                <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
-                  Login
-                </Link>
-
-                <button
-                  onClick={toggleTheme}
-                  className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-300 active:scale-95"
-                  aria-label="Toggle theme"
-                >
-                  <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
-                    {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-                  </span>
-                  <img
-                    src={images.darkIcon}
-                    alt="Theme icon"
-                    width={20}
-                    height={20}
-                    className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
-                      }`}
-                  />
-                </button>
-              </>
+              // Placeholder with same width to prevent layout shift
+              <div className="h-[38px] w-[280px]" />
             )}
 
           </div>
@@ -259,7 +250,7 @@ export function Navbar() {
         }`}
       >
         <div className="flex flex-col gap-3 pt-4">
-          {loggedIn && user ? (
+          {navbarMounted && loggedIn && user ? (
             <>
               <div className="py-2 border-b border-gray-100 dark:border-gray-800">
                 <p className="font-urbanist font-bold text-[16px] text-[#212121] dark:text-white truncate">

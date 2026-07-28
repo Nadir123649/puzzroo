@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { isLoggedIn, ensureSession } from '@/lib/auth/frontend-auth'
+import { isLoggedIn } from '@/lib/auth/frontend-auth'
 
 export function RedirectIfAuthenticated({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
@@ -10,25 +10,31 @@ export function RedirectIfAuthenticated({ children }: { children: React.ReactNod
   useEffect(() => {
     setMounted(true)
 
-    // Validate the session first: a stale/expired accessToken must be cleared
-    // (so we don't bounce a logged-OUT user away from /login), while a live
-    // session is refreshed. Only then decide whether to redirect.
-    const run = async () => {
-      await ensureSession()
+    // Check if user is already logged in
+    const checkAndRedirect = () => {
       if (isLoggedIn()) {
         window.location.replace('/')
       } else {
-        // Session was stale/expired and cleared — reveal the login form.
+        // Not logged in - show the login/signup form
         setValidated(true)
       }
     }
-    run()
+
+    // Wait for ensureSession from providers.tsx to complete (max 200ms)
+    const timer = setTimeout(checkAndRedirect, 200)
 
     // bfcache restores (e.g. pressing Back after an OAuth login) do not re-run
     // the effect body, so re-check on pageshow to avoid a stuck blank screen.
-    const onPageShow = () => run()
+    const onPageShow = () => {
+      setValidated(false)
+      setTimeout(checkAndRedirect, 200)
+    }
     window.addEventListener('pageshow', onPageShow)
-    return () => window.removeEventListener('pageshow', onPageShow)
+    
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('pageshow', onPageShow)
+    }
   }, [])
 
   const spinner = (

@@ -54,28 +54,43 @@ export default function SubscriptionPage() {
     const detectCurrency = async () => {
       let detectedCountry = ''
       
-      // Try IP-based detection via XMLHttpRequest (bypasses Next.js dev-overlay fetch interceptor)
-      // Wrapped in silent error handling to prevent 403 errors from showing in console
+      // Fallback 1: Try browser timezone first (no API call, instant)
       try {
-        const data = await new Promise<any>((resolve, reject) => {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+        if (timezone.includes('Karachi') || timezone.includes('Pakistan')) {
+          setCurrency('PKR')
+          return
+        } else if (timezone.includes('Europe/')) {
+          const euTimezones = ['Europe/Paris', 'Europe/Berlin', 'Europe/Rome', 'Europe/Madrid', 'Europe/Amsterdam', 'Europe/Brussels', 'Europe/Vienna', 'Europe/Lisbon', 'Europe/Helsinki', 'Europe/Dublin', 'Europe/Athens', 'Europe/Luxembourg', 'Europe/Malta', 'Europe/Nicosia', 'Europe/Tallinn', 'Europe/Riga', 'Europe/Vilnius', 'Europe/Bratislava', 'Europe/Ljubljana']
+          if (euTimezones.some(tz => timezone.includes(tz))) {
+            setCurrency('EUR')
+            return
+          }
+        }
+      } catch (e) {
+        // Timezone detection failed, continue to IP-based detection
+      }
+      
+      // Fallback 2: Try IP-based detection (may be blocked)
+      // Silently fail if API is blocked or rate limited
+      try {
+        const data = await new Promise<any>((resolve) => {
           const xhr = new XMLHttpRequest()
           xhr.open('GET', 'https://ipapi.co/json/', true)
-          xhr.timeout = 3000
+          xhr.timeout = 2000 // 2 seconds timeout
           xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
               try {
                 resolve(JSON.parse(xhr.responseText))
               } catch (e) {
-                // Silent fail - just use fallback
                 resolve(null)
               }
             } else {
-              // Silent fail on 403 or other errors
-              resolve(null)
+              resolve(null) // Silent fail on 403, 429, etc.
             }
           }
-          xhr.onerror = () => resolve(null) // Silent fail
-          xhr.ontimeout = () => resolve(null) // Silent fail
+          xhr.onerror = () => resolve(null)
+          xhr.ontimeout = () => resolve(null)
           xhr.send()
         })
         
@@ -83,7 +98,8 @@ export default function SubscriptionPage() {
           detectedCountry = data.country_code
         }
       } catch (err) {
-        console.warn('IP-based currency detection failed, falling back to timezone:', err)
+        // Silently fail - no console messages
+        detectedCountry = ''
       }
 
       if (detectedCountry) {
@@ -96,6 +112,7 @@ export default function SubscriptionPage() {
           setCurrency('USD')
         }
       }
+      // If all detection fails, default USD from initial state is used
     }
 
     detectCurrency()
