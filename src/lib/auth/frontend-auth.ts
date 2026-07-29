@@ -540,6 +540,7 @@ export async function updateEmailPreferences(prefs: Record<string, boolean>): Pr
 }
 
 function mapUser(u: any): User {
+  const mappedRole = u.role === "premium" ? "free" : (u.role || "free");
   return {
     id: u.id,
     publicId: u.publicId,
@@ -547,11 +548,11 @@ function mapUser(u: any): User {
     email: u.email || "",
     username: u.username,
     usernameSet: u.usernameSet,
-    role: u.role || "free",
+    role: mappedRole,
     joinedDate: u.createdAt ? formatDate(u.createdAt) : "N/A",
     createdAt: u.createdAt,
     accountStatus: u.status || "active",
-    subscriptionPlan: u.role || "free",
+    subscriptionPlan: mappedRole,
     avatar: u.avatar,
     provider: u.provider || "email",
     linkedProviders: u.linkedProviders || [],
