@@ -128,59 +128,28 @@ export class SessionService {
   ) {
     const session = await this.getSession(sessionId, userId)
 
-    let result: { isComplete: boolean; accuracy: number; correctCells: number; totalCells: number }
     let verification: TangramVerificationResult
 
-    if (grid && grid.length > 0) {
+    if (pieces && pieces.length > 0) {
       verification = await verificationEngine.verifyCompletion(session.puzzleId, grid, pieces)
-      result = {
-        isComplete: verification.isComplete,
-        accuracy: verification.accuracy,
-        correctCells: verification.correctCells,
-        totalCells: verification.totalCellsRequired,
-      }
-    } else if (pieces && pieces.length > 0) {
-      verification = await verificationEngine.verifyCompletion(session.puzzleId, grid, pieces)
-      result = {
-        isComplete: verification.isComplete,
-        accuracy: verification.accuracy,
-        correctCells: verification.correctCells,
-        totalCells: verification.totalCellsRequired,
-      }
     } else {
-      result = {
-        isComplete: false,
-        accuracy: 0,
-        correctCells: 0,
-        totalCells: 0,
-      }
       verification = {
         isComplete: false,
-        totalCellsRequired: 0,
-        correctCells: 0,
-        incorrectCells: 0,
+        valid: false,
         accuracy: 0,
-        mistakes: 0,
-        rowValidation: [],
-        columnValidation: [],
-        pieces: []
+        piecesCorrect: 0,
+        totalPieces: 0,
+        pieceResults: [],
+        errors: ['No pieces provided'],
       }
     }
 
     const difficultyMultiplier: Record<string, number> = { easy: 1, medium: 1.5, hard: 2, expert: 3 };
     const multiplier = difficultyMultiplier[session.difficulty] ?? 1;
-    const score = Math.max(0, Math.round(result.accuracy * 10 * multiplier - hintsUsed * 50 - mistakes * 25));
-
-    const completionResult = {
-      isComplete: result.isComplete,
-      accuracy: result.accuracy,
-      correctCells: result.correctCells,
-      totalCells: result.totalCells,
-      completedAt: new Date(),
-    }
+    const score = Math.max(0, Math.round(verification.accuracy * 10 * multiplier - hintsUsed * 50 - mistakes * 25));
 
     const sessionResult = await playSessionRepository.complete(sessionId, {
-      accuracy: result.accuracy,
+      accuracy: verification.accuracy,
       elapsedTime,
       moves,
       mistakes,
@@ -193,7 +162,6 @@ export class SessionService {
     return {
       ...toSafeSession(sessionResult),
       verification,
-      completionResult,
     }
   }
 

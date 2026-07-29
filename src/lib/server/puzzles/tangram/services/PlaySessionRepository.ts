@@ -37,14 +37,11 @@ export class PlaySessionRepository {
   }
 
   async findActiveByUserAndPuzzle(userId: string, puzzleId: string) {
-    console.log('[D] findActiveByUserAndPuzzle', { userId: userId?.substring(0,10), puzzleId: puzzleId?.substring(0,20), ts: Date.now() })
-    const doc = await TangramPlaySession.findOne({
+    return TangramPlaySession.findOne({
       userId,
       puzzleId,
       status: { $in: ["playing", "paused"] },
     })
-    console.log('[D] findActiveByUserAndPuzzle: result', { found: !!doc, status: doc?.status, ts: Date.now() })
-    return doc
   }
 
   async findByUserAndStatus(

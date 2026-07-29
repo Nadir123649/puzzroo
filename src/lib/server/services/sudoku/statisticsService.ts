@@ -2,7 +2,6 @@ import { connectDB } from "@/lib/server/db";
 import PlaySession from "@/lib/server/models/sudoku/PlaySession";
 import UserStatistics from "@/lib/server/models/sudoku/UserStatistics";
 import PuzzleStatistics from "@/lib/server/models/sudoku/PuzzleStatistics";
-import DailyChallenge from "@/lib/server/models/sudoku/DailyChallenge";
 import type { Difficulty, UserStatsResponse } from "./types";
 
 function computeStreaks(dates: Date[]): { current: number; longest: number } {

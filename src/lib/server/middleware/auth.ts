@@ -4,22 +4,45 @@ import { errorResponse } from "../utils/apiResponse";
 import { connectDB } from "../db";
 import LoginSession from "../models/LoginSession";
 
+const ALLOWED_ALGORITHMS: jwt.Algorithm[] = ["HS256"];
+const ALLOWED_ORIGINS = [
+  process.env.NEXT_PUBLIC_APP_URL,
+  process.env.NEXT_PUBLIC_SITE_URL,
+  "http://localhost:3000",
+  "http://localhost:3001",
+].filter(Boolean) as string[];
+
+function validateOrigin(request: NextRequest): boolean {
+  const method = request.method.toUpperCase();
+  if (["GET", "HEAD", "OPTIONS"].includes(method)) return true;
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  if (!origin && !referer) return true;
+  const checkOrigin = origin || referer;
+  if (!checkOrigin) return true;
+  return ALLOWED_ORIGINS.some(allowed => checkOrigin.startsWith(allowed));
+}
+
 export async function auth(request: NextRequest) {
+  if (!validateOrigin(request)) {
+    return { error: errorResponse(403, "forbidden", "Request blocked: invalid origin") };
+  }
+
   const token = request.headers.get("Authorization");
   if (!token) {
     return { error: errorResponse(401, "token_missing", "Access denied. No token provided.") };
   }
   const actualToken = token.startsWith("Bearer ") ? token.slice(7) : token;
   try {
-    const decoded = jwt.verify(actualToken, process.env.JWT_ACCESS_SECRET!) as {
+    const decoded = jwt.verify(actualToken, process.env.JWT_ACCESS_SECRET!, {
+      algorithms: ALLOWED_ALGORITHMS,
+    }) as {
       id: string;
       role: string;
       jti?: string;
+      exp?: number;
     };
 
-    // If the token is bound to a login session, the session MUST still exist.
-    // Deleting the session (logout / logout-all / device revoke) therefore
-    // invalidates the token immediately — making logout real, not cosmetic.
     if (decoded.jti) {
       await connectDB();
       const session = await LoginSession.findById(decoded.jti);

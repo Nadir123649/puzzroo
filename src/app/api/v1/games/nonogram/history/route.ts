@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { withAuth } from "../route-helpers";
-import PlaySession from "@/lib/server/models/PlaySession";
-import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle";
+import NonogramPlaySession from "@/lib/server/models/NonogramPlaySession";
 import { successResponse } from "@/lib/server/utils/apiResponse";
 
 export const GET = withAuth(async (req, user) => {
@@ -19,36 +18,41 @@ export const GET = withAuth(async (req, user) => {
     filter.difficulty = difficulty;
   }
 
-  const [sessions, total] = await Promise.all([
-    PlaySession.find(filter)
-      .sort({ updatedAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-    PlaySession.countDocuments(filter),
+  const [results, total] = await Promise.all([
+    NonogramPlaySession.aggregate([
+      { $match: filter },
+      { $sort: { lastSaveAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "nonogrampuzzles",
+          localField: "puzzleId",
+          foreignField: "puzzleId",
+          as: "puzzle",
+        },
+      },
+      { $unwind: { path: "$puzzle", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          sessionId: 1,
+          puzzleId: 1,
+          difficulty: 1,
+          status: 1,
+          elapsedTime: 1,
+          hintsUsed: 1,
+          mistakes: 1,
+          "result.accuracy": 1,
+          startedAt: 1,
+          completedAt: 1,
+          title: "$puzzle.title",
+          size: "$puzzle.size",
+          category: "$puzzle.category",
+        },
+      },
+    ]),
+    NonogramPlaySession.countDocuments(filter),
   ]);
-
-  const results = await Promise.all(
-    sessions.map(async (s) => {
-      const puzzle = await NonogramPuzzle.findOne({ puzzleId: s.puzzleId })
-        .select("title size category")
-        .lean();
-      return {
-        sessionId: s._id,
-        puzzleId: s.puzzleId,
-        title: (puzzle as any)?.title || "",
-        size: (puzzle as any)?.size || 0,
-        difficulty: s.difficulty,
-        status: s.status,
-        elapsedSeconds: s.elapsedSeconds,
-        hintsUsed: s.hintsUsed,
-        mistakes: s.mistakes,
-        accuracy: (s as any).completionResult?.accuracy || 0,
-        startedAt: s.startedAt,
-        completedAt: s.completedAt,
-      };
-    })
-  );
 
   return successResponse({ sessions: results, total, limit, skip });
 });

@@ -7,7 +7,7 @@ import type {
   SessionResponse,
   SaveProgressInput,
 } from "./types";
-import { encode81, decode81, cloneBoard, createEmptyNotes, isEmptyNotes } from "./utils";
+import { createEmptyNotes, isEmptyNotes } from "./utils";
 import { verifyCompletion, calculateScore, validateElapsedTime } from "./verificationService";
 
 function toSessionResponse(doc: any): SessionResponse {

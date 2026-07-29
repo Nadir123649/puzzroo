@@ -87,5 +87,6 @@ export interface SavedGameState {
   elapsedSeconds: number
   hintsUsed: number
   mistakeCount: number
+  moveCount?: number
   timestamp: number
 }

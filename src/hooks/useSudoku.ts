@@ -43,7 +43,7 @@ import {
 } from '@shared/lib/sudoku/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
-import { getAccessToken } from '@/lib/auth/frontend-auth'
+import { getAccessToken, signInGuest } from '@/lib/auth/frontend-auth'
 
 function getTodayDateParam(): string {
   const d = new Date()
@@ -198,7 +198,10 @@ export function useSudoku() {
     completionCalledRef.current = false
     movesRef.current = 0
     if (typeof window === 'undefined') return null
-    if (!getAccessToken()) return null
+    if (!getAccessToken()) {
+      await signInGuest()
+      if (!getAccessToken()) return null
+    }
     const pid = puzzleId || gameState.puzzleId
     if (!pid) return null
     try {
@@ -259,7 +262,6 @@ export function useSudoku() {
         hintsUsed: Number(hintsUsedRef.current),
         mistakes: Number(mistakesRef.current),
         moves: Number(movesRef.current),
-        score: Number(scoreRef.current),
       })
     } catch { /* ignore */ }
   }
@@ -804,7 +806,17 @@ export function useSudoku() {
         const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
         setGameState(next)
         puzzleIdRef.current = next.puzzleId
+        sessionCreatedRef.current = false
+        sessionIdRef.current = null
         completionCalledRef.current = false
+        if (getAccessToken()) {
+          initSession(next.puzzleId)
+        } else {
+          await signInGuest()
+          if (getAccessToken()) {
+            initSession(next.puzzleId)
+          }
+        }
       }
     } catch {
       if (!cancelled) setLoading(false)

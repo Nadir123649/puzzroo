@@ -8,6 +8,7 @@ interface CreateSessionInput {
   difficulty: CrossMathDifficulty
   blanks: string[]
   availableNumbers: number[]
+  isReplay?: boolean
 }
 
 interface SessionQuery {
@@ -27,6 +28,7 @@ export class PlaySessionRepository {
       grid: {},
       blanks: input.blanks,
       availableNumbers: input.availableNumbers,
+      isReplay: input.isReplay || false,
       startedAt: new Date(),
       lastSaveAt: new Date(),
     })
@@ -41,13 +43,11 @@ export class PlaySessionRepository {
   }
 
   async findActiveByUserAndPuzzle(userId: string, puzzleId: string) {
-    console.log('[D] findActiveByUserAndPuzzle', { userId: userId?.substring(0,10), puzzleId: puzzleId?.substring(0,20), ts: Date.now() })
     const doc = await CrossMathPlaySession.findOne({
       userId,
       puzzleId,
       status: { $in: ["playing", "paused"] },
     })
-    console.log('[D] findActiveByUserAndPuzzle: result', { found: !!doc, status: doc?.status, ts: Date.now() })
     return doc
   }
 
@@ -113,11 +113,9 @@ export class PlaySessionRepository {
         $set: {
           grid,
           elapsedTime,
-          hintsUsed,
-          mistakes,
           lastSaveAt: new Date(),
         },
-        $max: { moves },
+        $max: { moves, mistakes, hintsUsed },
       },
       { new: true }
     )

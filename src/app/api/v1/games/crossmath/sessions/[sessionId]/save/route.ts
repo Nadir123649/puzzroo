@@ -6,7 +6,6 @@ import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { rateLimit } from "@/lib/server/utils/http"
 
 export const POST = withAuth(async (req, user, params) => {
-  console.log('[TRACE] POST /save', { sessionId: params.sessionId?.substring(0,20), userId: user.id?.substring(0,10), ts: Date.now() })
   if (!rateLimit(req, "crossmath-save", 60)) {
     return errorResponse(429, "rate_limited", "Too many requests")
   }
@@ -29,7 +28,6 @@ export const POST = withAuth(async (req, user, params) => {
     parsed.data.mistakes,
     parsed.data.moves
   )
-  console.log('[TRACE] POST /save: result', { sessionId: sessionId?.substring(0,20), status: result.sessionStatus, ts: Date.now() })
   return successResponse(result)
 })
 
