@@ -9,7 +9,7 @@ interface CrossMathCellProps {
   onClick: () => void
 }
 
-export function CrossMathCell({ cell, isSelected, onClick }: CrossMathCellProps) {
+export const CrossMathCell = React.memo(function CrossMathCellComponent({ cell, isSelected, onClick }: CrossMathCellProps) {
   const isEditable = cell.isEditable
   const isEmpty = cell.type === 'empty'
   const isNumber = cell.type === 'number'
@@ -114,4 +114,4 @@ export function CrossMathCell({ cell, isSelected, onClick }: CrossMathCellProps)
       {cell.value}
     </button>
   )
-}
+})

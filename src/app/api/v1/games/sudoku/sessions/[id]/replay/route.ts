@@ -10,6 +10,6 @@ export const POST = withAuth(async (req: NextRequest, user, params) => {
   }
 
   const existingSession = await getSession(params.id, user.id);
-  const session = await replayPuzzle(user.id, existingSession.puzzleId);
-  return successResponse(session, 201);
+  const result = await replayPuzzle(user.id, existingSession.puzzleId);
+  return successResponse(result, 201);
 });

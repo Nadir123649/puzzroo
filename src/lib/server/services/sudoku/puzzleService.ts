@@ -51,7 +51,8 @@ export async function getRandomPuzzle(
   const exclusions = new Set(excludeIds || []);
 
   if (userId) {
-    const [activeSessions, completedSessions] = await Promise.all([
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [activeSessions, completedSessions, recentAbandoned] = await Promise.all([
       PlaySession.find({
         userId,
         status: { $in: ["playing", "paused"] },
@@ -60,17 +61,15 @@ export async function getRandomPuzzle(
         userId,
         status: "completed",
       }).select("puzzleId").lean(),
+      PlaySession.find({
+        userId,
+        status: "abandoned",
+        updatedAt: { $gte: twentyFourHoursAgo },
+      }).select("puzzleId").lean(),
     ]);
 
     for (const s of activeSessions) exclusions.add(String(s.puzzleId));
     for (const s of completedSessions) exclusions.add(String(s.puzzleId));
-
-    const recentAbandoned = await PlaySession.find({
-      userId,
-      status: "abandoned",
-      updatedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-    }).select("puzzleId").lean();
-
     for (const s of recentAbandoned) exclusions.add(String(s.puzzleId));
   }
 

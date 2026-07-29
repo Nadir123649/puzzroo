@@ -1,6 +1,3 @@
-'use client'
-
-import React from 'react'
 import { InfoPageLayout } from '@/components/layout/InfoPageLayout'
 
 export default function TermsAndConditionsPage() {

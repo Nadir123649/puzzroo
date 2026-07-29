@@ -1,4 +1,4 @@
-import { decode81, encode81, isBoardComplete, isBoardFullyValid } from "./utils";
+import { decode81, isBoardComplete, isBoardFullyValid } from "./utils";
 import type { Difficulty } from "./types";
 import PlaySession from "@/lib/server/models/sudoku/PlaySession";
 import SudokuPuzzle from "@/lib/server/models/SudokuPuzzle";
@@ -86,4 +86,13 @@ export function calculateScore(
 
   const score = (baseScore * multiplier) + timeBonus + flawlessBonus - mistakePenalty - hintPenalty;
   return Math.max(100, score);
+}
+
+export function validateElapsedTime(
+  clientElapsedTime: number,
+  savedElapsedTime: number,
+  sessionStartedAt: Date
+): number {
+  const wallClockElapsed = Math.max(0, (Date.now() - sessionStartedAt.getTime()) / 1000);
+  return Math.max(savedElapsedTime, Math.min(clientElapsedTime, wallClockElapsed));
 }
