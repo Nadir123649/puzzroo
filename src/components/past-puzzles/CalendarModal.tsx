@@ -19,7 +19,6 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>('')
   
-  // Keyboard navigation, mouse wheel / touchpad, and mobile swipe handlers
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   const today = new Date()
@@ -121,22 +120,6 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
   ]
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-  const handleWheel = (e: React.WheelEvent) => {
-    if (Math.abs(e.deltaX) > 20) {
-      if (e.deltaX > 20) {
-        handleNextMonth()
-      } else {
-        handlePrevMonth()
-      }
-    } else if (Math.abs(e.deltaY) > 20) {
-      if (e.deltaY > 20) {
-        handleNextMonth()
-      } else {
-        handlePrevMonth()
-      }
-    }
-  }
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 1) {
@@ -258,7 +241,6 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
       >
         <div 
           className="bg-white dark:bg-[#1F222A] rounded-2xl shadow-2xl max-w-md w-full p-6 relative my-auto scroll-smooth"
-          onWheel={handleWheel}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
         >
@@ -314,7 +296,7 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
         </div>
 
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-2 mb-4">
+        <div key={`${year}-${month}`} className="grid grid-cols-7 gap-2 mb-4">
           {calendarDays.map((day, index) => {
             if (day === null) {
               return <div key={`empty-${index}`} />

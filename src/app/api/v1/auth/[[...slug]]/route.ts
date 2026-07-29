@@ -166,19 +166,32 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const rl = checkRateLimit(request, "auth:refresh", 20, 60_000);
       if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const refreshToken = request.cookies.get("refreshToken")?.value;
-      if (!refreshToken) return errorResponse(401, "token_missing", "Refresh token not found");
+      if (!refreshToken) {
+        return NextResponse.json(
+          { success: false, version: "1.0.0", payload: { error: { code: "token_missing", message: "Refresh token not found" } }, serverTimestamp: new Date().toISOString() },
+          { status: 200 }
+        );
+      }
       const jwt = await import("jsonwebtoken");
       try {
         const decoded = jwt.default.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { id: string; jti?: string; ver?: number };
         const user = await User.findById(decoded.id);
-        if (!user) return errorResponse(401, "user_not_found", "User not found");
+        if (!user) {
+          return NextResponse.json(
+            { success: false, version: "1.0.0", payload: { error: { code: "user_not_found", message: "User not found" } }, serverTimestamp: new Date().toISOString() },
+            { status: 200 }
+          );
+        }
 
         // ── Refresh token rotation ──
         let tokenVersion: number | undefined;
         if (decoded.jti) {
           const session = await LoginSession.findById(decoded.jti);
           if (!session) {
-            return errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.");
+            return NextResponse.json(
+              { success: false, version: "1.0.0", payload: { error: { code: "session_revoked", message: "Session has been revoked. Please sign in again." } }, serverTimestamp: new Date().toISOString() },
+              { status: 200 }
+            );
           }
           const currentVersion = (session as any).tokenVersion ?? 0;
           const presentedVersion = decoded.ver ?? 0;
@@ -192,7 +205,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               properties: { expectedVersion: currentVersion, receivedVersion: presentedVersion },
               request,
             });
-            return errorResponse(401, "token_reused", "Refresh token has already been used. All sessions revoked for security.");
+            return NextResponse.json(
+              { success: false, version: "1.0.0", payload: { error: { code: "token_reused", message: "Refresh token has already been used. All sessions revoked for security." } }, serverTimestamp: new Date().toISOString() },
+              { status: 200 }
+            );
           }
 
           (session as any).tokenVersion = currentVersion + 1;
@@ -205,7 +221,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         res.cookies.set("refreshToken", tokenPayload.refreshToken, cookieOptions);
         return res;
       } catch {
-        return errorResponse(401, "token_invalid", "Invalid or expired refresh token");
+        return NextResponse.json(
+          { success: false, version: "1.0.0", payload: { error: { code: "token_invalid", message: "Invalid or expired refresh token" } }, serverTimestamp: new Date().toISOString() },
+          { status: 200 }
+        );
       }
     }
 

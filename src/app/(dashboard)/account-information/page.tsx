@@ -217,18 +217,9 @@ export default function AccountInformationPage() {
 
           {/* Email Address */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
-            <div className="flex items-center gap-2 mb-1 sm:mb-0">
-              <Image 
-                src={images.gmailIcon} 
-                alt="Email" 
-                width={16} 
-                height={16}
-                className="object-contain"
-              />
-              <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD]">
-                Email Address
-              </span>
-            </div>
+            <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-1 sm:mb-0">
+              Email Address
+            </span>
             <div className="flex flex-col items-start sm:items-end">
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
                 {localUser?.email || 'N/A'}
@@ -273,11 +264,11 @@ export default function AccountInformationPage() {
           </div>
 
           {/* Password */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
-            <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-2 sm:mb-0">
+          <div className="flex flex-row items-center justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
+            <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD]">
               Password
             </span>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 -mt-[2px]">
               {canChangePassword ? (
                 <Button
                   size="xs"
@@ -297,7 +288,7 @@ export default function AccountInformationPage() {
           </div>
 
           {/* Subscription Plan */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
             <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-1 sm:mb-0">
               Subscription Plan
             </span>
@@ -307,7 +298,7 @@ export default function AccountInformationPage() {
           </div>
 
           {/* Connected Accounts */}
-          <div className="pt-3">
+          <div className="pt-3 pb-3">
             <h3 className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white mb-2">
               Connected Accounts
             </h3>

@@ -41,6 +41,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   const router = useRouter()
   const mobileBoardRef = useRef<HTMLDivElement>(null)
   const desktopBoardRef = useRef<HTMLDivElement>(null)
+  const [isModalVisible, setIsModalVisible] = useState(false)
 
   const {
     puzzle,
@@ -67,10 +68,6 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     hasRedo,
     commitHistory
   } = usePolygonTangram(difficulty)
-
-
-
-  const [isModalVisible, setIsModalVisible] = useState(false)
 
   // Show modal automatically when game is won or lost
   useEffect(() => {
@@ -255,10 +252,10 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
             {/* RIGHT SIDE - CONTROLS PANEL */}
             <div 
-              className="flex-shrink-0 w-[360px] flex flex-col gap-5 sticky top-[100px] self-stretch"
+              className="flex-shrink-0 w-[360px] flex flex-col gap-5 sticky top-[100px]"
             >
-              {/* Premium Controls Card - fills space but doesn't push buttons down */}
-              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-6 shadow-lg shadow-purple-500/5 flex flex-col gap-5 flex-1">
+              {/* Premium Controls Card */}
+              <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-6 shadow-lg shadow-purple-500/5 flex flex-col gap-5">
                 {/* Difficulty Heading - centered, bold, larger */}
                 {puzzle && (
                   <div className="text-center py-1">
@@ -331,7 +328,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                   {/* Replay Button */}
                   <button
                     onClick={handleReplay}
-                    disabled={gameStatus !== 'playing'}
+                    disabled={gameStatus !== 'playing' && isModalVisible}
                     className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Restart same puzzle"
                     aria-label="Replay"
@@ -476,7 +473,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               {/* Replay Button */}
               <button
                 onClick={handleReplay}
-                disabled={gameStatus !== 'playing'}
+                disabled={gameStatus !== 'playing' && isModalVisible}
                 className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Restart same puzzle"
                 aria-label="Replay"
@@ -488,7 +485,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               <button
                 onClick={handleUndo}
                 disabled={!hasUndo}
-                className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-full bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Undo last move"
                 aria-label="Undo"
               >
@@ -499,7 +496,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               <button
                 onClick={handleRedo}
                 disabled={!hasRedo}
-                className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-full bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Redo move"
                 aria-label="Redo"
               >
@@ -508,27 +505,29 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
             </div>
 
             {/* Replay / New Game Button Mobile */}
-            {isFromPastPuzzles || mode !== 'normal' ? (
-              <Button
-                onClick={handleReplay}
-                disabled={isResetting}
-                fullWidth
-                size="md"
-                className="h-[46px]"
-              >
-                Replay Game
-              </Button>
-            ) : (
-              <Button
-                onClick={handleNewGame}
-                disabled={isResetting}
-                fullWidth
-                size="md"
-                className="h-[46px]"
-              >
-                New Game
-              </Button>
-            )}
+            <div className="w-full px-4">
+              {isFromPastPuzzles || mode !== 'normal' ? (
+                <Button
+                  onClick={handleReplay}
+                  disabled={isResetting}
+                  fullWidth
+                  size="md"
+                  className="h-[46px]"
+                >
+                  Replay Game
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNewGame}
+                  disabled={isResetting}
+                  fullWidth
+                  size="md"
+                  className="h-[46px]"
+                >
+                  New Game
+                </Button>
+              )}
+            </div>
           </div>
 
         </div>

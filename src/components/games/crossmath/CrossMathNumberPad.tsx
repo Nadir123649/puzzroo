@@ -53,7 +53,7 @@ export function CrossMathNumberPad({
                     ${mobile ? 'h-[46px]' : 'h-[46px]'}
                     rounded-[8px]
                     font-urbanist font-bold text-[20px]
-                    transition-all duration-200
+                    transition-colors duration-150
                     ${
                       isUsed
                         ? 'bg-[#F0EDFF] dark:bg-[#1F222A] text-[#BDBDBD] dark:text-[#616161] opacity-50 cursor-not-allowed'

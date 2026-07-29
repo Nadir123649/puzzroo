@@ -65,6 +65,7 @@ export async function completeOAuthLogin(
     setSubmitting: (v: boolean) => void
     setErrors?: (e: any) => void
     welcomeKey?: string
+    router?: any
   }
 ) {
   opts.setSubmitting(true)
@@ -87,7 +88,11 @@ export async function completeOAuthLogin(
     window.dispatchEvent(new Event('auth-change'))
     if (opts.welcomeKey) notify.successKey(opts.welcomeKey as any)
     opts.setSubmitting(false)
-    window.location.href = payload.user.usernameSet ? '/' : '/choose-username'
+    if (opts.router) {
+      opts.router.push(payload.user.usernameSet ? '/' : '/choose-username')
+    } else {
+      window.location.href = payload.user.usernameSet ? '/' : '/choose-username'
+    }
   } catch (err: any) {
     opts.setSubmitting(false)
     if (err?.code !== 'auth/popup-closed-by-user') {

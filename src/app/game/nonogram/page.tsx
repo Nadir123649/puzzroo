@@ -4,6 +4,7 @@ import { GameInfo } from '@/components/game-lobby/GameInfo';
 import { GamePromo } from '@/components/game-lobby/GamePromo';
 import { NonogramPuzzleGrid } from '@/components/game-lobby/NonogramPuzzleGrid';
 import { GameLobbyProvider } from '@/contexts/GameLobbyContext';
+import { images } from '@/lib/utils';
 
 export default async function NonogramLobbyPage() {
   return (
@@ -12,7 +13,8 @@ export default async function NonogramLobbyPage() {
         <main className="flex-grow flex flex-col">
           <GameHero
             name="Nonogram"
-            image="/kakuro.svg"
+            image={images.gameCards.nonogram}
+            imageLight={images.gameCards.nonogramWhite}
             difficulties={['easy', 'medium', 'hard', 'expert']}
             gameSlug="nonogram"
           />
