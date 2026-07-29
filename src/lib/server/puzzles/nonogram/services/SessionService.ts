@@ -180,6 +180,8 @@ export class SessionService {
       score,
     })
 
+    if (!sessionResult) throw new Error("already_completed")
+
     return toSafeSession(sessionResult)
   }
 

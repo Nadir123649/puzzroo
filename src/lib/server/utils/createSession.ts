@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import crypto from "crypto";
 import LoginSession from "@/lib/server/models/LoginSession";
 import { parseUserAgent } from "@/lib/server/utils/parseUserAgent";
 import { geoLocate } from "@/lib/server/utils/geoLocate";
@@ -13,10 +14,19 @@ function getClientIp(request: NextRequest): string | null {
   return null;
 }
 
+function getDeviceFingerprint(request: NextRequest): string | null {
+  const header = request.headers.get("x-device-fingerprint");
+  if (header) return header;
+  const ua = request.headers.get("user-agent");
+  if (ua) return crypto.createHash("sha256").update(ua).digest("hex").substring(0, 32);
+  return null;
+}
+
 export async function createSession(request: NextRequest, userId: string, provider?: string, markOthersInactive = true) {
   const ip = getClientIp(request);
   const ua = request.headers.get("user-agent");
   const parsed = parseUserAgent(ua);
+  const deviceFingerprint = getDeviceFingerprint(request);
 
   const [location] = await Promise.all([
     geoLocate(ip),
@@ -25,7 +35,7 @@ export async function createSession(request: NextRequest, userId: string, provid
       : Promise.resolve(),
   ]);
 
-  const session = await LoginSession.create({
+  const sessionData = {
     userId,
     ip,
     userAgent: ua,
@@ -36,8 +46,20 @@ export async function createSession(request: NextRequest, userId: string, provid
     isCurrent: true,
     provider: provider || null,
     lastSeenAt: new Date(),
-  });
+    deviceFingerprint,
+    status: "active" as const,
+  };
 
+  if (deviceFingerprint) {
+    const existing = await LoginSession.findOneAndUpdate(
+      { userId, deviceFingerprint, status: "active" },
+      { $set: { ...sessionData, tokenVersion: 0 } },
+      { new: true },
+    );
+    if (existing) return existing;
+  }
+
+  const session = await LoginSession.create(sessionData);
   return session;
 }
 

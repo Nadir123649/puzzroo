@@ -9,12 +9,15 @@ import { isLoggedIn, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
 
+let globalMounted = false;
+
 export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number>(0)
 
+<<<<<<< HEAD
   const [loggedIn, setLoggedIn] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('puzzroo_auth') === 'true'
@@ -41,6 +44,26 @@ export function Navbar() {
   const router = useRouter()
 
   useLayoutEffect(() => {
+=======
+  // Synchronous init from localStorage so the very first render reflects the
+  // real auth state — prevents flash/layout-shift on SPA navigation.
+  const [loggedIn, setLoggedIn] = useState<boolean>(() => {
+    if (typeof window === 'undefined' || !globalMounted) return false
+    return isLoggedIn()
+  })
+  const [user, setUser] = useState<{ name: string; email: string; avatar?: string | null } | null>(() => {
+    if (typeof window === 'undefined' || !globalMounted) return null
+    const userData = getCurrentUser()
+    if (!userData) return null
+    return { name: userData.name || userData.username, email: userData.email, avatar: userData.avatar }
+  })
+  const [navbarMounted, setNavbarMounted] = useState(globalMounted)
+  const pathname = usePathname()
+  const router = useRouter()
+
+  useEffect(() => {
+    globalMounted = true;
+>>>>>>> 6c760fb38bd06ef39cd127861674c86ee59cf9c9
     setNavbarMounted(true)
 
     const checkAuth = () => {
@@ -53,6 +76,7 @@ export function Navbar() {
           setUser({
             name: userData.name || userData.username,
             email: userData.email,
+            avatar: userData.avatar,
           })
         }
         if (typeof document !== 'undefined') {
@@ -90,6 +114,7 @@ export function Navbar() {
         setUser({
           name: userData.name || userData.username,
           email: userData.email,
+          avatar: userData.avatar,
         })
       }
       if (typeof document !== 'undefined') {
@@ -197,16 +222,36 @@ export function Navbar() {
 
           {/* RIGHT: Desktop Actions */}
           <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
+<<<<<<< HEAD
             {/* Logged Out Actions Container */}
             <div className="logged-out-only items-center gap-[clamp(8px,1vw,16px)]">
               <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
                 Sign up
               </Link>
+=======
+            {navbarMounted ? (
+              (loggedIn && user) ? (
+                <>
+                  <Link 
+                    href="/subscription" 
+                    className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
+                  >
+                    Subscribe Us
+                  </Link>
+                  <ProfileDropdown userName={user.name} userEmail={user.email} userAvatar={user.avatar} />
+                </>
+              ) : (
+                <>
+                  <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
+                    Sign up
+                  </Link>
+>>>>>>> 6c760fb38bd06ef39cd127861674c86ee59cf9c9
 
               <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
                 Login
               </Link>
 
+<<<<<<< HEAD
               <button
                 onClick={toggleTheme}
                 className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-300 active:scale-95"
@@ -237,6 +282,30 @@ export function Navbar() {
               </Link>
               <ProfileDropdown userName={navbarMounted ? (user?.name || '') : ''} userEmail={user?.email || ''} />
             </div>
+=======
+                  <button
+                    onClick={toggleTheme}
+                    className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-300 active:scale-95"
+                    aria-label="Toggle theme"
+                  >
+                    <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
+                      {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                    </span>
+                    <img
+                      src={images.darkIcon}
+                      alt="Theme icon"
+                      width={20}
+                      height={20}
+                      className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
+                        }`}
+                    />
+                  </button>
+                </>
+              )
+            ) : (
+              <div className="h-[38px] w-[280px]" />
+            )}
+>>>>>>> 6c760fb38bd06ef39cd127861674c86ee59cf9c9
 
           </div>
 

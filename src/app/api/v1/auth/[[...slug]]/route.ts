@@ -16,6 +16,7 @@ import { authPayload, issueSession } from "@/lib/server/utils/authHelpers";
 import { generatePublicId } from "@/lib/server/utils/publicId";
 import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
+import { z } from "zod";
 import { checkRateLimit } from "@/lib/server/utils/http";
 import { checkBruteForce, recordFailure, resetBruteForce } from "@/lib/server/utils/bruteForce";
 import { getSessionTokenVersion } from "@/lib/server/utils/authHelpers";
@@ -41,35 +42,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const { name, password } = val.data!;
       const email = val.data!.email.toLowerCase().trim();
       const existingUser = await User.findOne({ $or: [{ email }, { pendingEmail: email }] });
-      const isDev = process.env.NODE_ENV !== "production";
-
-      // ── OAuth-only account exists — create separate account with pendingEmail ──
-      if (existingUser && !existingUser.password && !existingUser.linkedProviders?.includes("email")) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const placeholderUsername = await generateUniqueUsername(name || email.split("@")[0] || "user");
-        const verificationToken = crypto.randomBytes(32).toString("hex");
-        const hashedVerificationToken = crypto.createHash("sha256").update(verificationToken).digest("hex");
-        const user = await User.create({
-          username: placeholderUsername, usernameSet: false,
-          name: name || null,
-          email: null, pendingEmail: email,
-          password: hashedPassword,
-          role: "free", publicId: await generatePublicId(),
-          linkedProviders: ["email"],
-          isVerified: isDev,
-          emailVerificationToken: hashedVerificationToken,
-          emailVerificationTokenExpire: Date.now() + 24 * 60 * 60 * 1000,
-        });
-        const verifyUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
-        try { await sendVerificationEmail(email, verifyUrl); }
-        catch (e) { console.error("Verification email failed to send:", e); }
-        await trackServer({ userId: user._id.toString(), event: "signup_linking_started", properties: { method: "email" }, request });
-        return successResponse({ linking: true, message: "Verification email sent. After verifying, choose a username or link an existing account." }, 201);
-      }
 
       if (existingUser) {
-        return successResponse({ message: "Registration successful. Please check your email to verify your account." }, 201);
+        return errorResponse(409, "account_already_exists", "An account with this email already exists. Please sign in instead.");
       }
+
+      const isDev = process.env.NODE_ENV !== "production";
       const placeholderUsername = await generateUniqueUsername(name || email.split("@")[0] || "user");
       const hashedPassword = await bcrypt.hash(password, 10);
       const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -141,7 +119,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!("error" in who)) {
         await trackServer({ userId: who.user.id, event: "logout", request });
         if (who.user.jti) {
-          await LoginSession.findByIdAndDelete(who.user.jti);
+          await LoginSession.findByIdAndUpdate(who.user.jti, { status: "logged_out", isCurrent: false });
         }
       }
       const res = NextResponse.json({ success: true, payload: { message: "Logged out successfully" }, timestamp: Date.now() }, { status: 200 });
@@ -155,7 +133,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
-      await LoginSession.deleteMany({ userId: userResult.user.id });
+      await LoginSession.updateMany({ userId: userResult.user.id, status: "active" }, { status: "logged_out", isCurrent: false });
       const res = NextResponse.json({ success: true, payload: { message: "Logged out from all devices" }, timestamp: Date.now() }, { status: 200 });
       res.cookies.delete("refreshToken");
       return res;
@@ -183,9 +161,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           );
         }
 
-        // ── Refresh token rotation ──
+        // ── Refresh token rotation (atomic) ──
         let tokenVersion: number | undefined;
         if (decoded.jti) {
+<<<<<<< HEAD
           const session = await LoginSession.findById(decoded.jti);
           if (!session) {
             return NextResponse.json(
@@ -214,6 +193,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           (session as any).tokenVersion = currentVersion + 1;
           await (session as any).save();
           tokenVersion = currentVersion + 1;
+=======
+          const updated = await LoginSession.findOneAndUpdate(
+            { _id: decoded.jti, tokenVersion: decoded.ver ?? 0 },
+            { $inc: { tokenVersion: 1 } },
+            { new: true, select: { tokenVersion: 1 } }
+          );
+          if (!updated) {
+            const sessionExists = await LoginSession.findById(decoded.jti).select("_id").lean();
+            if (!sessionExists) {
+              return errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.");
+            }
+            return errorResponse(401, "token_reused", "Refresh token has already been used. Please sign in again.");
+          }
+          tokenVersion = updated.tokenVersion;
+>>>>>>> 6c760fb38bd06ef39cd127861674c86ee59cf9c9
         }
 
         const tokenPayload = buildTokenPayload(user, decoded.jti, tokenVersion);
@@ -289,8 +283,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await user.save();
       await trackServer({ userId: user._id.toString(), event: "username_set", request });
       const tokenVersion = jti ? await getSessionTokenVersion(jti) : undefined;
-      const res = NextResponse.json({ success: true, payload: authPayload(user, jti, tokenVersion), timestamp: Date.now() }, { status: 200 });
-      res.cookies.set("refreshToken", buildTokenPayload(user, jti, tokenVersion).refreshToken, cookieOptions);
+      const payload = authPayload(user, jti, tokenVersion);
+      const res = NextResponse.json({ success: true, payload, timestamp: Date.now() }, { status: 200 });
+      res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
       return res;
     }
 
@@ -309,7 +304,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         target = await User.findOne({ email: userEmail, _id: { $ne: user._id } });
       }
       if (!target) {
-        const { username } = body;
+        const val = validate(z.object({ username: z.string().min(1).max(20).optional() }), body);
+        if (val.error) return val.error;
+        const { username } = val.data!;
         if (username) {
           target = await User.findOne({
             username,
@@ -409,16 +406,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
-      const { email, password } = body;
+      const val = validate(z.object({ email: z.string().email().optional(), password: z.string().min(6).optional() }), body);
+      if (val.error) return val.error;
+      const { email, password } = val.data!;
       const user = await User.findById(userResult.user.id);
       if (!user) return errorResponse(404, "user_not_found", "User not found");
       if (user.role !== "guest") return errorResponse(400, "not_guest", "Only guest accounts can be upgraded");
       if (email) {
-        const existing = await User.findOne({ email });
+        const normalizedEmail = email.toLowerCase().trim();
+        const existing = await User.findOne({ email: normalizedEmail });
         if (existing && String(existing._id) !== String(user._id)) {
           return errorResponse(409, "email_taken", "Email already in use");
         }
-        user.email = email;
+        user.email = normalizedEmail;
       }
       if (password) user.password = await bcrypt.hash(password, 10);
       user.role = "free";

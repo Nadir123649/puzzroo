@@ -11,9 +11,10 @@ import { useTheme } from '../../hooks/use-theme'
 interface ProfileDropdownProps {
   userName: string
   userEmail: string
+  userAvatar?: string | null
 }
 
-export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
+export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -63,8 +64,12 @@ export function ProfileDropdown({ userName, userEmail }: ProfileDropdownProps) {
         aria-label="Profile menu"
       >
         {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-[#6949FF] flex items-center justify-center text-white">
-          <User size={18} strokeWidth={2.5} />
+        <div className="w-8 h-8 rounded-full bg-[#6949FF] flex items-center justify-center text-white overflow-hidden">
+          {userAvatar ? (
+            <img src={userAvatar} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <User size={18} strokeWidth={2.5} />
+          )}
         </div>
         
         {/* Name */}

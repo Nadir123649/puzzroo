@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
 
-interface EmailPreference {
+export interface EmailPreference {
   id: string;
   title: string;
   description: string;

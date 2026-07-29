@@ -36,6 +36,8 @@ const dailyChallengeSchema = new mongoose.Schema(
 dailyChallengeSchema.index({ date: 1, userId: 1 }, { unique: true });
 dailyChallengeSchema.index({ date: 1 });
 dailyChallengeSchema.index({ userId: 1 });
+dailyChallengeSchema.index({ userId: 1, status: 1 });
+dailyChallengeSchema.index({ puzzleId: 1 });
 
 export default mongoose.models.DailyChallenge ||
   mongoose.model("DailyChallenge", dailyChallengeSchema);

@@ -6,6 +6,7 @@ import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
 import { ChangeNameModal } from '@/components/account/ChangeNameModal'
 import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
 import { SetEmailModal } from '@/components/account/SetEmailModal'
+import { AvatarUpload } from '@/components/account/AvatarUpload'
 import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider, clearAccessToken } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { Check, Activity, BarChart3, Monitor, Smartphone, Tablet, MapPin, Laptop, Trash2, Clock, Phone, X } from 'lucide-react'
@@ -92,6 +93,17 @@ export default function AccountInformationPage() {
     setLocalUser(prev => prev ? { ...prev, name: newName } : prev)
   }
 
+  const handleAvatarChanged = (url: string) => {
+    const stored = localStorage.getItem('puzzroo_user')
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      parsed.avatar = url
+      localStorage.setItem('puzzroo_user', JSON.stringify(parsed))
+      window.dispatchEvent(new Event('auth-change'))
+    }
+    setLocalUser(prev => prev ? { ...prev, avatar: url } : prev)
+  }
+
   const fetchedRef = useRef(false)
 
   useEffect(() => {
@@ -143,6 +155,18 @@ export default function AccountInformationPage() {
         <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD]">
           Account Information
         </p>
+      </div>
+
+      {/* Avatar Section */}
+      <div className="bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] px-4 md:px-6 py-4 md:py-6 mb-4">
+        <h2 className="font-urbanist font-bold text-[18px] md:text-[20px] text-[#212121] dark:text-white mb-4">
+          Profile Picture
+        </h2>
+        <AvatarUpload
+          currentAvatar={localUser?.avatar}
+          userName={localUser?.name || ''}
+          onAvatarChanged={handleAvatarChanged}
+        />
       </div>
 
       {/* Account Details Card */}

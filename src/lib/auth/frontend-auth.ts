@@ -1,4 +1,4 @@
-import { api } from "@/lib/api/client";
+import { api, refreshAccessToken } from "@/lib/api/client";
 
 let currentAccessToken: string | null = null;
 
@@ -175,15 +175,9 @@ export async function ensureSession(): Promise<void> {
   refreshPromise = (async () => {
     try {
       lastRefreshTime = Date.now();
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("refresh_failed");
-      const data = await res.json();
-      const accessToken = data?.payload?.token?.accessToken;
-      if (!accessToken) throw new Error("no_token");
-      setAccessToken(accessToken);
+      const newToken = await refreshAccessToken();
+      if (!newToken) throw new Error("refresh_failed");
+      setAccessToken(newToken);
       // Re-read the profile so server-side changes (e.g. being promoted to
       // admin, subscription upgrades) take effect without a full re-login.
       try {
@@ -196,12 +190,13 @@ export async function ensureSession(): Promise<void> {
       } catch {}
       window.dispatchEvent(new Event("auth-change"));
     } catch {
-      clearClientSession();
+      // Refresh failed — likely stale cookie from rapid page refresh, not actual
+      // session expiry. Leave client state intact; the next API call or page
+      // refresh will retry. The api() 401 handler handles truly-expired sessions.
     } finally {
       refreshPromise = null;
     }
   })();
-  
   return refreshPromise;
 }
 
@@ -249,6 +244,7 @@ export async function updateUser(updates: Partial<User>): Promise<boolean> {
   try {
     const body: Record<string, any> = {};
     if (updates.name !== undefined) body.name = updates.name;
+    if (updates.avatar !== undefined) body.avatar = updates.avatar;
     if (Object.keys(body).length === 0) return false;
     const res = await api("/api/v1/users/me", {
       method: "PATCH",

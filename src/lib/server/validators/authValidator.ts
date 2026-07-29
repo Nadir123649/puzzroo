@@ -54,6 +54,7 @@ export const chooseUsernameSchema = z.object({
 export const updateProfileSchema = z.object({
   name: nameField.optional(),
   phone: z.string().optional(),
+  avatar: z.string().url().optional(),
 });
 
 export const unlinkProviderSchema = z.object({

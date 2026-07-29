@@ -1,12 +1,22 @@
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { connectDB } from '@/lib/server/db';
 import { successResponse, errorResponse } from '@/lib/server/utils/apiResponse';
 import { auth } from '@/lib/server/middleware/auth';
 import { rateLimit } from '@/lib/server/utils/http';
+import { validate } from '@/lib/server/middleware/validate';
 import { sessionService } from '@/lib/server/puzzles/nonogram/services/SessionService';
 import { statisticsService } from '@/lib/server/puzzles/nonogram/services/StatisticsService';
 import { verificationEngine } from '@/lib/server/puzzles/nonogram/services/VerificationEngine';
 import DailyChallenge from '@/lib/server/models/DailyChallenge';
+
+const completeBodySchema = z.object({
+  sessionId: z.string().min(1),
+  grid: z.array(z.array(z.union([z.string(), z.object({ state: z.string() })])).min(1)).optional(),
+  elapsedSeconds: z.number().min(0),
+  hintsUsed: z.number().min(0),
+  mistakes: z.number().min(0),
+});
 
 export async function POST(request: NextRequest) {
   if (!rateLimit(request, 'nonogram-complete', 30)) {
@@ -16,19 +26,11 @@ export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {};
   try { body = await request.json(); } catch {}
 
-  const { sessionId, grid: rawGrid, elapsedSeconds, hintsUsed, mistakes } = body as {
-    sessionId?: string;
-    grid?: Array<Array<{ state: string } | string>>;
-    elapsedSeconds?: number;
-    hintsUsed?: number;
-    mistakes?: number;
-  };
+  const parsed = validate(completeBodySchema, body);
+  if (parsed.error) return parsed.error;
+  const { sessionId, grid: rawGrid, elapsedSeconds, hintsUsed, mistakes } = parsed.data!;
 
   const grid = rawGrid?.map(row => row.map(cell => typeof cell === 'string' ? cell : cell.state));
-
-  if (!sessionId) {
-    return errorResponse(400, 'validation_error', 'sessionId is required');
-  }
 
   await connectDB();
   const userResult = await auth(request);

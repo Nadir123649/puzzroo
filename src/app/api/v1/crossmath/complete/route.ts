@@ -1,10 +1,13 @@
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { connectDB } from '@/lib/server/db';
 import { successResponse, errorResponse } from '@/lib/server/utils/apiResponse';
 import { auth } from '@/lib/server/middleware/auth';
 import { rateLimit } from '@/lib/server/utils/http';
+import { validate } from '@/lib/server/middleware/validate';
 import { sessionService } from '@/lib/server/puzzles/crossmath/services/SessionService';
 import { statisticsService } from '@/lib/server/puzzles/crossmath/services/StatisticsService';
+import { completeSessionSchema } from '@/lib/server/puzzles/crossmath/validators';
 import DailyChallenge from '@/lib/server/models/DailyChallenge';
 
 export async function POST(request: NextRequest) {
@@ -15,18 +18,16 @@ export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {};
   try { body = await request.json(); } catch {}
 
-  const { sessionId, grid, elapsedSeconds, hintsUsed, mistakes, moves } = body as {
-    sessionId?: string;
-    grid?: Record<string, number>;
-    elapsedSeconds?: number;
-    hintsUsed?: number;
-    mistakes?: number;
-    moves?: number;
-  };
-
-  if (!sessionId) {
-    return errorResponse(400, 'validation_error', 'sessionId is required');
-  }
+  const parsed = validate(z.object({
+    sessionId: z.string().min(1),
+    grid: z.record(z.string(), z.number()).optional().default({}),
+    elapsedSeconds: z.number().min(0).optional().default(0),
+    hintsUsed: z.number().min(0).optional().default(0),
+    mistakes: z.number().min(0).optional().default(0),
+    moves: z.number().min(0).optional().default(0),
+  }), body);
+  if (parsed.error) return parsed.error;
+  const { sessionId, grid, elapsedSeconds, hintsUsed, mistakes, moves } = parsed.data!;
 
   await connectDB();
   const userResult = await auth(request);

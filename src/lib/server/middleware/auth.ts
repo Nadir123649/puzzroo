@@ -23,7 +23,7 @@ export async function auth(request: NextRequest) {
     if (decoded.jti) {
       await connectDB();
       const session = await LoginSession.findById(decoded.jti);
-      if (!session || session.userId.toString() !== decoded.id) {
+      if (!session || session.userId.toString() !== decoded.id || session.status !== "active") {
         return { error: errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.") };
       }
     }
