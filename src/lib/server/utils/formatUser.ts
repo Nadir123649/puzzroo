@@ -7,7 +7,7 @@ export function formatUser(user: any) {
     name: user.name,
     email: user.email,
     phone: user.phone,
-    role: user.role,
+    role: user.role === "premium" ? "free" : user.role,
     status: user.status,
     isSuperUser: user.isSuperUser,
     isVerified: user.isVerified,
