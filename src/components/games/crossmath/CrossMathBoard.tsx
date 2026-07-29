@@ -9,6 +9,7 @@ interface CrossMathBoardProps {
   selectedCell: { row: number; col: number } | null
   onCellClick: (row: number, col: number) => void
   mobile?: boolean
+  minCellWidth?: number
 }
 
 export function CrossMathBoard({
@@ -16,6 +17,7 @@ export function CrossMathBoard({
   selectedCell,
   onCellClick,
   mobile = false,
+  minCellWidth,
 }: CrossMathBoardProps) {
   const rows = board.length
   const cols = board[0]?.length || 0
@@ -52,6 +54,7 @@ export function CrossMathBoard({
                   selectedCell?.col === colIndex
                 }
                 onClick={() => onCellClick(rowIndex, colIndex)}
+                minCellWidth={minCellWidth}
               />
             )
           })

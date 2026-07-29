@@ -47,6 +47,7 @@ function LoginPageContent() {
         setSubmitting: setIsSubmitting,
         setErrors,
         welcomeKey: 'AUTH_WELCOME_OAUTH',
+        router,
       })
     })()
     return () => { cancelled = true }
@@ -81,7 +82,7 @@ function LoginPageContent() {
 
     if (result.success) {
       notify.successKey('AUTH_WELCOME_BACK')
-      window.location.replace('/')
+      router.push('/')
     } else {
       notify.errorFromResult(result, 'AUTH_INVALID_CREDENTIALS')
       setErrors({ general: notify.fromResult(result, 'AUTH_INVALID_CREDENTIALS') })
@@ -280,6 +281,7 @@ function LoginPageContent() {
                       setSubmitting: setIsSubmitting,
                       setErrors,
                       welcomeKey: 'AUTH_WELCOME_OAUTH',
+                      router,
                     })
                   } catch (err: any) {
                     setIsSubmitting(false)

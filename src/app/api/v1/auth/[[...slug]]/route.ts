@@ -144,12 +144,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const rl = checkRateLimit(request, "auth:refresh", 20, 60_000);
       if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const refreshToken = request.cookies.get("refreshToken")?.value;
-      if (!refreshToken) return errorResponse(401, "token_missing", "Refresh token not found");
+      if (!refreshToken) {
+        return NextResponse.json(
+          { success: false, version: "1.0.0", payload: { error: { code: "token_missing", message: "Refresh token not found" } }, serverTimestamp: new Date().toISOString() },
+          { status: 200 }
+        );
+      }
       const jwt = await import("jsonwebtoken");
       try {
         const decoded = jwt.default.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { id: string; jti?: string; ver?: number };
         const user = await User.findById(decoded.id);
-        if (!user) return errorResponse(401, "user_not_found", "User not found");
+        if (!user) {
+          return NextResponse.json(
+            { success: false, version: "1.0.0", payload: { error: { code: "user_not_found", message: "User not found" } }, serverTimestamp: new Date().toISOString() },
+            { status: 200 }
+          );
+        }
 
         // ── Refresh token rotation (atomic) ──
         let tokenVersion: number | undefined;
@@ -174,7 +184,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         res.cookies.set("refreshToken", tokenPayload.refreshToken, cookieOptions);
         return res;
       } catch {
-        return errorResponse(401, "token_invalid", "Invalid or expired refresh token");
+        return NextResponse.json(
+          { success: false, version: "1.0.0", payload: { error: { code: "token_invalid", message: "Invalid or expired refresh token" } }, serverTimestamp: new Date().toISOString() },
+          { status: 200 }
+        );
       }
     }
 
@@ -417,5 +430,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   } catch (error: any) {
     console.error(error);
     return errorResponse(500, "internal_error", "Internal Server Error");
-  }
 }
+}
+// Force trigger rebuild to clear dev server compile error cache

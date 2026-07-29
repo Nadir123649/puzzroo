@@ -111,18 +111,28 @@ export function CrossMathGame() {
 
   const numbersPerRow = getNumbersPerRow(difficulty)
 
+  // Cell size: easy mode always uses 56px so the board stays large and
+  // the right-panel buttons stay horizontally aligned with the board bottom.
+  // Medium/hard boards shrink proportionally to fit the screen.
+  const numCols = board[0]?.length || 5
+  const targetBoardPx = 300
+  const minCellWidth = difficulty === 'easy'
+    ? 56
+    : Math.max(36, Math.min(50, Math.floor(targetBoardPx / numCols)))
+
   return (
     <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}>
       <div className="w-full px-[20px] flex justify-center">
         <div className="w-full max-w-[1200px] flex flex-col gap-[15px] pb-0 md:pb-[50px]">
           {/* Desktop Layout */}
-          <div className="hidden md:flex gap-[30px] lg:gap-[48px] justify-center items-center">
+          <div className="hidden md:flex gap-[30px] lg:gap-[48px] justify-center items-stretch">
             {/* CrossMath Board - Center aligned for easy mode */}
             <div className="flex-shrink-0 relative">
               <CrossMathBoard
                 board={board}
                 selectedCell={selectedCell}
                 onCellClick={selectCell}
+                minCellWidth={minCellWidth}
               />
               {/* Floating Score Feedback */}
               <FloatingScoreFeedback
@@ -143,71 +153,75 @@ export function CrossMathGame() {
                 </h3>
               </div>
 
-              {/* Stats */}
-              <div className="relative overflow-visible">
-                <SudokuStats
-                  mistakes={mistakes}
-                  maxMistakes={maxMistakes}
-                  score={score}
-                  time={time}
+              {/* Middle Content Wrapper (Stats, Controls, Number Pad) - centered vertically */}
+              <div className="flex flex-col gap-[20px] my-auto">
+                {/* Stats */}
+                <div className="relative overflow-visible">
+                  <SudokuStats
+                    mistakes={mistakes}
+                    maxMistakes={maxMistakes}
+                    score={score}
+                    time={time}
+                  />
+                  {/* Floating Score Feedback */}
+                  <FloatingScoreFeedback
+                    feedbacks={scoreFeedbacks}
+                    onComplete={handleFeedbackComplete}
+                  />
+                </div>
+
+                {/* Feature Buttons */}
+                <SudokuControls
+                  notesMode={false}
+                  availableHints={availableHints}
+                  onUndo={undoLastMove}
+                  onErase={eraseCell}
+                  onTogglePencil={() => {}}
+                  onHint={requestHint}
+                  showPencil={false}
+                  canUndo={canUndo}
                 />
-                {/* Floating Score Feedback */}
-                <FloatingScoreFeedback
-                  feedbacks={scoreFeedbacks}
-                  onComplete={handleFeedbackComplete}
+
+                {/* Number Pad */}
+                <CrossMathNumberPad
+                  availableNumbers={availableNumbers}
+                  onNumberSelect={enterNumber}
+                  numbersPerRow={difficulty === 'easy' ? availableNumbers.size : numbersPerRow}
+                  usedNumbersCount={usedNumbersCount}
+                  requiredNumbersCount={requiredNumbersCount}
                 />
               </div>
 
-              {/* Feature Buttons */}
-              <SudokuControls
-                notesMode={false}
-                availableHints={availableHints}
-                onUndo={undoLastMove}
-                onErase={eraseCell}
-                onTogglePencil={() => {}}
-                onHint={requestHint}
-                showPencil={false}
-                canUndo={canUndo}
-                showReplay={true}
-                onReplay={replayBoard}
-              />
+              {/* Bottom Actions Section */}
+              <div className="w-full flex flex-col gap-[12px] mt-auto">
+                {isFromPastPuzzles ? (
+                  <button
+                    onClick={() => handleNewGame(true)}
+                    disabled={isResetting}
+                    className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    Replay Game
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleNewGame(false)}
+                      disabled={isResetting}
+                      className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      New Game
+                    </button>
 
-              {/* Number Pad */}
-              <CrossMathNumberPad
-                availableNumbers={availableNumbers}
-                onNumberSelect={enterNumber}
-                numbersPerRow={numbersPerRow}
-                usedNumbersCount={usedNumbersCount}
-                requiredNumbersCount={requiredNumbersCount}
-              />
-
-               {isFromPastPuzzles ? (
-                 <button
-                   onClick={() => handleNewGame(true)}
-                   disabled={isResetting}
-                   className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                 >
-                   Replay Game
-                 </button>
-               ) : (
-                 <>
-                   <button
-                     onClick={() => handleNewGame(false)}
-                     disabled={isResetting}
-                     className="w-full h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                   >
-                     New Game
-                   </button>
-
-                   <button
-                     onClick={() => handleNewGame(true)}
-                     disabled={isResetting}
-                     className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                   >
-                     Replay
-                   </button>
-                 </>
-               )}
+                    <button
+                      onClick={() => handleNewGame(true)}
+                      disabled={isResetting}
+                      className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      Replay
+                    </button>
+                  </>
+                )}
+              </div>
              </div>
            </div>
  
@@ -260,10 +274,7 @@ export function CrossMathGame() {
                 mobile
                 showPencil={false}
                 canUndo={canUndo}
-                showReplay={true}
-                onReplay={replayBoard}
               />
-
               {isFromPastPuzzles ? (
                 <button
                   onClick={() => handleNewGame(true)}

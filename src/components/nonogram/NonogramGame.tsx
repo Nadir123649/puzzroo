@@ -38,6 +38,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     maxMistakes,
     isDragging,
     dragPreviewCells,
+    dragAction,
     inputMode,
     handleCellClick,
     handleDragStart,
@@ -600,7 +601,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                         const isSelected = selectedCell?.row === rowIdx && selectedCell?.col === colIdx
                         const isError = errorCell?.row === rowIdx && errorCell?.col === colIdx
                         const cellKey = `${rowIdx}-${colIdx}`
-                        const isInDragPreview = dragPreviewCells.has(cellKey) && cellState === 'empty'
+                        const isInDragPreview = dragPreviewCells.has(cellKey)
 
                         // Dynamic grey-out of completed rows/columns
                         const isRowCompleted = rowValidation[rowIdx] === 'completed'
@@ -623,8 +624,8 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                           bgClass = 'bg-[#E8E8E8] dark:bg-[#252830]'
                           borderClass = 'opacity-40'
                         } else if (isInDragPreview) {
-                          // Light purple preview during drag
-                          bgClass = 'bg-[#A592FF] dark:bg-[#7C6BAE]'
+                          // Darker purple preview during drag
+                          bgClass = 'bg-[#5536E6] dark:bg-[#4E31D4] text-white'
                         } else if (isErrorCell) {
                           bgClass = 'bg-white dark:bg-[#181A20]'
                           borderClass = 'ring-2 ring-red-500 ring-inset'
@@ -674,7 +675,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                             aria-label={`Cell row ${rowIdx + 1}, column ${colIdx + 1}, ${cellState}`}
                           >
                             {/* Show red flag for marked cells OR when in preview with mark mode */}
-                            {((cellState === 'marked' && !isInDragPreview) || (isInDragPreview && inputMode === 'mark')) && (
+                            {((cellState === 'marked' && !isInDragPreview) || (isInDragPreview && dragAction === 'mark')) && (
                               <Flag 
                                 size={cellSize * 0.5} 
                                 className="pointer-events-none text-[#EF4444]"

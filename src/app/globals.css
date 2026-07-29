@@ -228,3 +228,58 @@ body {
 .animate-successPulse {
   animation: success-pulse 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Navbar Auth State Displays (No-flicker dynamic CSS) */
+.logged-in-only {
+  display: none !important;
+}
+.logged-out-only {
+  display: none !important;
+}
+
+html.user-logged-in .logged-in-only {
+  display: flex !important;
+}
+html.user-logged-in .logged-out-only {
+  display: none !important;
+}
+
+html.user-logged-out .logged-out-only {
+  display: flex !important;
+}
+html.user-logged-out .logged-in-only {
+  display: none !important;
+}
+
+
+
+/* Input Autofill Styles Override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 100px #ffffff inset !important;
+  -webkit-text-fill-color: #212121 !important;
+  caret-color: #212121 !important;
+  border-color: #E0E0E0 !important;
+}
+
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 2px #6949FF, 0 0 0 100px #ffffff inset !important;
+  border-color: transparent !important;
+}
+
+html.dark input:-webkit-autofill,
+html.dark input:-webkit-autofill:hover,
+html.dark input:-webkit-autofill:focus,
+html.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 100px #181A20 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  border-color: #35383F !important;
+}
+
+html.dark input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 2px #6949FF, 0 0 0 100px #181A20 inset !important;
+  border-color: transparent !important;
+}

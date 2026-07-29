@@ -53,6 +53,7 @@ export default function SignupPage() {
         setSubmitting: setIsSubmitting,
         setErrors,
         welcomeKey: 'AUTH_WELCOME_OAUTH',
+        router,
       })
     })()
     return () => { cancelled = true }
@@ -298,6 +299,7 @@ export default function SignupPage() {
                       setSubmitting: setIsSubmitting,
                       setErrors,
                       welcomeKey: 'AUTH_WELCOME_OAUTH',
+                      router,
                     })
                   } catch (err: any) {
                     setIsSubmitting(false)

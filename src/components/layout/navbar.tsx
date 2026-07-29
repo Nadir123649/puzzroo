@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from '../../hooks/use-theme'
@@ -17,25 +17,35 @@ export function Navbar() {
   const mobileMenuRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number>(0)
 
-  // Synchronous init from localStorage so the very first render reflects the
-  // real auth state — prevents flash/layout-shift on SPA navigation.
   const [loggedIn, setLoggedIn] = useState<boolean>(() => {
-    if (typeof window === 'undefined' || !globalMounted) return false
-    return isLoggedIn()
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('puzzroo_auth') === 'true'
+    }
+    return false
   })
   const [user, setUser] = useState<{ name: string; email: string; avatar?: string | null } | null>(() => {
-    if (typeof window === 'undefined' || !globalMounted) return null
-    const userData = getCurrentUser()
-    if (!userData) return null
-    return { name: userData.name || userData.username, email: userData.email, avatar: userData.avatar }
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem("puzzroo_user")
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          return {
+            name: parsed.name || parsed.username,
+            email: parsed.email,
+            avatar: parsed.avatar
+          }
+        }
+      } catch {}
+    }
+    return null
   })
-  const [navbarMounted, setNavbarMounted] = useState(globalMounted)
+  const [navbarMounted, setNavbarMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
-  useEffect(() => {
-    globalMounted = true;
+  useLayoutEffect(() => {
     setNavbarMounted(true)
+    globalMounted = true;
 
     const checkAuth = () => {
       const isAuth = isLoggedIn()
@@ -50,8 +60,16 @@ export function Navbar() {
             avatar: userData.avatar,
           })
         }
+        if (typeof document !== 'undefined') {
+          document.documentElement.classList.add('user-logged-in')
+          document.documentElement.classList.remove('user-logged-out')
+        }
       } else {
         setUser(null)
+        if (typeof document !== 'undefined') {
+          document.documentElement.classList.add('user-logged-out')
+          document.documentElement.classList.remove('user-logged-in')
+        }
       }
     }
 
@@ -80,8 +98,16 @@ export function Navbar() {
           avatar: userData.avatar,
         })
       }
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.add('user-logged-in')
+        document.documentElement.classList.remove('user-logged-out')
+      }
     } else {
       setUser(null)
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.add('user-logged-out')
+        document.documentElement.classList.remove('user-logged-in')
+      }
     }
   }, [pathname, navbarMounted])
 
@@ -130,7 +156,7 @@ export function Navbar() {
   }, [isMenuOpen])
 
   return (
-    <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-300 z-[200]">
+    <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-200 z-[200]">
       <div className="w-full max-w-[1380px] mx-auto px-[20px] py-[8px] md:py-[22px]">
         <div className="w-full flex items-center justify-between h-[48px]">
 
@@ -177,49 +203,46 @@ export function Navbar() {
 
           {/* RIGHT: Desktop Actions */}
           <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
-            {navbarMounted ? (
-              (loggedIn && user) ? (
-                <>
-                  <Link 
-                    href="/subscription" 
-                    className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
-                  >
-                    Subscribe Us
-                  </Link>
-                  <ProfileDropdown userName={user.name} userEmail={user.email} userAvatar={user.avatar} />
-                </>
-              ) : (
-                <>
-                  <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
-                    Sign up
-                  </Link>
+            {/* Logged Out Actions Container */}
+            <div className="logged-out-only items-center gap-[clamp(8px,1vw,16px)]">
+              <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
+                Sign up
+              </Link>
 
-                  <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
-                    Login
-                  </Link>
+              <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
+                Login
+              </Link>
 
-                  <button
-                    onClick={toggleTheme}
-                    className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-300 active:scale-95"
-                    aria-label="Toggle theme"
-                  >
-                    <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
-                      {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-                    </span>
-                    <img
-                      src={images.darkIcon}
-                      alt="Theme icon"
-                      width={20}
-                      height={20}
-                      className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
-                        }`}
-                    />
-                  </button>
-                </>
-              )
-            ) : (
-              <div className="h-[38px] w-[280px]" />
-            )}
+              <button
+                onClick={toggleTheme}
+                className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-300 active:scale-95"
+                aria-label="Toggle theme"
+              >
+                <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
+                  {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                </span>
+                <img
+                  src={images.darkIcon}
+                  alt="Theme icon"
+                  width={20}
+                  height={20}
+                  className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
+                    }`}
+                />
+              </button>
+            </div>
+
+            {/* Logged In Actions Container */}
+            <div className="logged-in-only items-center gap-[clamp(8px,1vw,16px)]">
+              {/* Subscribe Us Button - Only for logged in users */}
+              <Link 
+                href="/subscription" 
+                className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
+              >
+                Subscribe Us
+              </Link>
+              <ProfileDropdown userName={navbarMounted ? (user?.name || '') : ''} userEmail={user?.email || ''} />
+            </div>
 
           </div>
 
@@ -243,13 +266,13 @@ export function Navbar() {
             {/* Hamburger Menu */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="rounded-lg ml-2"
+              className="w-10 h-10 rounded-lg flex items-center justify-center ml-1 hover:bg-gray-100 dark:hover:bg-[#1F222A] active:scale-95 transition-all duration-200"
               aria-label="Toggle menu"
             >
               <div className="w-5 h-4 flex flex-col justify-between">
-                <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+                <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`}></span>
                 <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
-                <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+                <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`}></span>
               </div>
             </button>
           </div>

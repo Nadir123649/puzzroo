@@ -7,9 +7,10 @@ interface CrossMathCellProps {
   cell: Cell
   isSelected: boolean
   onClick: () => void
+  minCellWidth?: number
 }
 
-export function CrossMathCell({ cell, isSelected, onClick }: CrossMathCellProps) {
+export function CrossMathCell({ cell, isSelected, onClick, minCellWidth }: CrossMathCellProps) {
   const isEditable = cell.isEditable
   const isEmpty = cell.type === 'empty'
   const isNumber = cell.type === 'number'
@@ -88,7 +89,7 @@ export function CrossMathCell({ cell, isSelected, onClick }: CrossMathCellProps)
       disabled={!isEditable}
       type="button"
       className={`
-        aspect-square w-full md:min-w-[46px] md:min-h-[46px]
+        aspect-square w-full
         flex items-center justify-center
         rounded-[4px]
         font-urbanist font-bold
@@ -103,6 +104,7 @@ export function CrossMathCell({ cell, isSelected, onClick }: CrossMathCellProps)
         ${isEditable ? 'pointer-events-auto' : 'pointer-events-none'}
       `}
       tabIndex={isEditable ? 0 : -1}
+      style={minCellWidth ? { minWidth: `${minCellWidth}px`, minHeight: `${minCellWidth}px` } : undefined}
       aria-label={
         isOperator && cell.value
           ? `Operator ${cell.value}`

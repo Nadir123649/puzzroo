@@ -156,6 +156,7 @@ export function SudokuGame() {
                 onErase={eraseCell}
                 onTogglePencil={toggleNotesMode}
                 onHint={requestHint}
+                showReset={!isFromPastPuzzles}
               />
 
               {/* Number Pad */}
@@ -243,6 +244,7 @@ export function SudokuGame() {
               onTogglePencil={toggleNotesMode}
               onHint={requestHint}
               mobile
+              showReset={!isFromPastPuzzles}
             />
 
              {/* Action Button Mobile - New Game or Replay Game */}

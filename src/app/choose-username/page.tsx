@@ -50,7 +50,7 @@ export default function ChooseUsernamePage() {
 
     if (result.success) {
       notify.successKey('AUTH_USERNAME_SET')
-      window.location.replace('/')
+      router.push('/')
     } else if (result.code === 'username_taken_conflict') {
       setLinkUsername(trimmed)
       setShowLinkModal(true)
@@ -72,7 +72,7 @@ export default function ChooseUsernamePage() {
     if (result.success) {
       setShowLinkModal(false)
       notify.success('Accounts linked! Welcome back.')
-      window.location.replace('/')
+      router.push('/')
     } else {
       setError(result.error || 'Failed to link accounts')
       setShowLinkModal(false)
