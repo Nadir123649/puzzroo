@@ -164,36 +164,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         // ── Refresh token rotation (atomic) ──
         let tokenVersion: number | undefined;
         if (decoded.jti) {
-<<<<<<< HEAD
-          const session = await LoginSession.findById(decoded.jti);
-          if (!session) {
-            return NextResponse.json(
-              { success: false, version: "1.0.0", payload: { error: { code: "session_revoked", message: "Session has been revoked. Please sign in again." } }, serverTimestamp: new Date().toISOString() },
-              { status: 200 }
-            );
-          }
-          const currentVersion = (session as any).tokenVersion ?? 0;
-          const presentedVersion = decoded.ver ?? 0;
-
-          if (presentedVersion !== currentVersion) {
-            // Token reuse detected — revoke ALL sessions for this user.
-            await LoginSession.deleteMany({ userId: user._id });
-            await trackServer({
-              userId: user._id.toString(),
-              event: "refresh_token_reuse",
-              properties: { expectedVersion: currentVersion, receivedVersion: presentedVersion },
-              request,
-            });
-            return NextResponse.json(
-              { success: false, version: "1.0.0", payload: { error: { code: "token_reused", message: "Refresh token has already been used. All sessions revoked for security." } }, serverTimestamp: new Date().toISOString() },
-              { status: 200 }
-            );
-          }
-
-          (session as any).tokenVersion = currentVersion + 1;
-          await (session as any).save();
-          tokenVersion = currentVersion + 1;
-=======
           const updated = await LoginSession.findOneAndUpdate(
             { _id: decoded.jti, tokenVersion: decoded.ver ?? 0 },
             { $inc: { tokenVersion: 1 } },
@@ -207,7 +177,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             return errorResponse(401, "token_reused", "Refresh token has already been used. Please sign in again.");
           }
           tokenVersion = updated.tokenVersion;
->>>>>>> 6c760fb38bd06ef39cd127861674c86ee59cf9c9
         }
 
         const tokenPayload = buildTokenPayload(user, decoded.jti, tokenVersion);
@@ -461,5 +430,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   } catch (error: any) {
     console.error(error);
     return errorResponse(500, "internal_error", "Internal Server Error");
-  }
 }
+}
+// Force trigger rebuild to clear dev server compile error cache
