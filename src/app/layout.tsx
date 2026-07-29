@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Urbanist } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/app/providers";
@@ -103,7 +102,7 @@ export default function RootLayout({
             body { transition: none !important; }
           `
         }} />
-        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{
+        <script id="theme-init" dangerouslySetInnerHTML={{
           __html: `
             (function() {
               try {
