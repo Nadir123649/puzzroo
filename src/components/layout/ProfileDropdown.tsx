@@ -53,7 +53,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
   }
 
   // Truncate name if too long
-  const displayName = (userName || "User").length > 15 ? `${(userName || "User").substring(0, 12)}...` : (userName || "User")
+  const displayName = userName.length > 15 ? `${userName.substring(0, 12)}...` : userName
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -73,7 +73,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
         </div>
         
         {/* Name */}
-        <span className="font-urbanist font-semibold text-[15px] text-[#212121] dark:text-white">
+        <span className="font-urbanist font-semibold text-[15px] text-[#212121] dark:text-white transition-colors duration-300">
           {displayName}
         </span>
 
@@ -91,7 +91,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-[#212121] dark:text-white"
+            className="text-[#212121] dark:text-white transition-colors duration-300"
           />
         </svg>
       </button>
@@ -101,10 +101,10 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
         <div className="absolute right-0 top-[calc(100%+8px)] w-[240px] bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-xl shadow-purple-500/10 overflow-hidden z-50 animate-slideDown">
           {/* User Info */}
           <div className="px-4 py-3 border-b border-[#E0E0E0] dark:border-[#35383F]">
-            <p className="font-urbanist font-bold text-[15px] text-[#212121] dark:text-white truncate">
+            <p className="font-urbanist font-bold text-[15px] text-[#212121] dark:text-white truncate transition-colors duration-300">
               {userName || "User"}
             </p>
-            <p className="font-urbanist text-[13px] text-[#757575] dark:text-[#BDBDBD] truncate">
+            <p className="font-urbanist text-[13px] text-[#757575] dark:text-[#BDBDBD] truncate transition-colors duration-300">
               {userEmail || ""}
             </p>
           </div>
@@ -117,7 +117,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
             >
               <User size={18} className="text-[#6949FF]" strokeWidth={2} />
-              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white transition-colors duration-300">
                 Account
               </span>
             </Link>
@@ -128,7 +128,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
             >
               <CreditCard size={18} className="text-[#6949FF]" strokeWidth={2} />
-              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white transition-colors duration-300">
                 Subscription
               </span>
             </Link>
@@ -139,7 +139,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
             >
               <Bell size={18} className="text-[#6949FF]" strokeWidth={2} />
-              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white transition-colors duration-300">
                 Updates
               </span>
             </Link>
@@ -150,8 +150,8 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
             >
               <History size={18} className="text-[#6949FF]" strokeWidth={2} />
-              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
-                History
+              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white transition-colors duration-300">
+                Billing History
               </span>
             </Link>
 
@@ -162,7 +162,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
               >
                 <Activity size={18} className="text-[#6949FF]" strokeWidth={2} />
-                <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+                <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white transition-colors duration-300">
                   User Tracking
                 </span>
               </Link>
@@ -180,7 +180,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
               ) : (
                 <Moon size={18} className="text-[#6949FF]" strokeWidth={2} />
               )}
-              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white transition-colors duration-300">
                 {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
               </span>
             </button>
@@ -193,7 +193,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
             >
               <LogOut size={18} className="text-red-600 dark:text-red-400" strokeWidth={2} />
-              <span className="font-urbanist font-semibold text-[14px] text-red-600 dark:text-red-400">
+              <span className="font-urbanist font-semibold text-[14px] text-red-600 dark:text-red-400 transition-colors duration-300">
                 Logout
               </span>
             </button>

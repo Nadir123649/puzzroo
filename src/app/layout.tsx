@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Urbanist } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/app/providers";
@@ -102,9 +103,40 @@ export default function RootLayout({
             body { transition: none !important; }
           `
         }} />
-        <script dangerouslySetInnerHTML={{
+        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{
           __html: `
             (function() {
+              try {
+                // Prevent unnecessary WebSocket initialization from reload.js browser extensions
+                if (typeof window !== 'undefined') {
+                  var OriginalWebSocket = window.WebSocket;
+                  if (OriginalWebSocket) {
+                    var MockWebSocket = function(url, protocols) {
+                      var urlStr = url ? url.toString() : '';
+                      if (urlStr.indexOf('/ws/ws') !== -1) {
+                        return {
+                          url: urlStr,
+                          readyState: 3, // CLOSED
+                          close: function() {},
+                          send: function() {},
+                          addEventListener: function() {},
+                          removeEventListener: function() {},
+                          dispatchEvent: function() { return false; },
+                          onopen: null,
+                          onclose: null,
+                          onerror: null,
+                          onmessage: null
+                        };
+                      }
+                      return new OriginalWebSocket(url, protocols);
+                    };
+                    MockWebSocket.prototype = OriginalWebSocket.prototype;
+                    Object.setPrototypeOf(MockWebSocket, OriginalWebSocket);
+                    window.WebSocket = MockWebSocket;
+                  }
+                }
+              } catch(e) {}
+
               try {
                 var theme = localStorage.getItem('theme');
                 var isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -112,6 +144,14 @@ export default function RootLayout({
                   document.documentElement.classList.add('dark');
                   document.documentElement.style.backgroundColor = '#181A20';
                   document.documentElement.style.colorScheme = 'dark';
+                }
+
+                // Check auth status early to prevent navbar layout flash/flicker
+                var isAuth = localStorage.getItem('puzzroo_auth') === 'true';
+                if (isAuth) {
+                  document.documentElement.classList.add('user-logged-in');
+                } else {
+                  document.documentElement.classList.add('user-logged-out');
                 }
               } catch(e) {}
             })();

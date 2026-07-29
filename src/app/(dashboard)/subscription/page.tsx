@@ -131,31 +131,8 @@ export default function SubscriptionPage() {
 
   const currentPricing = pricing[currency]
 
-  const handleCheckout = async (plan: string, priceId: string) => {
-    setLoading(plan)
-    const loadingId = notify.loading('Redirecting to checkout…')
-    try {
-      const res = await api("/api/v1/subscriptions/checkout", {
-        method: "POST",
-        body: JSON.stringify({ planId: plan }),
-      })
-      notify.dismiss(loadingId ?? undefined)
-      if (res.success) {
-        const payload = res.payload as any
-        if (payload.url) {
-          window.location.href = payload.url
-          return
-        }
-        notify.successKey('BILLING_ACTIVATED')
-      } else {
-        notify.errorFromResult(res, 'BILLING_FAILED')
-      }
-    } catch {
-      notify.dismiss(loadingId ?? undefined)
-      notify.errorKey('BILLING_FAILED')
-    } finally {
-      setLoading(null)
-    }
+  const handleCheckout = async (_plan: string, _priceId: string) => {
+    notify.error('Subscription currently unavailable!')
   }
 
   return (
