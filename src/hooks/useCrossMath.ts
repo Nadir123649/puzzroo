@@ -950,6 +950,11 @@ export function useCrossMath(initialPuzzleId?: string) {
     clearGameState()
     completionCalledRef.current = false
     movesRef.current = 0
+    sessionCreatedRef.current = false
+    sessionIdRef.current = null
+    if (!getAccessToken()) ensureGuestId()
+    const dcId = isDailyChallenge ? `daily-cross-math-${dateParam || getTodayDateParam()}` : undefined
+    await initSession(puzzle.id, difficulty, isDailyChallenge, dcId)
   }, [difficulty, usePatternMode, isDailyChallenge, dateParam])
 
   const requestHint = useCallback(() => {

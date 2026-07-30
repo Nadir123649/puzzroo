@@ -16,7 +16,8 @@
     "nonogram:generate": "py tools/puzzle-generators/export_nonogram.py --difficulty all --count 1000",
     "nonogram:validate": "py tools/puzzle-generators/validate_nonogram_dataset.py --min-count 1000",
     "db:seed": "tsx scripts/seed-puzzles.ts",
-    "db:seed:dry": "tsx scripts/seed-puzzles.ts --dry"
+    "db:seed:dry": "tsx scripts/seed-puzzles.ts --dry",
+    "db:indexes": "tsx scripts/ensureIndexes.ts"
   },
   "dependencies": {
     "@react-email/components": "^1.0.12",

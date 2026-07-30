@@ -37,12 +37,13 @@ mongoose.connection.on("error", (err) => {
   console.error("[db] mongoose connection error:", err);
 });
 
+if (process.env.MONGO_URI && !process.env.MONGODB_URI) {
+  console.warn("[ENV] MONGO_URI is deprecated. Rename to MONGODB_URI.");
+}
+
 export async function connectDB() {
   if (!MONGODB_URI) {
     throw new Error("Please define MONGODB_URI (or MONGO_URI) in .env.local");
-  }
-  if (process.env.MONGO_URI && !process.env.MONGODB_URI) {
-    console.warn("[ENV] MONGO_URI is deprecated. Rename to MONGODB_URI.");
   }
 
   if (cached) return cached;
