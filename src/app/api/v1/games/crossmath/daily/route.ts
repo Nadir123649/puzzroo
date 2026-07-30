@@ -10,9 +10,10 @@ export async function GET(request: NextRequest) {
 
   const url = new URL(request.url)
   const dateStr = url.searchParams.get("date") || new Date().toISOString().split("T")[0]
+  const difficulty = (url.searchParams.get("difficulty") || undefined) as "easy" | "medium" | "hard" | undefined
 
   try {
-    const puzzle = await randomPuzzleEngine.selectDailyPuzzle(dateStr)
+    const puzzle = await randomPuzzleEngine.selectDailyPuzzle(dateStr, difficulty)
 
     const { getPatternById, patternToGameGrid } = await import("@shared/data/crossmath/patterns")
     const pattern = getPatternById(puzzle.patternId)

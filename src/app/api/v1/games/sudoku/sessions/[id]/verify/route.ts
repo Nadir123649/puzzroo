@@ -8,14 +8,14 @@ import SudokuPuzzle from "@/lib/server/models/SudokuPuzzle";
 import { connectDB } from "@/lib/server/db";
 import { withAuth } from "../../../route-helpers";
 
-export const POST = withAuth(async (req: NextRequest, user, params) => {
+export const POST = withAuth(async (req: NextRequest, actor, params) => {
   let body: any = {};
   try { body = await req.json(); } catch {}
 
   const val = validate(verifyCompletionSchema, body);
   if (val.error) return val.error;
 
-  const session = await getSession(params.id, user.id);
+  const session = await getSession(params.id, actor);
   if (session.status !== "playing") throw new Error("session_not_active");
 
   await connectDB();

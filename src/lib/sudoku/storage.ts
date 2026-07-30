@@ -41,15 +41,20 @@ function getScopedKey(baseKey: string): string {
   return `${baseKey}_guest`
 }
 
-const keyFor = (puzzleId?: string) => {
-  const baseKey = puzzleId ? `puzzroo_sudoku_game_${puzzleId}` : STORAGE_KEY
+const keyFor = (puzzleId?: string, difficulty?: string) => {
+  let baseKey = STORAGE_KEY
+  if (puzzleId) {
+    baseKey = `puzzroo_sudoku_game_${puzzleId}`
+  } else if (difficulty) {
+    baseKey = `puzzroo_sudoku_game_${difficulty}`
+  }
   return getScopedKey(baseKey)
 }
 
 /**
  * Save game state to localStorage
  */
-export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>, puzzleId?: string): void {
+export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>, puzzleId?: string, difficulty?: string): void {
   if (!isBrowser) return
   
   try {
@@ -59,7 +64,8 @@ export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>
       savedAt: Date.now(),
     }
     
-    localStorage.setItem(keyFor(puzzleId), JSON.stringify(dataToSave))
+    const key = keyFor(puzzleId, difficulty || state.difficulty)
+    localStorage.setItem(key, JSON.stringify(dataToSave))
   } catch (error) {
     console.error('Failed to save game state:', error)
   }
@@ -68,11 +74,11 @@ export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>
 /**
  * Load game state from localStorage
  */
-export function loadGameState(puzzleId?: string): SavedGameState | null {
+export function loadGameState(puzzleId?: string, difficulty?: string): SavedGameState | null {
   if (!isBrowser) return null
   
   try {
-    const data = localStorage.getItem(keyFor(puzzleId))
+    const data = localStorage.getItem(keyFor(puzzleId, difficulty))
     if (!data) return null
 
     const parsed = JSON.parse(data) as SavedGameState
@@ -80,20 +86,20 @@ export function loadGameState(puzzleId?: string): SavedGameState | null {
     // Version check
     if (parsed.version !== STORAGE_VERSION) {
       console.warn('Saved game version mismatch, clearing storage')
-      clearGameState(puzzleId)
+      clearGameState(puzzleId, difficulty)
       return null
     }
 
     // Don't restore completed games
     if (parsed.gameStatus === 'won' || parsed.gameStatus === 'lost') {
-      clearGameState(puzzleId)
+      clearGameState(puzzleId, difficulty)
       return null
     }
 
     return parsed
   } catch (error) {
     console.error('Failed to load game state:', error)
-    clearGameState(puzzleId)
+    clearGameState(puzzleId, difficulty)
     return null
   }
 }
@@ -101,11 +107,11 @@ export function loadGameState(puzzleId?: string): SavedGameState | null {
 /**
  * Clear saved game state
  */
-export function clearGameState(puzzleId?: string): void {
+export function clearGameState(puzzleId?: string, difficulty?: string): void {
   if (!isBrowser) return
   
   try {
-    localStorage.removeItem(keyFor(puzzleId))
+    localStorage.removeItem(keyFor(puzzleId, difficulty))
   } catch (error) {
     console.error('Failed to clear game state:', error)
   }

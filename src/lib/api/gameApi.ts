@@ -71,8 +71,10 @@ export const gameApi = {
       | TangramPuzzleResponse;
   },
 
-  async getDailyPuzzle(game: GameId, date?: string, signal?: AbortSignal) {
-    const params = date ? { date } : undefined;
+  async getDailyPuzzle(game: GameId, date?: string, difficulty?: string, signal?: AbortSignal) {
+    const params: Record<string, string> = {};
+    if (date) params.date = date;
+    if (difficulty) params.difficulty = difficulty;
     const res = await api<unknown>(`/api/v1/games/${game}/daily`, {
       params,
       suppressToast: true,
@@ -146,13 +148,15 @@ export const gameApi = {
     return res.payload;
   },
 
-  async getContinueCrossMath() {
-    const res = await api<ContinuePlayingInfo>('/api/v1/games/crossmath/continue');
+  async getContinueCrossMath(difficulty?: string) {
+    const params = difficulty ? `?difficulty=${difficulty}` : '';
+    const res = await api<ContinuePlayingInfo>(`/api/v1/games/crossmath/continue${params}`);
     return res.payload;
   },
 
-  async getContinue(game: GameId) {
-    const res = await api<any>(`/api/v1/games/${game}/continue`);
+  async getContinue(game: GameId, difficulty?: string) {
+    const params = difficulty ? `?difficulty=${difficulty}` : '';
+    const res = await api<any>(`/api/v1/games/${game}/continue${params}`);
     return res.payload;
   },
 
@@ -288,7 +292,7 @@ export const gameApi = {
 
   async getTangramDailyCompletion(date?: string) {
     const params = date ? { date } : {};
-    const res = await api('/api/v1/tangram/daily/completion', { params });
+    const res = await api('/api/v1/games/tangram/daily/completion', { params });
     return res.payload;
   },
 
@@ -324,6 +328,11 @@ export const gameApi = {
 
   async restartCrossMathSession(sessionId: string) {
     const res = await api(`/api/v1/crossmath/session/${sessionId}/restart`, { method: 'POST' });
+    return res.payload;
+  },
+
+  async abandonSudokuSession(sessionId: string) {
+    const res = await api(`/api/v1/games/sudoku/sessions/${sessionId}/abandon`, { method: 'POST' });
     return res.payload;
   },
 
@@ -384,7 +393,7 @@ export const gameApi = {
 
   async getCrossMathDailyCompletion(date?: string) {
     const params = date ? { date } : {};
-    const res = await api('/api/v1/crossmath/daily/completion', { params });
+    const res = await api('/api/v1/games/crossmath/daily/completion', { params });
     return res.payload;
   },
 
@@ -396,6 +405,11 @@ export const gameApi = {
       body: JSON.stringify({ puzzleId, dailyChallengeId }),
       suppressToast: true,
     });
+    return res.payload;
+  },
+
+  async getContinueDailySudoku() {
+    const res = await api<any>('/api/v1/games/sudoku/daily/continue');
     return res.payload;
   },
 

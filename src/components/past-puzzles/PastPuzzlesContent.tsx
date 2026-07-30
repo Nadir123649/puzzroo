@@ -118,7 +118,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
 
     // Verify today's challenge with server
     const apiGameId = gameId === 'cross-math' ? 'crossmath' : gameId === 'sudoku' ? 'sudoku' : gameId
-    api(`/api/v1/${apiGameId}/daily/completion`).then(res => {
+    api(`/api/v1/games/${apiGameId}/daily/completion`).then(res => {
       if (res.success) {
         const payload = res.payload as any
         if (payload?.completed) {
@@ -512,8 +512,8 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
     onPlayClick(true)
     // Show loading for 1 second
     await new Promise(resolve => setTimeout(resolve, 1000))
-    // Route directly to daily challenge page with date in URL
-    router.push(`/daily-challenge/${puzzle.gameId}?date=${puzzle.dateString}`)
+    // Route directly to daily challenge page with date and difficulty in URL
+    router.push(`/daily-challenge/${puzzle.gameId}?date=${puzzle.dateString}&difficulty=${puzzle.difficulty}`)
   }
 
   return (

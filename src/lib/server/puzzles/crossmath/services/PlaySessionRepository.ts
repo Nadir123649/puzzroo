@@ -77,7 +77,8 @@ export class PlaySessionRepository {
     status: SessionStatus | SessionStatus[],
     userId?: string,
     guestId?: string,
-    gameType?: "crossmath" | "daily_challenge"
+    gameType?: "crossmath" | "daily_challenge",
+    difficulty?: string
   ) {
     const statuses = Array.isArray(status) ? status : [status]
     const filter: Record<string, unknown> = { status: { $in: statuses } }
@@ -91,6 +92,9 @@ export class PlaySessionRepository {
       filter.guestId = guestId
     } else if (userId) {
       filter.userId = userId
+    }
+    if (difficulty) {
+      filter.difficulty = difficulty
     }
     return CrossMathPlaySession.findOne(filter).sort({ lastSaveAt: -1 })
   }

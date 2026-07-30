@@ -1,23 +1,12 @@
 import { NextRequest } from "next/server";
-import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
+import { errorResponse } from "@/lib/server/utils/apiResponse";
 import { getSession } from "@/lib/server/services/sudoku/sessionService";
-import { auth } from "@/lib/server/middleware/auth";
+import { withAuth } from "../../route-helpers";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const userResult = await auth(_request);
-  if ("error" in userResult) return userResult.error;
+export const GET = withAuth(async (_req: NextRequest, actor, params) => {
+  const { id } = params;
+  const session = await getSession(id, actor);
+  if (!session) return errorResponse(404, "session_not_found", "Session not found");
 
-  try {
-    const { id } = await params;
-    const session = await getSession(id, userResult.user.id);
-    if (!session) return errorResponse(404, "session_not_found", "Session not found");
-
-    return successResponse(session);
-  } catch (error: any) {
-    console.error("[sudoku/sessions/id GET]", error);
-    return errorResponse(500, "internal_error", "Internal Server Error");
-  }
-}
+  return Response.json({ success: true, version: "1.0.0", payload: session, serverTimestamp: new Date().toISOString() });
+});

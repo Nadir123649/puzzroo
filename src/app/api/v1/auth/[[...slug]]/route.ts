@@ -178,10 +178,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           );
           if (!updated) {
             const sessionExists = await LoginSession.findById(decoded.jti).select("_id").lean();
-            if (!sessionExists) {
-              return errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.");
-            }
-            return errorResponse(401, "token_reused", "Refresh token has already been used. Please sign in again.");
+            const errRes = !sessionExists
+              ? errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.")
+              : errorResponse(401, "token_reused", "Refresh token has already been used. Please sign in again.");
+            errRes.cookies.delete("refreshToken");
+            return errRes;
           }
           tokenVersion = updated.tokenVersion;
         }
@@ -191,10 +192,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         res.cookies.set("refreshToken", tokenPayload.refreshToken, cookieOptions);
         return res;
       } catch {
-        return NextResponse.json(
+        const errRes = NextResponse.json(
           { success: false, version: "1.0.0", payload: { error: { code: "token_invalid", message: "Invalid or expired refresh token" } }, serverTimestamp: new Date().toISOString() },
           { status: 200 }
         );
+        errRes.cookies.delete("refreshToken");
+        return errRes;
       }
     }
 
