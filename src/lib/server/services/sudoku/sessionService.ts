@@ -1,14 +1,39 @@
 import { connectDB } from "@/lib/server/db";
 import SudokuPuzzle from "@/lib/server/models/SudokuPuzzle";
 import PlaySession from "@/lib/server/models/sudoku/PlaySession";
+import type { Actor } from "@/app/api/v1/games/sudoku/route-helpers";
 import type {
   SessionStatus,
   SessionResult,
   SessionResponse,
   SaveProgressInput,
 } from "./types";
-import { createEmptyNotes, isEmptyNotes } from "./utils";
+import { isEmptyNotes } from "./utils";
 import { verifyCompletion, calculateScore, validateElapsedTime } from "./verificationService";
+import { sudokuPlaySessionRepository } from "./SudokuPlaySessionRepository";
+
+function actorId(actor: Actor): string {
+  return actor.id;
+}
+
+function actorGuestId(actor: Actor): string | undefined {
+  return actor.type === "guest" ? actor.id : undefined;
+}
+
+function actorToOwner(actor: Actor): { userId?: string; guestId?: string } {
+  const guestId = actorGuestId(actor);
+  if (guestId) return { guestId };
+  return { userId: actor.id };
+}
+
+function assertOwnership(session: any, actor: Actor): void {
+  const guestId = actorGuestId(actor);
+  if (guestId) {
+    if (session.guestId !== guestId) throw new Error("not_owner");
+  } else {
+    if (!session.userId || String(session.userId) !== actor.id) throw new Error("not_owner");
+  }
+}
 
 function toSessionResponse(doc: any): SessionResponse {
   return {
@@ -30,209 +55,155 @@ function toSessionResponse(doc: any): SessionResponse {
     pausedAt: doc.pausedAt?.toISOString?.() || null,
     lastSavedAt: doc.lastSavedAt?.toISOString?.() || new Date().toISOString(),
     isReplay: doc.isReplay || false,
+    gameType: doc.gameType || "sudoku",
+    dailyChallengeId: doc.dailyChallengeId || null,
   };
 }
 
-export async function createSession(userId: string, puzzleId: string) {
+export async function createSession(actor: Actor, puzzleId: string, gameType?: "sudoku" | "daily_challenge", dailyChallengeId?: string) {
   await connectDB();
 
-  const existing = await PlaySession.findOne({
-    userId,
-    puzzleId,
-    status: { $in: ["playing", "paused"] },
-  }).lean();
+  const { userId, guestId } = actorToOwner(actor);
 
-  if (existing) {
-    return toSessionResponse(existing);
+  if (gameType === "daily_challenge" && dailyChallengeId) {
+    const existing = await sudokuPlaySessionRepository.findActiveDailyByChallenge(dailyChallengeId, userId, guestId);
+    if (existing) return toSessionResponse(existing.toObject());
+  } else {
+    const existing = await sudokuPlaySessionRepository.findActiveByUserAndPuzzle(puzzleId, userId, guestId);
+    if (existing) return toSessionResponse(existing.toObject());
   }
 
   const puzzle = await SudokuPuzzle.findOne({ puzzleId }).lean();
   if (!puzzle) throw new Error("puzzle_not_found");
 
   try {
-    const session = await PlaySession.create({
-      userId,
+    const session = await sudokuPlaySessionRepository.create({
+      userId: guestId ? undefined : userId,
+      guestId,
       puzzleId,
+      gameType,
+      dailyChallengeId,
       difficulty: puzzle.difficulty,
       currentBoard: puzzle.puzzle,
       initialBoard: puzzle.puzzle,
-      notes: createEmptyNotes(),
-      status: "playing",
-      startedAt: new Date(),
-      lastSavedAt: new Date(),
     });
-    return toSessionResponse(session);
+    return toSessionResponse(session.toObject());
   } catch (error: any) {
     if (error?.code === 11000) {
-      const existing = await PlaySession.findOne({
-        userId,
-        puzzleId,
-        status: { $in: ["playing", "paused"] },
-      }).lean();
-      if (existing) return toSessionResponse(existing);
+      if (gameType === "daily_challenge" && dailyChallengeId) {
+        const existing = await sudokuPlaySessionRepository.findActiveDailyByChallenge(dailyChallengeId, userId, guestId);
+        if (existing) return toSessionResponse(existing.toObject());
+      } else {
+        const existing = await sudokuPlaySessionRepository.findActiveByUserAndPuzzle(puzzleId, userId, guestId);
+        if (existing) return toSessionResponse(existing.toObject());
+      }
     }
     throw error;
   }
 }
 
-export async function getSession(sessionId: string, userId: string) {
+export async function getSession(sessionId: string, actor: Actor) {
   await connectDB();
-  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
+  const session = await sudokuPlaySessionRepository.findById(sessionId);
   if (!session) throw new Error("session_not_found");
-  return toSessionResponse(session);
+  assertOwnership(session, actor);
+  return toSessionResponse(session.toObject());
 }
 
-export async function getActiveSession(userId: string) {
+export async function getActiveSession(actor: Actor) {
   await connectDB();
-  const session = await PlaySession.findOne({
-    userId,
-    status: { $in: ["playing", "paused"] },
-  })
-    .sort({ lastSavedAt: -1 })
-    .lean();
+  const { userId, guestId } = actorToOwner(actor);
+  const session = await sudokuPlaySessionRepository.findActiveByOwner(userId, guestId);
   if (!session) return null;
-  return toSessionResponse(session);
+  return toSessionResponse(session.toObject());
 }
 
-export async function pauseSession(sessionId: string, userId: string) {
+export async function pauseSession(sessionId: string, actor: Actor) {
   await connectDB();
-  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) throw new Error("session_not_found");
+  const session = await getSession(sessionId, actor);
   if (session.status !== "playing") throw new Error("session_not_active");
 
-  const updated = await PlaySession.findOneAndUpdate(
-    { _id: sessionId, userId },
-    { status: "paused", pausedAt: new Date(), lastSavedAt: new Date() },
-    { new: true }
-  ).lean();
+  const { userId, guestId } = actorToOwner(actor);
+  const owner = await sudokuPlaySessionRepository.ownerFilter(userId, guestId);
+  const updated = await sudokuPlaySessionRepository.pause(sessionId, owner);
   if (!updated) throw new Error("session_not_found");
-  return toSessionResponse(updated);
+  return toSessionResponse(updated.toObject());
 }
 
-export async function resumeSession(sessionId: string, userId: string) {
+export async function resumeSession(sessionId: string, actor: Actor) {
   await connectDB();
-  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) throw new Error("session_not_found");
+  const session = await getSession(sessionId, actor);
   if (session.status !== "paused") throw new Error("session_not_paused");
 
-  const updated = await PlaySession.findOneAndUpdate(
-    { _id: sessionId, userId },
-    {
-      status: "playing",
-      pausedAt: null,
-      lastSavedAt: new Date(),
-    },
-    { new: true }
-  ).lean();
+  const { userId, guestId } = actorToOwner(actor);
+  const owner = await sudokuPlaySessionRepository.ownerFilter(userId, guestId);
+  const updated = await sudokuPlaySessionRepository.resume(sessionId, owner);
   if (!updated) throw new Error("session_not_found");
-  return toSessionResponse(updated);
+  return toSessionResponse(updated.toObject());
 }
 
 export async function saveProgress(
   sessionId: string,
-  userId: string,
+  actor: Actor,
   input: SaveProgressInput
 ) {
   await connectDB();
 
-  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) throw new Error("session_not_found");
-  if (!["playing", "paused"].includes(session.status)) throw new Error("session_not_active");
+  const { userId, guestId } = actorToOwner(actor);
+  const owner = await sudokuPlaySessionRepository.ownerFilter(userId, guestId);
 
-  const $set: any = {
-    currentBoard: input.board,
-    elapsedTime: input.elapsedTime,
-    lastSavedAt: new Date(),
-  };
-
-  if (input.hintsUsed !== undefined) $set.hintsUsed = input.hintsUsed;
-  if (input.mistakes !== undefined) $set.mistakes = input.mistakes;
-  if (input.moves !== undefined) $set.moves = input.moves;
-  if (input.notes) $set.notes = input.notes;
-
-  const update: any = { $set };
-
-  const updated = await PlaySession.findOneAndUpdate(
-    { _id: sessionId, userId, status: { $in: ["playing", "paused"] } },
-    update,
-    { new: true }
-  ).lean();
-
-  if (!updated) throw new Error("session_not_active");
-  return toSessionResponse(updated);
+  const updated = await sudokuPlaySessionRepository.saveProgress(sessionId, input, owner);
+  if (!updated) {
+    const exists = await sudokuPlaySessionRepository.findById(sessionId);
+    if (!exists) throw new Error("session_not_found");
+    assertOwnership(exists, actor);
+    throw new Error("session_not_active");
+  }
+  return toSessionResponse(updated.toObject());
 }
 
 export async function autosave(
   sessionId: string,
-  userId: string,
+  actor: Actor,
   input: SaveProgressInput
 ) {
-  return saveProgress(sessionId, userId, input);
+  return saveProgress(sessionId, actor, input);
 }
 
-export async function restartSession(sessionId: string, userId: string) {
+export async function restartSession(sessionId: string, actor: Actor) {
   await connectDB();
-  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) throw new Error("session_not_found");
+  const session = await getSession(sessionId, actor);
   if (session.status === "completed") throw new Error("already_completed");
 
-  const updated = await PlaySession.findOneAndUpdate(
-    { _id: sessionId, userId },
-    {
-      $set: {
-        currentBoard: session.initialBoard,
-        notes: createEmptyNotes(),
-        elapsedTime: 0,
-        hintsUsed: 0,
-        mistakes: 0,
-        moves: 0,
-        result: "incomplete",
-        score: 0,
-        status: "playing",
-        lastSavedAt: new Date(),
-      },
-      $inc: { restartCount: 1 },
-    },
-    { new: true }
-  ).lean();
+  const { userId, guestId } = actorToOwner(actor);
+  const owner = await sudokuPlaySessionRepository.ownerFilter(userId, guestId);
+  const updated = await sudokuPlaySessionRepository.restart(sessionId, session.initialBoard, owner);
 
   if (!updated) throw new Error("session_not_found");
-  return toSessionResponse(updated);
+  return toSessionResponse(updated.toObject());
 }
 
-export async function replayPuzzle(userId: string, puzzleId: string) {
+export async function replayPuzzle(actor: Actor, puzzleId: string) {
   await connectDB();
 
-  const existing = await PlaySession.findOne({
-    userId,
-    puzzleId,
-    status: { $in: ["playing", "paused"] },
-  }).lean();
-  if (existing) {
-    await PlaySession.findOneAndUpdate(
-      { _id: existing._id },
-      { $set: { status: "abandoned", result: "gave_up" } }
-    );
-  }
+  const { userId, guestId } = actorToOwner(actor);
+  await sudokuPlaySessionRepository.abandonActiveForPuzzle(puzzleId, userId, guestId);
 
   const puzzle = await SudokuPuzzle.findOne({ puzzleId }).lean();
   if (!puzzle) throw new Error("puzzle_not_found");
 
-  const session = await PlaySession.create({
-    userId,
+  const session = await sudokuPlaySessionRepository.create({
+    userId: guestId ? undefined : userId,
+    guestId,
     puzzleId,
     difficulty: puzzle.difficulty,
     currentBoard: puzzle.puzzle,
     initialBoard: puzzle.puzzle,
-    notes: createEmptyNotes(),
-    status: "playing",
     isReplay: true,
-    startedAt: new Date(),
-    lastSavedAt: new Date(),
   });
 
   return {
-    session: toSessionResponse(session),
+    session: toSessionResponse(session.toObject()),
     puzzle: {
       puzzleId: puzzle.puzzleId,
       difficulty: puzzle.difficulty,
@@ -242,32 +213,23 @@ export async function replayPuzzle(userId: string, puzzleId: string) {
   };
 }
 
-export async function abandonSession(sessionId: string, userId: string) {
+export async function abandonSession(sessionId: string, actor: Actor) {
   await connectDB();
-  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) throw new Error("session_not_found");
+  const session = await getSession(sessionId, actor);
   if (session.status === "completed") throw new Error("already_completed");
   if (!["playing", "paused"].includes(session.status)) throw new Error("session_not_active");
 
-  const updated = await PlaySession.findOneAndUpdate(
-    { _id: sessionId, userId },
-    {
-      $set: {
-        status: "abandoned",
-        result: "gave_up",
-        lastSavedAt: new Date(),
-      },
-    },
-    { new: true }
-  ).lean();
+  const { userId, guestId } = actorToOwner(actor);
+  const owner = await sudokuPlaySessionRepository.ownerFilter(userId, guestId);
+  const updated = await sudokuPlaySessionRepository.abandon(sessionId, owner);
 
   if (!updated) throw new Error("session_not_found");
-  return toSessionResponse(updated);
+  return toSessionResponse(updated.toObject());
 }
 
 export async function completeSession(
   sessionId: string,
-  userId: string,
+  actor: Actor,
   board: string,
   elapsedTime: number,
   hintsUsed?: number,
@@ -275,15 +237,13 @@ export async function completeSession(
   moves?: number
 ) {
   await connectDB();
-  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) throw new Error("session_not_found");
+  const session = await getSession(sessionId, actor);
   if (session.status === "completed") throw new Error("already_completed");
-  if (!["playing", "paused"].includes(session.status)) throw new Error("session_not_active");
 
   const validatedTime = validateElapsedTime(
     elapsedTime,
     session.elapsedTime || 0,
-    session.startedAt || new Date()
+    session.startedAt ? new Date(session.startedAt) : new Date()
   );
 
   const finalHints = hintsUsed ?? session.hintsUsed ?? 0;
@@ -296,86 +256,111 @@ export async function completeSession(
   );
   const finalMoves = moves ?? session.moves ?? 0;
 
-  const $set: Record<string, unknown> = {
-    status: "completed",
-    currentBoard: board,
-    elapsedTime: validatedTime,
-    result: "solved",
-    score,
-    moves: finalMoves,
-    hintsUsed: finalHints,
-    mistakes: finalMistakes,
-    completedAt: new Date(),
-    lastSavedAt: new Date(),
-  };
+  const { userId, guestId } = actorToOwner(actor);
+  const owner = await sudokuPlaySessionRepository.ownerFilter(userId, guestId);
 
-  const updated = await PlaySession.findOneAndUpdate(
-    { _id: sessionId, userId, status: { $in: ["playing", "paused"] } },
-    { $set },
-    { new: true }
-  ).lean();
+  const updated = await sudokuPlaySessionRepository.complete(sessionId, {
+    board,
+    elapsedTime: validatedTime,
+    moves: finalMoves,
+    mistakes: finalMistakes,
+    hintsUsed: finalHints,
+    score,
+  }, owner);
 
   if (!updated) {
-    const existing = await PlaySession.findOne({ _id: sessionId, userId }).lean();
+    const existing = await sudokuPlaySessionRepository.findById(sessionId);
     if (!existing) throw new Error("session_not_found");
+    assertOwnership(existing, actor);
     throw new Error("already_completed");
   }
   return toSessionResponse(updated);
 }
 
 export async function getUserHistory(
-  userId: string,
+  actor: Actor,
   status?: "completed" | "abandoned",
   cursor?: string,
   limit = 20
 ) {
   await connectDB();
-  const filter: any = { userId };
-  if (status) filter.status = status;
-  if (cursor) filter._id = { $lt: cursor };
+  const { userId, guestId } = actorToOwner(actor);
+  const owner = await sudokuPlaySessionRepository.ownerFilter(userId, guestId);
+  const result = await sudokuPlaySessionRepository.findHistory(owner, status, cursor, limit);
+  return result.sessions.map(toSessionResponse);
+}
 
-  const sessions = await PlaySession.find(filter)
-    .sort({ lastSavedAt: -1 })
-    .limit(limit)
-    .lean();
-
+export async function getRecentSessions(actor: Actor, limit = 10) {
+  await connectDB();
+  const { userId, guestId } = actorToOwner(actor);
+  const sessions = await sudokuPlaySessionRepository.findRecentByUser(limit, userId, guestId);
   return sessions.map(toSessionResponse);
 }
 
-export async function getCompletedGames(userId: string, cursor?: string, limit = 20) {
-  return getUserHistory(userId, "completed", cursor, limit);
+export async function getCompletedGames(actor: Actor, cursor?: string, limit = 20) {
+  return getUserHistory(actor, "completed", cursor, limit);
 }
 
-export async function getAbandonedGames(userId: string, cursor?: string, limit = 20) {
-  return getUserHistory(userId, "abandoned", cursor, limit);
+export async function getAbandonedGames(actor: Actor, cursor?: string, limit = 20) {
+  return getUserHistory(actor, "abandoned", cursor, limit);
 }
 
-export async function canResume(userId: string) {
+export async function canResume(actor: Actor) {
   await connectDB();
-  const session = await PlaySession.findOne({
-    userId,
-    status: { $in: ["playing", "paused"] },
-  })
-    .sort({ lastSavedAt: -1 })
-    .lean();
+  const { userId, guestId } = actorToOwner(actor);
+  const session = await sudokuPlaySessionRepository.findActiveByOwner(userId, guestId);
   return !!session;
 }
 
-export async function getResumableSession(userId: string) {
+export async function getResumableSession(actor: Actor, gameType?: "sudoku" | "daily_challenge", difficulty?: string) {
   await connectDB();
-  const session = await PlaySession.findOne({
-    userId,
+  const { userId, guestId } = actorToOwner(actor);
+
+  const filter: Record<string, unknown> = {
     status: { $in: ["playing", "paused"] },
-  })
+  };
+  if (guestId) {
+    filter.guestId = guestId;
+  } else {
+    filter.userId = userId;
+  }
+  if (gameType === "daily_challenge") {
+    filter.gameType = "daily_challenge";
+  } else {
+    filter.gameType = { $ne: "daily_challenge" };
+  }
+
+  const activeSessions = await PlaySession.find(filter)
     .sort({ lastSavedAt: -1 })
     .lean();
+
+  if (!activeSessions || activeSessions.length === 0) return { hasActiveSession: false };
+
+  let session = null;
+  let puzzle = null;
+
+  if (difficulty) {
+    for (const sess of activeSessions) {
+      if (sess.difficulty === difficulty) {
+        session = sess;
+        puzzle = await SudokuPuzzle.findOne({ puzzleId: sess.puzzleId }).lean();
+        break;
+      }
+      const p = await SudokuPuzzle.findOne({ puzzleId: sess.puzzleId }).lean();
+      if (p && p.difficulty === difficulty) {
+        session = sess;
+        puzzle = p;
+        PlaySession.updateOne({ _id: sess._id }, { $set: { difficulty: p.difficulty } }).catch(() => {});
+        break;
+      }
+    }
+  } else {
+    session = activeSessions[0];
+    puzzle = await SudokuPuzzle.findOne({ puzzleId: session.puzzleId }).lean();
+  }
+
   if (!session) return { hasActiveSession: false };
 
-  const puzzle = await SudokuPuzzle.findOne({ puzzleId: session.puzzleId }).lean();
-
-  // If board is fully filled (no '0' cells), verify it. If solved,
-  // auto-complete rather than returning a session the user can't make
-  // progress on. Eliminates the tab-close / network-failure race.
   const board = session.currentBoard || ""
   if (puzzle && board.length === 81 && !board.includes("0")) {
     try {
@@ -387,7 +372,7 @@ export async function getResumableSession(userId: string) {
         const moves = session.moves || 0
         await completeSession(
           String(session._id),
-          userId,
+          actor,
           board,
           elapsedTime,
           hintsUsed,
@@ -397,8 +382,6 @@ export async function getResumableSession(userId: string) {
         return { hasActiveSession: false }
       }
     } catch {
-      // Verification failure should not prevent the user from
-      // continuing — fall through to normal session return.
     }
   }
 

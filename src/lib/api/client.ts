@@ -30,12 +30,21 @@ function isTokenExpired(token: string): boolean {
 }
 
 export async function refreshAccessToken(): Promise<string | null> {
+  if (!isClient) return null;
+  // If user is not logged in (no puzzroo_auth in localStorage), do not attempt refresh
+  if (!localStorage.getItem("puzzroo_auth")) return null;
+
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
     try {
       const res = await fetch(`${API_BASE}/api/v1/auth/refresh`, { method: "POST", credentials: "include" });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem("puzzroo_auth");
+        }
+        return null;
+      }
       const data = await res.json();
       return data.payload?.token?.accessToken || null;
     } catch {
@@ -81,15 +90,16 @@ export async function api<T = any>(
   };
 
   let accessToken = getAccessToken();
+  const userIsLoggedIn = isClient && !!localStorage.getItem("puzzroo_auth");
 
-  if (!accessToken && isClient && localStorage.getItem("puzzroo_auth")) {
+  if (!accessToken && userIsLoggedIn) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       setAccessToken(newToken);
       if (onRefresh) onRefresh(newToken);
       accessToken = newToken;
     }
-  } else if (accessToken && isTokenExpired(accessToken)) {
+  } else if (accessToken && isTokenExpired(accessToken) && userIsLoggedIn) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       setAccessToken(newToken);
@@ -97,6 +107,7 @@ export async function api<T = any>(
       accessToken = newToken;
     }
   }
+
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
   } else if (isClient) {
@@ -115,9 +126,8 @@ export async function api<T = any>(
     try {
       let res = await fetch(url, { ...fetchOptions, headers, credentials: "include" });
 
-      // Auto-refresh on 401
-      const mightBeLoggedIn = accessToken || (isClient && localStorage.getItem("puzzroo_auth"));
-      if (res.status === 401 && mightBeLoggedIn) {
+      // Auto-refresh on 401 only for logged-in users
+      if (res.status === 401 && userIsLoggedIn) {
         const newToken = await refreshAccessToken();
         if (newToken) {
           setAccessToken(newToken);

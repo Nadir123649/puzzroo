@@ -11,7 +11,7 @@ import { withAuth } from "../../../route-helpers";
 import { completionBus } from "@/lib/server/games/completion";
 import { ensureGameSubscriptions } from "@/lib/server/games/subscriptions";
 
-export const POST = withAuth(async (req: NextRequest, user, params) => {
+export const POST = withAuth(async (req: NextRequest, actor, params) => {
   if (!rateLimit(req, "sudoku-complete", 30)) {
     return errorResponse(429, "rate_limited", "Too many requests");
   }
@@ -22,7 +22,7 @@ export const POST = withAuth(async (req: NextRequest, user, params) => {
   const val = validate(completeSessionSchema, body);
   if (val.error) return val.error;
 
-  const session = await getSession(params.id, user.id);
+  const session = await getSession(params.id, actor);
   if (session.status !== "playing") throw new Error("session_not_active");
 
   await connectDB();
@@ -39,13 +39,13 @@ export const POST = withAuth(async (req: NextRequest, user, params) => {
   const moves = val.data!.moves ?? session.moves ?? 0;
 
   const updated = await completeSession(
-    params.id, user.id, val.data!.board, val.data!.elapsedTime,
+    params.id, actor, val.data!.board, val.data!.elapsedTime,
     hintsUsed, mistakes, moves
   );
 
   ensureGameSubscriptions();
   completionBus.emit({
-    playerId: user.id,
+    playerId: actor.id,
     sessionId: params.id,
     gameType: "sudoku",
     puzzleId: session.puzzleId,
@@ -56,7 +56,7 @@ export const POST = withAuth(async (req: NextRequest, user, params) => {
     hintsUsed,
     completedAt: new Date(),
     isReplay: session.isReplay || false,
-    isGuest: user.role === "guest",
+    isGuest: actor.type === "guest",
   });
 
   return successResponse({

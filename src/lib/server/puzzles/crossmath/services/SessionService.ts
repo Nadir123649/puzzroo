@@ -348,10 +348,10 @@ export class SessionService {
     return toSafeSession(session.toObject())
   }
 
-  async getContinuePlaying(actor: Actor, gameType: "crossmath" | "daily_challenge" = "crossmath") {
+  async getContinuePlaying(actor: Actor, gameType: "crossmath" | "daily_challenge" = "crossmath", difficulty?: string) {
     const userId = this.actorId(actor)
     const guestId = this.actorGuestId(actor)
-    const session = await playSessionRepository.findByUserAndStatus(["playing", "paused"], userId, guestId, gameType)
+    const session = await playSessionRepository.findByUserAndStatus(["playing", "paused"], userId, guestId, gameType, difficulty)
     if (!session) {
       return { hasActiveSession: false }
     }

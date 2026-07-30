@@ -20,7 +20,7 @@ async function getGuestId(page: any): Promise<string> {
 
 async function api(page: any, url: string, options?: any) {
   const guestId = await getGuestId(page)
-  return page.evaluate(async ({ url, options, guestId }) => {
+  return page.evaluate(async ({ url, options, guestId }: { url: string; options: any; guestId: string }) => {
     const headers: Record<string, string> = { "Content-Type": "application/json" }
     if (guestId) headers["x-guest-id"] = guestId
     const res = await fetch(url, { ...options, headers, credentials: "include" })

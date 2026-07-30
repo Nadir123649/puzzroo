@@ -174,7 +174,7 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
       if (puzzle) {
         setSelectedDate(clickedDate)
         setErrorMessage('')
-        router.push(`/daily-challenge/${gameId}?date=${dateString}`)
+        router.push(`/daily-challenge/${gameId}?date=${dateString}&difficulty=${puzzle.difficulty}`)
         onClose()
       }
     } catch (error) {

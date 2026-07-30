@@ -3,6 +3,7 @@ import PlaySession from "@/lib/server/models/sudoku/PlaySession";
 import UserStatistics from "@/lib/server/models/sudoku/UserStatistics";
 import PuzzleStatistics from "@/lib/server/models/sudoku/PuzzleStatistics";
 import type { Difficulty, UserStatsResponse } from "./types";
+import mongoose from "mongoose";
 
 function computeStreaks(dates: Date[]): { current: number; longest: number } {
   if (dates.length === 0) return { current: 0, longest: 0 };
@@ -146,13 +147,14 @@ export async function getUserStats(userId: string): Promise<UserStatsResponse | 
 export async function updateUserStatsOnComplete(sessionId: string, userId: string) {
   await connectDB();
 
-  const [session, stats, allSessions] = await Promise.all([
-    PlaySession.findOne({ _id: sessionId, userId }).lean(),
+  const session = await PlaySession.findById(sessionId).lean();
+  if (!session) return;
+  if (!session.userId) return;
+
+  const [stats, allSessions] = await Promise.all([
     UserStatistics.findOne({ userId }),
     PlaySession.find({ userId }).lean(),
   ]);
-
-  if (!session) return;
 
   if (!stats) {
     const fav = findFavoriteDifficulty(allSessions);
@@ -213,8 +215,9 @@ export async function updateUserStatsOnComplete(sessionId: string, userId: strin
 
 export async function updateUserStatsOnAbandon(sessionId: string, userId: string) {
   await connectDB();
-  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
+  const session = await PlaySession.findById(sessionId).lean();
   if (!session) return;
+  if (!session.userId) return;
 
   const stats = await UserStatistics.findOne({ userId });
   if (stats) {
@@ -235,6 +238,7 @@ export async function updatePuzzleStatsOnComplete(sessionId: string) {
   await connectDB();
   const session = await PlaySession.findById(sessionId).lean();
   if (!session) return;
+  if (!session.userId) return;
 
   let stats = await PuzzleStatistics.findOne({ puzzleId: session.puzzleId });
 

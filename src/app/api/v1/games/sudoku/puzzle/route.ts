@@ -25,9 +25,15 @@ export async function GET(
     const { difficulty } = q.data;
 
     const userResult = await auth(request);
-    const userId = "error" in userResult ? undefined : userResult.user.id;
+    let userId: string | undefined;
+    let guestId: string | undefined;
+    if (!("error" in userResult)) {
+      userId = userResult.user.id;
+    } else {
+      guestId = request.headers.get("x-guest-id") || undefined;
+    }
 
-    const doc = await getRandomPuzzle(userId, difficulty);
+    const doc = await getRandomPuzzle(userId, difficulty, undefined, guestId);
     if (!doc) return errorResponse(404, "no_puzzle", "No puzzle available");
 
     const response = sudokuToResponse({

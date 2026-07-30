@@ -9,6 +9,7 @@ export const GET = withAuth(async (req: NextRequest, actor: Actor) => {
   if (!rateLimit(req, "crossmath-continue", 30)) {
     return errorResponse(429, "rate_limited", "Too many requests")
   }
-  const result = await sessionService.getContinuePlaying(actor)
+  const difficulty = new URL(req.url).searchParams.get("difficulty") || undefined
+  const result = await sessionService.getContinuePlaying(actor, "crossmath", difficulty)
   return successResponse(result)
 })

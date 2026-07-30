@@ -56,7 +56,17 @@ export function loadDifficultyPreference(): Difficulty {
   return 'easy'
 }
 
-export function saveGameState(state: Omit<SavedCrossMathState, 'version' | 'savedAt'>): void {
+const keyFor = (puzzleId?: string, difficulty?: string) => {
+  let baseKey = STORAGE_KEY
+  if (puzzleId) {
+    baseKey = `puzzroo_crossmath_game_${puzzleId}`
+  } else if (difficulty) {
+    baseKey = `puzzroo_crossmath_game_${difficulty}`
+  }
+  return getScopedKey(baseKey)
+}
+
+export function saveGameState(state: Omit<SavedCrossMathState, 'version' | 'savedAt'>, puzzleId?: string, difficulty?: string): void {
   if (!isBrowser) return
   try {
     const dataToSave: SavedCrossMathState = {
@@ -64,44 +74,44 @@ export function saveGameState(state: Omit<SavedCrossMathState, 'version' | 'save
       version: STORAGE_VERSION,
       savedAt: Date.now(),
     }
-    const key = getScopedKey(STORAGE_KEY)
+    const key = keyFor(puzzleId, difficulty || state.difficulty)
     localStorage.setItem(key, JSON.stringify(dataToSave))
   } catch (error) {
     console.error('Failed to save game state:', error)
   }
 }
 
-export function loadGameState(): SavedCrossMathState | null {
+export function loadGameState(puzzleId?: string, difficulty?: string): SavedCrossMathState | null {
   if (!isBrowser) return null
   try {
-    const key = getScopedKey(STORAGE_KEY)
+    const key = keyFor(puzzleId, difficulty)
     const data = localStorage.getItem(key)
     if (!data) return null
 
     const parsed = JSON.parse(data) as SavedCrossMathState
 
     if (parsed.version !== STORAGE_VERSION) {
-      clearGameState()
+      clearGameState(puzzleId, difficulty)
       return null
     }
 
     if (parsed.gameStatus === 'won' || parsed.gameStatus === 'lost') {
-      clearGameState()
+      clearGameState(puzzleId, difficulty)
       return null
     }
 
     return parsed
   } catch (error) {
     console.error('Failed to load game state:', error)
-    clearGameState()
+    clearGameState(puzzleId, difficulty)
     return null
   }
 }
 
-export function clearGameState(): void {
+export function clearGameState(puzzleId?: string, difficulty?: string): void {
   if (!isBrowser) return
   try {
-    const key = getScopedKey(STORAGE_KEY)
+    const key = keyFor(puzzleId, difficulty)
     localStorage.removeItem(key)
   } catch (error) {
     console.error('Failed to clear game state:', error)

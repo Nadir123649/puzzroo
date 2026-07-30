@@ -93,12 +93,6 @@ export function useCrossMath(initialPuzzleId?: string) {
   }
 
   const getInitialDifficulty = () => {
-    if (typeof window !== 'undefined') {
-      const saved = loadGameState()
-      if (saved && saved.difficulty) {
-        return saved.difficulty
-      }
-    }
     return difficultyParam
   }
 
@@ -277,12 +271,12 @@ export function useCrossMath(initialPuzzleId?: string) {
         }
         setLoading(true)
         try {
-          const savedGame = loadGameState()
+          const savedGame = loadGameState(undefined, difficultyParam)
 
           const dcId = isDailyChallenge ? `daily-cross-math-${dateParam || getTodayDateParam()}` : undefined
           const continueResult = isDailyChallenge && dcId
             ? await gameApi.getContinueDailyCrossMath(dcId).catch(() => null)
-            : await gameApi.getContinueCrossMath().catch(() => null)
+            : await gameApi.getContinueCrossMath(difficultyParam).catch(() => null)
           const serverSession = continueResult?.hasActiveSession ? continueResult.session : null
           if (serverSession && serverSession.sessionId && (serverSession as any).puzzle) {
             const serverPuzzle = (serverSession as any).puzzle
@@ -355,7 +349,8 @@ export function useCrossMath(initialPuzzleId?: string) {
             }
           } else if (isDailyChallenge) {
             try {
-              const resp = await gameApi.getDailyPuzzle('crossmath', getDailyDateString(dateParam))
+              const targetDiff = difficultyParam || difficulty
+              const resp = await gameApi.getDailyPuzzle('crossmath', getDailyDateString(dateParam), targetDiff)
               if (isValidPuzzle(resp)) {
                 puzzle = resp as unknown as CrossMathPuzzle
               }
@@ -438,25 +433,29 @@ export function useCrossMath(initialPuzzleId?: string) {
             const gridCopy = puzzle.grid.map(row => row.map(cell => ({ ...cell })))
             setBoard(gridCopy)
             setCurrentPuzzle(puzzle)
-            const limit = difficulty === 'hard' ? 2 : puzzle.maxMistakes
+            const targetDiff = (puzzle.difficulty || difficultyParam || difficulty) as Difficulty
+            if (puzzle.difficulty && puzzle.difficulty !== difficulty) {
+              setDifficulty(puzzle.difficulty as Difficulty)
+            }
+            const limit = targetDiff === 'hard' ? 2 : puzzle.maxMistakes
             setMaxMistakes(limit)
             setAvailableNumbers(new Set(puzzle.availableNumbers))
             setUsedNumbersCount(new Map())
             setMistakes(0)
             setScore(0)
-            setTime(getInitialTime(difficulty))
+            setTime(getInitialTime(targetDiff))
             setGameStatus('playing')
             setSelectedCell(null)
             setIsTyping(false)
             setHistory([])
-            clearGameState()
-            const sessionData = await initSession(puzzle.id, difficulty, isDailyChallenge, dcId)
+            clearGameState(undefined, targetDiff)
+            const sessionData = await initSession(puzzle.id, targetDiff, isDailyChallenge, dcId)
             if (sessionData && !savedGame) {
               const restored = restoreFromSession(sessionData, puzzle.grid)
               if (restored) {
                 setBoard(restored)
                 setMistakes(sessionData.mistakes || 0)
-                setTime(Math.max(0, getInitialTime(difficulty) - (sessionData.elapsedTime || 0)))
+                setTime(Math.max(0, getInitialTime(targetDiff) - (sessionData.elapsedTime || 0)))
                 const usedCount = new Map<number, number>()
                 restored.forEach(row => {
                   row.forEach(cell => {
@@ -496,7 +495,7 @@ export function useCrossMath(initialPuzzleId?: string) {
         score,
         time,
         gameStatus,
-      })
+      }, undefined, difficulty)
     }
   }, [board, difficulty, mistakes, score, time, gameStatus, currentPuzzle])
 
