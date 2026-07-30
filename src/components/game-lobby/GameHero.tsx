@@ -154,13 +154,32 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
             
             {/* Game Image with background */}
             <div className="w-[129px] h-[129px] relative flex items-center justify-center bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] p-[14px]">
-              <Image
-                src={currentImage}
-                alt={name}
-                width={101}
-                height={101}
-                className="w-[101px] h-[101px] object-contain"
-              />
+              {imageLight ? (
+                <>
+                  <Image
+                    src={imageLight}
+                    alt={name}
+                    width={101}
+                    height={101}
+                    className="w-[101px] h-[101px] object-contain absolute transition-opacity duration-300 opacity-100 dark:opacity-0"
+                  />
+                  <Image
+                    src={image}
+                    alt={name}
+                    width={101}
+                    height={101}
+                    className="w-[101px] h-[101px] object-contain absolute transition-opacity duration-300 opacity-0 dark:opacity-100"
+                  />
+                </>
+              ) : (
+                <Image
+                  src={image}
+                  alt={name}
+                  width={101}
+                  height={101}
+                  className="w-[101px] h-[101px] object-contain"
+                />
+              )}
             </div>
 
             {/* Game Title */}
