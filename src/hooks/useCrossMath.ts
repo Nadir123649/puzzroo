@@ -18,7 +18,7 @@ import {
 } from '@shared/lib/crossmath/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
-import { getAccessToken, signInGuest } from '@/lib/auth/frontend-auth'
+import { getAccessToken, ensureGuestId } from '@/lib/auth/frontend-auth'
 
 // Module-level guard to cancel StrictMode double-mount in dev
 let _crossmathMountGuard = false
@@ -149,6 +149,7 @@ export function useCrossMath(initialPuzzleId?: string) {
   const completionCalledRef = useRef(false)
   const hintsUsedRef = useRef(0)
   const movesRef = useRef(0)
+  const restoredRef = useRef(false)
 
   function gridToRecord(grid: Cell[][]): Record<string, number> {
     const record: Record<string, number> = {}
@@ -167,17 +168,18 @@ export function useCrossMath(initialPuzzleId?: string) {
     return Math.max(0, getInitialTime(diff as Difficulty) - countdownTime)
   }
 
-  async function initSession(puzzleId: string, diff: string): Promise<any> {
+  async function initSession(puzzleId: string, diff: string, dailyChallenge = false, challengeId?: string): Promise<any> {
     if (sessionCreatedRef.current) return null
     movesRef.current = 0
     completionCalledRef.current = false
     if (typeof window === 'undefined') return null
     if (!getAccessToken()) {
-      await signInGuest()
-      if (!getAccessToken()) return null
+      ensureGuestId()
     }
     try {
-      const res = await gameApi.createSession('crossmath', puzzleId, diff)
+      const res = dailyChallenge && challengeId
+        ? await gameApi.createDailyCrossMathSession(puzzleId, challengeId)
+        : await gameApi.createSession('crossmath', puzzleId, diff)
       if (res && (res.sessionId || res._id || res.id)) {
         sessionIdRef.current = res.sessionId || res._id || res.id
         sessionCreatedRef.current = true
@@ -269,9 +271,70 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     let cancelled = false
       ; (async () => {
+        if (restoredRef.current) {
+          setLoading(false)
+          return
+        }
         setLoading(true)
         try {
           const savedGame = loadGameState()
+
+          const dcId = isDailyChallenge ? `daily-cross-math-${dateParam || getTodayDateParam()}` : undefined
+          const continueResult = isDailyChallenge && dcId
+            ? await gameApi.getContinueDailyCrossMath(dcId).catch(() => null)
+            : await gameApi.getContinueCrossMath().catch(() => null)
+          const serverSession = continueResult?.hasActiveSession ? continueResult.session : null
+          if (serverSession && serverSession.sessionId && (serverSession as any).puzzle) {
+            const serverPuzzle = (serverSession as any).puzzle
+            if (serverPuzzle && isValidPuzzle(serverPuzzle)) {
+              setCurrentPuzzle(serverPuzzle)
+              writePuzzleCache(serverPuzzle)
+
+              const freshBoard = serverPuzzle.grid.map((row: any[]) => row.map((cell: any) => ({ ...cell })))
+              const savedGrid = serverSession.grid || {}
+              for (const [key, val] of Object.entries(savedGrid)) {
+                const [r, c] = key.split('-').map(Number)
+                const target = freshBoard[r]?.[c]
+                if (target && target.isEditable) {
+                  target.value = val as number
+                  target.type = 'number'
+                }
+              }
+
+              setBoard(freshBoard)
+              setMistakes(serverSession.mistakes || 0)
+              setScore(0)
+              setTime(Math.max(0, getInitialTime((serverSession.difficulty || difficulty) as Difficulty) - (serverSession.elapsedTime || 0)))
+              setGameStatus((serverSession.sessionStatus || 'playing') as 'playing' | 'won' | 'lost')
+              if (serverSession.difficulty) setDifficulty(serverSession.difficulty as Difficulty)
+              setSelectedCell(null)
+              setIsTyping(false)
+              setHistory([])
+              clearGameState()
+
+              sessionIdRef.current = serverSession.sessionId
+              sessionCreatedRef.current = true
+
+              const limit = (serverSession.difficulty || difficulty) === 'hard' ? 2 : serverPuzzle.maxMistakes
+              setMaxMistakes(limit)
+              setAvailableNumbers(new Set(serverPuzzle.availableNumbers))
+
+              const usedCount = new Map<number, number>()
+              freshBoard.forEach((row: any[]) => {
+                row.forEach((cell: any) => {
+                  if (cell.isEditable && cell.type === 'number' && typeof cell.value === 'number') {
+                    const current = usedCount.get(cell.value) || 0
+                    usedCount.set(cell.value, current + 1)
+                  }
+                })
+              })
+              setUsedNumbersCount(usedCount)
+
+              if (!cancelled) setLoading(false)
+              restoredRef.current = true
+              return
+            }
+          }
 
           let puzzle: CrossMathPuzzle | null = null
 
@@ -387,7 +450,7 @@ export function useCrossMath(initialPuzzleId?: string) {
             setIsTyping(false)
             setHistory([])
             clearGameState()
-            const sessionData = await initSession(puzzle.id, difficulty)
+            const sessionData = await initSession(puzzle.id, difficulty, isDailyChallenge, dcId)
             if (sessionData && !savedGame) {
               const restored = restoreFromSession(sessionData, puzzle.grid)
               if (restored) {
@@ -408,7 +471,7 @@ export function useCrossMath(initialPuzzleId?: string) {
             }
           }
           if (savedGame && puzzle) {
-            await initSession(puzzle.id, difficulty)
+            await initSession(puzzle.id, difficulty, isDailyChallenge, dcId)
           }
         } catch {
           // Unexpected error during puzzle load — board stays empty
@@ -805,6 +868,20 @@ export function useCrossMath(initialPuzzleId?: string) {
   const replayBoard = useCallback(async () => {
     if (!currentPuzzle) return
     const id = currentPuzzle.id
+
+    const prevSessionId = sessionIdRef.current
+    let replaySessionCreated = false
+    if (prevSessionId) {
+      try {
+        const result = await gameApi.replayCrossMathSession(prevSessionId)
+        if (result && result.sessionId) {
+          sessionIdRef.current = result.sessionId
+          sessionCreatedRef.current = true
+          replaySessionCreated = true
+        }
+      } catch { }
+    }
+
     let puzzle: CrossMathPuzzle | undefined
     try {
       const cached = readPuzzleCache(id)
@@ -814,14 +891,11 @@ export function useCrossMath(initialPuzzleId?: string) {
         const resp = await gameApi.getPuzzleById('crossmath', id)
         if (isValidPuzzle(resp)) puzzle = resp as unknown as CrossMathPuzzle
       }
-    } catch {
-      // fall through
-    }
-    if (!puzzle) {
-      puzzle = currentPuzzle
-    }
+    } catch { }
+    if (!puzzle) puzzle = currentPuzzle
     writePuzzleCache(puzzle)
     setCurrentPuzzle(puzzle)
+
     const gridCopy = puzzle.grid.map(row => row.map(cell => ({ ...cell })))
     setBoard(gridCopy)
     setUsedNumbersCount(new Map())
@@ -835,18 +909,14 @@ export function useCrossMath(initialPuzzleId?: string) {
     clearGameState()
     completionCalledRef.current = false
     movesRef.current = 0
-    sessionCreatedRef.current = false
-    sessionIdRef.current = null
-    ;(async () => {
-      if (getAccessToken()) {
-        initSession(id, difficulty)
-      } else {
-        await signInGuest()
-        if (getAccessToken()) {
-          initSession(id, difficulty)
-        }
-      }
-    })()
+
+    if (!replaySessionCreated) {
+      sessionCreatedRef.current = false
+      sessionIdRef.current = null
+      if (!getAccessToken()) ensureGuestId()
+      const dcId = isDailyChallenge ? `daily-cross-math-${dateParam || getTodayDateParam()}` : undefined
+      await initSession(id, difficulty, isDailyChallenge, dcId)
+    }
   }, [currentPuzzle, difficulty])
 
   const resetBoard = useCallback(async () => {

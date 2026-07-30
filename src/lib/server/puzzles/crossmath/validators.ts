@@ -54,6 +54,11 @@ export const abandonSessionSchema = z.object({
   reason: z.string().optional(),
 })
 
+export const startDailySessionSchema = z.object({
+  puzzleId: z.string().min(1, "puzzleId is required"),
+  dailyChallengeId: z.string().min(1, "dailyChallengeId is required"),
+})
+
 export const replaySessionSchema = z.object({
   puzzleId: z.string().min(1, "puzzleId is required"),
 })

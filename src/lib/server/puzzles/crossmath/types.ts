@@ -91,12 +91,15 @@ export interface SafePuzzleResponse {
   grid: unknown[][];
   availableNumbers: number[];
   maxMistakes: number;
+  solution: Record<string, number>;
   puzzleId?: string;
 }
 
 export interface SafeSessionResponse {
   sessionId: string
   puzzleId: string
+  gameType: "crossmath" | "daily_challenge"
+  dailyChallengeId?: string | null
   difficulty: CrossMathDifficulty
   sessionStatus: SessionStatus
   grid: Record<string, number>

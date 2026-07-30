@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server"
 import { withAuth } from "../../../route-helpers"
+import type { Actor } from "../../../route-helpers"
 import { sessionService } from "@/lib/server/puzzles/crossmath/services/SessionService"
 import { saveProgressSchema } from "@/lib/server/puzzles/crossmath/validators"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { rateLimit } from "@/lib/server/utils/http"
 
-export const POST = withAuth(async (req, user, params) => {
+export const POST = withAuth(async (req: NextRequest, actor: Actor, params) => {
   if (!rateLimit(req, "crossmath-save", 60)) {
     return errorResponse(429, "rate_limited", "Too many requests")
   }
@@ -21,7 +22,7 @@ export const POST = withAuth(async (req, user, params) => {
 
   const result = await sessionService.saveProgress(
     sessionId,
-    user.id,
+    actor,
     parsed.data.grid,
     parsed.data.elapsedTime,
     parsed.data.hintsUsed,

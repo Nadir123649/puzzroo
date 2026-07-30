@@ -387,4 +387,22 @@ export const gameApi = {
     const res = await api('/api/v1/crossmath/daily/completion', { params });
     return res.payload;
   },
+
+  // ---- Daily Challenge session management ----
+
+  async createDailyCrossMathSession(puzzleId: string, dailyChallengeId: string) {
+    const res = await api('/api/v1/games/crossmath/daily/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ puzzleId, dailyChallengeId }),
+      suppressToast: true,
+    });
+    return res.payload;
+  },
+
+  async getContinueDailyCrossMath(dailyChallengeId: string) {
+    const res = await api<ContinuePlayingInfo>(
+      `/api/v1/games/crossmath/daily/continue?dailyChallengeId=${encodeURIComponent(dailyChallengeId)}`
+    );
+    return res.payload;
+  },
 };

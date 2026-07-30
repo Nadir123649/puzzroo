@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/server/db';
 import { successResponse, errorResponse } from '@/lib/server/utils/apiResponse';
-import { auth } from '@/lib/server/middleware/auth';
 import { rateLimit } from '@/lib/server/utils/http';
 import { sessionService } from '@/lib/server/puzzles/crossmath/services/SessionService';
+import { resolveActor } from '../../../_actor';
 
 export async function POST(
   request: NextRequest,
@@ -15,12 +15,12 @@ export async function POST(
 
   const { id } = await params;
   await connectDB();
-  const userResult = await auth(request);
-  if ('error' in userResult) return userResult.error;
+  const actor = await resolveActor(request);
+  if (!actor) return errorResponse(401, 'auth_required', 'Authentication or guest ID required');
 
   try {
-    const session = await sessionService.getSession(id, userResult.user.id);
-    const replayed = await sessionService.replaySession(userResult.user.id, session.puzzleId);
+    const session = await sessionService.getSession(id, actor);
+    const replayed = await sessionService.replaySession(actor, session.puzzleId);
     return successResponse(replayed);
   } catch (error: any) {
     if (error.message === 'session_not_found' || error.message === 'puzzle_not_found') {

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server"
 import { withAuth } from "../../../route-helpers"
+import type { Actor } from "../../../route-helpers"
 import { sessionService } from "@/lib/server/puzzles/crossmath/services/SessionService"
 import { statisticsService } from "@/lib/server/puzzles/crossmath/services/StatisticsService"
 import { completeSessionSchema } from "@/lib/server/puzzles/crossmath/validators"
@@ -9,7 +10,7 @@ import { completionBus } from "@/lib/server/games/completion"
 import { ensureGameSubscriptions } from "@/lib/server/games/subscriptions"
 import DailyChallenge from "@/lib/server/models/DailyChallenge"
 
-export const POST = withAuth(async (req, user, params) => {
+export const POST = withAuth(async (req: NextRequest, actor: Actor, params) => {
   if (!rateLimit(req, "crossmath-complete", 15)) {
     return errorResponse(429, "rate_limited", "Too many requests")
   }
@@ -25,7 +26,7 @@ export const POST = withAuth(async (req, user, params) => {
 
   const result = await sessionService.completeSession(
     sessionId,
-    user.id,
+    actor,
     parsed.data.grid,
     parsed.data.elapsedTime,
     parsed.data.hintsUsed,
@@ -34,50 +35,52 @@ export const POST = withAuth(async (req, user, params) => {
   )
 
   if (result.isCompleted && result.result) {
-    statisticsService.updateOnSessionComplete(
-      user.id,
-      result.result.puzzleId,
-      result.result.difficulty,
-      result.result.elapsedTime,
-      result.result.hintsUsed,
-      result.result.mistakes,
-      result.result.accuracy
-    ).catch(() => {})
+    if (actor.type === "user") {
+      statisticsService.updateOnSessionComplete(
+        actor.id,
+        result.result.puzzleId,
+        result.result.difficulty,
+        result.result.elapsedTime,
+        result.result.hintsUsed,
+        result.result.mistakes,
+        result.result.accuracy
+      ).catch(() => {})
 
-    ensureGameSubscriptions()
-    completionBus.emit({
-      playerId: user.id,
-      sessionId,
-      gameType: "crossmath",
-      puzzleId: result.result.puzzleId,
-      difficulty: result.result.difficulty,
-      score: result.result.score,
-      elapsedTime: result.result.elapsedTime,
-      mistakes: result.result.mistakes,
-      hintsUsed: result.result.hintsUsed,
-      completedAt: new Date(),
-      isReplay: false,
-      isGuest: user.role === "guest",
-    })
-
-    const today = new Date().toISOString().split("T")[0]
-    DailyChallenge.findOneAndUpdate(
-      { date: today, userId: user.id },
-      {
-        date: today,
-        userId: user.id,
+      ensureGameSubscriptions()
+      completionBus.emit({
+        playerId: actor.id,
+        sessionId,
+        gameType: "crossmath",
         puzzleId: result.result.puzzleId,
         difficulty: result.result.difficulty,
-        sessionId,
-        status: "completed",
-        completedAt: new Date(),
-        elapsedSeconds: result.result.elapsedTime,
-        accuracy: result.result.accuracy,
-        hintsUsed: result.result.hintsUsed,
+        score: result.result.score,
+        elapsedTime: result.result.elapsedTime,
         mistakes: result.result.mistakes,
-      },
-      { upsert: true, new: true }
-    ).catch(() => {})
+        hintsUsed: result.result.hintsUsed,
+        completedAt: new Date(),
+        isReplay: false,
+        isGuest: false,
+      })
+
+      const today = new Date().toISOString().split("T")[0]
+      DailyChallenge.findOneAndUpdate(
+        { date: today, userId: actor.id },
+        {
+          date: today,
+          userId: actor.id,
+          puzzleId: result.result.puzzleId,
+          difficulty: result.result.difficulty,
+          sessionId,
+          status: "completed",
+          completedAt: new Date(),
+          elapsedSeconds: result.result.elapsedTime,
+          accuracy: result.result.accuracy,
+          hintsUsed: result.result.hintsUsed,
+          mistakes: result.result.mistakes,
+        },
+        { upsert: true, new: true }
+      ).catch(() => {})
+    }
   }
 
   return successResponse(result)
