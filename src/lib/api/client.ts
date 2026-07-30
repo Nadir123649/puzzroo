@@ -1,5 +1,5 @@
 import { notify } from '@/lib/toast'
-import { getAccessToken, setAccessToken } from '@/lib/auth/frontend-auth'
+import { getAccessToken, setAccessToken, getGuestId } from '@/lib/auth/frontend-auth'
 
 type RefreshCallback = (token: string) => void;
 let onRefresh: RefreshCallback | null = null;
@@ -99,6 +99,11 @@ export async function api<T = any>(
   }
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
+  } else if (isClient) {
+    const guestId = getGuestId();
+    if (guestId) {
+      headers["x-guest-id"] = guestId;
+    }
   }
 
   if (!(fetchOptions.body instanceof FormData)) {

@@ -1,3 +1,4 @@
+import mongoose from "mongoose"
 import CrossMathPuzzle from "@/lib/server/models/CrossMathPuzzle"
 import CrossMathPlaySession from "@/lib/server/models/CrossMathPlaySession"
 import { getPatternById } from "@shared/data/crossmath/patterns"
@@ -29,23 +30,26 @@ async selectRandom(options: SelectRandomOptions, page = 1, pageSize = 20, shapeN
     const matchFilter: Record<string, any> = { game: "crossmath" }
     if (difficulty) matchFilter.difficulty = difficulty
 
+    const isObjectId = mongoose.Types.ObjectId.isValid(userId)
+    const ownerField = isObjectId ? "userId" : "guestId"
+
     const excludeIds: string[] = []
 
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
     const distinctPromises: Promise<any[]>[] = []
     if (excludeCompleted) {
       distinctPromises.push(
-        CrossMathPlaySession.find({ userId, status: "completed" }).distinct("puzzleId")
+        CrossMathPlaySession.find({ [ownerField]: userId, status: "completed" }).distinct("puzzleId")
       )
     }
     if (excludeActive) {
       distinctPromises.push(
-        CrossMathPlaySession.find({ userId, status: { $in: ["playing", "paused"] } }).distinct("puzzleId")
+        CrossMathPlaySession.find({ [ownerField]: userId, status: { $in: ["playing", "paused"] } }).distinct("puzzleId")
       )
     }
     if (excludeRecentAbandons) {
       distinctPromises.push(
-        CrossMathPlaySession.find({ userId, status: "abandoned", lastSaveAt: { $gte: twentyFourHoursAgo } }).distinct("puzzleId")
+        CrossMathPlaySession.find({ [ownerField]: userId, status: "abandoned", lastSaveAt: { $gte: twentyFourHoursAgo } }).distinct("puzzleId")
       )
     }
 
@@ -114,12 +118,19 @@ async selectRandom(options: SelectRandomOptions, page = 1, pageSize = 20, shapeN
     if (difficulty) matchFilter.difficulty = difficulty
     if (patternId !== undefined) matchFilter.patternId = patternId
 
+    const isObjectId = mongoose.Types.ObjectId.isValid(userId)
+    const sessionFilter: Record<string, any> = {
+      status: { $in: ["completed", "playing", "paused"] },
+    }
+    if (isObjectId) {
+      sessionFilter.userId = userId
+    } else {
+      sessionFilter.guestId = userId
+    }
+
     let played: string[] = []
     try {
-      played = await CrossMathPlaySession.find({
-        userId,
-        status: { $in: ["completed", "playing", "paused"] },
-      }).distinct("puzzleId")
+      played = await CrossMathPlaySession.find(sessionFilter).distinct("puzzleId")
     } catch (e: any) {
       if (e.name !== "CastError") throw e
     }

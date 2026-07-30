@@ -6,10 +6,17 @@ const crossMathPlaySessionSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
       index: true,
     },
+    guestId: { type: String, index: true },
     puzzleId: { type: String, required: true },
+    gameType: {
+      type: String,
+      enum: ["crossmath", "daily_challenge"],
+      default: "crossmath",
+      index: true,
+    },
+    dailyChallengeId: { type: String, default: null },
     difficulty: {
       type: String,
       enum: ["easy", "medium", "hard"],
@@ -50,6 +57,7 @@ const crossMathPlaySessionSchema = new mongoose.Schema(
 )
 
 crossMathPlaySessionSchema.index({ userId: 1, puzzleId: 1 })
+crossMathPlaySessionSchema.index({ guestId: 1, puzzleId: 1 })
 crossMathPlaySessionSchema.index(
   { userId: 1, puzzleId: 1, status: 1 },
   {
@@ -57,9 +65,21 @@ crossMathPlaySessionSchema.index(
     partialFilterExpression: { status: { $in: ["playing", "paused"] } },
   }
 )
+crossMathPlaySessionSchema.index(
+  { guestId: 1, puzzleId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["playing", "paused"] } },
+  }
+)
 crossMathPlaySessionSchema.index({ userId: 1, status: 1 })
+crossMathPlaySessionSchema.index({ guestId: 1, status: 1 })
+crossMathPlaySessionSchema.index({ guestId: 1, gameType: 1, status: 1 })
+crossMathPlaySessionSchema.index({ guestId: 1, dailyChallengeId: 1, status: 1 })
 crossMathPlaySessionSchema.index({ userId: 1, status: 1, completedAt: -1 })
 crossMathPlaySessionSchema.index({ userId: 1, status: 1, lastSaveAt: -1 })
+crossMathPlaySessionSchema.index({ guestId: 1, status: 1, completedAt: -1 })
+crossMathPlaySessionSchema.index({ guestId: 1, status: 1, lastSaveAt: -1 })
 crossMathPlaySessionSchema.index({ puzzleId: 1, status: 1 })
 crossMathPlaySessionSchema.index({ completedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
 

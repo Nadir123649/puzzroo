@@ -488,34 +488,27 @@ export async function fetchBillingHistory(): Promise<any> {
   return res.payload;
 }
 
-let guestLoginPromise: Promise<boolean> | null = null;
+export function getGuestId(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("puzzroo_guest_id");
+}
+
+export function ensureGuestId(): string {
+  let id = getGuestId()
+  if (!id) {
+    id = crypto.randomUUID()
+    try {
+      localStorage.setItem("puzzroo_guest_id", id)
+    } catch {}
+  }
+  return id
+}
 
 export async function signInGuest(): Promise<boolean> {
   if (typeof window === "undefined") return false;
   if (getAccessToken()) return true;
-  if (guestLoginPromise) return guestLoginPromise;
-  guestLoginPromise = (async () => {
-    try {
-      const res = await api("/api/v1/oauth/guest", { method: "POST" });
-      if (!res.success) return false;
-      const payload = res.payload as any;
-      if (payload.token?.accessToken) {
-        setAccessToken(payload.token.accessToken);
-        localStorage.setItem("puzzroo_auth", "true");
-        if (payload.user) {
-          localStorage.setItem("puzzroo_user", JSON.stringify(payload.user));
-        }
-        window.dispatchEvent(new Event("auth-change"));
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    } finally {
-      guestLoginPromise = null;
-    }
-  })();
-  return guestLoginPromise;
+  ensureGuestId()
+  return true
 }
 
 export async function fetchGameStats(): Promise<any> {

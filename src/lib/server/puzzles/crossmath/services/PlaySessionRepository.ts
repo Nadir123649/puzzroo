@@ -3,8 +3,11 @@ import CrossMathPlaySession from "@/lib/server/models/CrossMathPlaySession"
 import type { CrossMathDifficulty, SessionStatus } from "../types"
 
 interface CreateSessionInput {
-  userId: string
+  userId?: string
+  guestId?: string
   puzzleId: string
+  gameType?: "crossmath" | "daily_challenge"
+  dailyChallengeId?: string
   difficulty: CrossMathDifficulty
   blanks: string[]
   availableNumbers: number[]
@@ -19,10 +22,10 @@ interface SessionQuery {
 
 export class PlaySessionRepository {
   async create(input: CreateSessionInput) {
-    return CrossMathPlaySession.create({
+    const doc: Record<string, unknown> = {
       sessionId: uuidv4(),
-      userId: input.userId,
       puzzleId: input.puzzleId,
+      gameType: input.gameType || "crossmath",
       difficulty: input.difficulty,
       status: "playing",
       grid: {},
@@ -31,46 +34,96 @@ export class PlaySessionRepository {
       isReplay: input.isReplay || false,
       startedAt: new Date(),
       lastSaveAt: new Date(),
-    })
+    }
+    if (input.dailyChallengeId) {
+      doc.dailyChallengeId = input.dailyChallengeId
+    }
+    if (input.guestId) {
+      doc.guestId = input.guestId
+    } else {
+      doc.userId = input.userId
+    }
+    return CrossMathPlaySession.create(doc)
   }
 
   async findById(sessionId: string) {
     return CrossMathPlaySession.findOne({ sessionId })
   }
 
-  async findByUserAndPuzzle(userId: string, puzzleId: string) {
-    return CrossMathPlaySession.findOne({ userId, puzzleId })
+  async findByUserAndPuzzle(puzzleId: string, userId?: string, guestId?: string) {
+    const filter: Record<string, unknown> = { puzzleId }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
+    return CrossMathPlaySession.findOne(filter)
   }
 
-  async findActiveByUserAndPuzzle(userId: string, puzzleId: string) {
-    const doc = await CrossMathPlaySession.findOne({
-      userId,
+  async findActiveByUserAndPuzzle(puzzleId: string, userId?: string, guestId?: string) {
+    const filter: Record<string, unknown> = {
       puzzleId,
       status: { $in: ["playing", "paused"] },
-    })
-    return doc
+    }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
+    return CrossMathPlaySession.findOne(filter)
   }
 
   async findByUserAndStatus(
-    userId: string,
-    status: SessionStatus | SessionStatus[]
+    status: SessionStatus | SessionStatus[],
+    userId?: string,
+    guestId?: string,
+    gameType?: "crossmath" | "daily_challenge"
   ) {
     const statuses = Array.isArray(status) ? status : [status]
-    return CrossMathPlaySession.findOne({
-      userId,
-      status: { $in: statuses },
-    }).sort({ lastSaveAt: -1 })
+    const filter: Record<string, unknown> = { status: { $in: statuses } }
+    if (gameType) {
+      filter.$or = [
+        { gameType },
+        { gameType: { $exists: false } },
+      ]
+    }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
+    return CrossMathPlaySession.findOne(filter).sort({ lastSaveAt: -1 })
+  }
+
+  async findActiveDailyByChallenge(dailyChallengeId: string, userId?: string, guestId?: string) {
+    const filter: Record<string, unknown> = {
+      dailyChallengeId,
+      gameType: "daily_challenge",
+      status: { $in: ["playing", "paused"] },
+    }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
+    return CrossMathPlaySession.findOne(filter).sort({ lastSaveAt: -1 })
   }
 
   async findByUser(
-    userId: string,
-    query: SessionQuery = {}
+    query: SessionQuery = {},
+    userId?: string,
+    guestId?: string
   ) {
-    const filter: Record<string, unknown> = { userId }
+    const filter: Record<string, unknown> = {}
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
     if (query.status) {
       filter.status = query.status
     }
-    const total = await CrossMathPlaySession.countDocuments(filter)
+    const total = await CrossMathPlaySession.countDocuments(filter).catch(() => 0)
     const sessions = await CrossMathPlaySession.find(filter)
       .sort({ lastSaveAt: -1 })
       .skip(query.skip || 0)
@@ -79,36 +132,37 @@ export class PlaySessionRepository {
     return { sessions, total }
   }
 
-  async findRecentByUser(userId: string, limit = 10) {
-    return CrossMathPlaySession.find({ userId })
+  async findRecentByUser(limit = 10, userId?: string, guestId?: string) {
+    const filter: Record<string, unknown> = {}
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
+    return CrossMathPlaySession.find(filter)
       .sort({ lastSaveAt: -1 })
       .limit(limit)
       .lean()
   }
 
-  async updateStatus(sessionId: string, status: SessionStatus) {
-    return CrossMathPlaySession.findOneAndUpdate(
-      { sessionId },
-      { $set: { status } },
-      { new: true }
-    )
-  }
-
   async saveProgress(
     sessionId: string,
-    userId: string,
     grid: Record<string, number>,
     elapsedTime: number,
     hintsUsed: number,
     mistakes: number,
-    moves: number
+    moves: number,
+    userId?: string,
+    guestId?: string
   ) {
+    const filter: Record<string, unknown> = { sessionId, status: { $in: ["playing", "paused"] } }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
     return CrossMathPlaySession.findOneAndUpdate(
-      {
-        sessionId,
-        userId: userId,
-        status: { $in: ["playing", "paused"] },
-      },
+      filter,
       {
         $set: {
           grid,
@@ -121,31 +175,21 @@ export class PlaySessionRepository {
     )
   }
 
-  async saveGrid(sessionId: string, grid: Record<string, number>, elapsedTime: number, moves?: number) {
-    const update: Record<string, any> = {
-      $set: {
-        grid,
-        elapsedTime,
-        lastSaveAt: new Date(),
-      },
-    }
-    if (moves !== undefined) {
-      update.$max = { moves }
-    }
-    return CrossMathPlaySession.findOneAndUpdate(
-      { sessionId },
-      update,
-      { new: true }
-    )
-  }
-
   async complete(
     sessionId: string,
-    result: { correct: number; total: number; accuracy: number; elapsedTime: number; moves: number; mistakes: number; hintsUsed: number; score: number }
+    result: { correct: number; total: number; accuracy: number; elapsedTime: number; moves: number; mistakes: number; hintsUsed: number; score: number },
+    userId?: string,
+    guestId?: string
   ) {
     const now = new Date()
+    const filter: Record<string, unknown> = { sessionId, status: { $in: ["playing", "paused"] } }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
     return CrossMathPlaySession.findOneAndUpdate(
-      { sessionId, status: { $in: ["playing", "paused"] } },
+      filter,
       {
         $set: {
           status: "completed",
@@ -170,9 +214,15 @@ export class PlaySessionRepository {
     )
   }
 
-  async abandon(sessionId: string) {
+  async abandon(sessionId: string, userId?: string, guestId?: string) {
+    const filter: Record<string, unknown> = { sessionId, status: { $in: ["playing", "paused"] } }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
     return CrossMathPlaySession.findOneAndUpdate(
-      { sessionId, status: { $in: ["playing", "paused"] } },
+      filter,
       {
         $set: {
           status: "abandoned",

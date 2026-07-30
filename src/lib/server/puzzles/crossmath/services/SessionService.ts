@@ -2,6 +2,7 @@ import { playSessionRepository } from "./PlaySessionRepository"
 import { verificationEngine } from "./VerificationEngine"
 import CrossMathPuzzle from "@/lib/server/models/CrossMathPuzzle"
 import CrossMathPlaySession from "@/lib/server/models/CrossMathPlaySession"
+import type { Actor } from "@/app/api/v1/games/crossmath/route-helpers"
 import type { SafeSessionResponse, SafePuzzleResponse, SaveProgressResponse, ProgressInfo, CompleteSessionResponse, CompletionResult, VerificationSummary, EquationError } from "../types"
 
 function calculateCrossMathScore(
@@ -36,6 +37,8 @@ function toSafeSession(session: Record<string, any>): SafeSessionResponse {
     return {
       sessionId: session.sessionId,
       puzzleId: session.puzzleId,
+      gameType: session.gameType || "crossmath",
+      dailyChallengeId: session.dailyChallengeId || null,
       difficulty: session.difficulty,
       sessionStatus: session.status,
       grid,
@@ -60,6 +63,24 @@ async function toSafePuzzleResponse(doc: any): Promise<SafePuzzleResponse> {
   const { getPatternById, patternToGameGrid } = await import("@shared/data/crossmath/patterns")
   const pattern = getPatternById(doc.patternId)
   const grid = pattern ? patternToGameGrid(pattern) : []
+  const blankSet = new Set(doc.blanks || [])
+  const solution = doc.solution || {}
+  for (const pc of (pattern?.cells || [])) {
+    if (pc.type === "NUMBER") {
+      const key = `${pc.row}-${pc.col}`
+      const cell = grid[pc.row]?.[pc.col]
+      if (!cell) continue
+      if (blankSet.has(key)) {
+        cell.type = "empty"
+        cell.value = undefined
+        cell.isEditable = true
+      } else {
+        cell.type = "number"
+        cell.value = solution[key]
+        cell.isEditable = false
+      }
+    }
+  }
   return {
     id: doc.puzzleId,
     difficulty: doc.difficulty,
@@ -69,24 +90,46 @@ async function toSafePuzzleResponse(doc: any): Promise<SafePuzzleResponse> {
     grid,
     availableNumbers: doc.availableNumbers || [],
     maxMistakes: doc.maxMistakes || 3,
+    solution: doc.solution || {},
   }
 }
 
 export class SessionService {
-  async startSession(userId: string, puzzleId: string) {
+  private actorId(actor: Actor): string {
+    return actor.id
+  }
+
+  private actorGuestId(actor: Actor): string | undefined {
+    return actor.type === "guest" ? actor.id : undefined
+  }
+
+  async startSession(actor: Actor, puzzleId: string, gameType?: "crossmath" | "daily_challenge", dailyChallengeId?: string) {
     const puzzle = await CrossMathPuzzle.findOne({ puzzleId }).lean()
     if (!puzzle) throw new Error("puzzle_not_found")
 
-    const existing = await playSessionRepository.findActiveByUserAndPuzzle(userId, puzzleId)
-    if (existing) {
-      return toSafeSession(existing.toObject())
+    const userId = this.actorId(actor)
+    const guestId = this.actorGuestId(actor)
+
+    if (gameType === "daily_challenge" && dailyChallengeId) {
+      const existing = await playSessionRepository.findActiveDailyByChallenge(dailyChallengeId, userId, guestId)
+      if (existing) {
+        return toSafeSession(existing.toObject())
+      }
+    } else {
+      const existing = await playSessionRepository.findActiveByUserAndPuzzle(puzzleId, userId, guestId)
+      if (existing) {
+        return toSafeSession(existing.toObject())
+      }
     }
 
     const puzzleDoc = puzzle as any
     try {
       const session = await playSessionRepository.create({
-        userId,
+        userId: guestId ? undefined : userId,
+        guestId,
         puzzleId,
+        gameType,
+        dailyChallengeId,
         difficulty: puzzleDoc.difficulty,
         blanks: puzzleDoc.blanks || [],
         availableNumbers: puzzleDoc.availableNumbers || [],
@@ -94,56 +137,72 @@ export class SessionService {
       return toSafeSession(session.toObject())
     } catch (error: any) {
       if (error?.code === 11000) {
-        const session = await playSessionRepository.findActiveByUserAndPuzzle(userId, puzzleId)
-        if (session) return toSafeSession(session.toObject())
+        if (gameType === "daily_challenge" && dailyChallengeId) {
+          const session = await playSessionRepository.findActiveDailyByChallenge(dailyChallengeId, userId, guestId)
+          if (session) return toSafeSession(session.toObject())
+        } else {
+          const session = await playSessionRepository.findActiveByUserAndPuzzle(puzzleId, userId, guestId)
+          if (session) return toSafeSession(session.toObject())
+        }
       }
       throw error
     }
   }
 
-  async getSession(sessionId: string, userId: string) {
+  async getSession(sessionId: string, actor: Actor) {
     const session = await playSessionRepository.findById(sessionId)
     if (!session) throw new Error("session_not_found")
-    if (session.userId.toString() !== userId) throw new Error("not_owner")
+    const guestId = this.actorGuestId(actor)
+    if (guestId) {
+      if (session.guestId !== guestId) throw new Error("not_owner")
+    } else {
+      if (!session.userId || session.userId.toString() !== actor.id) throw new Error("not_owner")
+    }
     return toSafeSession(session.toObject())
   }
 
-  async pauseSession(sessionId: string, userId: string) {
-    const session = await this.getSession(sessionId, userId)
+  async pauseSession(sessionId: string, actor: Actor) {
+    const session = await this.getSession(sessionId, actor)
     if (session.sessionStatus !== "playing") throw new Error("session_not_active")
     await CrossMathPlaySession.findOneAndUpdate(
       { sessionId },
       { $set: { status: "paused", pausedAt: new Date() } }
     )
-    return this.getSession(sessionId, userId)
+    return this.getSession(sessionId, actor)
   }
 
-  async resumeSession(sessionId: string, userId: string) {
-    const session = await this.getSession(sessionId, userId)
+  async resumeSession(sessionId: string, actor: Actor) {
+    const session = await this.getSession(sessionId, actor)
     if (session.sessionStatus !== "paused") throw new Error("session_not_paused")
     await CrossMathPlaySession.findOneAndUpdate(
       { sessionId },
       { $set: { status: "playing" } }
     )
-    return this.getSession(sessionId, userId)
+    return this.getSession(sessionId, actor)
   }
 
   async saveProgress(
     sessionId: string,
-    userId: string,
+    actor: Actor,
     grid: Record<string, number>,
     elapsedTime: number,
     hintsUsed: number,
     mistakes: number,
     moves: number
   ): Promise<SaveProgressResponse> {
+    const userId = this.actorId(actor)
+    const guestId = this.actorGuestId(actor)
     const updated = await playSessionRepository.saveProgress(
-      sessionId, userId, grid, elapsedTime, hintsUsed, mistakes, moves
+      sessionId, grid, elapsedTime, hintsUsed, mistakes, moves, userId, guestId
     )
     if (!updated) {
       const exists = await playSessionRepository.findById(sessionId)
       if (!exists) throw new Error("session_not_found")
-      if (exists.userId.toString() !== userId) throw new Error("not_owner")
+      if (guestId) {
+        if (exists.guestId !== guestId) throw new Error("not_owner")
+      } else {
+        if (!exists.userId || exists.userId.toString() !== userId) throw new Error("not_owner")
+      }
       throw new Error("session_not_active")
     }
     return {
@@ -158,21 +217,21 @@ export class SessionService {
     }
   }
 
-  async verifyGrid(sessionId: string, userId: string, grid: Record<string, number>) {
-    const session = await this.getSession(sessionId, userId)
+  async verifyGrid(sessionId: string, actor: Actor, grid: Record<string, number>) {
+    const session = await this.getSession(sessionId, actor)
     return verificationEngine.verify(session.puzzleId, grid)
   }
 
   async completeSession(
     sessionId: string,
-    userId: string,
+    actor: Actor,
     grid: Record<string, number>,
     elapsedTime: number,
     hintsUsed: number,
     mistakes: number,
     moves: number
   ): Promise<CompleteSessionResponse> {
-    const session = await this.getSession(sessionId, userId)
+    const session = await this.getSession(sessionId, actor)
     if (session.sessionStatus === "completed") throw new Error("already_completed")
     if (session.sessionStatus === "abandoned") throw new Error("session_abandoned")
 
@@ -203,6 +262,8 @@ export class SessionService {
     const finalMoves = Math.max(session.moves || 0, moves)
     const score = calculateCrossMathScore(verifyResult.correctEquations, session.difficulty, finalMistakes, finalHintsUsed)
 
+    const userId = this.actorId(actor)
+    const guestId = this.actorGuestId(actor)
     const updated = await playSessionRepository.complete(sessionId, {
       correct: verifyResult.correctEquations,
       total: verifyResult.totalEquations,
@@ -212,7 +273,7 @@ export class SessionService {
       mistakes: finalMistakes,
       hintsUsed: finalHintsUsed,
       score,
-    })
+    }, userId, guestId)
 
     if (!updated) throw new Error("already_completed")
 
@@ -244,32 +305,39 @@ export class SessionService {
     }
   }
 
-  async abandonSession(sessionId: string, userId: string) {
-    const session = await this.getSession(sessionId, userId)
+  async abandonSession(sessionId: string, actor: Actor) {
+    const session = await this.getSession(sessionId, actor)
     if (session.sessionStatus === "completed") throw new Error("already_completed")
     if (session.sessionStatus === "abandoned") throw new Error("already_abandoned")
-    const updated = await playSessionRepository.abandon(sessionId)
+    const userId = this.actorId(actor)
+    const guestId = this.actorGuestId(actor)
+    const updated = await playSessionRepository.abandon(sessionId, userId, guestId)
     if (!updated) throw new Error("session_not_active")
-    return this.getSession(sessionId, userId)
+    return this.getSession(sessionId, actor)
   }
 
-  async restartSession(sessionId: string, userId: string) {
-    const session = await this.getSession(sessionId, userId)
-    await playSessionRepository.abandon(sessionId)
+  async restartSession(sessionId: string, actor: Actor) {
+    const session = await this.getSession(sessionId, actor)
+    const userId = this.actorId(actor)
+    const guestId = this.actorGuestId(actor)
+    await playSessionRepository.abandon(sessionId, userId, guestId)
     await playSessionRepository.incrementRestartCount(sessionId)
-    return this.startSession(userId, session.puzzleId)
+    return this.startSession(actor, session.puzzleId)
   }
 
-  async replaySession(userId: string, puzzleId: string) {
-    const existing = await playSessionRepository.findActiveByUserAndPuzzle(userId, puzzleId)
+  async replaySession(actor: Actor, puzzleId: string) {
+    const userId = this.actorId(actor)
+    const guestId = this.actorGuestId(actor)
+    const existing = await playSessionRepository.findActiveByUserAndPuzzle(puzzleId, userId, guestId)
     if (existing) {
-      await playSessionRepository.abandon(existing.sessionId)
+      await playSessionRepository.abandon(existing.sessionId, userId, guestId)
     }
     const puzzle = await CrossMathPuzzle.findOne({ puzzleId }).lean()
     if (!puzzle) throw new Error("puzzle_not_found")
     const puzzleDoc = puzzle as any
     const session = await playSessionRepository.create({
-      userId,
+      userId: guestId ? undefined : userId,
+      guestId,
       puzzleId,
       difficulty: puzzleDoc.difficulty,
       blanks: puzzleDoc.blanks || [],
@@ -279,8 +347,10 @@ export class SessionService {
     return toSafeSession(session.toObject())
   }
 
-  async getContinuePlaying(userId: string) {
-    const session = await playSessionRepository.findByUserAndStatus(userId, ["playing", "paused"])
+  async getContinuePlaying(actor: Actor, gameType: "crossmath" | "daily_challenge" = "crossmath") {
+    const userId = this.actorId(actor)
+    const guestId = this.actorGuestId(actor)
+    const session = await playSessionRepository.findByUserAndStatus(["playing", "paused"], userId, guestId, gameType)
     if (!session) {
       return { hasActiveSession: false }
     }
@@ -294,10 +364,6 @@ export class SessionService {
           ? gridRaw
           : {}
 
-    // If grid is fully filled, verify it. If solved, auto-complete rather
-    // than returning a session the user can't make progress on. This
-    // eliminates the tab-close / network-failure race where the client's
-    // fire-and-forget "complete" request never reached the server.
     const filledCount = blanks.filter((b: string) => grid[b] !== undefined).length
     if (filledCount === blanks.length && blanks.length > 0) {
       try {
@@ -309,7 +375,7 @@ export class SessionService {
           const elapsedTime = session.elapsedTime || 0
           const score = calculateCrossMathScore(verifyResult.correctEquations, session.difficulty, storedMistakes, storedHintsUsed)
 
-          const completed = await playSessionRepository.complete(session.sessionId, {
+          await playSessionRepository.complete(session.sessionId, {
             correct: verifyResult.correctEquations,
             total: verifyResult.totalEquations,
             accuracy: verifyResult.accuracy,
@@ -318,7 +384,7 @@ export class SessionService {
             mistakes: storedMistakes,
             hintsUsed: storedHintsUsed,
             score,
-          })
+          }, userId, guestId)
 
           return { hasActiveSession: false }
         }
@@ -334,16 +400,70 @@ export class SessionService {
     return { hasActiveSession: true, session: { ...safeSession, puzzle: puzzleResp } }
   }
 
-  async getRecentSessions(userId: string, limit = 10) {
-    const sessions = await playSessionRepository.findRecentByUser(userId, limit)
+  async startDailyChallenge(actor: Actor, puzzleId: string, dailyChallengeId: string) {
+    return this.startSession(actor, puzzleId, "daily_challenge", dailyChallengeId)
+  }
+
+  async getContinueDailyChallenge(actor: Actor, dailyChallengeId: string) {
+    const userId = this.actorId(actor)
+    const guestId = this.actorGuestId(actor)
+    const session = await playSessionRepository.findActiveDailyByChallenge(dailyChallengeId, userId, guestId)
+    if (!session) {
+      return { hasActiveSession: false }
+    }
+
+    const blanks = session.blanks || []
+    const gridRaw = session.grid || {}
+    const grid: Record<string, number> =
+      gridRaw instanceof Map
+        ? Object.fromEntries(gridRaw)
+        : typeof gridRaw === "object" && gridRaw !== null
+          ? gridRaw
+          : {}
+
+    const filledCount = blanks.filter((b: string) => grid[b] !== undefined).length
+    if (filledCount === blanks.length && blanks.length > 0) {
+      try {
+        const verifyResult = await verificationEngine.verify(session.puzzleId, grid)
+        if (verifyResult.completed) {
+          await playSessionRepository.complete(session.sessionId, {
+            correct: verifyResult.correctEquations,
+            total: verifyResult.totalEquations,
+            accuracy: verifyResult.accuracy,
+            elapsedTime: session.elapsedTime || 0,
+            moves: session.moves || 0,
+            mistakes: session.mistakes || 0,
+            hintsUsed: session.hintsUsed || 0,
+            score: calculateCrossMathScore(verifyResult.correctEquations, session.difficulty, session.mistakes || 0, session.hintsUsed || 0),
+          }, userId, guestId)
+          return { hasActiveSession: false }
+        }
+      } catch (e) {
+        // auto-complete failure is non-fatal; return active session
+      }
+    }
+
+    const puzzle = await CrossMathPuzzle.findOne({ puzzleId: session.puzzleId }).lean()
+    const safeSession = toSafeSession(session.toObject())
+    const puzzleResp = puzzle ? await toSafePuzzleResponse(puzzle) : undefined
+
+    return { hasActiveSession: true, session: { ...safeSession, puzzle: puzzleResp } }
+  }
+
+  async getRecentSessions(actor: Actor, limit = 10) {
+    const userId = this.actorId(actor)
+    const guestId = this.actorGuestId(actor)
+    const sessions = await playSessionRepository.findRecentByUser(limit, userId, guestId)
     return sessions.map(s => toSafeSession(s))
   }
 
   async getSessionHistory(
-    userId: string,
+    actor: Actor,
     options: { status?: string; difficulty?: string; limit?: number; skip?: number }
   ) {
-    const filter: Record<string, unknown> = { userId }
+    const userId = this.actorId(actor)
+    const guestId = this.actorGuestId(actor)
+    const filter: Record<string, unknown> = guestId ? { guestId } : { userId }
     if (options.status) filter.status = options.status
     if (options.difficulty) filter.difficulty = options.difficulty
 
@@ -357,8 +477,14 @@ export class SessionService {
     return { sessions: sessions.map(s => toSafeSession(s)), total }
   }
 
-  async getCompletedPuzzles(userId: string, options: { limit?: number; skip?: number }) {
-    const filter = { userId, status: "completed" as const }
+  async getCompletedPuzzles(actor: Actor, options: { limit?: number; skip?: number }) {
+    const guestId = this.actorGuestId(actor)
+    const filter: Record<string, unknown> = { status: "completed" as const }
+    if (guestId) {
+      filter.guestId = guestId
+    } else {
+      filter.userId = actor.id
+    }
     const total = await CrossMathPlaySession.countDocuments(filter)
     const sessions = await CrossMathPlaySession.find(filter)
       .sort({ completedAt: -1 })
@@ -369,7 +495,11 @@ export class SessionService {
     return { sessions: sessions.map(s => toSafeSession(s)), total }
   }
 
-  async getPlayerStats(userId: string) {
+  async getPlayerStats(actor: Actor) {
+    const userId = this.actorId(actor)
+    if (actor.type === "guest") {
+      return null
+    }
     const stats = await (await import("../services/StatisticsService")).statisticsService.getUserStats(userId)
     return stats
   }
