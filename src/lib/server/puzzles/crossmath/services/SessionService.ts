@@ -16,8 +16,9 @@ function calculateCrossMathScore(
   return Math.max(0, Math.round(correctEquations * 10 * multiplier - mistakes * 5 - hintsUsed * 20))
 }
 
-function computeProgress(grid: Record<string, number>, blanks: string[]): ProgressInfo {
-  const filled = blanks.filter(b => grid[b] !== undefined).length
+function computeProgress(grid: Record<string, number> | Map<string, number>, blanks: string[]): ProgressInfo {
+  const g: Record<string, number> = grid instanceof Map ? Object.fromEntries(grid) : (grid || {})
+  const filled = blanks.filter(b => g[b] !== undefined).length
   return {
     filledCells: filled,
     totalBlanks: blanks.length,

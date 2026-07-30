@@ -171,7 +171,7 @@ export class PlaySessionRepository {
         },
         $max: { moves, mistakes, hintsUsed },
       },
-      { new: true }
+      { returnDocument: "after" }
     )
   }
 
@@ -210,7 +210,7 @@ export class PlaySessionRepository {
           lastSaveAt: now,
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     )
   }
 
@@ -230,7 +230,7 @@ export class PlaySessionRepository {
           lastSaveAt: new Date(),
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     )
   }
 
@@ -238,7 +238,7 @@ export class PlaySessionRepository {
     return CrossMathPlaySession.findOneAndUpdate(
       { sessionId },
       { $inc: { restartCount: 1 } },
-      { new: true }
+      { returnDocument: "after" }
     )
   }
 

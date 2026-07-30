@@ -770,7 +770,17 @@ export function useSudoku() {
         const next = transformPuzzle(puzzle, false)
         setGameState(next)
         puzzleIdRef.current = next.puzzleId
+        sessionCreatedRef.current = false
+        sessionIdRef.current = null
         completionCalledRef.current = false
+        if (getAccessToken()) {
+          initSession(next.puzzleId)
+        } else {
+          await signInGuest()
+          if (getAccessToken()) {
+            initSession(next.puzzleId)
+          }
+        }
       }
     } catch {
       if (!cancelled) setLoading(false)
