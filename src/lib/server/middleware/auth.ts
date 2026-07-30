@@ -10,6 +10,7 @@ const ALLOWED_ORIGINS = [
   process.env.NEXT_PUBLIC_SITE_URL,
   "http://localhost:3000",
   "http://localhost:3001",
+  "https://puzzroo-beta.vercel.app",
 ].filter(Boolean) as string[];
 
 function validateOrigin(request: NextRequest): boolean {
