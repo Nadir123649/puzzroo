@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const existingUser = await User.findOne({ $or: [{ email }, { pendingEmail: email }] });
 
       if (existingUser) {
-        return errorResponse(409, "account_already_exists", "An account with this email already exists. Please sign in instead.");
+        return errorResponse(409, "account_already_exists", "An account with this email already exists. Please log in instead.");
       }
 
       const isDev = process.env.NODE_ENV !== "production";

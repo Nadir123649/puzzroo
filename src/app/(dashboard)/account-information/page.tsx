@@ -16,7 +16,7 @@ import { images } from '@/lib/utils'
 const PROVIDER_META: Record<string, { label: string; badge: string; badgeClass: string }> = {
   google: { label: 'Google', badge: 'G', badgeClass: 'text-[#4285F4]' },
   facebook: { label: 'Facebook', badge: 'f', badgeClass: 'text-[#1877F2]' },
-  email: { label: 'Email & Password', badge: 'mail', badgeClass: 'text-[#6949FF]' },
+  email: { label: 'Email', badge: 'mail', badgeClass: 'text-[#6949FF]' },
   phone: { label: 'Phone Number', badge: 'phone', badgeClass: 'text-[#22C55E]' },
   guest: { label: 'Guest', badge: '?', badgeClass: 'text-[#757575]' },
 }
@@ -70,7 +70,7 @@ export default function AccountInformationPage() {
     const result = await unlinkProvider(providerToUnlink)
     if (result.success) {
       setLinkedProviders(prev => prev.filter(p => p !== providerToUnlink))
-      notify.success(`${providerToUnlink === 'email' ? 'Email & Password' : providerToUnlink.charAt(0).toUpperCase() + providerToUnlink.slice(1)} has been unlinked`)
+      notify.success(`${providerToUnlink === 'email' ? 'Email' : providerToUnlink.charAt(0).toUpperCase() + providerToUnlink.slice(1)} has been unlinked`)
       fetchUserProfile().then(profile => {
         if (profile) {
           if (profile.linkedProviders?.length) setLinkedProviders(profile.linkedProviders)
@@ -292,7 +292,7 @@ export default function AccountInformationPage() {
             <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD]">
               Password
             </span>
-            <div className="flex items-center gap-3 -mt-[2px]">
+            <div className="flex items-center gap-3 -translate-y-1">
               {canChangePassword ? (
                 <Button
                   size="xs"
@@ -322,7 +322,7 @@ export default function AccountInformationPage() {
           </div>
 
           {/* Connected Accounts */}
-          <div className="pt-3 pb-3">
+          <div className="pt-1 pb-3">
             <h3 className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white mb-2">
               Connected Accounts
             </h3>
@@ -626,7 +626,7 @@ export default function AccountInformationPage() {
               </div>
               <h3 className="font-urbanist font-bold text-[18px] text-[#212121] dark:text-white">Unlink Account</h3>
               <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD]">
-                Are you sure you want to unlink {confirmUnlink === 'email' ? 'Email & Password' : confirmUnlink.charAt(0).toUpperCase() + confirmUnlink.slice(1)}?
+                Are you sure you want to unlink {confirmUnlink === 'email' ? 'Email' : confirmUnlink.charAt(0).toUpperCase() + confirmUnlink.slice(1)}?
               </p>
               <div className="flex gap-3 w-full">
                 <button

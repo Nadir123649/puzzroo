@@ -177,7 +177,6 @@ function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentPr
   const router = useRouter()
   const isActive = ACTIVE_GAMES.includes(game.id)
   
-  const currentImage = theme === 'light' && game.imageLight ? game.imageLight : game.image
   const displayStatus = isPlayed ? 'Played' : game.status
   
   // Locked/Coming Soon state
@@ -193,13 +192,32 @@ function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentPr
         
         {/* Game Image - Grayscale (no blur) */}
         <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F0EDFF] dark:bg-[#1F222A] grayscale">
-          <Image
-            src={currentImage}
-            alt={game.imageAlt}
-            fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="w-full h-full object-cover select-none"
-          />
+          {game.imageLight ? (
+            <>
+              <Image
+                src={game.imageLight}
+                alt={game.imageAlt}
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className="w-full h-full object-cover select-none transition-opacity duration-300 absolute inset-0 opacity-100 dark:opacity-0"
+              />
+              <Image
+                src={game.image}
+                alt={game.imageAlt}
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className="w-full h-full object-cover select-none transition-opacity duration-300 absolute inset-0 opacity-0 dark:opacity-100"
+              />
+            </>
+          ) : (
+            <Image
+              src={game.image}
+              alt={game.imageAlt}
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="w-full h-full object-cover select-none"
+            />
+          )}
         </div>
 
         {/* Text Content */}
@@ -249,13 +267,32 @@ function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentPr
     >
       {/* Game Image - Fluid and responsive */}
       <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F0EDFF] dark:bg-[#1F222A]">
-        <Image
-          src={currentImage}
-          alt={game.imageAlt}
-          fill
-          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="w-full h-full object-cover select-none"
-        />
+        {game.imageLight ? (
+          <>
+            <Image
+              src={game.imageLight}
+              alt={game.imageAlt}
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="w-full h-full object-cover select-none transition-opacity duration-300 absolute inset-0 opacity-100 dark:opacity-0"
+            />
+            <Image
+              src={game.image}
+              alt={game.imageAlt}
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="w-full h-full object-cover select-none transition-opacity duration-300 absolute inset-0 opacity-0 dark:opacity-100"
+            />
+          </>
+        ) : (
+          <Image
+            src={game.image}
+            alt={game.imageAlt}
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="w-full h-full object-cover select-none"
+          />
+        )}
       </div>
 
       {/* Text Content */}

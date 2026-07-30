@@ -15,6 +15,7 @@ export function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const hamburgerRef = useRef<HTMLButtonElement>(null)
   const touchStartX = useRef<number>(0)
 
   const [loggedIn, setLoggedIn] = useState<boolean>(() => {
@@ -35,13 +36,18 @@ export function Navbar() {
             avatar: parsed.avatar
           }
         }
-      } catch {}
+      } catch { }
     }
     return null
   })
   const [navbarMounted, setNavbarMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+
+  const isAccountSection = pathname.startsWith('/account-information') || 
+                           pathname.startsWith('/email-preferences') || 
+                           pathname.startsWith('/subscription') || 
+                           pathname.startsWith('/change-password');
 
   useLayoutEffect(() => {
     setNavbarMounted(true)
@@ -86,7 +92,7 @@ export function Navbar() {
   // Sync auth state on page navigation
   useEffect(() => {
     if (!navbarMounted) return
-    
+
     const isAuth = isLoggedIn()
     setLoggedIn(isAuth)
     if (isAuth) {
@@ -116,7 +122,10 @@ export function Navbar() {
     if (!isMenuOpen) return
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+      if (
+        mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node) &&
+        hamburgerRef.current && !hamburgerRef.current.contains(event.target as Node)
+      ) {
         setIsMenuOpen(false)
       }
     }
@@ -156,14 +165,14 @@ export function Navbar() {
   }, [isMenuOpen])
 
   return (
-    <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] transition-colors duration-200 z-[200]">
+    <header className="sticky top-0 w-full bg-white dark:bg-[#181A20] border-none duration-300 z-[200]">
       <div className="w-full max-w-[1380px] mx-auto px-[20px] py-[8px] md:py-[22px]">
         <div className="w-full flex items-center justify-between h-[48px]">
 
           {/* LEFT: Logo + Brand */}
           <div className="flex items-center gap-[clamp(8px,1vw,12px)] select-none">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="flex items-center gap-[clamp(8px,1vw,12px)] cursor-pointer"
               onClick={(e) => {
                 if (pathname === '/') {
@@ -175,22 +184,22 @@ export function Navbar() {
                 }
               }}
             >
-              <svg 
-                viewBox="0 0 37 37" 
-                fill="none" 
+              <svg
+                viewBox="0 0 37 37"
+                fill="none"
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-6 h-6 md:w-8 md:h-8 rounded-lg"
               >
-                <path d="M23.0562 16.7426C24.2701 16.042 24.2701 14.2913 23.0562 13.5908L17.1366 10.1753C15.9227 9.47472 14.405 10.3508 14.405 11.7519V18.5814C14.405 19.9825 15.9227 20.8586 17.1366 20.158L23.0562 16.7426Z" fill="url(#paint0_linear_2380_2069)"/>
-                <path fillRule="evenodd" clipRule="evenodd" d="M27.5315 30.4851C32.0394 30.5303 35.8181 27.0727 36.1827 22.6137C36.3524 20.041 36.4191 17.4557 36.3954 14.8712C36.3746 12.6103 36.2857 10.3493 36.1367 8.09876C35.97 6.08 35.0829 4.18861 33.6371 2.76821C32.1913 1.34856 30.2831 0.495435 28.26 0.364356C25.0274 0.0910889 21.6126 0 18.1978 0C14.783 0 11.3682 0.0910889 8.18086 0.318441C6.15775 0.44952 4.24952 1.30339 2.8037 2.72304C1.35789 4.14269 0.470835 6.03482 0.304096 8.05359C-0.0597661 12.922 -0.105712 17.7453 0.212945 22.6137C0.387836 24.7769 1.3779 26.7935 2.98452 28.2553C4.59041 29.7164 6.69206 30.5133 8.86412 30.4851H13.6447V36.4L22.7509 30.4851H27.5315ZM13.6447 30.4851V24.5703H8.86412C7.45239 24.6155 6.22297 23.6142 6.08661 22.2042C5.81316 17.6542 5.85911 13.1042 6.17776 8.55421C6.23038 7.81439 6.58979 7.18269 7.13151 6.76427C7.52353 6.46213 8.01041 6.2718 8.54546 6.23329C11.6416 6.00594 14.9193 5.91485 18.1978 5.91485C21.4763 5.91485 24.754 6.05186 27.8502 6.18812C29.0796 6.27921 30.1267 7.23453 30.2179 8.50829C30.5825 13.0583 30.5825 17.6083 30.309 22.1583C30.1267 23.5691 28.9432 24.6155 27.5315 24.5703H22.7509L13.6447 30.4851Z" fill="url(#paint1_linear_2380_2069)"/>
+                <path d="M23.0562 16.7426C24.2701 16.042 24.2701 14.2913 23.0562 13.5908L17.1366 10.1753C15.9227 9.47472 14.405 10.3508 14.405 11.7519V18.5814C14.405 19.9825 15.9227 20.8586 17.1366 20.158L23.0562 16.7426Z" fill="url(#paint0_linear_2380_2069)" />
+                <path fillRule="evenodd" clipRule="evenodd" d="M27.5315 30.4851C32.0394 30.5303 35.8181 27.0727 36.1827 22.6137C36.3524 20.041 36.4191 17.4557 36.3954 14.8712C36.3746 12.6103 36.2857 10.3493 36.1367 8.09876C35.97 6.08 35.0829 4.18861 33.6371 2.76821C32.1913 1.34856 30.2831 0.495435 28.26 0.364356C25.0274 0.0910889 21.6126 0 18.1978 0C14.783 0 11.3682 0.0910889 8.18086 0.318441C6.15775 0.44952 4.24952 1.30339 2.8037 2.72304C1.35789 4.14269 0.470835 6.03482 0.304096 8.05359C-0.0597661 12.922 -0.105712 17.7453 0.212945 22.6137C0.387836 24.7769 1.3779 26.7935 2.98452 28.2553C4.59041 29.7164 6.69206 30.5133 8.86412 30.4851H13.6447V36.4L22.7509 30.4851H27.5315ZM13.6447 30.4851V24.5703H8.86412C7.45239 24.6155 6.22297 23.6142 6.08661 22.2042C5.81316 17.6542 5.85911 13.1042 6.17776 8.55421C6.23038 7.81439 6.58979 7.18269 7.13151 6.76427C7.52353 6.46213 8.01041 6.2718 8.54546 6.23329C11.6416 6.00594 14.9193 5.91485 18.1978 5.91485C21.4763 5.91485 24.754 6.05186 27.8502 6.18812C29.0796 6.27921 30.1267 7.23453 30.2179 8.50829C30.5825 13.0583 30.5825 17.6083 30.309 22.1583C30.1267 23.5691 28.9432 24.6155 27.5315 24.5703H22.7509L13.6447 30.4851Z" fill="url(#paint1_linear_2380_2069)" />
                 <defs>
                   <linearGradient id="paint0_linear_2380_2069" x1="36.4" y1="36.4" x2="-6.91273" y2="23.8419" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#6949FF"/>
-                    <stop offset="1" stopColor="#876DFF"/>
+                    <stop stopColor="#6949FF" />
+                    <stop offset="1" stopColor="#876DFF" />
                   </linearGradient>
                   <linearGradient id="paint1_linear_2380_2069" x1="36.4" y1="36.4" x2="-6.91273" y2="23.8419" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#6949FF"/>
-                    <stop offset="1" stopColor="#876DFF"/>
+                    <stop stopColor="#6949FF" />
+                    <stop offset="1" stopColor="#876DFF" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -235,8 +244,8 @@ export function Navbar() {
             {/* Logged In Actions Container */}
             <div className="logged-in-only items-center gap-[clamp(8px,1vw,16px)]">
               {/* Subscribe Us Button - Only for logged in users */}
-              <Link 
-                href="/subscription" 
+              <Link
+                href="/subscription"
                 className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
               >
                 Subscribe Us
@@ -264,27 +273,29 @@ export function Navbar() {
             </button>
 
             {/* Hamburger Menu */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-10 h-10 rounded-lg flex items-center justify-center ml-1 hover:bg-gray-100 dark:hover:bg-[#1F222A] active:scale-95 transition-all duration-200"
-              aria-label="Toggle menu"
-            >
-              <div className="w-5 h-4 flex flex-col justify-between">
-                <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`}></span>
-                <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
-                <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`}></span>
-              </div>
-            </button>
+            {!isAccountSection && (
+              <button
+                ref={hamburgerRef}
+                onClick={() => setIsMenuOpen(prev => !prev)}
+                className="w-10 h-10 rounded-lg flex items-center justify-center ml-1 hover:bg-gray-100 dark:hover:bg-[#1F222A] active:scale-95 transition-all duration-200"
+                aria-label="Toggle menu"
+              >
+                <div className="w-5 h-4 flex flex-col justify-between">
+                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`}></span>
+                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
+                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`}></span>
+                </div>
+              </button>
+            )}
           </div>
 
         </div>
       </div>
       {/* Mobile Menu Dropdown */}
-      <div 
+      <div
         ref={mobileMenuRef}
-        className={`md:hidden w-full bg-white dark:bg-[#181A20] px-[20px] border-t border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-300 ease-in-out ${
-          isMenuOpen && navbarMounted ? 'max-h-96 pb-4 opacity-100' : 'max-h-0 pb-0 opacity-0'
-        }`}
+        className={`md:hidden w-full bg-white dark:bg-[#181A20] px-[20px] border-t border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen && navbarMounted ? 'max-h-96 pb-4 opacity-100' : 'max-h-0 pb-0 opacity-0'
+          }`}
       >
         <div className="flex flex-col gap-3 pt-4">
           {navbarMounted && loggedIn && user ? (
