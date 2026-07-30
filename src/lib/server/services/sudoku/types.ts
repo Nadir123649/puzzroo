@@ -92,3 +92,8 @@ export interface ContinuePlayingResponse {
   hasActiveSession: boolean;
   session?: SessionResponse & { puzzle: SudokuPuzzleInfo };
 }
+
+export interface ReplayResponse {
+  session: SessionResponse;
+  puzzle: SudokuPuzzleInfo;
+}

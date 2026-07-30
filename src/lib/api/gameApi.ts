@@ -138,13 +138,11 @@ export const gameApi = {
   // ---- Session management (move-by-move sync) ----
 
   async createSession(game: GameId, puzzleId: string, difficulty?: string) {
-    console.log('[D] createSession API call', { game, puzzleId: puzzleId?.substring(0,20), difficulty, ts: Date.now() });
     const res = await api(`/api/v1/games/${game}/sessions`, {
       method: 'POST',
       body: JSON.stringify({ puzzleId, difficulty }),
       suppressToast: true,
     });
-    console.log('[D] createSession API response', { success: res?.success, hasPayload: !!res?.payload, sessionId: res?.payload?.sessionId?.substring(0,20), ts: Date.now() });
     return res.payload;
   },
 
@@ -196,103 +194,6 @@ export const gameApi = {
     return res.payload;
   },
 
-
-  // ---- Nonogram-specific endpoints ----
-
-  async startNonogramSession(puzzleId: string, difficulty: string) {
-    const res = await api<{ sessionId: string; status: string }>(
-      '/api/v1/nonogram/session',
-      { method: 'POST', body: JSON.stringify({ puzzleId, difficulty }) }
-    );
-    return res.payload;
-  },
-
-  async pauseNonogramSession(sessionId: string) {
-    const res = await api(`/api/v1/nonogram/session/${sessionId}/pause`, { method: 'POST' });
-    return res.payload;
-  },
-
-  async resumeNonogramSession(sessionId: string) {
-    const res = await api(`/api/v1/nonogram/session/${sessionId}/resume`, { method: 'POST' });
-    return res.payload;
-  },
-
-  async saveNonogramProgress(
-    sessionId: string,
-    data: { grid: Array<Array<{ state: string }>>; elapsedSeconds: number; hintsUsed?: number; mistakes?: number }
-  ) {
-    const res = await api(`/api/v1/nonogram/session/${sessionId}/save`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    return res.payload;
-  },
-
-  async restartNonogramSession(sessionId: string) {
-    const res = await api(`/api/v1/nonogram/session/${sessionId}/restart`, { method: 'POST' });
-    return res.payload;
-  },
-
-  async replayNonogramSession(sessionId: string) {
-    const res = await api(`/api/v1/nonogram/session/${sessionId}/replay`, { method: 'POST' });
-    return res.payload;
-  },
-
-  async abandonNonogramSession(sessionId: string, reason?: string) {
-    const res = await api(`/api/v1/nonogram/session/${sessionId}/abandon`, {
-      method: 'POST',
-      body: JSON.stringify({ reason }),
-    });
-    return res.payload;
-  },
-
-  async verifyNonogramSolution(sessionId: string, grid: Array<Array<{ state: string }>>) {
-    const res = await api('/api/v1/nonogram/verify', {
-      method: 'POST',
-      body: JSON.stringify({ sessionId, grid }),
-    });
-    return res.payload;
-  },
-
-  async completeNonogramPuzzle(
-    sessionId: string,
-    grid: Array<Array<{ state: string }>>,
-    elapsedSeconds: number,
-    hintsUsed?: number,
-    mistakes?: number
-  ) {
-    const res = await api('/api/v1/nonogram/complete', {
-      method: 'POST',
-      body: JSON.stringify({ sessionId, grid, elapsedSeconds, hintsUsed, mistakes }),
-    });
-    return res.payload;
-  },
-
-  async getNonogramHistory(limit = 20, cursor?: string) {
-    const params: Record<string, string> = { limit: String(limit) };
-    if (cursor) params.cursor = cursor;
-    const res = await api<{ items: unknown[]; nextCursor: string | null }>(
-      '/api/v1/nonogram/history',
-      { params }
-    );
-    return res.payload;
-  },
-
-  async getNonogramStats() {
-    const res = await api('/api/v1/nonogram/stats');
-    return res.payload;
-  },
-
-  async getNonogramDailyHistory() {
-    const res = await api('/api/v1/nonogram/daily/history');
-    return res.payload;
-  },
-
-  async getNonogramDailyCompletion(date?: string) {
-    const params = date ? { date } : {};
-    const res = await api('/api/v1/nonogram/daily/completion', { params });
-    return res.payload;
-  },
 
   // ---- Tangram-specific endpoints ----
 
@@ -426,6 +327,11 @@ export const gameApi = {
     return res.payload;
   },
 
+  async replaySudokuSession(sessionId: string) {
+    const res = await api(`/api/v1/games/sudoku/sessions/${sessionId}/replay`, { method: 'POST' });
+    return res.payload;
+  },
+
   async replayCrossMathSession(sessionId: string) {
     const res = await api(`/api/v1/crossmath/session/${sessionId}/replay`, { method: 'POST' });
     return res.payload;
@@ -482,10 +388,3 @@ export const gameApi = {
     return res.payload;
   },
 };
-
-function todayString(): string {
-  const d = new Date();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
-}

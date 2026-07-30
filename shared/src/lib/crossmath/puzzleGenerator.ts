@@ -26,6 +26,10 @@ function applyOp(a: number, op: string, b: number): number {
     case '−':
     case '-':
       return a - b
+    case '×':
+      return a * b
+    case '÷':
+      return b === 0 ? NaN : a / b
     default:
       return a + b
   }

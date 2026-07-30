@@ -18,7 +18,7 @@ import {
 } from '@shared/lib/crossmath/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
-import { getAccessToken } from '@/lib/auth/frontend-auth'
+import { getAccessToken, signInGuest } from '@/lib/auth/frontend-auth'
 
 // Module-level guard to cancel StrictMode double-mount in dev
 let _crossmathMountGuard = false
@@ -172,7 +172,10 @@ export function useCrossMath(initialPuzzleId?: string) {
     movesRef.current = 0
     completionCalledRef.current = false
     if (typeof window === 'undefined') return null
-    if (!getAccessToken()) return null
+    if (!getAccessToken()) {
+      await signInGuest()
+      if (!getAccessToken()) return null
+    }
     try {
       const res = await gameApi.createSession('crossmath', puzzleId, diff)
       if (res && (res.sessionId || res._id || res.id)) {
@@ -217,26 +220,6 @@ export function useCrossMath(initialPuzzleId?: string) {
     })
   }
 
-  const reportWin = useCallback((
-    puzzleId: string,
-    diff: any,
-    finalScore: number,
-    elapsed: number,
-    finalMistakes: number
-  ) => {
-    if (getAccessToken()) {
-      gameApi.complete('crossmath', {
-        puzzleId,
-        difficulty: diff,
-        score: finalScore,
-        time: elapsedFromCountdown(elapsed, diff),
-        hintsUsed: hintsUsedRef.current,
-        mistakes: finalMistakes,
-        moves: movesRef.current,
-      }).catch(() => {})
-    }
-  }, [])
-
   async function completePuzzle(grid: Cell[][], elapsed: number, diff: string, finalScore?: number, finalMistakes?: number) {
     if (!sessionIdRef.current || completionCalledRef.current) return
     completionCalledRef.current = true
@@ -246,7 +229,6 @@ export function useCrossMath(initialPuzzleId?: string) {
         elapsedTime: elapsedFromCountdown(elapsed, diff),
         hintsUsed: hintsUsedRef.current,
         mistakes: finalMistakes ?? mistakes,
-        score: finalScore ?? score,
         moves: movesRef.current,
       })
     } catch { /* ignore */ }
@@ -853,6 +835,18 @@ export function useCrossMath(initialPuzzleId?: string) {
     clearGameState()
     completionCalledRef.current = false
     movesRef.current = 0
+    sessionCreatedRef.current = false
+    sessionIdRef.current = null
+    ;(async () => {
+      if (getAccessToken()) {
+        initSession(id, difficulty)
+      } else {
+        await signInGuest()
+        if (getAccessToken()) {
+          initSession(id, difficulty)
+        }
+      }
+    })()
   }, [currentPuzzle, difficulty])
 
   const resetBoard = useCallback(async () => {

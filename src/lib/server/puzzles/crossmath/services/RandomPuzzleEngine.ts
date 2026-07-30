@@ -31,30 +31,27 @@ async selectRandom(options: SelectRandomOptions, page = 1, pageSize = 20, shapeN
 
     const excludeIds: string[] = []
 
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const distinctPromises: Promise<any[]>[] = []
     if (excludeCompleted) {
-      const completed = await CrossMathPlaySession.find({
-        userId,
-        status: "completed",
-      }).distinct("puzzleId")
-      excludeIds.push(...completed.map(id => id.toString()))
+      distinctPromises.push(
+        CrossMathPlaySession.find({ userId, status: "completed" }).distinct("puzzleId")
+      )
     }
-
     if (excludeActive) {
-      const active = await CrossMathPlaySession.find({
-        userId,
-        status: { $in: ["playing", "paused"] },
-      }).distinct("puzzleId")
-      excludeIds.push(...active.map(id => id.toString()))
+      distinctPromises.push(
+        CrossMathPlaySession.find({ userId, status: { $in: ["playing", "paused"] } }).distinct("puzzleId")
+      )
+    }
+    if (excludeRecentAbandons) {
+      distinctPromises.push(
+        CrossMathPlaySession.find({ userId, status: "abandoned", lastSaveAt: { $gte: twentyFourHoursAgo } }).distinct("puzzleId")
+      )
     }
 
-    if (excludeRecentAbandons) {
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-      const recentAbandons = await CrossMathPlaySession.find({
-        userId,
-        status: "abandoned",
-        lastSaveAt: { $gte: twentyFourHoursAgo },
-      }).distinct("puzzleId")
-      excludeIds.push(...recentAbandons.map(id => id.toString()))
+    const results = await Promise.all(distinctPromises)
+    for (const ids of results) {
+      for (const id of ids) excludeIds.push(id.toString())
     }
 
     if (excludeIds.length > 0) {

@@ -45,7 +45,7 @@ import { calculateCentroid, polygonToPoints } from '@shared/lib/tangram/polygon-
 import { validatePuzzle } from '@shared/lib/tangram/polygon-validation'
 import { attemptSnap, geometricallyMatches } from '@shared/lib/tangram/polygon-snapping'
 import { PIECE_CONFIG } from '@shared/lib/tangram/pieceConfig'
-import { getAccessToken } from '@/lib/auth/frontend-auth'
+import { getAccessToken, signInGuest } from '@/lib/auth/frontend-auth'
 
 const PIECE_COLORS: Record<TangramPieceId, string> = {
   baseTriangle1: '#4A90E2',
@@ -270,7 +270,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     if (sessionCreatedRef.current) return null
     completionCalledRef.current = false
     if (typeof window === 'undefined') return null
-    if (!getAccessToken()) return null
+    if (!getAccessToken()) {
+      await signInGuest()
+      if (!getAccessToken()) return null
+    }
     try {
       const res = await gameApi.createSession('tangram', puzzleId, diff)
       if (res && (res.sessionId || res._id || res.id)) {
@@ -946,6 +949,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     }
 
     completionCalledRef.current = false
+    sessionCreatedRef.current = false
+    sessionIdRef.current = null
     setHistoryIndex(0)
 
     // Re-fetch the same puzzle by id and reset it to the tray (cache-first)
@@ -976,6 +981,14 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         if (!cancelled) {
             writeCache(p)
             setPuzzle(p)
+            if (getAccessToken()) {
+              initSession(p.id, difficulty)
+            } else {
+              await signInGuest()
+              if (getAccessToken()) {
+                initSession(p.id, difficulty)
+              }
+            }
           }
         } catch {
           if (!cancelled) {

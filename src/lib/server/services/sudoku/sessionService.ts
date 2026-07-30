@@ -7,8 +7,8 @@ import type {
   SessionResponse,
   SaveProgressInput,
 } from "./types";
-import { encode81, decode81, cloneBoard, createEmptyNotes, isEmptyNotes } from "./utils";
-import { verifyCompletion, calculateScore } from "./verificationService";
+import { createEmptyNotes, isEmptyNotes } from "./utils";
+import { verifyCompletion, calculateScore, validateElapsedTime } from "./verificationService";
 
 function toSessionResponse(doc: any): SessionResponse {
   return {
@@ -231,7 +231,15 @@ export async function replayPuzzle(userId: string, puzzleId: string) {
     lastSavedAt: new Date(),
   });
 
-  return toSessionResponse(session);
+  return {
+    session: toSessionResponse(session),
+    puzzle: {
+      puzzleId: puzzle.puzzleId,
+      difficulty: puzzle.difficulty,
+      puzzle: puzzle.puzzle,
+      solution: puzzle.solution,
+    },
+  };
 }
 
 export async function abandonSession(sessionId: string, userId: string) {
@@ -264,8 +272,7 @@ export async function completeSession(
   elapsedTime: number,
   hintsUsed?: number,
   mistakes?: number,
-  moves?: number,
-  score?: number
+  moves?: number
 ) {
   await connectDB();
   const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
@@ -273,18 +280,34 @@ export async function completeSession(
   if (session.status === "completed") throw new Error("already_completed");
   if (!["playing", "paused"].includes(session.status)) throw new Error("session_not_active");
 
-  const $set: any = {
+  const validatedTime = validateElapsedTime(
+    elapsedTime,
+    session.elapsedTime || 0,
+    session.startedAt || new Date()
+  );
+
+  const finalHints = hintsUsed ?? session.hintsUsed ?? 0;
+  const finalMistakes = mistakes ?? session.mistakes ?? 0;
+  const score = calculateScore(
+    (session.difficulty || "medium") as any,
+    validatedTime,
+    finalHints,
+    finalMistakes
+  );
+  const finalMoves = moves ?? session.moves ?? 0;
+
+  const $set: Record<string, unknown> = {
     status: "completed",
     currentBoard: board,
-    elapsedTime,
+    elapsedTime: validatedTime,
     result: "solved",
+    score,
+    moves: finalMoves,
+    hintsUsed: finalHints,
+    mistakes: finalMistakes,
     completedAt: new Date(),
     lastSavedAt: new Date(),
   };
-  if (hintsUsed !== undefined) $set.hintsUsed = hintsUsed;
-  if (mistakes !== undefined) $set.mistakes = mistakes;
-  if (moves !== undefined) $set.moves = moves;
-  if (score !== undefined) $set.score = score;
 
   const updated = await PlaySession.findOneAndUpdate(
     { _id: sessionId, userId, status: { $in: ["playing", "paused"] } },
@@ -362,12 +385,6 @@ export async function getResumableSession(userId: string) {
         const hintsUsed = session.hintsUsed || 0
         const mistakes = session.mistakes || 0
         const moves = session.moves || 0
-        const score = calculateScore(
-          puzzle.difficulty as any,
-          elapsedTime,
-          hintsUsed,
-          mistakes,
-        )
         await completeSession(
           String(session._id),
           userId,
@@ -376,7 +393,6 @@ export async function getResumableSession(userId: string) {
           hintsUsed,
           mistakes,
           moves,
-          score,
         )
         return { hasActiveSession: false }
       }

@@ -1,6 +1,7 @@
 import TangramPuzzle from '@/lib/server/models/TangramPuzzle';
-import { verifyPuzzleSolution } from '@/lib/server/tangram/geometry/engine';
+import { verifyPuzzleSolution, checkCoverage } from '@/lib/server/tangram/geometry/engine';
 import type { TangramPieceState } from '@/lib/server/tangram/types';
+import type { TangramVerificationResult } from '../types';
 
 function toPieceState(piece: any): TangramPieceState {
   return {
@@ -19,31 +20,50 @@ export class VerificationEngine {
         isComplete: false,
         valid: false,
         accuracy: 0,
-        correctCells: 0,
-        totalCellsRequired: 0,
-        incorrectCells: 0,
-        mistakes: 0,
-        pieces: [],
-        rowValidation: [],
-        columnValidation: [],
-      };
+        piecesCorrect: 0,
+        totalPieces: 0,
+        pieceResults: [],
+        errors: ['No pieces provided'],
+        coverage: { covered: false, coverageRatio: 0, errors: ['No pieces to verify'] },
+      } satisfies TangramVerificationResult;
     }
 
     const pieceStates = pieces.map(toPieceState);
     const result = await verifyPuzzleSolution({ puzzleId, pieceStates });
 
+    let coverage: { covered: boolean; coverageRatio: number; errors: string[] } | undefined;
+
+    try {
+      const puzzle = await TangramPuzzle.findOne({ puzzleId }).lean();
+      if (puzzle?.fullPolygon) {
+        const allPolygons = pieceStates.map((state: TangramPieceState) => {
+          const idx = (puzzle.pieceShapeIds as string[])?.indexOf(state.pieceId);
+          const original = idx >= 0 ? (puzzle.individualPiecePolygons as number[][][])[idx] : [];
+          const { transformPolygon } = require('@/lib/server/tangram/geometry/engine');
+          return transformPolygon(original, state.position, state.rotation, state.flipped);
+        });
+        coverage = checkCoverage(allPolygons, puzzle.fullPolygon as number[][]);
+      }
+    } catch {
+      coverage = { covered: false, coverageRatio: 0, errors: ['Coverage check unavailable'] };
+    }
+
     return {
       isComplete: result.valid,
       valid: result.valid,
       accuracy: result.accuracy,
-      correctCells: result.piecesCorrect,
-      totalCellsRequired: result.totalPieces,
-      incorrectCells: result.totalPieces - result.piecesCorrect,
-      mistakes: 0,
-      pieces: pieces || [],
-      rowValidation: [],
-      columnValidation: [],
-    };
+      piecesCorrect: result.piecesCorrect,
+      totalPieces: result.totalPieces,
+      pieceResults: result.pieceResults.map(p => ({
+        pieceId: p.pieceId,
+        correct: p.correct,
+        positionMatch: p.positionMatch,
+        rotationMatch: p.rotationMatch,
+        error: p.error,
+      })),
+      errors: result.errors,
+      coverage,
+    } satisfies TangramVerificationResult;
   }
 }
 

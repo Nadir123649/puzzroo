@@ -25,5 +25,6 @@ gameProgressSchema.index({ userId: 1, profileId: 1, gameId: 1, puzzleId: 1 }, { 
 gameProgressSchema.index({ userId: 1, gameId: 1, completed: 1 });
 gameProgressSchema.index({ userId: 1, profileId: 1, gameId: 1, completed: 1 });
 gameProgressSchema.index({ userId: 1, updatedAt: -1 });
+gameProgressSchema.index({ userId: 1, gameId: 1, updatedAt: -1 });
 
 export default mongoose.models.GameProgress || mongoose.model("GameProgress", gameProgressSchema);

@@ -5,9 +5,11 @@ import { statisticsService } from "@/lib/server/puzzles/crossmath/services/Stati
 import { completeSessionSchema } from "@/lib/server/puzzles/crossmath/validators"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { rateLimit } from "@/lib/server/utils/http"
+import { completionBus } from "@/lib/server/games/completion"
+import { ensureGameSubscriptions } from "@/lib/server/games/subscriptions"
+import DailyChallenge from "@/lib/server/models/DailyChallenge"
 
 export const POST = withAuth(async (req, user, params) => {
-  console.log('[TRACE] POST /complete', { sessionId: params.sessionId?.substring(0,20), userId: user.id?.substring(0,10), ts: Date.now() })
   if (!rateLimit(req, "crossmath-complete", 15)) {
     return errorResponse(429, "rate_limited", "Too many requests")
   }
@@ -31,8 +33,6 @@ export const POST = withAuth(async (req, user, params) => {
     parsed.data.moves
   )
 
-  console.log('[TRACE] POST /complete: result', { sessionId: sessionId?.substring(0,20), isCompleted: result.isCompleted, ts: Date.now() })
-
   if (result.isCompleted && result.result) {
     statisticsService.updateOnSessionComplete(
       user.id,
@@ -42,7 +42,42 @@ export const POST = withAuth(async (req, user, params) => {
       result.result.hintsUsed,
       result.result.mistakes,
       result.result.accuracy
-    ).catch(err => console.error('[crossmath] stats update failed', err))
+    ).catch(() => {})
+
+    ensureGameSubscriptions()
+    completionBus.emit({
+      playerId: user.id,
+      sessionId,
+      gameType: "crossmath",
+      puzzleId: result.result.puzzleId,
+      difficulty: result.result.difficulty,
+      score: result.result.score,
+      elapsedTime: result.result.elapsedTime,
+      mistakes: result.result.mistakes,
+      hintsUsed: result.result.hintsUsed,
+      completedAt: new Date(),
+      isReplay: false,
+      isGuest: user.role === "guest",
+    })
+
+    const today = new Date().toISOString().split("T")[0]
+    DailyChallenge.findOneAndUpdate(
+      { date: today, userId: user.id },
+      {
+        date: today,
+        userId: user.id,
+        puzzleId: result.result.puzzleId,
+        difficulty: result.result.difficulty,
+        sessionId,
+        status: "completed",
+        completedAt: new Date(),
+        elapsedSeconds: result.result.elapsedTime,
+        accuracy: result.result.accuracy,
+        hintsUsed: result.result.hintsUsed,
+        mistakes: result.result.mistakes,
+      },
+      { upsert: true, new: true }
+    ).catch(() => {})
   }
 
   return successResponse(result)

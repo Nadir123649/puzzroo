@@ -4,6 +4,17 @@ import CrossMathPuzzle from "@/lib/server/models/CrossMathPuzzle"
 import CrossMathPlaySession from "@/lib/server/models/CrossMathPlaySession"
 import type { SafeSessionResponse, SafePuzzleResponse, SaveProgressResponse, ProgressInfo, CompleteSessionResponse, CompletionResult, VerificationSummary, EquationError } from "../types"
 
+function calculateCrossMathScore(
+  correctEquations: number,
+  difficulty: string,
+  mistakes: number,
+  hintsUsed: number
+): number {
+  const difficultyMultiplier: Record<string, number> = { easy: 1, medium: 1.5, hard: 2 }
+  const multiplier = difficultyMultiplier[difficulty] ?? 1
+  return Math.max(0, Math.round(correctEquations * 10 * multiplier - mistakes * 5 - hintsUsed * 20))
+}
+
 function computeProgress(grid: Record<string, number>, blanks: string[]): ProgressInfo {
   const filled = blanks.filter(b => grid[b] !== undefined).length
   return {
@@ -63,12 +74,10 @@ async function toSafePuzzleResponse(doc: any): Promise<SafePuzzleResponse> {
 
 export class SessionService {
   async startSession(userId: string, puzzleId: string) {
-    console.log('[D] startSession', { userId: userId?.substring(0,10), puzzleId: puzzleId?.substring(0,20), ts: Date.now() })
     const puzzle = await CrossMathPuzzle.findOne({ puzzleId }).lean()
     if (!puzzle) throw new Error("puzzle_not_found")
 
     const existing = await playSessionRepository.findActiveByUserAndPuzzle(userId, puzzleId)
-    console.log('[D] startSession: existing check', { found: !!existing, status: existing?.status, ts: Date.now() })
     if (existing) {
       return toSafeSession(existing.toObject())
     }
@@ -128,14 +137,11 @@ export class SessionService {
     mistakes: number,
     moves: number
   ): Promise<SaveProgressResponse> {
-    console.log('[TRACE] saveProgress called', { sessionId: sessionId?.substring(0,20), userId: userId?.substring(0,10), gridSize: Object.keys(grid).length, elapsedTime, ts: Date.now() })
     const updated = await playSessionRepository.saveProgress(
       sessionId, userId, grid, elapsedTime, hintsUsed, mistakes, moves
     )
-    console.log('[TRACE] saveProgress result', { sessionId: sessionId?.substring(0,20), found: !!updated, status: updated?.status, ts: Date.now() })
     if (!updated) {
       const exists = await playSessionRepository.findById(sessionId)
-      console.log('[TRACE] saveProgress fallback read', { sessionId: sessionId?.substring(0,20), found: !!exists, status: exists?.status, ts: Date.now() })
       if (!exists) throw new Error("session_not_found")
       if (exists.userId.toString() !== userId) throw new Error("not_owner")
       throw new Error("session_not_active")
@@ -164,17 +170,13 @@ export class SessionService {
     elapsedTime: number,
     hintsUsed: number,
     mistakes: number,
-    moves: number,
-    _score?: number
+    moves: number
   ): Promise<CompleteSessionResponse> {
-    console.log('[TRACE] completeSession', { sessionId: sessionId?.substring(0,20), userId: userId?.substring(0,10), gridSize: Object.keys(grid).length, ts: Date.now() })
     const session = await this.getSession(sessionId, userId)
-    console.log('[TRACE] completeSession: current status', { sessionId: sessionId?.substring(0,20), status: session.sessionStatus, ts: Date.now() })
     if (session.sessionStatus === "completed") throw new Error("already_completed")
     if (session.sessionStatus === "abandoned") throw new Error("session_abandoned")
 
     const verifyResult = await verificationEngine.verify(session.puzzleId, grid)
-    console.log('[TRACE] completeSession: verify result', { sessionId: sessionId?.substring(0,20), completed: verifyResult.completed, allCorrect: verifyResult.isCorrect, ts: Date.now() })
     if (!verifyResult.completed) {
       return {
         isCompleted: false,
@@ -196,22 +198,22 @@ export class SessionService {
       }
     }
 
-    const difficultyMultiplier: Record<string, number> = { easy: 1, medium: 1.5, hard: 2 };
-    const multiplier = difficultyMultiplier[session.difficulty] ?? 1;
-    const score = Math.max(0, Math.round(verifyResult.correctEquations * 10 * multiplier - mistakes * 5 - hintsUsed * 20));
+    const finalMistakes = Math.max(session.mistakes || 0, mistakes)
+    const finalHintsUsed = Math.max(session.hintsUsed || 0, hintsUsed)
+    const finalMoves = Math.max(session.moves || 0, moves)
+    const score = calculateCrossMathScore(verifyResult.correctEquations, session.difficulty, finalMistakes, finalHintsUsed)
 
     const updated = await playSessionRepository.complete(sessionId, {
       correct: verifyResult.correctEquations,
       total: verifyResult.totalEquations,
       accuracy: verifyResult.accuracy,
       elapsedTime,
-      moves,
-      mistakes,
-      hintsUsed,
+      moves: finalMoves,
+      mistakes: finalMistakes,
+      hintsUsed: finalHintsUsed,
       score,
     })
 
-    console.log('[TRACE] completeSession: DB update result', { sessionId: sessionId?.substring(0,20), found: !!updated, newStatus: updated?.status, ts: Date.now() })
     if (!updated) throw new Error("already_completed")
 
     return {
@@ -222,9 +224,9 @@ export class SessionService {
         difficulty: session.difficulty,
         completedAt: updated.completedAt?.toISOString?.() || new Date().toISOString(),
         elapsedTime,
-        moves,
-        mistakes,
-        hintsUsed,
+        moves: finalMoves,
+        mistakes: finalMistakes,
+        hintsUsed: finalHintsUsed,
         score,
         accuracy: verifyResult.accuracy,
         totalEquations: verifyResult.totalEquations,
@@ -263,14 +265,23 @@ export class SessionService {
     if (existing) {
       await playSessionRepository.abandon(existing.sessionId)
     }
-    return this.startSession(userId, puzzleId)
+    const puzzle = await CrossMathPuzzle.findOne({ puzzleId }).lean()
+    if (!puzzle) throw new Error("puzzle_not_found")
+    const puzzleDoc = puzzle as any
+    const session = await playSessionRepository.create({
+      userId,
+      puzzleId,
+      difficulty: puzzleDoc.difficulty,
+      blanks: puzzleDoc.blanks || [],
+      availableNumbers: puzzleDoc.availableNumbers || [],
+      isReplay: true,
+    })
+    return toSafeSession(session.toObject())
   }
 
   async getContinuePlaying(userId: string) {
-    console.log('[TRACE] getContinuePlaying', { userId: userId?.substring(0,10), ts: Date.now() })
     const session = await playSessionRepository.findByUserAndStatus(userId, ["playing", "paused"])
     if (!session) {
-      console.log('[TRACE] getContinuePlaying: no active session', { userId: userId?.substring(0,10), ts: Date.now() })
       return { hasActiveSession: false }
     }
 
@@ -283,74 +294,36 @@ export class SessionService {
           ? gridRaw
           : {}
 
-    console.log('[TRACE] getContinuePlaying: session found', {
-      sessionId: session.sessionId?.substring(0,20),
-      status: session.status,
-      puzzleId: session.puzzleId?.substring(0,20),
-      blanksCount: blanks.length,
-      gridKeys: Object.keys(grid).length,
-      ts: Date.now(),
-    })
-
     // If grid is fully filled, verify it. If solved, auto-complete rather
     // than returning a session the user can't make progress on. This
     // eliminates the tab-close / network-failure race where the client's
     // fire-and-forget "complete" request never reached the server.
     const filledCount = blanks.filter((b: string) => grid[b] !== undefined).length
-    console.log('[TRACE] getContinuePlaying: auto-complete check', {
-      sessionId: session.sessionId?.substring(0,20),
-      filledCount,
-      blanksLength: blanks.length,
-      allFilled: filledCount === blanks.length,
-      shouldAutoComplete: filledCount === blanks.length && blanks.length > 0,
-      ts: Date.now(),
-    })
     if (filledCount === blanks.length && blanks.length > 0) {
       try {
         const verifyResult = await verificationEngine.verify(session.puzzleId, grid)
-        console.log('[TRACE] getContinuePlaying: verify result', {
-          sessionId: session.sessionId?.substring(0,20),
-          completed: verifyResult.completed,
-          allCorrect: verifyResult.isCorrect,
-          ts: Date.now(),
-        })
         if (verifyResult.completed) {
-          const mistakes = session.mistakes || 0
-          const hintsUsed = session.hintsUsed || 0
+          const storedMistakes = session.mistakes || 0
+          const storedHintsUsed = session.hintsUsed || 0
           const moves = session.moves || 0
           const elapsedTime = session.elapsedTime || 0
-          const score = Math.max(0, verifyResult.correctEquations * 10 - mistakes * 5 - hintsUsed * 20)
+          const score = calculateCrossMathScore(verifyResult.correctEquations, session.difficulty, storedMistakes, storedHintsUsed)
 
-          console.log('[TRACE] getContinuePlaying: auto-completing', {
-            sessionId: session.sessionId?.substring(0,20),
-            score,
-            ts: Date.now(),
-          })
           const completed = await playSessionRepository.complete(session.sessionId, {
             correct: verifyResult.correctEquations,
             total: verifyResult.totalEquations,
             accuracy: verifyResult.accuracy,
             elapsedTime,
             moves,
-            mistakes,
-            hintsUsed,
+            mistakes: storedMistakes,
+            hintsUsed: storedHintsUsed,
             score,
-          })
-          console.log('[TRACE] getContinuePlaying: auto-complete result', {
-            sessionId: session.sessionId?.substring(0,20),
-            success: !!completed,
-            newStatus: completed?.status,
-            ts: Date.now(),
           })
 
           return { hasActiveSession: false }
         }
       } catch (e) {
-        console.log('[TRACE] getContinuePlaying: auto-complete error', {
-          sessionId: session.sessionId?.substring(0,20),
-          error: (e as Error)?.message,
-          ts: Date.now(),
-        })
+        // auto-complete failure is non-fatal; return active session
       }
     }
 
@@ -358,11 +331,6 @@ export class SessionService {
     const safeSession = toSafeSession(session.toObject())
     const puzzleResp = puzzle ? await toSafePuzzleResponse(puzzle) : undefined
 
-    console.log('[TRACE] getContinuePlaying: returning session', {
-      sessionId: session.sessionId?.substring(0,20),
-      hasActiveSession: true,
-      ts: Date.now(),
-    })
     return { hasActiveSession: true, session: { ...safeSession, puzzle: puzzleResp } }
   }
 

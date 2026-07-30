@@ -488,6 +488,36 @@ export async function fetchBillingHistory(): Promise<any> {
   return res.payload;
 }
 
+let guestLoginPromise: Promise<boolean> | null = null;
+
+export async function signInGuest(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (getAccessToken()) return true;
+  if (guestLoginPromise) return guestLoginPromise;
+  guestLoginPromise = (async () => {
+    try {
+      const res = await api("/api/v1/oauth/guest", { method: "POST" });
+      if (!res.success) return false;
+      const payload = res.payload as any;
+      if (payload.token?.accessToken) {
+        setAccessToken(payload.token.accessToken);
+        localStorage.setItem("puzzroo_auth", "true");
+        if (payload.user) {
+          localStorage.setItem("puzzroo_user", JSON.stringify(payload.user));
+        }
+        window.dispatchEvent(new Event("auth-change"));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      guestLoginPromise = null;
+    }
+  })();
+  return guestLoginPromise;
+}
+
 export async function fetchGameStats(): Promise<any> {
   const res = await api("/api/v1/games/stats");
   if (!res.success) return null;
@@ -558,6 +588,18 @@ function mapUser(u: any): User {
     linkedProviders: u.linkedProviders || [],
     hasPassword: u.hasPassword,
     isVerified: u.isVerified,
+  };
+}
+
+function mapUserForStorage(u: any): Partial<User> {
+  return {
+    id: u.id,
+    publicId: u.publicId,
+    name: u.name || u.username,
+    username: u.username,
+    usernameSet: u.usernameSet,
+    role: u.role || "free",
+    avatar: u.avatar,
   };
 }
 

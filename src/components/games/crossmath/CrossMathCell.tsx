@@ -10,7 +10,7 @@ interface CrossMathCellProps {
   minCellWidth?: number
 }
 
-export function CrossMathCell({ cell, isSelected, onClick, minCellWidth }: CrossMathCellProps) {
+export const CrossMathCell = React.memo(function CrossMathCellComponent({ cell, isSelected, onClick, minCellWidth }: CrossMathCellProps) {
   const isEditable = cell.isEditable
   const isEmpty = cell.type === 'empty'
   const isNumber = cell.type === 'number'
@@ -116,4 +116,4 @@ export function CrossMathCell({ cell, isSelected, onClick, minCellWidth }: Cross
       {cell.value}
     </button>
   )
-}
+})

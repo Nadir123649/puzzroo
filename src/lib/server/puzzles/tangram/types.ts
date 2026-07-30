@@ -31,23 +31,23 @@ export interface TangramSessionResult {
 
 export interface TangramVerificationResult {
   isComplete: boolean
-  totalCellsRequired: number
-  correctCells: number
-  incorrectCells: number
+  valid: boolean
   accuracy: number
-  mistakes: number
-  rowValidation: Array<'correct' | 'incorrect' | 'pending'>
-  columnValidation: Array<'correct' | 'incorrect' | 'pending'>
-  pieces: {
-    id: string
-    shape: number[][]
-    isCorrect: boolean
-    errors?: {
-      cellId: number
-      type: 'position' | 'overlap' | 'rotation' | 'scale'
-      severity: 'critical' | 'error' | 'warning'
-    }[]
+  piecesCorrect: number
+  totalPieces: number
+  pieceResults: {
+    pieceId: string
+    correct: boolean
+    positionMatch: boolean
+    rotationMatch: boolean
+    error?: string
   }[]
+  errors: string[]
+  coverage?: {
+    covered: boolean
+    coverageRatio: number
+    errors: string[]
+  }
 }
 
 export interface SafeSessionResponse {
