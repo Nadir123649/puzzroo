@@ -40,26 +40,6 @@ export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initial
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Reset state when modal opens - restore previously selected date if available
-  useEffect(() => {
-    if (isOpen) {
-      setErrorMessage('')
-      if (initialSelectedDate) {
-        // Parse the stored dateString (MM-DD-YY) back into a Date
-        const [month, day, year] = initialSelectedDate.split('-')
-        const fullYear = 2000 + parseInt(year)
-        const restoredDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
-        restoredDate.setHours(0, 0, 0, 0)
-        setSelectedDate(restoredDate)
-        // Navigate calendar to that month
-        setCurrentDate(new Date(fullYear, parseInt(month) - 1, 1))
-      } else {
-        setCurrentDate(new Date())
-        setSelectedDate(null)
-      }
-    }
-  }, [isOpen, initialSelectedDate])
-
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
