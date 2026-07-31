@@ -170,10 +170,9 @@ export class PlaySessionRepository {
       {
         $set: {
           grid,
-          elapsedTime,
           lastSaveAt: new Date(),
         },
-        $max: { moves, mistakes, hintsUsed },
+        $max: { moves, mistakes, hintsUsed, elapsedTime },
       },
       { returnDocument: "after" }
     )

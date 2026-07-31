@@ -6,6 +6,8 @@ import CrossMathPlaySession from "@/lib/server/models/CrossMathPlaySession"
 import type { Actor } from "@/app/api/v1/games/crossmath/route-helpers"
 import type { SafeSessionResponse, SafePuzzleResponse, SaveProgressResponse, ProgressInfo, CompleteSessionResponse, CompletionResult, VerificationSummary, EquationError } from "../types"
 
+const EXPIRED_SESSION_RETENTION_MS = 90 * 24 * 60 * 60 * 1000
+
 function calculateCrossMathScore(
   correctEquations: number,
   difficulty: string,
@@ -124,6 +126,14 @@ export class SessionService {
       }
     }
     return true
+  }
+
+  private async pruneExpiredSessions() {
+    try {
+      await playSessionRepository.deleteExpired(new Date(Date.now() - EXPIRED_SESSION_RETENTION_MS))
+    } catch (error) {
+      // cleanup failure is non-fatal
+    }
   }
 
   async startSession(actor: Actor, puzzleId: string, gameType?: "crossmath" | "daily_challenge", dailyChallengeId?: string) {
@@ -376,6 +386,7 @@ export class SessionService {
   async getContinuePlaying(actor: Actor, gameType: "crossmath" | "daily_challenge" = "crossmath", difficulty?: string) {
     const userId = this.actorId(actor)
     const guestId = this.actorGuestId(actor)
+    await this.pruneExpiredSessions()
     const session = await playSessionRepository.findByUserAndStatus(["playing", "paused"], userId, guestId, gameType, difficulty)
     if (!session) {
       return { hasActiveSession: false }
@@ -436,6 +447,7 @@ export class SessionService {
   async getContinueDailyChallenge(actor: Actor, dailyChallengeId: string) {
     const userId = this.actorId(actor)
     const guestId = this.actorGuestId(actor)
+    await this.pruneExpiredSessions()
     const session = await playSessionRepository.findActiveDailyByChallenge(dailyChallengeId, userId, guestId)
     if (!session) {
       return { hasActiveSession: false }

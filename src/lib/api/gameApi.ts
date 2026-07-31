@@ -341,8 +341,12 @@ export const gameApi = {
     return res.payload;
   },
 
-  async replayCrossMathSession(sessionId: string) {
-    const res = await api(`/api/v1/crossmath/session/${sessionId}/replay`, { method: 'POST' });
+  async replayCrossMathSession(sessionId: string, puzzleId: string) {
+    const res = await api(`/api/v1/games/crossmath/sessions/${sessionId}/replay`, {
+      method: 'POST',
+      body: JSON.stringify({ puzzleId }),
+      suppressToast: true,
+    });
     return res.payload;
   },
 
