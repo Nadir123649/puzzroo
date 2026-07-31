@@ -54,6 +54,11 @@ export function TangramHero({ backTo }: TangramHeroProps = {}) {
       await new Promise(resolve => setTimeout(resolve, 1000))
       sessionStorage.removeItem('puzzroo_return_url')
       router.push(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}back=past`)
+    } else if (backTo && backTo.includes('/past-puzzles/')) {
+      setLoaderText("Back to past puzzles...")
+      setIsNavigating(true)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      router.push(`${backTo}${backTo.includes('?') ? '&' : '?'}back=past`)
     } else {
       setLoaderText("Back to lobby...")
       setIsNavigating(true)

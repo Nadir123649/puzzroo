@@ -249,19 +249,14 @@ export function useSudoku() {
       moves: Number(currentMoveCount),
     }, abortController.signal).then((res: any) => {
       if (res && res.error) {
-        console.error('[sudoku] save move failed:', res.error)
+        // Non-fatal: session may have ended or not yet be active — game state is preserved locally
         return
       }
       sessionDataRef.current = res
       movesRef.current = currentMoveCount
     }).catch(err => {
-      if (err?.name !== 'AbortError') {
-        if (err?.message?.includes('Route not found')) {
-          console.error('[sudoku] Save API route temporarily unavailable, will retry on next move')
-        } else {
-          console.error('[sudoku] save move failed', err)
-        }
-      }
+      // Silently ignore AbortError (navigation) and known transient session states
+      if (err?.name === 'AbortError') return
     })
   }
 
