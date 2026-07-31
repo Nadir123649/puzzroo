@@ -195,16 +195,10 @@ function LoginPageContent() {
 
               {/* Password Input */}
               <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="password" className="font-urbanist font-bold text-[14px] text-[#424242] dark:text-[#E0E0E0]">
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="password" className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
                     Password
                   </label>
-                  <Link prefetch={false}
-                    href="/forgot-password"
-                    className="font-urbanist font-semibold text-[13px] text-[#6949FF] hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
                 </div>
                 <div className="relative flex items-center">
                   <input
@@ -258,6 +252,12 @@ function LoginPageContent() {
                     Remember me
                   </span>
                 </label>
+                <Link prefetch={false}
+                  href="/forgot-password"
+                  className="font-urbanist font-semibold text-[13px] text-[#6949FF] hover:underline"
+                >
+                  Forgot password?
+                </Link>
               </div>
 
               {/* Submit button */}
