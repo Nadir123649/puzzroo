@@ -1,0 +1,100 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e10]:
+    - banner [ref=e11]:
+      - generic [ref=e13]:
+        - link "Puzzroo" [ref=e15] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e21]:
+          - link "Sign up" [ref=e22] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=e23] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [ref=e24] [cursor=pointer]:
+            - generic [ref=e25]: Light Mode
+            - img "Theme icon" [ref=e26]
+    - main [ref=e27]:
+      - main [ref=e47]:
+        - generic [ref=e49]:
+          - button "Back to games" [ref=e50] [cursor=pointer]
+          - generic [ref=e53]:
+            - img "CrossMath" [ref=e55]
+            - heading "CROSS MATH" [level=1] [ref=e56]
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - generic [ref=e63]:
+              - button "Number 5" [disabled]: "5"
+              - button "Operator +" [disabled]: +
+              - button "Number 8" [ref=e199] [cursor=pointer]: "8"
+              - button "Operator -" [disabled]: "-"
+              - button "Empty cell" [ref=e65] [cursor=pointer]
+              - button "Operator +" [disabled]: +
+              - button "Number 9" [disabled]: "9"
+              - button "Operator -" [disabled]: "-"
+              - button "Empty cell" [ref=e66] [cursor=pointer]
+              - button "Operator =" [disabled]: =
+              - button "Number 9" [disabled]: "9"
+              - button "Operator +" [disabled]: +
+              - button "Empty cell" [ref=e81] [cursor=pointer]
+              - button "Operator -" [disabled]: "-"
+              - button "Number 7" [disabled]: "7"
+              - button "Operator +" [disabled]: +
+              - button "Empty cell" [ref=e98] [cursor=pointer]
+              - button "Operator -" [disabled]: "-"
+              - button "Empty cell" [ref=e99] [cursor=pointer]
+              - button "Operator +" [disabled]: +
+              - button "Number 6" [disabled]: "6"
+              - button "Operator -" [disabled]: "-"
+              - button "Empty cell" [ref=e100] [cursor=pointer]
+              - button "Operator =" [disabled]: =
+              - button "Number 3" [disabled]: "3"
+              - button "Operator +" [disabled]: +
+              - button "Number 6" [disabled]: "6"
+              - button "Operator -" [disabled]: "-"
+              - button "Empty cell" [ref=e135] [cursor=pointer]
+              - button "Operator =" [disabled]: =
+              - button "Number 4" [disabled]: "4"
+            - generic: "-5"
+          - generic [ref=e162]:
+            - generic [ref=e163]:
+              - text: Difficulty
+              - heading "hard" [level=3] [ref=e164]
+            - generic [ref=e165]:
+              - generic [ref=e166]:
+                - generic [ref=e167]:
+                  - generic [ref=e169]:
+                    - text: "Score:"
+                    - generic [ref=e170]: "0"
+                  - generic [ref=e171]:
+                    - generic [ref=e172]:
+                      - text: "Mistakes:"
+                      - generic [ref=e173]: 1/2
+                    - generic [ref=e174]:
+                      - text: "Time:"
+                      - generic [ref=e175]: 09:40
+                - generic: "-5"
+              - generic [ref=e176]:
+                - button "Reset" [ref=e177] [cursor=pointer]
+                - button "Erase" [ref=e181] [cursor=pointer]
+                - button "Hint" [disabled] [ref=e185]
+              - generic [ref=e190]:
+                - button "Number 2" [ref=e191] [cursor=pointer]: "2"
+                - button "Number 3" [ref=e192] [cursor=pointer]: "3"
+                - button "Number 4" [ref=e193] [cursor=pointer]: "4"
+                - button "Number 8 (used 1 time)" [disabled] [ref=e200]: "8"
+            - generic [ref=e195]:
+              - button "New Game" [ref=e196] [cursor=pointer]
+              - button "Replay" [ref=e197] [cursor=pointer]
+    - contentinfo [ref=e28]:
+      - generic [ref=e30]:
+        - paragraph [ref=e32]: © 2026 Puzzroo
+        - generic [ref=e33]:
+          - link "FAQ" [ref=e34] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=e35] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=e36] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=e37] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=e43] [cursor=pointer]
+  - alert [ref=e198]

@@ -644,7 +644,6 @@ export function useCrossMath(initialPuzzleId?: string) {
         setGameStatus('lost')
         setSelectedCell(null)
         clearGameState()
-        saveMoveNow(newBoard, time, hintsUsedRef.current, newMistakes, difficulty)
         void failSession()
         return
       }
@@ -740,7 +739,6 @@ export function useCrossMath(initialPuzzleId?: string) {
         setGameStatus('lost')
         setSelectedCell(null)
         clearGameState()
-        saveMoveNow(newBoard, time, hintsUsedRef.current, newMistakes, difficulty)
         void failSession()
         return
       }
@@ -1160,7 +1158,6 @@ export function useCrossMath(initialPuzzleId?: string) {
         if (newMistakes >= maxMistakes) {
           setGameStatus('lost')
           clearGameState()
-          saveMoveNow(newBoard, time, hintsUsedRef.current, newMistakes, difficulty)
           void failSession()
           return
         }
