@@ -130,7 +130,7 @@ export function SetEmailModal({ isOpen, onClose, currentEmail, hasPassword }: Se
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col gap-5">
             {error && (
               <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl">
                 <p className="font-urbanist text-[14px] font-semibold text-red-600 dark:text-red-400 text-center">
@@ -198,6 +198,8 @@ export function SetEmailModal({ isOpen, onClose, currentEmail, hasPassword }: Se
                       maxLength={20}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter password"
+                      autoComplete="off"
+                      data-lpignore="true"
                       required
                       className="w-full h-[52px] bg-[#FAFAFA] dark:bg-[#15171C] border border-[#EEEEEE] dark:border-[#2A2D35] rounded-xl px-5 font-urbanist text-[15px] text-[#212121] dark:text-white placeholder-[#BDBDBD] dark:placeholder-[#757575] focus:outline-none focus:border-[#6949FF] dark:focus:border-[#6949FF] focus:bg-white dark:focus:bg-[#1A1D23] transition-all"
                     />
@@ -222,6 +224,8 @@ export function SetEmailModal({ isOpen, onClose, currentEmail, hasPassword }: Se
                       maxLength={20}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirm password"
+                      autoComplete="off"
+                      data-lpignore="true"
                       required
                       className="w-full h-[52px] bg-[#FAFAFA] dark:bg-[#15171C] border border-[#EEEEEE] dark:border-[#2A2D35] rounded-xl px-5 font-urbanist text-[15px] text-[#212121] dark:text-white placeholder-[#BDBDBD] dark:placeholder-[#757575] focus:outline-none focus:border-[#6949FF] dark:focus:border-[#6949FF] focus:bg-white dark:focus:bg-[#1A1D23] transition-all"
                     />

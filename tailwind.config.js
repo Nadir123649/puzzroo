@@ -46,9 +46,9 @@ module.exports = {
         }
       },
       animation: {
-        'fade-in': 'fadeIn 0.5s ease-out forwards',
-        'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        'slide-down': 'slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'fade-in': 'fadeIn 0.5s ease-out both',
+        'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'slide-down': 'slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) both',
         'float-slow': 'floatSlow 6s ease-in-out infinite',
         'float-medium': 'floatMedium 4s ease-in-out infinite',
         'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',

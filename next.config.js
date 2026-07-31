@@ -53,8 +53,7 @@ const nextConfig = {
                 },
                 {
                   key: 'Permissions-Policy',
-                  value:
-                    'camera=(), display-capture=(), geolocation=(), microphone=(), usb=()',
+                  value: 'geolocation=(), microphone=(), usb=()',
                 },
                 {
                   key: 'Cross-Origin-Resource-Policy',

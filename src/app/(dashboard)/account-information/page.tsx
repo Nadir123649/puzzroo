@@ -93,7 +93,7 @@ export default function AccountInformationPage() {
     setLocalUser(prev => prev ? { ...prev, name: newName } : prev)
   }
 
-  const handleAvatarChanged = (url: string) => {
+  const handleAvatarChanged = (url: string | null) => {
     const stored = localStorage.getItem('puzzroo_user')
     if (stored) {
       const parsed = JSON.parse(stored)
@@ -147,21 +147,8 @@ export default function AccountInformationPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-5">
-        <h1 className="font-urbanist font-bold text-[26px] md:text-[32px] text-[#212121] dark:text-white mb-1">
-          {localUser?.name || 'User'}
-        </h1>
-        <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD]">
-          Account Information
-        </p>
-      </div>
-
       {/* Avatar Section */}
-      <div className="bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] px-4 md:px-6 py-4 md:py-6 mb-4">
-        <h2 className="font-urbanist font-bold text-[18px] md:text-[20px] text-[#212121] dark:text-white mb-4">
-          Profile Picture
-        </h2>
+      <div className="mb-6">
         <AvatarUpload
           currentAvatar={localUser?.avatar}
           userName={localUser?.name || ''}

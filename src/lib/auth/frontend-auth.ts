@@ -46,7 +46,7 @@ export interface User {
   createdAt?: string
   accountStatus: string
   subscriptionPlan: string
-  avatar?: string
+  avatar?: string | null
   provider?: string
   linkedProviders?: string[]
   hasPassword?: boolean

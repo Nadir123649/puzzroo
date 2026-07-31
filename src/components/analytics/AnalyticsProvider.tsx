@@ -1,33 +1,39 @@
 "use client";
 
-import { useEffect, useRef, Suspense } from "react";
+import { useEffect, Suspense } from "react";
 import { analytics } from "@/lib/analytics/client";
 import { getCurrentUser } from "@/lib/auth/frontend-auth";
-import { usePageTracking } from "@/hooks/usePageTracking";
+
+// The track API fires only on the login event itself — no pageview or
+// per-click tracking. The guard is persisted so identify runs once per
+// login, not once per page load/reload.
+const IDENTITY_KEY = "pz_identified_user_id";
 
 function AnalyticsTracker() {
-  const lastIdentified = useRef<string | null>(null);
-
-  // Track page views (once per route change)
-  usePageTracking();
-
-  // Identify the current user on mount + whenever auth changes.
   useEffect(() => {
     const syncIdentity = () => {
+      let storedId: string | null = null;
+      try {
+        storedId = localStorage.getItem(IDENTITY_KEY);
+      } catch {}
       const user = getCurrentUser();
       if (user?.id) {
-        if (lastIdentified.current !== user.id) {
-          lastIdentified.current = user.id;
+        if (storedId !== user.id) {
+          try {
+            localStorage.setItem(IDENTITY_KEY, user.id);
+          } catch {}
           analytics.identify(user.id, {
             username: user.username,
             plan: user.subscriptionPlan,
             provider: user.provider,
           });
         }
-      } else if (lastIdentified.current) {
+      } else if (storedId) {
         analytics.track("logged_out");
         analytics.reset();
-        lastIdentified.current = null;
+        try {
+          localStorage.removeItem(IDENTITY_KEY);
+        } catch {}
       }
     };
     syncIdentity();

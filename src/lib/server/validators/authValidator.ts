@@ -59,7 +59,7 @@ export const updateProfileSchema = z.object({
     .max(16, "Full name must be at most 16 characters")
     .optional(),
   phone: z.string().optional(),
-  avatar: z.string().url().optional(),
+  avatar: z.string().url().nullish(),
 });
 
 export const unlinkProviderSchema = z.object({

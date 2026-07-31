@@ -17,7 +17,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   {
     href: '/account-information',
-    label: 'Account Information',
+    label: 'Account Details',
     icon: User,
   },
   {
