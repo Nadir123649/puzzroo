@@ -65,6 +65,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (val.data!.name !== undefined) updates.name = val.data!.name;
       if (val.data!.phone !== undefined) updates.phone = val.data!.phone;
       if (val.data!.avatar !== undefined) updates.avatar = val.data!.avatar;
+      if (val.data!.theme !== undefined) updates.theme = val.data!.theme;
       const user = await User.findByIdAndUpdate(userResult.userId, updates, {
         new: true, runValidators: true,
       });

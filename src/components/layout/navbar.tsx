@@ -250,7 +250,7 @@ export function Navbar() {
               >
                 Subscribe Us
               </Link>
-              <ProfileDropdown userName={navbarMounted ? (user?.name || '') : ''} userEmail={user?.email || ''} userAvatar={user?.avatar} />
+              <ProfileDropdown userName={navbarMounted ? (user?.name || '') : ''} userEmail={navbarMounted ? (user?.email || '') : ''} userAvatar={navbarMounted ? user?.avatar : null} />
             </div>
 
           </div>

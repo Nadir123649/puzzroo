@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema(
     // browser keep linking new guest sessions to the same account.
     guestId: { type: String, default: null, unique: true, sparse: true },
     avatar: { type: String, default: null },
+    theme: { type: String, enum: ["light", "dark"], default: null },
     role: {
       type: String,
       enum: ["guest", "free", "premium", "admin"],

@@ -262,7 +262,8 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
 
         {/* Quick edit popover: gallery or camera only */}
         {showQuickMenu && (
-          <div className="absolute top-full right-1/2 translate-x-1/2 mt-3 w-64 bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-2xl p-2 z-50 animate-slide-up">
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[min(16rem,calc(100vw-1.5rem))] z-50">
+            <div className="bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-2xl p-2 animate-slide-up">
             <button
               type="button"
               onClick={() => {
@@ -293,6 +294,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
                 <span className="font-urbanist text-[12px] text-[#757575] dark:text-[#9E9E9E]">Use your device camera</span>
               </span>
             </button>
+            </div>
           </div>
         )}
 

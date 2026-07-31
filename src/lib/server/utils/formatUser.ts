@@ -23,6 +23,7 @@ export function formatUser(user: any) {
       return derived.length > 0 ? derived : [user.provider || 'email'];
     })(),
     avatar: user.avatar,
+    theme: user.theme || null,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
     lastLoginAt: user.lastLoginAt,

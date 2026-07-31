@@ -60,6 +60,7 @@ export const updateProfileSchema = z.object({
     .optional(),
   phone: z.string().optional(),
   avatar: z.string().url().nullish(),
+  theme: z.enum(["light", "dark"]).nullish(),
 });
 
 export const unlinkProviderSchema = z.object({
