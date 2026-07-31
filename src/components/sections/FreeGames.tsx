@@ -106,7 +106,7 @@ export const markGameAsPlayed = (gameId: string): void => {
     const playedGames = getPlayedGames()
     playedGames.add(gameId)
     localStorage.setItem('puzzroo_played_games', JSON.stringify([...playedGames]))
-    // Track the last played game
+    // Track the last played game in localStorage
     localStorage.setItem('puzzroo_last_played_game', gameId)
   } catch (error) {
     console.error('Failed to mark game as played:', error)
@@ -328,7 +328,7 @@ function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentPr
               {/* Play Now Button */}
               <Link href={`/game/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()} prefetch={false}>
                 <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}>
-                  {isPlayed ? 'Play Again' : 'Play Now'}
+                  {isLastPlayed ? 'Play Again' : 'Play Now'}
                 </button>
               </Link>
 

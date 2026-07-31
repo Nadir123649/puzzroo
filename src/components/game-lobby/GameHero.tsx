@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { GameLoader } from '@/components/ui/GameLoader'
 import { DifficultyTabs } from './DifficultyTabs'
@@ -32,18 +32,18 @@ function useCountdownToMidnight() {
       const now = new Date()
       const midnight = new Date()
       midnight.setHours(24, 0, 0, 0)
-      
+
       const diff = midnight.getTime() - now.getTime()
       const hours = Math.floor(diff / (1000 * 60 * 60))
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
       const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-      
+
       setTimeLeft({ hours, minutes, seconds })
     }
 
     calculateTimeLeft()
     const interval = setInterval(calculateTimeLeft, 1000)
-    
+
     return () => clearInterval(interval)
   }, [])
 
@@ -60,7 +60,7 @@ function useCurrentDate() {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const month = months[now.getMonth()]
     const year = now.getFullYear()
-    
+
     setDateString(`${day} ${month} ${year}`)
   }, [])
 
@@ -80,16 +80,26 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
         if (saved && ['easy', 'medium', 'hard', 'expert'].includes(saved)) {
           return saved as Difficulty
         }
-      } catch {}
+      } catch { }
     }
     return 'easy'
   }
 
+  const searchParams = useSearchParams()
+  const backParam = searchParams?.get('back')
   const [isLoading, setIsLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(!!backParam)
   const [localDifficulty, setLocalDifficulty] = useState<Difficulty>(getInitialDifficulty)
   const timeLeft = useCountdownToMidnight()
   const currentDate = useCurrentDate()
-  
+
+  useEffect(() => {
+    if (backParam) {
+      const timer = setTimeout(() => setInitialLoading(false), 200)
+      return () => clearTimeout(timer)
+    }
+  }, [backParam])
+
   // Load saved preference on mount
   useEffect(() => {
     const saved = getInitialDifficulty()
@@ -100,7 +110,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
 
   // Lock body scroll when loading overlay is active
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || initialLoading) {
       document.body.style.overflow = 'hidden'
       document.body.style.touchAction = 'none'
     } else {
@@ -111,10 +121,10 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
       document.body.style.overflow = ''
       document.body.style.touchAction = ''
     }
-  }, [isLoading])
-  
+  }, [isLoading, initialLoading])
+
   const currentImage = theme === 'light' && imageLight ? imageLight : image
-  
+
   // Check if this is Sudoku, CrossMath, Nonogram, or Tangram to link to the actual game page
   const isSudoku = name.toLowerCase() === 'sudoku'
   const isCrossMath = name.toLowerCase() === 'cross math' || name.toLowerCase() === 'cross-math' || name.toLowerCase() === 'crossmath'
@@ -151,7 +161,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
       <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 pt-12 md:pt-16 pb-12 relative">
         <div className="w-full px-[20px]">
           <div className="flex flex-col items-center gap-5 md:gap-6">
-            
+
             {/* Game Image with background */}
             <div className="w-[129px] h-[129px] relative flex items-center justify-center bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] p-[14px]">
               {imageLight ? (
@@ -188,7 +198,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
             </h1>
 
             {/* Difficulty Tabs */}
-            <DifficultyTabs 
+            <DifficultyTabs
               difficulties={difficulties}
               selectedDifficulty={localDifficulty}
               onDifficultyChange={handleDifficultyChange}
@@ -248,7 +258,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
         </div>
 
         {/* Loading Overlay */}
-        <GameLoader isOpen={isLoading} text="Loading game..." />
+        <GameLoader isOpen={isLoading || initialLoading} text={isLoading ? "Loading puzzle..." : (backParam === 'lobby' ? "Back to lobby..." : "")} />
       </section>
     </>
   )

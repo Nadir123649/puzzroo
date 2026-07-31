@@ -54,7 +54,7 @@ export function GameShell({
   showNewGame = true,
   showReplay = true,
   isResetting = false,
-  loaderText = 'Loading game...',
+  loaderText = 'Loading puzzle...',
   modal,
 }: GameShellProps) {
   return (

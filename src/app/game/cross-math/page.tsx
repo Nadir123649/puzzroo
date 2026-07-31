@@ -11,7 +11,7 @@ export default function CrossMathLobbyPage() {
         <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[50px]">
           <GameHero
             name="Cross Math"
-            image="/kakuro.svg"
+            image="/cross-world.svg"
             difficulties={['easy', 'medium', 'hard']}
             gameSlug="cross-math"
           />

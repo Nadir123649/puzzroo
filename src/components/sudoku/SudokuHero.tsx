@@ -16,6 +16,7 @@ export function SudokuHero({ backTo }: SudokuHeroProps = {}) {
   const searchParams = useSearchParams()
   const pathname = usePathname() || ''
   const [isNavigating, setIsNavigating] = useState(false)
+  const [loaderText, setLoaderText] = useState("Back to lobby...")
 
   const dateParam = searchParams?.get('date')
   const hasDate = !!dateParam
@@ -42,19 +43,21 @@ export function SudokuHero({ backTo }: SudokuHeroProps = {}) {
   }, [isNavigating])
 
   const handleBackClick = async () => {
-    setIsNavigating(true)
-    // Show loading for 1 second
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
     const params = new URLSearchParams(window.location.search)
     const hasDate = params.has('date')
     
     const returnUrl = hasDate ? (typeof window !== 'undefined' ? sessionStorage.getItem('puzzroo_return_url') : null) : null
     if (returnUrl) {
+      setLoaderText("Back to past puzzles...")
+      setIsNavigating(true)
+      await new Promise(resolve => setTimeout(resolve, 1000))
       sessionStorage.removeItem('puzzroo_return_url')
-      router.push(returnUrl)
+      router.push(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}back=past`)
     } else {
-      router.push(backTo || '/game/sudoku')
+      setLoaderText("Back to lobby...")
+      setIsNavigating(true)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      router.push(backTo || '/game/sudoku?back=lobby')
     }
   }
 
@@ -107,7 +110,7 @@ export function SudokuHero({ backTo }: SudokuHeroProps = {}) {
       </section>
 
       {/* Loading Overlay for Navigation */}
-      <GameLoader isOpen={isNavigating} text="Back to lobby..." />
+      <GameLoader isOpen={isNavigating} text={loaderText} />
     </>
   )
 }

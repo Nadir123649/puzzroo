@@ -3,18 +3,14 @@
 import { Suspense } from 'react'
 import { useParams } from 'next/navigation'
 import { PastPuzzlesContent } from '@/components/past-puzzles/PastPuzzlesContent'
-import { Loader2 } from 'lucide-react'
+import { GameLoader } from '@/components/ui/GameLoader'
 
 export default function PastPuzzlesPage() {
   const params = useParams()
   const gameId = params.gameId as 'sudoku' | 'cross-math' | 'nonogram' | 'tangram'
 
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#181A20]">
-        <Loader2 className="animate-spin text-[var(--color-primary)]" size={48} />
-      </div>
-    }>
+    <Suspense fallback={<GameLoader isOpen={true} text="Loading past puzzles..." />}>
       <PastPuzzlesContent gameId={gameId} />
     </Suspense>
   )

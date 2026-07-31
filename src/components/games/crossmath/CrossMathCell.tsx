@@ -99,6 +99,7 @@ export const CrossMathCell = React.memo(function CrossMathCellComponent({ cell, 
         ${textColor}
         ${cursorClass}
         ${hoverClass}
+        focus:outline-none
         transition-all duration-150
         select-none
         ${isEditable ? 'pointer-events-auto' : 'pointer-events-none'}
