@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Lock, Calendar, X, Check, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { generatePastPuzzles } from '@shared/lib/dailyChallenge/generator'
 import { getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
 import { DailyChallenge, DailyChallengeStatus } from '@shared/lib/dailyChallenge/types'
@@ -50,10 +50,20 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     return null
   })
   
+  const searchParams = useSearchParams()
+  const backParam = searchParams?.get('back')
   const [showAccessModal, setShowAccessModal] = useState(false)
   const [showCalendarModal, setShowCalendarModal] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(!!backParam)
   const [completedPuzzles, setCompletedPuzzles] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (backParam) {
+      const timer = setTimeout(() => setInitialLoading(false), 200)
+      return () => clearTimeout(timer)
+    }
+  }, [backParam])
   const [authed, setAuthed] = useState(false)
   const [isPremiumUser, setIsPremiumUser] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -90,7 +100,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
 
   // Lock body scroll when loading
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || isNavigatingBack || initialLoading) {
       document.body.style.overflow = 'hidden'
       document.body.style.touchAction = 'none'
     } else {
@@ -101,7 +111,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
       document.body.style.overflow = ''
       document.body.style.touchAction = ''
     }
-  }, [isLoading])
+  }, [isLoading, isNavigatingBack, initialLoading])
 
   // Save current URL for returning from daily challenge
   useEffect(() => {
@@ -144,30 +154,19 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
       const actualStatus = getChallengeStatus(puzzle.id)
       const isCompleted = completedPuzzles.has(puzzle.id)
       
-      // If it's already in progress or completed, keep its status and do NOT lock
-      if (actualStatus === 'in-progress' || isCompleted) {
+      // Lock if beyond accessible count and user is not premium
+      const isLocked = !isPremiumUser && index >= accessibleCount
+
+      if (isLocked) {
         return {
           ...puzzle,
-          status: isCompleted ? 'completed' : actualStatus,
+          status: 'locked' as DailyChallengeStatus,
         }
-      }
-      
-      // If the user is premium, they can access everything
-      if (isPremiumUser) {
-        return {
-          ...puzzle,
-          status: actualStatus,
-        }
-      }
-      
-      // Otherwise, lock if beyond accessible count
-      if (index >= accessibleCount) {
-        return { ...puzzle, status: 'locked' as DailyChallengeStatus }
       }
       
       return {
         ...puzzle,
-        status: actualStatus,
+        status: isCompleted ? ('completed' as DailyChallengeStatus) : actualStatus,
       }
     })
     
@@ -296,24 +295,32 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
                 )}
               </div>
 
-              {/* Access Info Modal - only for guests */}
-              {!authed && (
+              {/* Access Info Modal - for guests and non-premium registered users */}
+              {(!authed || (authed && !isPremiumUser)) && (
                 <div className="bg-[#F0EDFF] dark:bg-[#35383F] rounded-xl p-4 flex flex-col md:flex-row items-center gap-4">
                   <div className="flex-1">
-                    <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
-                      <span className="font-bold text-[#6949FF]">Guest Access:</span> You can play the last 3 days of daily challenges
-                    </p>
-                    <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
-                      Register to unlock 7 days of daily challenges!
-                    </p>
+                    {!authed ? (
+                      <>
+                        <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                          <span className="font-bold text-[#6949FF]">Guest Access:</span> You can play the last 3 days of daily challenges
+                        </p>
+                        <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                          Register to unlock 7 days of daily challenges!
+                        </p>
+                      </>
+                    ) : (
+                      <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                        <span className="font-bold text-[#6949FF]">Premium Access:</span> Get premium to unlock all past puzzles!
+                      </p>
+                    )}
                   </div>
                   
-                  <Link href="/signup">
+                  <Link href={!authed ? "/signup" : "/subscription"}>
                     <Button
                       size="md"
                       className="whitespace-nowrap"
                     >
-                      Register Now
+                      {!authed ? "Register Now" : "Get Premium"}
                     </Button>
                   </Link>
                 </div>
@@ -385,6 +392,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
         isOpen={showAccessModal} 
         onClose={() => setShowAccessModal(false)}
         gameIcon={gameIcon}
+        authed={authed}
       />
 
       {/* Calendar Modal */}
@@ -397,7 +405,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
       />
 
       {/* Loading Overlay */}
-      <GameLoader isOpen={isLoading || isNavigatingBack} text={isNavigatingBack ? "Navigating..." : "Loading game..."} />
+      <GameLoader isOpen={isLoading || isNavigatingBack || initialLoading} text={isNavigatingBack ? "Navigating..." : (initialLoading ? (backParam === 'past' ? "Back to past puzzles..." : "") : "Loading puzzle...")} />
     </>
   )
 }
@@ -507,11 +515,8 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
     )
   }
 
-  const handleCardClick = async (e: React.MouseEvent) => {
+  const handleCardClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    onPlayClick(true)
-    // Show loading for 1 second
-    await new Promise(resolve => setTimeout(resolve, 1000))
     // Route directly to daily challenge page with date in URL
     router.push(`/daily-challenge/${puzzle.gameId}?date=${puzzle.dateString}`)
   }

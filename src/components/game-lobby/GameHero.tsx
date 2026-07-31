@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { GameLoader } from '@/components/ui/GameLoader'
 import { DifficultyTabs } from './DifficultyTabs'
@@ -85,10 +85,20 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
     return 'easy'
   }
 
+  const searchParams = useSearchParams()
+  const backParam = searchParams?.get('back')
   const [isLoading, setIsLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(!!backParam)
   const [localDifficulty, setLocalDifficulty] = useState<Difficulty>(getInitialDifficulty)
   const timeLeft = useCountdownToMidnight()
   const currentDate = useCurrentDate()
+
+  useEffect(() => {
+    if (backParam) {
+      const timer = setTimeout(() => setInitialLoading(false), 200)
+      return () => clearTimeout(timer)
+    }
+  }, [backParam])
   
   // Load saved preference on mount
   useEffect(() => {
@@ -100,7 +110,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
 
   // Lock body scroll when loading overlay is active
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || initialLoading) {
       document.body.style.overflow = 'hidden'
       document.body.style.touchAction = 'none'
     } else {
@@ -111,7 +121,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
       document.body.style.overflow = ''
       document.body.style.touchAction = ''
     }
-  }, [isLoading])
+  }, [isLoading, initialLoading])
   
   const currentImage = theme === 'light' && imageLight ? imageLight : image
   
@@ -248,7 +258,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
         </div>
 
         {/* Loading Overlay */}
-        <GameLoader isOpen={isLoading} text="Loading game..." />
+        <GameLoader isOpen={isLoading || initialLoading} text={isLoading ? "Loading puzzle..." : (backParam === 'lobby' ? "Back to lobby..." : "")} />
       </section>
     </>
   )

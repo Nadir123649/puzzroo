@@ -56,7 +56,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   } = useNonogram(puzzleId)
 
   const [isResetting, setIsResetting] = useState(false)
-  const [loaderText, setLoaderText] = useState('Loading game...')
+  const [loaderText, setLoaderText] = useState('Loading puzzle...')
   const [showCompletionModal, setShowCompletionModal] = useState(false)
 
 
@@ -84,7 +84,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   }
 
   const handleNewPuzzle = async () => {
-    setLoaderText('Loading game...')
+    setLoaderText('Loading puzzle...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
     newPuzzle()
@@ -860,7 +860,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
       )}
 
       {/* Loading Overlay */}
-      <GameLoader isOpen={isResetting || loading || isCurrentlyLoading} text={isCurrentlyLoading ? 'Loading game...' : loaderText} />
+      <GameLoader isOpen={isResetting || loading || isCurrentlyLoading} text={isCurrentlyLoading ? 'Loading puzzle...' : loaderText} />
     </>
   )
 }

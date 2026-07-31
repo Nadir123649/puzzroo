@@ -50,7 +50,7 @@ export default function CrossMathPage() {
 
   return (
     <>
-      <GameLoader isOpen={initialLoading} text="Loading game..." />
+      <GameLoader isOpen={initialLoading} text="Loading puzzle..." />
       <AppLayout>
         <main className="flex-grow flex flex-col">
           <Suspense fallback={<div className="flex-grow" />}>

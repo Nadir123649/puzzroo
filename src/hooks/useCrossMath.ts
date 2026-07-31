@@ -1041,7 +1041,7 @@ export function useCrossMath(initialPuzzleId?: string) {
       const requiredCount = requiredNumbersCount.get(num) || 0
       const adjustedUsedCount = newUsedCount.get(num) || 0
 
-      if (adjustedUsedCount >= requiredCount) {
+      if (requiredCount > 0 && adjustedUsedCount >= requiredCount) {
         // Prevent placing a number that is already used
         const newBoard = board.map(r => r.map(c => ({ ...c })))
         newBoard[row][col] = {
@@ -1132,7 +1132,7 @@ export function useCrossMath(initialPuzzleId?: string) {
       }
       setBoard(newBoard)
     }
-  }, [board, selectedCell, gameStatus, isTyping, usedNumbersCount, score, mistakes, maxMistakes, currentPuzzle])
+  }, [board, selectedCell, gameStatus, isTyping, usedNumbersCount, score, mistakes, maxMistakes, currentPuzzle, requiredNumbersCount])
 
   // Keyboard support with multi-digit and minus support
   useEffect(() => {

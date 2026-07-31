@@ -19,7 +19,7 @@ export function SudokuGame() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isResetting, setIsResetting] = useState(false)
-  const [loaderText, setLoaderText] = useState('Loading game...')
+  const [loaderText, setLoaderText] = useState('Loading puzzle...')
   const [showModal, setShowModal] = useState(false)
   
   // Check if this is from past puzzles or daily challenge (has date param or route contains daily-challenge)
@@ -98,7 +98,7 @@ export function SudokuGame() {
 
   const handleNewGame = async (isReplay = false) => {
     setShowModal(false)
-    setLoaderText(isReplay ? 'Replaying game...' : 'Loading game...')
+    setLoaderText(isReplay ? 'Replaying puzzle...' : 'Loading puzzle...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
     if (isReplay) {

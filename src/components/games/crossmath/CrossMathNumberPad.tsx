@@ -9,6 +9,7 @@ interface CrossMathNumberPadProps {
   mobile?: boolean
   usedNumbersCount: Map<number, number>
   requiredNumbersCount?: Map<number, number>
+  difficulty?: 'easy' | 'medium' | 'hard'
 }
 
 export function CrossMathNumberPad({
@@ -18,6 +19,7 @@ export function CrossMathNumberPad({
   mobile = false,
   usedNumbersCount,
   requiredNumbersCount,
+  difficulty,
 }: CrossMathNumberPadProps) {
   // Convert set to sorted array - these are ALL the numbers that should appear in the solution
   const allNumbers = Array.from(availableNumbers).sort((a, b) => a - b)
@@ -29,7 +31,7 @@ export function CrossMathNumberPad({
   }
 
   return (
-    <div className="w-full">
+    <div className={`w-full ${difficulty === 'easy' ? 'mt-4' : ''}`}>
       <div className="flex flex-col gap-[12px]">
         {rows.map((row, rowIndex) => (
           <div

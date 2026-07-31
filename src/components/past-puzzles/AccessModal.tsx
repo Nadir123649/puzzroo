@@ -9,9 +9,10 @@ interface AccessModalProps {
   isOpen: boolean
   onClose: () => void
   gameIcon: string
+  authed: boolean
 }
 
-export function AccessModal({ isOpen, onClose, gameIcon }: AccessModalProps) {
+export function AccessModal({ isOpen, onClose, gameIcon, authed }: AccessModalProps) {
   // Handle ESC key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -89,21 +90,29 @@ export function AccessModal({ isOpen, onClose, gameIcon }: AccessModalProps) {
 
             {/* Text Content */}
             <div className="space-y-3">
-              <p className="font-urbanist text-[16px] md:text-[18px] font-semibold text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
-                <span className="font-bold text-[#6949FF]">Guest Access:</span> You can play the last 3 days of daily challenges
-              </p>
-              <p className="font-urbanist text-[16px] md:text-[18px] font-semibold text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
-                Register to unlock 7 days of daily challenges!
-              </p>
+              {authed ? (
+                <p className="font-urbanist text-[16px] md:text-[18px] font-semibold text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                  <span className="font-bold text-[#6949FF]">Premium Access:</span> Get premium to unlock all past puzzles!
+                </p>
+              ) : (
+                <>
+                  <p className="font-urbanist text-[16px] md:text-[18px] font-semibold text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                    <span className="font-bold text-[#6949FF]">Guest Access:</span> You can play the last 3 days of daily challenges
+                  </p>
+                  <p className="font-urbanist text-[16px] md:text-[18px] font-semibold text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                    Register to unlock 7 days of daily challenges!
+                  </p>
+                </>
+              )}
             </div>
 
-            {/* Register Button */}
-            <Link href="/signup" className="w-full">
+            {/* Redirect Button */}
+            <Link href={authed ? "/subscription" : "/signup"} className="w-full">
               <button 
                 onClick={onClose}
                 className="w-full min-w-[280px] h-[46px] px-8 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
               >
-                Register Now
+                {authed ? "Get Premium" : "Register Now"}
               </button>
             </Link>
           </div>

@@ -61,7 +61,7 @@ export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
             className="w-6 h-6 md:w-8 md:h-8 rounded-lg animate-pulse"
             priority
           />
-          <span className="font-urbanist text-[20px] md:text-[24px] font-extrabold tracking-tight text-[#181A20] dark:text-white transition-colors duration-300">
+          <span className="font-urbanist text-[20px] md:text-[24px] font-extrabold tracking-tight text-[#181A20] dark:text-white transition-colors duration-300 animate-pulse">
             Puzzroo
           </span>
         </div>

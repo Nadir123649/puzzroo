@@ -99,6 +99,7 @@ export function CrossMathCell({ cell, isSelected, onClick, minCellWidth }: Cross
         ${textColor}
         ${cursorClass}
         ${hoverClass}
+        focus:outline-none
         transition-all duration-150
         select-none
         ${isEditable ? 'pointer-events-auto' : 'pointer-events-none'}
