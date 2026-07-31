@@ -1,0 +1,9 @@
+
+> puzzroo@0.1.0 start
+> next start -p 3000
+
+▲ Next.js 16.2.7
+- Local:         http://localhost:3000
+- Network:       http://192.168.100.169:3000
+✓ Ready in 402ms
+[ENV] MONGO_URI is deprecated. Rename to MONGODB_URI.

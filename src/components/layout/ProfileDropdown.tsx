@@ -100,22 +100,13 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
       {isOpen && (
         <div className="absolute right-0 top-[calc(100%+8px)] w-[240px] bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-xl shadow-purple-500/10 overflow-hidden z-50 animate-slideDown">
           {/* User Info */}
-          <div className="px-4 py-3 border-b border-[#E0E0E0] dark:border-[#35383F] flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#6949FF] flex items-center justify-center text-white overflow-hidden shrink-0">
-              {userAvatar ? (
-                <img src={userAvatar} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <User size={18} strokeWidth={2.5} />
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="font-urbanist font-bold text-[15px] text-[#212121] dark:text-white truncate transition-colors duration-300">
-                {userName || "User"}
-              </p>
-              <p className="font-urbanist text-[13px] text-[#757575] dark:text-[#BDBDBD] truncate transition-colors duration-300">
-                {userEmail || ""}
-              </p>
-            </div>
+          <div className="px-4 py-3 border-b border-[#E0E0E0] dark:border-[#35383F]">
+            <p className="font-urbanist font-bold text-[15px] text-[#212121] dark:text-white truncate transition-colors duration-300">
+              {userName || "User"}
+            </p>
+            <p className="font-urbanist text-[13px] text-[#757575] dark:text-[#BDBDBD] truncate transition-colors duration-300">
+              {userEmail || ""}
+            </p>
           </div>
 
           {/* Menu Items */}

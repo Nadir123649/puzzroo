@@ -398,25 +398,41 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const normalizedEmail = email.toLowerCase().trim();
       const user = await User.findById(userResult.user.id);
       if (!user) return errorResponse(404, "user_not_found", "User not found");
-      const existing = await User.findOne({ email: normalizedEmail, _id: { $ne: user._id } });
+      if (user.email && user.email === normalizedEmail) {
+        return errorResponse(400, "same_email", "This is already your current email");
+      }
+      // The new address must not belong to another account — neither as a live
+      // email nor as a pending (unconfirmed) change on someone else.
+      const existing = await User.findOne({
+        $or: [{ email: normalizedEmail }, { pendingEmail: normalizedEmail }],
+        _id: { $ne: user._id },
+      });
       if (existing) return errorResponse(409, "email_taken", "This email is already used by another account");
       if (password) {
         user.password = await bcrypt.hash(password, 10);
         if (!user.linkedProviders.includes("email")) user.linkedProviders.push("email");
       }
-      user.email = normalizedEmail;
-      const isDev = process.env.NODE_ENV !== "production";
-      if (!isDev && !user.isVerified) {
-        const verificationToken = crypto.randomBytes(32).toString("hex");
-        user.emailVerificationToken = crypto.createHash("sha256").update(verificationToken).digest("hex");
-        user.emailVerificationTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        const verifyUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
-        try { await sendVerificationEmail(user.email, verifyUrl); } catch (e) { console.error("Verification email failed to send:", e); }
-      } else {
-        user.isVerified = true;
+      // New email is NOT applied immediately. Store it as pending and require
+      // confirmation via a link sent to the NEW address; only after the user
+      // clicks it does the email actually change.
+      user.pendingEmail = normalizedEmail;
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      user.emailVerificationToken = crypto.createHash("sha256").update(verificationToken).digest("hex");
+      user.emailVerificationTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const confirmUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
+      try {
+        await sendVerificationEmail(normalizedEmail, confirmUrl);
+      } catch (e) {
+        console.error("Confirmation email failed to send:", e);
+        if (process.env.NODE_ENV === "production") {
+          return errorResponse(500, "email_failed", "Failed to send confirmation email. Try again later.");
+        }
+      }
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[dev] Email change confirmation for ${user.email} -> ${normalizedEmail}: ${confirmUrl}`);
       }
       await user.save({ validateBeforeSave: false });
-      return successResponse({ user: formatUser(user), message: "Email updated successfully" });
+      return successResponse({ user: formatUser(user), message: `Confirmation email sent to ${normalizedEmail}. Click the link in the email to finish the change.` });
     }
 
     // ──── POST /api/v1/auth/upgrade (guest → free) ────

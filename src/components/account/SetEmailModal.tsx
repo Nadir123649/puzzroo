@@ -83,7 +83,7 @@ export function SetEmailModal({ isOpen, onClose, currentEmail, hasPassword }: Se
       setSuccess(true)
       setTimeout(() => {
         onClose()
-      }, 2000)
+      }, 4000)
     } catch {
       setError('Failed to update. Please try again.')
     } finally {
@@ -144,7 +144,8 @@ export function SetEmailModal({ isOpen, onClose, currentEmail, hasPassword }: Se
             {success && (
               <div className="p-4 bg-green-50 dark:bg-green-500/10 border border-green-100 dark:border-green-500/20 rounded-xl">
                 <p className="font-urbanist text-[14px] font-semibold text-green-600 dark:text-green-400 text-center">
-                  Email updated successfully!
+                  Confirmation email sent to {email.trim()}. Click the link in the email to finish
+                  {currentEmail ? ' updating your email' : ' adding your email'}.
                 </p>
               </div>
             )}
@@ -251,7 +252,7 @@ export function SetEmailModal({ isOpen, onClose, currentEmail, hasPassword }: Se
               disabled={success}
               className="mt-4 h-[56px] shadow-lg shadow-[#6949FF]/20"
             >
-              {success ? 'Saved Successfully!' : 'Save Changes'}
+              {success ? 'Email Sent!' : 'Save Changes'}
             </Button>
           </form>
         </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { ensureSession } from '@/lib/auth/frontend-auth'
+import { ensureSession, updateUser, isLoggedIn } from '@/lib/auth/frontend-auth'
 
 type Theme = 'light' | 'dark'
 
@@ -30,7 +30,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // The HTML tag is pre-configured by an inline block script in layout.tsx to avoid FOUC.
     const isDark = document.documentElement.classList.contains('dark')
     setTheme(isDark ? 'dark' : 'light')
-    
+
+    // Server-stored theme (synced across devices) can arrive via login() or
+    // ensureSession(); applyUserTheme dispatches this event to update context.
+    const syncTheme = () => {
+      setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light')
+    }
+    window.addEventListener('theme-change', syncTheme)
+
     // Enable transitions after initial render
     requestAnimationFrame(() => {
       document.documentElement.classList.add('hydrated')
@@ -62,7 +69,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         .catch(() => {});
     }, 10 * 60 * 1000);
 
-    return () => clearInterval(healthInterval);
+    return () => {
+      clearInterval(healthInterval)
+      window.removeEventListener('theme-change', syncTheme)
+    }
   }, [])
 
   const toggleTheme = () => {
@@ -78,6 +88,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     setTheme(nextTheme)
+
+    // Persist per-account so the preference syncs across devices.
+    if (isLoggedIn()) {
+      updateUser({ theme: nextTheme }).catch(() => {})
+    }
   }
 
   return (

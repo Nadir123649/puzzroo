@@ -51,6 +51,7 @@ export interface User {
   linkedProviders?: string[]
   hasPassword?: boolean
   isVerified?: boolean
+  theme?: string | null
 }
 
 export async function login(identifier: string, password: string, rememberMe: boolean = false): Promise<{ success: boolean; error?: string; code?: string }> {
@@ -67,6 +68,7 @@ export async function login(identifier: string, password: string, rememberMe: bo
     setAccessToken(payload.token.accessToken);
     localStorage.setItem("puzzroo_auth", "true");
     localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
+    applyUserTheme(payload.user?.theme);
     window.dispatchEvent(new Event("auth-change"));
     return { success: true };
   } catch (err: any) {
@@ -168,6 +170,7 @@ export async function ensureSession(): Promise<void> {
           const current = getCurrentUser();
           const updated = mapUser(meRes.payload as any);
           localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
+          applyUserTheme(updated.theme);
           window.dispatchEvent(new Event("auth-change"));
         } else {
           throw new Error("token_revoked");
@@ -196,6 +199,7 @@ export async function ensureSession(): Promise<void> {
           const current = getCurrentUser();
           const updated = mapUser(meRes.payload as any);
           localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
+          applyUserTheme(updated.theme);
         }
       } catch {}
       window.dispatchEvent(new Event("auth-change"));
@@ -255,6 +259,7 @@ export async function updateUser(updates: Partial<User>): Promise<boolean> {
     const body: Record<string, any> = {};
     if (updates.name !== undefined) body.name = updates.name;
     if (updates.avatar !== undefined) body.avatar = updates.avatar;
+    if (updates.theme !== undefined) body.theme = updates.theme;
     if (Object.keys(body).length === 0) return false;
     const res = await api("/api/v1/users/me", {
       method: "PATCH",
@@ -586,6 +591,7 @@ function mapUser(u: any): User {
     linkedProviders: u.linkedProviders || [],
     hasPassword: u.hasPassword,
     isVerified: u.isVerified,
+    theme: u.theme || null,
   };
 }
 
@@ -599,6 +605,21 @@ function mapUserForStorage(u: any): Partial<User> {
     role: u.role || "free",
     avatar: u.avatar,
   };
+}
+
+/**
+ * Applies a user's server-stored theme to the document and localStorage.
+ * Fires a "theme-change" event so ThemeProvider keeps its state in sync.
+ * No-op for anonymous users (null theme = follow system/local preference).
+ */
+export function applyUserTheme(theme?: string | null): void {
+  if (typeof window === "undefined") return;
+  if (!theme || (theme !== "light" && theme !== "dark")) return;
+  try { localStorage.setItem("theme", theme) } catch {}
+  const root = document.documentElement;
+  if (theme === "dark") root.classList.add("dark");
+  else root.classList.remove("dark");
+  window.dispatchEvent(new Event("theme-change"));
 }
 
 function formatDate(iso: string): string {

@@ -153,6 +153,102 @@ export default function RootLayout({
                   document.documentElement.classList.add('user-logged-out');
                 }
               } catch(e) {}
+
+              try {
+                // Browser extensions (reload.js, translators, ad/toolbar helpers) inject
+                // elements directly into <body> before React hydrates. React's hydration
+                // walk starts at body.firstChild, hits the foreign node, and throws
+                // "Minified React error #418" (recoverable, but noisy). Move such nodes
+                // to the end of <body> during the pre-hydration window so React's walk
+                // only sees its own markup. Nodes inserted after hydration are harmless
+                // and left alone. Only raw element nodes are moved; scripts, styles,
+                // links, templates, comments and text nodes are ignored.
+                if (typeof MutationObserver !== 'undefined') {
+                  var hydrateGuard = (function() {
+                    var ALLOWED = { SCRIPT: 1, STYLE: 1, LINK: 1, META: 1, TEMPLATE: 1, NOSCRIPT: 1, BASE: 1 };
+                    var done = false;
+                    var obs = null;
+                    var stop = function() {
+                      done = true;
+                      if (obs) { try { obs.disconnect(); } catch(e) {} }
+                    };
+                    var reactAttached = function(node) {
+                      if (!node || typeof Object.getOwnPropertySymbols !== 'function') return false;
+                      var syms = Object.getOwnPropertySymbols(node);
+                      for (var i = 0; i < syms.length; i++) {
+                        var d = syms[i].description;
+                        if (d && (d.indexOf('__reactFiber') === 0 || d.indexOf('__reactInternalInstance') === 0)) return true;
+                      }
+                      return false;
+                    };
+                    var isForeign = function(n) {
+                      var snapshot = window.__pzBodyMarkup;
+                      if (!snapshot) return false;
+                      if (ALLOWED[n.tagName]) return false;
+                      if (n.__pzChecked) return false;
+                      n.__pzChecked = true;
+                      var html = '';
+                      try { html = n.outerHTML; } catch(e) { return false; }
+                      return html.length > 0 && snapshot.indexOf(html) === -1;
+                    };
+                    var sweep = function() {
+                      if (done || !document.body || reactAttached(document.body)) return;
+                      var kids = document.body.childNodes;
+                      var foreign = [];
+                      for (var i = 0; i < kids.length; i++) {
+                        var n = kids[i];
+                        if (n.nodeType !== 1) continue;
+                        if (isForeign(n)) foreign.push(n);
+                      }
+                      for (var k = 0; k < foreign.length; k++) {
+                        try { document.body.appendChild(foreign[k]); } catch(e) {}
+                      }
+                    };
+                    var onMutations = function(muts) {
+                      if (done || !document.body) return;
+                      if (reactAttached(document.body)) { stop(); return; }
+                      for (var i = 0; i < muts.length; i++) {
+                        var added = muts[i].addedNodes;
+                        for (var j = 0; j < added.length; j++) {
+                          var n = added[j];
+                          if (n.nodeType !== 1) continue;
+                          if (n.parentNode && n.parentNode === document.body && isForeign(n)) {
+                            try { document.body.appendChild(n); } catch(e) {}
+                          }
+                        }
+                      }
+                    };
+                    var start = function() {
+                      if (done || !document.body) return;
+                      sweep();
+                      if (done || reactAttached(document.body)) { stop(); return; }
+                      obs = new MutationObserver(onMutations);
+                      obs.observe(document.body, { childList: true });
+                      window.addEventListener('load', stop);
+                      setTimeout(stop, 10000);
+                    };
+                    // The snapshot must be taken AFTER the parser finishes but BEFORE
+                    // any DOMContentLoaded listener runs (extensions register theirs
+                    // first and inject immediately). readyState 'interactive' fires
+                    // before DOMContentLoaded dispatch, so it is the right moment.
+                    var snapshotTaken = false;
+                    var takeSnapshot = function() {
+                      if (snapshotTaken || !document.body) return;
+                      snapshotTaken = true;
+                      try { window.__pzBodyMarkup = document.body.innerHTML; } catch(e) {}
+                    };
+                    if (document.readyState === 'loading') {
+                      document.addEventListener('readystatechange', function() {
+                        if (document.readyState === 'interactive') takeSnapshot();
+                      });
+                      document.addEventListener('DOMContentLoaded', start);
+                    } else {
+                      takeSnapshot();
+                      start();
+                    }
+                  })();
+                }
+              } catch(e) {}
             })();
           `
         }} />

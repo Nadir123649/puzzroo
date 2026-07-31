@@ -4,7 +4,7 @@ import User from "@/lib/server/models/User";
 import { connectDB } from "@/lib/server/db";
 import { successResponse, errorResponse, getOrigin } from "@/lib/server/utils/apiResponse";
 import { cookieOptions } from "@/lib/server/utils/cookieOptions";
-import { sendVerificationEmail } from "@/lib/server/services/emailService";
+import { sendVerificationEmail, sendEmailChangedEmail } from "@/lib/server/services/emailService";
 import { getFirebaseAuth } from "@/lib/server/config/firebase";
 import { auth } from "@/lib/server/middleware/auth";
 import { validate } from "@/lib/server/middleware/validate";
@@ -40,6 +40,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         emailVerificationTokenExpire: { $gt: Date.now() },
       });
       if (!user) return errorResponse(400, "token_invalid", "Invalid or expired verification token");
+      // If this token confirmed a pending email change, apply the swap now.
+      if (user.pendingEmail) {
+        const oldEmail = user.email;
+        const conflict = await User.findOne({
+          $or: [{ email: user.pendingEmail }, { pendingEmail: user.pendingEmail }],
+          _id: { $ne: user._id },
+        });
+        if (conflict) return errorResponse(409, "email_taken", "This email is already used by another account");
+        user.email = user.pendingEmail;
+        user.pendingEmail = undefined;
+        if (oldEmail) {
+          try {
+            await sendEmailChangedEmail(oldEmail, user.name || user.username, user.email);
+          } catch (e) { console.error("Email-changed notification failed to send:", e); }
+        }
+      }
       user.isVerified = true;
       user.emailVerificationToken = undefined;
       user.emailVerificationTokenExpire = undefined;
@@ -145,6 +161,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         emailVerificationTokenExpire: { $gt: Date.now() },
       });
       if (!user) return NextResponse.redirect(new URL("/login?verified=false", baseUrl));
+      // If this token confirmed a pending email change, apply the swap now.
+      if (user.pendingEmail) {
+        const oldEmail = user.email;
+        const conflict = await User.findOne({
+          $or: [{ email: user.pendingEmail }, { pendingEmail: user.pendingEmail }],
+          _id: { $ne: user._id },
+        });
+        if (conflict) return NextResponse.redirect(new URL("/login?verified=false", baseUrl));
+        user.email = user.pendingEmail;
+        user.pendingEmail = undefined;
+        if (oldEmail) {
+          try {
+            await sendEmailChangedEmail(oldEmail, user.name || user.username, user.email);
+          } catch (e) { console.error("Email-changed notification failed to send:", e); }
+        }
+      }
       user.isVerified = true;
       user.emailVerificationToken = undefined;
       user.emailVerificationTokenExpire = undefined;
