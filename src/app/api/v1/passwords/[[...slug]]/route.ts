@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import User from "@/lib/server/models/User";
@@ -8,9 +8,6 @@ import { sendResetPasswordEmail } from "@/lib/server/services/emailService";
 import { validate } from "@/lib/server/middleware/validate";
 import { forgotPasswordSchema, resetPasswordSchema } from "@/lib/server/validators/authValidator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
-import { authPayload, issueSession } from "@/lib/server/utils/authHelpers";
-import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
-import { cookieOptions } from "@/lib/server/utils/cookieOptions";
 import { checkRateLimit } from "@/lib/server/utils/http";
 
 // Reset links are short-lived for security.
@@ -73,17 +70,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         resetPasswordTokenExpire: { $gt: Date.now() },
       });
       if (!user) return errorResponse(400, "token_invalid", "Invalid or expired reset token");
-      user.password = await bcrypt.hash(password, 10);
-      user.isVerified = true;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordTokenExpire = undefined;
-      user.lastLoginAt = new Date();
-      await user.save({ validateBeforeSave: false });
+      if (user.password && (await bcrypt.compare(password, user.password))) {
+        return errorResponse(400, "same_password", "You are already using this password. Please choose a different password.");
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      // Atomic consume: the token dies on first successful use (one-time use),
+      // even under concurrent submissions.
+      const consumed = await User.updateOne(
+        { _id: user._id, resetPasswordToken: hashedToken, resetPasswordTokenExpire: { $gt: Date.now() } },
+        {
+          $set: { password: hashedPassword, isVerified: true },
+          $unset: { resetPasswordToken: "", resetPasswordTokenExpire: "" },
+        }
+      );
+      if (consumed.modifiedCount === 0) return errorResponse(400, "token_invalid", "Invalid or expired reset token");
       await trackServer({ userId: user._id.toString(), event: "password_reset_completed", request });
-      const { payload } = await issueSession(request, user, "email");
-      const res = NextResponse.json({ success: true, payload, timestamp: Date.now() }, { status: 200 });
-      res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
-      return res;
+      return successResponse({ message: "Password changed. Please log in with your new password." });
     }
 
     return errorResponse(404, "not_found", "Route not found");

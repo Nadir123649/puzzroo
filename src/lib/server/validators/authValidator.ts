@@ -52,7 +52,12 @@ export const chooseUsernameSchema = z.object({
 });
 
 export const updateProfileSchema = z.object({
-  name: nameField.optional(),
+  name: z
+    .string()
+    .trim()
+    .min(3, "Full name must be at least 3 characters")
+    .max(16, "Full name must be at most 16 characters")
+    .optional(),
   phone: z.string().optional(),
   avatar: z.string().url().optional(),
 });

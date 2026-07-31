@@ -408,13 +408,8 @@ export async function resetPassword(token: string, password: string): Promise<{ 
     if (!res.success) {
       return { success: false, error: (res.payload as any)?.error?.message || "Failed to reset password" };
     }
-    const payload = res.payload as any;
-    if (payload.token?.accessToken) {
-      setAccessToken(payload.token.accessToken);
-      localStorage.setItem("puzzroo_auth", "true");
-      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
-      window.dispatchEvent(new Event("auth-change"));
-    }
+    // Deliberately no session is started here: the user must log in with the
+    // new password themselves.
     return { success: true };
   } catch {
     return { success: false, error: "Network error" };

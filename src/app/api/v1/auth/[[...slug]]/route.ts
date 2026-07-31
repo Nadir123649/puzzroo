@@ -253,6 +253,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const isSamePassword = await bcrypt.compare(newPassword, user.password);
       if (isSamePassword) return errorResponse(400, "same_password", "You are already using this password. Please choose a different password.");
       user.password = await bcrypt.hash(newPassword, 10);
+      // Any outstanding password-reset link must die when the password is
+      // changed through another path — the link is only valid for the
+      // password state it was issued against.
+      user.resetPasswordToken = undefined;
+      user.resetPasswordTokenExpire = undefined;
       await user.save();
       await trackServer({ userId: user._id.toString(), event: "password_changed", request });
       auditLog({ eventType: "auth:password_changed", userId: user._id.toString(), sessionId: jti, ip: getClientIp(request) }).catch(() => {});
