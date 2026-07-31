@@ -11,10 +11,22 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params) => {
     return errorResponse(429, "rate_limited", "Too many requests")
   }
   const { sessionId } = params
-  const session = await sessionService.abandonSession(sessionId, actor)
 
-  if (actor.type === "user") {
-    await statisticsService.updateOnSessionAbandon(actor.id, session.puzzleId, session.difficulty)
+  let session
+  try {
+    session = await sessionService.abandonSession(sessionId, actor)
+    if (actor.type === "user") {
+      try {
+        await statisticsService.updateOnSessionAbandon(actor.id, session.puzzleId, session.difficulty)
+      } catch (error) {
+        // statistics failure is non-fatal; session is already finalized
+      }
+    }
+  } catch (error: any) {
+    const code = error?.message || error?.code
+    if (code !== "already_abandoned" && code !== "already_completed" && code !== "session_not_active") throw error
+    session = await sessionService.getSession(sessionId, actor)
+    if (session.sessionStatus !== "abandoned" && session.sessionStatus !== "completed") throw error
   }
 
   return successResponse({ sessionId: session.sessionId, sessionStatus: session.sessionStatus, abandonedAt: session.abandonedAt })

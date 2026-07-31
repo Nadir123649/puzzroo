@@ -1,5 +1,6 @@
 import { playSessionRepository } from "./PlaySessionRepository"
 import { verificationEngine } from "./VerificationEngine"
+import { statisticsService } from "./StatisticsService"
 import CrossMathPuzzle from "@/lib/server/models/CrossMathPuzzle"
 import CrossMathPlaySession from "@/lib/server/models/CrossMathPlaySession"
 import type { Actor } from "@/app/api/v1/games/crossmath/route-helpers"
@@ -104,6 +105,27 @@ export class SessionService {
     return actor.type === "guest" ? actor.id : undefined
   }
 
+  private async mistakeLimitFor(session: { difficulty?: string; puzzleId: string }): Promise<number> {
+    if (session.difficulty === "hard") return 2
+    const puzzle = await CrossMathPuzzle.findOne({ puzzleId: session.puzzleId }).lean()
+    return (puzzle as any)?.maxMistakes || 3
+  }
+
+  private async finalizeIfMistakeLimitReached(session: { sessionId: string; status?: string; mistakes?: number; difficulty?: string; puzzleId: string }, userId: string, guestId?: string): Promise<boolean> {
+    if (session.status !== "playing" && session.status !== "paused") return false
+    const limit = await this.mistakeLimitFor(session)
+    if ((session.mistakes || 0) < limit) return false
+    const abandoned = await playSessionRepository.abandon(session.sessionId, userId, guestId)
+    if (abandoned && !guestId) {
+      try {
+        await statisticsService.updateOnSessionAbandon(userId, session.puzzleId, session.difficulty || "")
+      } catch (error) {
+        // statistics failure is non-fatal; session is already finalized
+      }
+    }
+    return true
+  }
+
   async startSession(actor: Actor, puzzleId: string, gameType?: "crossmath" | "daily_challenge", dailyChallengeId?: string) {
     const puzzle = await CrossMathPuzzle.findOne({ puzzleId }).lean()
     if (!puzzle) throw new Error("puzzle_not_found")
@@ -206,9 +228,12 @@ export class SessionService {
       }
       throw new Error("session_not_active")
     }
+
+    const terminal = await this.finalizeIfMistakeLimitReached(updated, userId, guestId)
+
     return {
       sessionId: updated.sessionId,
-      sessionStatus: updated.status,
+      sessionStatus: terminal ? "abandoned" : updated.status,
       lastSavedAt: updated.lastSaveAt?.toISOString?.() || new Date().toISOString(),
       moves: updated.moves,
       mistakes: updated.mistakes,
@@ -394,6 +419,9 @@ export class SessionService {
       }
     }
 
+    const finalized = await this.finalizeIfMistakeLimitReached(session, userId, guestId)
+    if (finalized) return { hasActiveSession: false }
+
     const puzzle = await CrossMathPuzzle.findOne({ puzzleId: session.puzzleId }).lean()
     const safeSession = toSafeSession(session.toObject())
     const puzzleResp = puzzle ? await toSafePuzzleResponse(puzzle) : undefined
@@ -443,6 +471,9 @@ export class SessionService {
         // auto-complete failure is non-fatal; return active session
       }
     }
+
+    const finalized = await this.finalizeIfMistakeLimitReached(session, userId, guestId)
+    if (finalized) return { hasActiveSession: false }
 
     const puzzle = await CrossMathPuzzle.findOne({ puzzleId: session.puzzleId }).lean()
     const safeSession = toSafeSession(session.toObject())
