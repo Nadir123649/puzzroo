@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
       notify.successKey('AUTH_RESET_SUCCESS')
       setIsSuccess(true)
       setTimeout(() => {
-        router.push('/')
+        router.push('/login')
       }, 2000)
     } else {
       const isTokenInvalid =
@@ -127,12 +127,12 @@ export default function ResetPasswordPage() {
                   Password Reset!
                 </h3>
                 <p className="font-urbanist font-medium text-[14px] text-[#757575] dark:text-[#BDBDBD]">
-                   Redirecting to home...
-                 </p>
+                  Please log in with your new password.
+                </p>
               </div>
-               <Link href="/" className="w-full">
-                 <Button variant="outline" className="w-full h-[48px] rounded-full text-base font-urbanist font-semibold">
-                   Go to Home
+               <Link href="/login" className="w-full">
+                 <Button className="w-full h-[48px] rounded-full text-base font-urbanist font-semibold bg-[#6949FF] hover:bg-[#5536E6]">
+                   Go to Log In
                  </Button>
                </Link>
             </div>

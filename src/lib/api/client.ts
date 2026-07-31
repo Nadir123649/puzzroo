@@ -135,10 +135,23 @@ export async function api<T = any>(
           headers["Authorization"] = `Bearer ${newToken}`;
           res = await fetch(url, { ...fetchOptions, headers, credentials: "include", keepalive: true });
         } else if (!sessionExpiredNotified) {
-          sessionExpiredNotified = true;
-          notify.errorKey("SYSTEM_SESSION_EXPIRED");
-          localStorage.removeItem("puzzroo_auth");
-          setTimeout(() => { window.location.href = "/login"; }, 1500);
+          // Refresh failed — could be a transient blip (network hiccup, rate
+          // limit). Retry once with a short delay before declaring the session
+          // dead, so a live session is never logged out on a single flake.
+          const retryToken = await new Promise<string | null>((resolve) =>
+            setTimeout(() => resolve(refreshAccessToken()), 1500)
+          );
+          if (retryToken) {
+            setAccessToken(retryToken);
+            if (onRefresh) onRefresh(retryToken);
+            headers["Authorization"] = `Bearer ${retryToken}`;
+            res = await fetch(url, { ...fetchOptions, headers, credentials: "include", keepalive: true });
+          } else if (!sessionExpiredNotified) {
+            sessionExpiredNotified = true;
+            notify.errorKey("SYSTEM_SESSION_EXPIRED");
+            localStorage.removeItem("puzzroo_auth");
+            setTimeout(() => { window.location.href = "/login"; }, 1500);
+          }
         }
       }
 

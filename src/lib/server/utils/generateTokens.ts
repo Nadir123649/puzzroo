@@ -27,5 +27,6 @@ export function buildTokenPayload(user: any, sessionId?: string, tokenVersion?: 
     accessToken: generateAccessToken(user, sessionId),
     accessTokenExpires: process.env.ACCESS_TOKEN_EXPIRES || "15m",
     refreshToken: generateRefreshToken(user, sessionId, tokenVersion),
+    refreshTokenExpires: process.env.REFRESH_TOKEN_EXPIRES || "7d",
   };
 }

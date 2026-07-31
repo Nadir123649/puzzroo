@@ -1,5 +1,10 @@
 import { api, refreshAccessToken } from "@/lib/api/client";
 
+// Access token is persisted so full page loads don't trigger a refresh round
+// trip (the token itself is valid for days). Only refresh when it truly
+// expires. Trade-off: localStorage is XSS-readable, same as puzzroo_user.
+const TOKEN_KEY = "puzzroo_access_token";
+
 let currentAccessToken: string | null = null;
 
 if (typeof window !== "undefined") {
@@ -8,6 +13,9 @@ if (typeof window !== "undefined") {
     if (legacy) {
       currentAccessToken = legacy;
       localStorage.removeItem("accessToken");
+      localStorage.setItem(TOKEN_KEY, legacy);
+    } else {
+      currentAccessToken = localStorage.getItem(TOKEN_KEY);
     }
   } catch {}
 }
@@ -18,10 +26,12 @@ export function getAccessToken(): string | null {
 
 export function setAccessToken(token: string): void {
   currentAccessToken = token;
+  try { localStorage.setItem(TOKEN_KEY, token) } catch {}
 }
 
 export function clearAccessToken(): void {
   currentAccessToken = null;
+  try { localStorage.removeItem(TOKEN_KEY) } catch {}
 }
 
 export interface User {
@@ -398,13 +408,8 @@ export async function resetPassword(token: string, password: string): Promise<{ 
     if (!res.success) {
       return { success: false, error: (res.payload as any)?.error?.message || "Failed to reset password" };
     }
-    const payload = res.payload as any;
-    if (payload.token?.accessToken) {
-      setAccessToken(payload.token.accessToken);
-      localStorage.setItem("puzzroo_auth", "true");
-      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
-      window.dispatchEvent(new Event("auth-change"));
-    }
+    // Deliberately no session is started here: the user must log in with the
+    // new password themselves.
     return { success: true };
   } catch {
     return { success: false, error: "Network error" };

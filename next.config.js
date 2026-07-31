@@ -27,10 +27,14 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
-          // Allow OAuth popups to keep a window reference and avoid the
-          // storage-partitioning that breaks Firebase's redirect state on
-          // mobile (Vercel/Next apply Cross-Origin-Opener-Policy: same-origin).
-          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
+          // NOTE: no Cross-Origin-Opener-Policy here. `same-origin-allow-popups`
+          // only preserves the opener reference for SAME-origin popups; a
+          // cross-origin Google popup still lands in a separate browsing
+          // context group, which makes Chrome block window.closed/window.close
+          // reads (console warnings) and degrades Firebase's popup channel.
+          // With no COOP header at all, the popup shares the opener's group
+          // and Firebase's popup flow works silently.
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
 
           // ── production-only security headers ──
           ...(production
@@ -42,10 +46,6 @@ const nextConfig = {
                 {
                   key: 'X-Frame-Options',
                   value: 'DENY',
-                },
-                {
-                  key: 'X-Content-Type-Options',
-                  value: 'nosniff',
                 },
                 {
                   key: 'Referrer-Policy',
@@ -69,7 +69,7 @@ const nextConfig = {
                     "font-src 'self' data:",
                     "form-action 'self'",
                     "frame-ancestors 'none'",
-                    "frame-src 'self' https://accounts.google.com https://www.facebook.com https://connect.facebook.net https://*.stripe.com",
+                    "frame-src 'self' https://accounts.google.com https://www.facebook.com https://connect.facebook.net https://*.stripe.com https://" + (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'puzzroo-64f53.firebaseapp.com'),
                     "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://puzzroo-64f53.firebasestorage.app https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://*.fbcdn.net",
                     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://connect.facebook.net https://*.stripe.com",
                     "style-src 'self' 'unsafe-inline'",

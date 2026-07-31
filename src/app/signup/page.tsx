@@ -12,8 +12,8 @@ import { GameLoader } from '@/components/ui/GameLoader'
 import { Button } from '@/components/ui/button'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { register } from '@/lib/auth/frontend-auth'
-import { auth, isFirebaseConfigured } from '@/lib/config/firebase-client'
-import { signInOAuthPopup, startOAuthRedirect, consumeOAuthRedirect, completeOAuthLogin } from '@/lib/auth/oauth'
+import { isFirebaseConfigured } from '@/lib/config/firebase-client'
+import { signInOAuthPopup, startOAuthRedirect, consumeOAuthRedirect, completeOAuthLogin, OAUTH_REDIRECT_SENTINEL } from '@/lib/auth/oauth'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -49,8 +49,16 @@ export default function SignupPage() {
     ;(async () => {
       const result = await consumeOAuthRedirect()
       if (cancelled || !result) return
+      if ('error' in result) {
+        const err: any = result.error
+        if (err?.code !== 'auth/unavailable') {
+          notify.errorFromResult(err, 'AUTH_REDIRECT_FAILED')
+          setErrors({ general: notify.fromResult(err, 'AUTH_REDIRECT_FAILED') })
+        }
+        return
+      }
       await completeOAuthLogin(result.token, result.provider, false, {
-        setSubmitting: setIsSubmitting,
+        setSubmitting: () => {},
         setErrors,
         welcomeKey: 'AUTH_WELCOME_OAUTH',
         router,
@@ -123,7 +131,7 @@ export default function SignupPage() {
           
           {/* Logo & Header */}
           <div className="flex flex-col items-center mb-8">
-            <Link href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none">
+            <Link prefetch={false} href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none">
               <Image
                 src={images.logo}
                 alt="Puzzroo Logo"
@@ -168,7 +176,7 @@ export default function SignupPage() {
                   </>
                 )}
               </div>
-              <Link href="/login" className="mt-2 font-urbanist text-[14px] text-[#6949FF] hover:underline font-semibold">
+              <Link prefetch={false} href="/login" className="mt-2 font-urbanist text-[14px] text-[#6949FF] hover:underline font-semibold">
                 Go to Login
               </Link>
             </div>
@@ -293,19 +301,22 @@ export default function SignupPage() {
                 type="button"
                 onClick={async () => {
                   try {
-                    if (!auth) return
                     const firebaseToken = await signInOAuthPopup('google')
+                    if (firebaseToken === OAUTH_REDIRECT_SENTINEL) return
                     await completeOAuthLogin(firebaseToken, 'google', false, {
-                      setSubmitting: setIsSubmitting,
+                      setSubmitting: () => {},
                       setErrors,
                       welcomeKey: 'AUTH_WELCOME_OAUTH',
                       router,
                     })
                   } catch (err: any) {
-                    setIsSubmitting(false)
-                    if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+                    const code = err?.code
+                    if (code === 'auth/unavailable') {
+                      notify.errorKey('AUTH_UNAVAILABLE')
+                      setErrors({ general: ToastMessages.AUTH_UNAVAILABLE })
+                    } else if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
                       notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
-                      setErrors({ email: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
+                      setErrors({ general: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }
                   }
                 }}
@@ -325,13 +336,15 @@ export default function SignupPage() {
                 type="button"
                 onClick={async () => {
                   try {
-                    if (!auth) return
                     await startOAuthRedirect('facebook')
                   } catch (err: any) {
-                    setIsSubmitting(false)
-                    if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+                    const code = err?.code
+                    if (code === 'auth/unavailable') {
+                      notify.errorKey('AUTH_UNAVAILABLE')
+                      setErrors({ general: ToastMessages.AUTH_UNAVAILABLE })
+                    } else {
                       notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
-                      setErrors({ email: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
+                      setErrors({ general: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }
                   }
                 }}
@@ -349,7 +362,7 @@ export default function SignupPage() {
               <div className="text-center pt-2">
                 <span className="font-urbanist font-medium text-[14px] text-[#757575] dark:text-[#BDBDBD]">
                   Already have an account?{' '}
-                  <Link href="/login" className="font-semibold text-[#6949FF] hover:underline">
+                  <Link prefetch={false} href="/login" className="font-semibold text-[#6949FF] hover:underline">
                     Log in
                   </Link>
                 </span>

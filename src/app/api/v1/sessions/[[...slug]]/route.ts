@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import LoginSession from "@/lib/server/models/LoginSession";
 import { connectDB } from "@/lib/server/db";
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
-import { auth } from "@/lib/server/middleware/auth";
+import { auth, invalidateSessionCache } from "@/lib/server/middleware/auth";
 
 async function getUserId(request: NextRequest) {
   const result = await auth(request);
@@ -73,6 +73,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     // DELETE /api/v1/sessions — revoke all sessions
     if (!sessionId) {
       await LoginSession.updateMany({ userId: userResult.userId }, { status: "revoked", isCurrent: false });
+      invalidateSessionCache();
       return successResponse({ message: "All sessions revoked successfully" });
     }
 
@@ -80,6 +81,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const session = await LoginSession.findOne({ _id: sessionId, userId: userResult.userId });
     if (!session) return errorResponse(404, "not_found", "Session not found");
     await session.updateOne({ status: "revoked", isCurrent: false });
+    invalidateSessionCache(sessionId);
     return successResponse({ message: "Session revoked successfully" });
   } catch (error: any) {
     console.error(error);

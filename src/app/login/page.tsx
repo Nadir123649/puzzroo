@@ -12,8 +12,8 @@ import { GameLoader } from '@/components/ui/GameLoader'
 import { Button } from '@/components/ui/button'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { login, resendVerificationEmail } from '@/lib/auth/frontend-auth'
-import { auth, isFirebaseConfigured } from '@/lib/config/firebase-client'
-import { signInOAuthPopup, startOAuthRedirect, consumeOAuthRedirect, completeOAuthLogin } from '@/lib/auth/oauth'
+import { isFirebaseConfigured } from '@/lib/config/firebase-client'
+import { signInOAuthPopup, startOAuthRedirect, consumeOAuthRedirect, completeOAuthLogin, OAUTH_REDIRECT_SENTINEL } from '@/lib/auth/oauth'
 
 function LoginPageContent() {
   const router = useRouter()
@@ -43,8 +43,16 @@ function LoginPageContent() {
     ;(async () => {
       const result = await consumeOAuthRedirect()
       if (cancelled || !result) return
+      if ('error' in result) {
+        const err: any = result.error
+        if (err?.code !== 'auth/unavailable') {
+          notify.errorFromResult(err, 'AUTH_REDIRECT_FAILED')
+          setErrors({ general: notify.fromResult(err, 'AUTH_REDIRECT_FAILED') })
+        }
+        return
+      }
       await completeOAuthLogin(result.token, result.provider, rememberMe, {
-        setSubmitting: setIsSubmitting,
+        setSubmitting: () => {},
         setErrors,
         welcomeKey: 'AUTH_WELCOME_OAUTH',
         router,
@@ -96,7 +104,7 @@ function LoginPageContent() {
           
           {/* Logo & Header */}
           <div className="flex flex-col items-center mb-8">
-            <Link href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none">
+            <Link prefetch={false} href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none">
               <Image
                 src={images.logo}
                 alt="Puzzroo Logo"
@@ -191,7 +199,7 @@ function LoginPageContent() {
                   <label htmlFor="password" className="font-urbanist font-bold text-[14px] text-[#424242] dark:text-[#E0E0E0]">
                     Password
                   </label>
-                  <Link
+                  <Link prefetch={false}
                     href="/forgot-password"
                     className="font-urbanist font-semibold text-[13px] text-[#6949FF] hover:underline"
                   >
@@ -275,17 +283,20 @@ function LoginPageContent() {
                 type="button"
                 onClick={async () => {
                   try {
-                    if (!auth) return
                     const firebaseToken = await signInOAuthPopup('google')
+                    if (firebaseToken === OAUTH_REDIRECT_SENTINEL) return
                     await completeOAuthLogin(firebaseToken, 'google', rememberMe, {
-                      setSubmitting: setIsSubmitting,
+                      setSubmitting: () => {},
                       setErrors,
                       welcomeKey: 'AUTH_WELCOME_OAUTH',
                       router,
                     })
                   } catch (err: any) {
-                    setIsSubmitting(false)
-                    if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+                    const code = err?.code
+                    if (code === 'auth/unavailable') {
+                      notify.errorKey('AUTH_UNAVAILABLE')
+                      setErrors({ general: ToastMessages.AUTH_UNAVAILABLE })
+                    } else if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
                       notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
                       setErrors({ general: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }
@@ -307,11 +318,13 @@ function LoginPageContent() {
                 type="button"
                 onClick={async () => {
                   try {
-                    if (!auth) return
                     await startOAuthRedirect('facebook')
                   } catch (err: any) {
-                    setIsSubmitting(false)
-                    if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+                    const code = err?.code
+                    if (code === 'auth/unavailable') {
+                      notify.errorKey('AUTH_UNAVAILABLE')
+                      setErrors({ general: ToastMessages.AUTH_UNAVAILABLE })
+                    } else {
                       notify.errorFromResult(err, 'AUTH_OAUTH_FAILED')
                       setErrors({ general: notify.fromResult(err, 'AUTH_OAUTH_FAILED') })
                     }
@@ -331,7 +344,7 @@ function LoginPageContent() {
               <div className="text-center pt-2">
                 <span className="font-urbanist font-medium text-[14px] text-[#757575] dark:text-[#BDBDBD]">
                   Don't have an account?{' '}
-                  <Link href="/signup" className="font-semibold text-[#6949FF] hover:underline">
+                  <Link prefetch={false} href="/signup" className="font-semibold text-[#6949FF] hover:underline">
                     Sign up
                   </Link>
                 </span>

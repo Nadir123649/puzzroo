@@ -51,9 +51,13 @@ export async function createSession(request: NextRequest, userId: string, provid
   };
 
   if (deviceFingerprint) {
+    // Reuse the existing active session for this device, but NEVER reset
+    // tokenVersion: doing so silently invalidates refresh tokens already
+    // issued to other tabs/windows of this session, which forces a
+    // token_reused logout minutes later.
     const existing = await LoginSession.findOneAndUpdate(
       { userId, deviceFingerprint, status: "active" },
-      { $set: { ...sessionData, tokenVersion: 0 } },
+      { $set: sessionData },
       { new: true },
     );
     if (existing) return existing;
