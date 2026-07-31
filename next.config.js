@@ -69,7 +69,7 @@ const nextConfig = {
                     "font-src 'self' data:",
                     "form-action 'self'",
                     "frame-ancestors 'none'",
-                    "frame-src 'self' https://accounts.google.com https://www.facebook.com https://connect.facebook.net https://*.stripe.com",
+                    "frame-src 'self' https://accounts.google.com https://www.facebook.com https://connect.facebook.net https://*.stripe.com https://" + (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'puzzroo-64f53.firebaseapp.com'),
                     "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://puzzroo-64f53.firebasestorage.app https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://*.fbcdn.net",
                     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://connect.facebook.net https://*.stripe.com",
                     "style-src 'self' 'unsafe-inline'",
