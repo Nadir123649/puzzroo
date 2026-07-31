@@ -80,11 +80,7 @@ function DailyChallengeContent() {
   }, [gameId, gameIdForApi, dateParam])
 
   if (!challenge || completionCheck === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#181A20]">
-        <Loader2 className="animate-spin text-[#6949FF]" size={48} />
-      </div>
-    )
+    return <GameLoader isOpen={true} text="Loading puzzle..." />
   }
 
   if (completionCheck === 'completed') {
@@ -185,23 +181,9 @@ function DailyChallengeContent() {
 }
 
 export default function DailyChallengePage() {
-  const [initialLoading, setInitialLoading] = useState(true)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setInitialLoading(false), 200)
-    return () => clearTimeout(timer)
-  }, [])
-
   return (
-    <>
-      <GameLoader isOpen={initialLoading} text="Loading puzzle..." />
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#181A20]">
-          <Loader2 className="animate-spin text-[#6949FF]" size={48} />
-        </div>
-      }>
-        <DailyChallengeContent />
-      </Suspense>
-    </>
+    <Suspense fallback={<GameLoader isOpen={true} text="Loading puzzle..." />}>
+      <DailyChallengeContent />
+    </Suspense>
   )
 }

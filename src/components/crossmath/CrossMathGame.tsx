@@ -19,7 +19,7 @@ export function CrossMathGame() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isResetting, setIsResetting] = useState(false)
-  const [loaderText, setLoaderText] = useState('Loading game...')
+  const [loaderText, setLoaderText] = useState('Loading puzzle...')
   const [showModal, setShowModal] = useState(false)
   
   // Check if this is from past puzzles or daily challenge (has date param or daily challenge route)
@@ -65,7 +65,7 @@ export function CrossMathGame() {
   }, [gameStatus])
 
   const handleNewGame = async (isReplay = false) => {
-    setLoaderText(isReplay ? 'Replaying game...' : 'Loading game...')
+    setLoaderText(isReplay ? 'Replaying puzzle...' : 'Loading puzzle...')
     setIsResetting(true)
     setShowModal(false)
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -189,6 +189,7 @@ export function CrossMathGame() {
                   numbersPerRow={difficulty === 'easy' ? availableNumbers.size : numbersPerRow}
                   usedNumbersCount={usedNumbersCount}
                   requiredNumbersCount={requiredNumbersCount}
+                  difficulty={difficulty}
                 />
               </div>
 
@@ -261,6 +262,7 @@ export function CrossMathGame() {
                mobile
                usedNumbersCount={usedNumbersCount}
                requiredNumbersCount={requiredNumbersCount}
+               difficulty={difficulty}
              />
  
               {/* Feature Buttons Mobile */}

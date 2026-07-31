@@ -35,7 +35,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   const isFromPastPuzzles = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
   
   const [isResetting, setIsResetting] = useState(false)
-  const [loaderText, setLoaderText] = useState('Loading game...')
+  const [loaderText, setLoaderText] = useState('Loading puzzle...')
   const [mobileBoardWidth, setMobileBoardWidth] = useState(350)
   const [desktopBoardWidth, setDesktopBoardWidth] = useState(700)
   const router = useRouter()
@@ -107,7 +107,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   }, [])
 
   const handleNewGame = async () => {
-    setLoaderText('Loading game...')
+    setLoaderText('Loading puzzle...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
     newGame()

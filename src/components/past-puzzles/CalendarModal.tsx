@@ -15,8 +15,24 @@ interface CalendarModalProps {
 
 export function CalendarModal({ isOpen, onClose, gameId, onDateSelected, initialSelectedDate }: CalendarModalProps) {
   const router = useRouter()
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [currentDate, setCurrentDate] = useState(() => {
+    if (initialSelectedDate) {
+      const [month, day, year] = initialSelectedDate.split('-')
+      const fullYear = 2000 + parseInt(year)
+      return new Date(fullYear, parseInt(month) - 1, 1)
+    }
+    return new Date()
+  })
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+    if (initialSelectedDate) {
+      const [month, day, year] = initialSelectedDate.split('-')
+      const fullYear = 2000 + parseInt(year)
+      const restoredDate = new Date(fullYear, parseInt(month) - 1, parseInt(day))
+      restoredDate.setHours(0, 0, 0, 0)
+      return restoredDate
+    }
+    return null
+  })
   const [errorMessage, setErrorMessage] = useState<string>('')
   
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
