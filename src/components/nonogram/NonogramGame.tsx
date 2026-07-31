@@ -361,7 +361,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                       <circle cx="12" cy="12" r="10"/>
                       <polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    <span>~{Math.floor(currentPuzzle.estimatedTime / 60)} min</span>
+                    <span>~{Math.floor((currentPuzzle.difficulty === 'expert' ? 1200 : currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300) / 60)} min</span>
                   </span>
                 </div>
               </div>
@@ -847,7 +847,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
           isOpen={(gameStatus === 'won' || gameStatus === 'lost') && showCompletionModal}
           difficulty={currentPuzzle.difficulty}
           time={(() => {
-            const initialTime = currentPuzzle.estimatedTime || (currentPuzzle.difficulty === 'expert' ? 1200 : currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300)
+            const initialTime = currentPuzzle.difficulty === 'expert' ? 1200 : currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300
             return Math.max(0, initialTime - elapsedSeconds)
           })()}
           completionPercentage={progress.percentComplete}
