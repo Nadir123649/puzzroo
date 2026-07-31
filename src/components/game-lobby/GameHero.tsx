@@ -32,18 +32,18 @@ function useCountdownToMidnight() {
       const now = new Date()
       const midnight = new Date()
       midnight.setHours(24, 0, 0, 0)
-      
+
       const diff = midnight.getTime() - now.getTime()
       const hours = Math.floor(diff / (1000 * 60 * 60))
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
       const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-      
+
       setTimeLeft({ hours, minutes, seconds })
     }
 
     calculateTimeLeft()
     const interval = setInterval(calculateTimeLeft, 1000)
-    
+
     return () => clearInterval(interval)
   }, [])
 
@@ -60,7 +60,7 @@ function useCurrentDate() {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const month = months[now.getMonth()]
     const year = now.getFullYear()
-    
+
     setDateString(`${day} ${month} ${year}`)
   }, [])
 
@@ -80,7 +80,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
         if (saved && ['easy', 'medium', 'hard', 'expert'].includes(saved)) {
           return saved as Difficulty
         }
-      } catch {}
+      } catch { }
     }
     return 'easy'
   }
@@ -99,7 +99,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
       return () => clearTimeout(timer)
     }
   }, [backParam])
-  
+
   // Load saved preference on mount
   useEffect(() => {
     const saved = getInitialDifficulty()
@@ -122,9 +122,9 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
       document.body.style.touchAction = ''
     }
   }, [isLoading, initialLoading])
-  
+
   const currentImage = theme === 'light' && imageLight ? imageLight : image
-  
+
   // Check if this is Sudoku, CrossMath, Nonogram, or Tangram to link to the actual game page
   const isSudoku = name.toLowerCase() === 'sudoku'
   const isCrossMath = name.toLowerCase() === 'cross math' || name.toLowerCase() === 'cross-math' || name.toLowerCase() === 'crossmath'
@@ -161,7 +161,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
       <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 pt-12 md:pt-16 pb-12 relative">
         <div className="w-full px-[20px]">
           <div className="flex flex-col items-center gap-5 md:gap-6">
-            
+
             {/* Game Image with background */}
             <div className="w-[129px] h-[129px] relative flex items-center justify-center bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] p-[14px]">
               {imageLight ? (
@@ -198,7 +198,7 @@ export function GameHero({ name, image, imageLight, difficulties, gameSlug }: Ga
             </h1>
 
             {/* Difficulty Tabs */}
-            <DifficultyTabs 
+            <DifficultyTabs
               difficulties={difficulties}
               selectedDifficulty={localDifficulty}
               onDifficultyChange={handleDifficultyChange}

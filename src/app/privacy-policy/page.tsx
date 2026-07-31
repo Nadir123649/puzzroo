@@ -1,21 +1,6 @@
-'use client'
-
-import React, { useState, useEffect } from 'react'
-import { GameLoader } from '@/components/ui/GameLoader'
 import { InfoPageLayout } from '@/components/layout/InfoPageLayout'
 
 export default function PrivacyPolicyPage() {
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 300)
-    return () => clearTimeout(timer)
-  }, [])
-
-  if (isLoading) {
-    return <GameLoader isOpen={true} text="Loading policy..." />
-  }
-
   return (
     <InfoPageLayout title="Privacy Policy">
       <div className="space-y-[24px] pb-[20px]">

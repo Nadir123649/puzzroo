@@ -17,9 +17,10 @@ import { generatePublicId } from "@/lib/server/utils/publicId";
 import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
 import { z } from "zod";
-import { checkRateLimit } from "@/lib/server/utils/http";
+import { checkRateLimit, getClientIp } from "@/lib/server/utils/http";
 import { checkBruteForce, recordFailure, resetBruteForce } from "@/lib/server/utils/bruteForce";
 import { getSessionTokenVersion } from "@/lib/server/utils/authHelpers";
+import { auditLog } from "@/lib/server/utils/auditLog";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
@@ -81,15 +82,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const user = await User.findOne({ $or: [{ email: lookup }, { pendingEmail: lookup }, { username: lookup }] });
       if (!user) {
         recordFailure(request, `login:${lookup}`);
+        auditLog({ eventType: "auth:login_failed", ip: getClientIp(request), metadata: { identifier: lookup } }).catch(() => {});
         return errorResponse(401, "invalid_credentials", "Invalid email or password");
       }
       if (!user.password) {
         recordFailure(request, `login:${lookup}`);
+        auditLog({ eventType: "auth:login_failed", ip: getClientIp(request), metadata: { identifier: lookup } }).catch(() => {});
         return errorResponse(401, "invalid_credentials", "Invalid email or password");
       }
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         recordFailure(request, `login:${lookup}`);
+        auditLog({ eventType: "auth:login_failed", ip: getClientIp(request), metadata: { identifier: lookup } }).catch(() => {});
         return errorResponse(401, "invalid_credentials", "Invalid email or password");
       }
       resetBruteForce(request, `login:${lookup}`);
@@ -102,6 +106,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // out ("can't log back in"). Instead we let them in and surface a
       // verification prompt client-side via `requiresVerification`.
       await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "password" }, request });
+      auditLog({ eventType: "auth:login", userId: user._id.toString(), ip: getClientIp(request), userAgent: request.headers.get("user-agent") || undefined }).catch(() => {});
       const { payload } = await issueSession(request, user, "email");
       const res = NextResponse.json(
         { success: true, payload, requiresVerification: !user.isVerified, timestamp: Date.now() },
@@ -118,6 +123,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const who = await auth(request);
       if (!("error" in who)) {
         await trackServer({ userId: who.user.id, event: "logout", request });
+        auditLog({ eventType: "auth:logout", userId: who.user.id, sessionId: who.user.jti }).catch(() => {});
         if (who.user.jti) {
           await LoginSession.findByIdAndUpdate(who.user.jti, { status: "logged_out", isCurrent: false });
         }
@@ -151,8 +157,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         );
       }
       const jwt = await import("jsonwebtoken");
+      const REFRESH_ALGOS = ["HS256" as const];
       try {
-        const decoded = jwt.default.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { id: string; jti?: string; ver?: number };
+        const decoded = jwt.default.verify(refreshToken, process.env.JWT_REFRESH_SECRET!, { algorithms: REFRESH_ALGOS }) as any;
         const user = await User.findById(decoded.id);
         if (!user) {
           return NextResponse.json(
@@ -171,10 +178,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           );
           if (!updated) {
             const sessionExists = await LoginSession.findById(decoded.jti).select("_id").lean();
-            if (!sessionExists) {
-              return errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.");
-            }
-            return errorResponse(401, "token_reused", "Refresh token has already been used. Please sign in again.");
+            const errRes = !sessionExists
+              ? errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.")
+              : errorResponse(401, "token_reused", "Refresh token has already been used. Please sign in again.");
+            errRes.cookies.delete("refreshToken");
+            return errRes;
           }
           tokenVersion = updated.tokenVersion;
         }
@@ -184,10 +192,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         res.cookies.set("refreshToken", tokenPayload.refreshToken, cookieOptions);
         return res;
       } catch {
-        return NextResponse.json(
+        const errRes = NextResponse.json(
           { success: false, version: "1.0.0", payload: { error: { code: "token_invalid", message: "Invalid or expired refresh token" } }, serverTimestamp: new Date().toISOString() },
           { status: 200 }
         );
+        errRes.cookies.delete("refreshToken");
+        return errRes;
       }
     }
 
@@ -211,6 +221,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.password = await bcrypt.hash(newPassword, 10);
       await user.save();
       await trackServer({ userId: user._id.toString(), event: "password_changed", request });
+      auditLog({ eventType: "auth:password_changed", userId: user._id.toString(), sessionId: jti, ip: getClientIp(request) }).catch(() => {});
       const tokenVersion = jti ? await getSessionTokenVersion(jti) : undefined;
       const newTokens = buildTokenPayload(user, jti, tokenVersion);
       const res = NextResponse.json({ success: true, payload: { message: "Password changed successfully", token: newTokens }, timestamp: Date.now() }, { status: 200 });

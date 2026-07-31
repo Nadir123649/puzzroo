@@ -5,12 +5,14 @@ import { updateUserStatsOnAbandon } from "@/lib/server/services/sudoku/statistic
 import { rateLimit } from "@/lib/server/utils/http";
 import { withAuth } from "../../../route-helpers";
 
-export const POST = withAuth(async (req: NextRequest, user, params) => {
+export const POST = withAuth(async (req: NextRequest, actor, params) => {
   if (!rateLimit(req, "sudoku-abandon", 30)) {
     return errorResponse(429, "rate_limited", "Too many requests");
   }
 
-  const session = await abandonSession(params.id, user.id);
-  updateUserStatsOnAbandon(params.id, user.id).catch(() => {});
+  const session = await abandonSession(params.id, actor);
+  if (actor.type === "user") {
+    updateUserStatsOnAbandon(params.id, actor.id).catch(() => {});
+  }
   return successResponse(session);
 });

@@ -5,7 +5,7 @@ import { promisify } from "util";
 
 const resolveSrv = promisify(dns.resolveSrv);
 
-const MONGODB_URI = process.env.MONGO_URI;
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
 let cached = (global as any)._mongooseConnection;
 
@@ -37,9 +37,13 @@ mongoose.connection.on("error", (err) => {
   console.error("[db] mongoose connection error:", err);
 });
 
+if (process.env.MONGO_URI && !process.env.MONGODB_URI) {
+  console.warn("[ENV] MONGO_URI is deprecated. Rename to MONGODB_URI.");
+}
+
 export async function connectDB() {
   if (!MONGODB_URI) {
-    throw new Error("Please define MONGO_URI in .env.local");
+    throw new Error("Please define MONGODB_URI (or MONGO_URI) in .env.local");
   }
 
   if (cached) return cached;

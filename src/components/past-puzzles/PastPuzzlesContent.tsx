@@ -28,7 +28,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   const router = useRouter()
   const [puzzles, setPuzzles] = useState<DailyChallenge[]>([])
   const [isNavigatingBack, setIsNavigatingBack] = useState(false)
-  
+
   // Persist filter + selected date in sessionStorage so navigation doesn't reset them
   const storageKey = `puzzroo_past_filter_${gameId}`
   const dateStorageKey = `puzzroo_past_date_${gameId}`
@@ -42,14 +42,14 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     }
     return 'all'
   })
-  
+
   const [selectedDate, setSelectedDate] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return sessionStorage.getItem(dateStorageKey) || null
     }
     return null
   })
-  
+
   const searchParams = useSearchParams()
   const backParam = searchParams?.get('back')
   const [showAccessModal, setShowAccessModal] = useState(false)
@@ -88,11 +88,11 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   }
 
   // Get game icon - theme aware for nonogram
-  const gameIcon = gameId === 'cross-math' 
-    ? images.gameCards.crossWord 
-    : gameId === 'sudoku' 
-      ? images.gameCards.sudoku 
-      : gameId === 'nonogram' 
+  const gameIcon = gameId === 'cross-math'
+    ? images.gameCards.crossWord
+    : gameId === 'sudoku'
+      ? images.gameCards.sudoku
+      : gameId === 'nonogram'
         ? (theme === 'light' ? images.gameCards.nonogramWhite : images.gameCards.nonogram)
         : gameId === 'tangram'
           ? images.gameCards.tangram
@@ -128,7 +128,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
 
     // Verify today's challenge with server
     const apiGameId = gameId === 'cross-math' ? 'crossmath' : gameId === 'sudoku' ? 'sudoku' : gameId
-    api(`/api/v1/${apiGameId}/daily/completion`).then(res => {
+    api(`/api/v1/games/${apiGameId}/daily/completion`).then(res => {
       if (res.success) {
         const payload = res.payload as any
         if (payload?.completed) {
@@ -140,7 +140,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
           setCompletedPuzzles(prev => new Set([...prev, todayId]))
         }
       }
-    }).catch(() => {})
+    }).catch(() => { })
   }, [gameId])
 
   useEffect(() => {
@@ -148,12 +148,12 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     const user = getCurrentUser()
     const accountCreatedAt = user?.createdAt ? new Date(user.createdAt) : undefined
     const generated = generatePastPuzzles(24, gameId, accountCreatedAt)
-    
+
     // Update status from localStorage and apply lock
     const withStatus = generated.map((puzzle, index) => {
       const actualStatus = getChallengeStatus(puzzle.id)
       const isCompleted = completedPuzzles.has(puzzle.id)
-      
+
       // Lock if beyond accessible count and user is not premium
       const isLocked = !isPremiumUser && index >= accessibleCount
 
@@ -163,13 +163,13 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
           status: 'locked' as DailyChallengeStatus,
         }
       }
-      
+
       return {
         ...puzzle,
         status: isCompleted ? ('completed' as DailyChallengeStatus) : actualStatus,
       }
     })
-    
+
     setPuzzles(withStatus)
   }, [gameId, accessibleCount, authed, isPremiumUser, completedPuzzles])
 
@@ -179,34 +179,34 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     if (selectedDate) {
       return p.dateString === selectedDate
     }
-    
+
     // Check if puzzle is completed from universal system
     const isCompleted = completedPuzzles.has(p.id)
-    
+
     // If filter is 'all', show everything
     if (filter === 'all') return true
-    
+
     // If filter is 'completed', show only completed puzzles
     if (filter === 'completed') {
       return isCompleted && p.status !== 'locked'
     }
-    
+
     // If filter is 'not-started', show not-started AND locked puzzles (but NOT completed)
     if (filter === 'not-started') {
       return (p.status === 'not-started' || p.status === 'locked') && !isCompleted
     }
-    
+
     // If filter is 'in-progress', show in-progress (but NOT completed)
     if (filter === 'in-progress') {
       return p.status === 'in-progress' && !isCompleted
     }
-    
+
     // Otherwise, match the exact status
     return p.status === filter
   })
 
   const totalPages = Math.max(1, Math.ceil(filteredPuzzles.length / ITEMS_PER_PAGE))
-  
+
   // Adjust currentPage if it exceeds totalPages due to filtering
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -247,149 +247,149 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
   return (
     <>
       <AppLayout>
-      <section className="w-full min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 pt-4 pb-0 md:pb-10">
-        <div className="w-full px-[20px] max-w-[1380px] mx-auto">
-          
-          {/* Back Arrow */}
-          <div className="hidden md:inline-block">
-            <button
-              onClick={handleBackToHome}
-              disabled={isNavigatingBack}
-              className="w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
-              aria-label="Back to home"
-            >
-              <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
-            </button>
-          </div>
+        <section className="w-full min-h-screen bg-white dark:bg-[#181A20] transition-colors duration-300 pt-4 pb-0 md:pb-10">
+          <div className="w-full px-[20px] max-w-[1380px] mx-auto">
 
-          {/* Main Container with Border */}
-          <div className="border-[0.95px] border-[#979797] dark:border-[#E0E0E0] rounded-3xl pt-4 pb-4 pl-3 pr-3 md:p-6 md:pb-6 md:mt-5">
-            <div className="flex flex-col gap-6">
+            {/* Back Arrow */}
+            <div className="hidden md:inline-block">
+              <button
+                onClick={handleBackToHome}
+                disabled={isNavigatingBack}
+                className="w-11 h-11 rounded-full border-2 border-[var(--color-primary)] bg-white dark:bg-[#181A20] flex items-center justify-center hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                aria-label="Back to home"
+              >
+                <ArrowLeft size={20} className="text-[var(--color-primary)]" strokeWidth={2.5} />
+              </button>
+            </div>
 
-              {/* Filter + Controls Container */}
-              <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center flex-wrap px-0">
-                <div className="w-full md:w-auto">
-                  <FilterDropdown value={filter} onChange={handleFilterChange} />
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<Calendar size={18} />}
-                  onClick={() => setShowCalendarModal(true)}
-                  className="w-full md:w-auto h-[46px] md:h-auto"
-                >
-                  Select Date
-                </Button>
+            {/* Main Container with Border */}
+            <div className="border-[0.95px] border-[#979797] dark:border-[#E0E0E0] rounded-3xl pt-4 pb-4 pl-3 pr-3 md:p-6 md:pb-6 md:mt-5">
+              <div className="flex flex-col gap-6">
 
-                {/* Clear Date Filter Button (if date selected) */}
-                {selectedDate && (
+                {/* Filter + Controls Container */}
+                <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center flex-wrap px-0">
+                  <div className="w-full md:w-auto">
+                    <FilterDropdown value={filter} onChange={handleFilterChange} />
+                  </div>
+
                   <Button
+                    variant="outline"
                     size="sm"
-                    leftIcon={<X size={18} />}
-                    onClick={clearDateFilter}
+                    leftIcon={<Calendar size={18} />}
+                    onClick={() => setShowCalendarModal(true)}
                     className="w-full md:w-auto h-[46px] md:h-auto"
                   >
-                    Clear Date ({selectedDate})
+                    Select Date
                   </Button>
-                )}
-              </div>
 
-              {/* Access Info Modal - for guests and non-premium registered users */}
-              {(!authed || (authed && !isPremiumUser)) && (
-                <div className="bg-[#F0EDFF] dark:bg-[#35383F] rounded-xl p-4 flex flex-col md:flex-row items-center gap-4">
-                  <div className="flex-1">
-                    {!authed ? (
-                      <>
-                        <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
-                          <span className="font-bold text-[#6949FF]">Guest Access:</span> You can play the last 3 days of daily challenges
-                        </p>
-                        <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
-                          Register to unlock 7 days of daily challenges!
-                        </p>
-                      </>
-                    ) : (
-                      <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
-                        <span className="font-bold text-[#6949FF]">Premium Access:</span> Get premium to unlock all past puzzles!
-                      </p>
-                    )}
-                  </div>
-                  
-                  <Link href={!authed ? "/signup" : "/subscription"}>
+                  {/* Clear Date Filter Button (if date selected) */}
+                  {selectedDate && (
                     <Button
-                      size="md"
-                      className="whitespace-nowrap"
+                      size="sm"
+                      leftIcon={<X size={18} />}
+                      onClick={clearDateFilter}
+                      className="w-full md:w-auto h-[46px] md:h-auto"
                     >
-                      {!authed ? "Register Now" : "Get Premium"}
+                      Clear Date ({selectedDate})
                     </Button>
-                  </Link>
+                  )}
                 </div>
-              )}
 
-              {/* Past Puzzle Grid - 1 column mobile, 4 columns desktop */}
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-6 md:gap-7 lg:gap-[30px] pt-4 pb-0 md:px-0 md:py-0">
-                {paginatedPuzzles.map((puzzle) => (
-                  <PuzzleCard
-                    key={puzzle.id}
-                    puzzle={puzzle}
-                    gameIcon={gameIcon}
-                    isLocked={puzzle.status === 'locked'}
-                    isCompleted={completedPuzzles.has(puzzle.id)}
-                    onLockedClick={() => setShowAccessModal(true)}
-                    onPlayClick={setIsLoading}
-                  />
-                ))}
+                {/* Access Info Modal - for guests and non-premium registered users */}
+                {(!authed || (authed && !isPremiumUser)) && (
+                  <div className="bg-[#F0EDFF] dark:bg-[#35383F] rounded-xl p-4 flex flex-col md:flex-row items-center gap-4">
+                    <div className="flex-1">
+                      {!authed ? (
+                        <>
+                          <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                            <span className="font-bold text-[#6949FF]">Guest Access:</span> You can play the last 3 days of daily challenges
+                          </p>
+                          <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                            Register to unlock 7 days of daily challenges!
+                          </p>
+                        </>
+                      ) : (
+                        <p className="font-urbanist text-[14px] md:text-[16px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
+                          <span className="font-bold text-[#6949FF]">Premium Access:</span> Get premium to unlock all past puzzles!
+                        </p>
+                      )}
+                    </div>
+
+                    <Link href={!authed ? "/signup" : "/subscription"}>
+                      <Button
+                        size="md"
+                        className="whitespace-nowrap"
+                      >
+                        {!authed ? "Register Now" : "Get Premium"}
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+
+                {/* Past Puzzle Grid - 1 column mobile, 4 columns desktop */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-6 md:gap-7 lg:gap-[30px] pt-4 pb-0 md:px-0 md:py-0">
+                  {paginatedPuzzles.map((puzzle) => (
+                    <PuzzleCard
+                      key={puzzle.id}
+                      puzzle={puzzle}
+                      gameIcon={gameIcon}
+                      isLocked={puzzle.status === 'locked'}
+                      isCompleted={completedPuzzles.has(puzzle.id)}
+                      onLockedClick={() => setShowAccessModal(true)}
+                      onPlayClick={setIsLoading}
+                    />
+                  ))}
+                </div>
+
+                {/* Empty State */}
+                {filteredPuzzles.length === 0 && (
+                  <div className="text-center py-16">
+                    <p className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD]">
+                      No puzzles match this filter
+                    </p>
+                  </div>
+                )}
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-6 mt-6 md:mt-8">
+                    {/* Left Arrow Button */}
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1F222A] disabled:border-[#BDBDBD] dark:disabled:border-[#616161] disabled:text-[#757575] dark:disabled:text-[#9E9E9E]"
+                      aria-label="Previous Page"
+                    >
+                      <ChevronLeft size={24} strokeWidth={2.5} />
+                    </button>
+
+                    {/* Page Indicator */}
+                    <span className="font-urbanist font-bold text-[16px] text-[#212121] dark:text-[#FAFAFA]">
+                      Page {currentPage} of {totalPages}
+                    </span>
+
+                    {/* Right Arrow Button */}
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1F222A] disabled:border-[#BDBDBD] dark:disabled:border-[#616161] disabled:text-[#757575] dark:disabled:text-[#9E9E9E]"
+                      aria-label="Next Page"
+                    >
+                      <ChevronRight size={24} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+
               </div>
-
-              {/* Empty State */}
-              {filteredPuzzles.length === 0 && (
-                <div className="text-center py-16">
-                  <p className="font-urbanist text-[16px] text-[#757575] dark:text-[#BDBDBD]">
-                    No puzzles match this filter
-                  </p>
-                </div>
-              )}
-
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-6 mt-6 md:mt-8">
-                  {/* Left Arrow Button */}
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1F222A] disabled:border-[#BDBDBD] dark:disabled:border-[#616161] disabled:text-[#757575] dark:disabled:text-[#9E9E9E]"
-                    aria-label="Previous Page"
-                  >
-                    <ChevronLeft size={24} strokeWidth={2.5} />
-                  </button>
-
-                  {/* Page Indicator */}
-                  <span className="font-urbanist font-bold text-[16px] text-[#212121] dark:text-[#FAFAFA]">
-                    Page {currentPage} of {totalPages}
-                  </span>
-
-                  {/* Right Arrow Button */}
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1F222A] disabled:border-[#BDBDBD] dark:disabled:border-[#616161] disabled:text-[#757575] dark:disabled:text-[#9E9E9E]"
-                    aria-label="Next Page"
-                  >
-                    <ChevronRight size={24} strokeWidth={2.5} />
-                  </button>
-                </div>
-              )}
-
             </div>
-          </div>
 
-        </div>
-      </section>
+          </div>
+        </section>
       </AppLayout>
 
       {/* Lock Click Modal */}
-      <AccessModal 
-        isOpen={showAccessModal} 
+      <AccessModal
+        isOpen={showAccessModal}
         onClose={() => setShowAccessModal(false)}
         gameIcon={gameIcon}
         authed={authed}
@@ -421,10 +421,10 @@ interface PuzzleCardProps {
 
 function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, onPlayClick }: PuzzleCardProps) {
   const router = useRouter()
-  
+
   // Determine actual status - completed overrides other statuses
   const actualStatus = isCompleted && !isLocked ? 'completed' : puzzle.status
-  
+
   const statusColors = {
     'completed': 'text-[#22C55E]',
     'in-progress': 'text-[#FF9800]',
@@ -441,7 +441,7 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
 
   if (isLocked) {
     return (
-      <div 
+      <div
         onClick={onLockedClick}
         className="relative bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 opacity-60"
       >
@@ -507,7 +507,7 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
           >
             <span>Play Puzzle</span>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="transform group-hover:translate-x-1 transition-transform">
-              <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -517,12 +517,12 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    // Route directly to daily challenge page with date in URL
-    router.push(`/daily-challenge/${puzzle.gameId}?date=${puzzle.dateString}`)
+    // Route directly to daily challenge page with date and difficulty in URL
+    router.push(`/daily-challenge/${puzzle.gameId}?date=${puzzle.dateString}&difficulty=${puzzle.difficulty}`)
   }
 
   return (
-    <div 
+    <div
       onClick={handleCardClick}
       className={`relative bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-4 md:p-5 flex flex-col gap-2.5 md:gap-4 hover:border-[#6949FF] transition-all duration-300 group cursor-pointer`}
     >
@@ -532,7 +532,7 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
           <Check size={16} strokeWidth={3} />
         </div>
       )}
-      
+
       {/* Top Icon */}
       <div className="flex justify-center">
         <div className="w-14 h-14 md:w-20 md:h-20 bg-[#F0EDFF] dark:bg-[#35383F] rounded-lg md:rounded-xl flex items-center justify-center group-hover:shadow-md group-hover:shadow-purple-500/20 transition-shadow duration-300">
@@ -596,7 +596,7 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
         >
           <span>Play Puzzle</span>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="transform group-hover:translate-x-1 transition-transform">
-            <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       )}

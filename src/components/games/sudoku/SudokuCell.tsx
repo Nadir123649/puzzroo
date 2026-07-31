@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { SudokuCell as SudokuCellType, Position } from '@shared/lib/sudoku/types'
 
 interface SudokuCellProps {
@@ -12,7 +13,7 @@ interface SudokuCellProps {
   onClick: (position: Position) => void
 }
 
-export function SudokuCell({
+function SudokuCellComponent({
   cell,
   position,
   isSelected,
@@ -102,3 +103,16 @@ export function SudokuCell({
     </button>
   )
 }
+
+export const SudokuCell = React.memo(SudokuCellComponent, (prev, next) => {
+  return prev.position.row === next.position.row
+    && prev.position.col === next.position.col
+    && prev.isSelected === next.isSelected
+    && prev.isHighlighted === next.isHighlighted
+    && prev.hasSelectedNumberHighlight === next.hasSelectedNumberHighlight
+    && prev.isMobile === next.isMobile
+    && prev.cell.value === next.cell.value
+    && prev.cell.fixed === next.cell.fixed
+    && prev.cell.isError === next.cell.isError
+    && prev.cell.isCorrect === next.cell.isCorrect
+})

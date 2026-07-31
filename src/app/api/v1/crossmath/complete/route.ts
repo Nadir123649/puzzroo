@@ -2,13 +2,14 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB } from '@/lib/server/db';
 import { successResponse, errorResponse } from '@/lib/server/utils/apiResponse';
-import { auth } from '@/lib/server/middleware/auth';
 import { rateLimit } from '@/lib/server/utils/http';
 import { validate } from '@/lib/server/middleware/validate';
 import { sessionService } from '@/lib/server/puzzles/crossmath/services/SessionService';
 import { statisticsService } from '@/lib/server/puzzles/crossmath/services/StatisticsService';
-import { completeSessionSchema } from '@/lib/server/puzzles/crossmath/validators';
 import DailyChallenge from '@/lib/server/models/DailyChallenge';
+import { completionBus } from '@/lib/server/games/completion';
+import { ensureGameSubscriptions } from '@/lib/server/games/subscriptions';
+import { resolveActor } from '../_actor';
 
 export async function POST(request: NextRequest) {
   if (!rateLimit(request, 'crossmath-complete', 30)) {
@@ -30,13 +31,14 @@ export async function POST(request: NextRequest) {
   const { sessionId, grid, elapsedSeconds, hintsUsed, mistakes, moves } = parsed.data!;
 
   await connectDB();
-  const userResult = await auth(request);
-  if ('error' in userResult) return userResult.error;
+
+  const actor = await resolveActor(request);
+  if (!actor) return errorResponse(401, 'auth_required', 'Authentication or guest ID required');
 
   try {
     const result = await sessionService.completeSession(
       sessionId,
-      userResult.user.id,
+      actor,
       grid || {},
       elapsedSeconds || 0,
       hintsUsed || 0,
@@ -44,9 +46,9 @@ export async function POST(request: NextRequest) {
       moves || 0
     );
 
-    if (result.isCompleted && result.result) {
+    if (result.isCompleted && result.result && actor.type === 'user') {
       statisticsService.updateOnSessionComplete(
-        userResult.user.id,
+        actor.id,
         result.result.puzzleId,
         result.result.difficulty,
         result.result.elapsedTime,
@@ -55,12 +57,28 @@ export async function POST(request: NextRequest) {
         result.result.accuracy
       ).catch(err => console.error('[crossmath] stats update failed', err));
 
+      ensureGameSubscriptions()
+      completionBus.emit({
+        playerId: actor.id,
+        sessionId,
+        gameType: "crossmath",
+        puzzleId: result.result.puzzleId,
+        difficulty: result.result.difficulty,
+        score: result.result.score,
+        elapsedTime: result.result.elapsedTime,
+        mistakes: result.result.mistakes,
+        hintsUsed: result.result.hintsUsed,
+        completedAt: new Date(),
+        isReplay: false,
+        isGuest: false,
+      })
+
       const today = new Date().toISOString().split('T')[0];
       await DailyChallenge.findOneAndUpdate(
-        { date: today, userId: userResult.user.id },
+        { date: today, userId: actor.id },
         {
           date: today,
-          userId: userResult.user.id,
+          userId: actor.id,
           puzzleId: result.result.puzzleId,
           difficulty: result.result.difficulty,
           sessionId,
@@ -73,8 +91,6 @@ export async function POST(request: NextRequest) {
         },
         { upsert: true, new: true }
       );
-
-      return successResponse(result);
     }
 
     return successResponse(result);

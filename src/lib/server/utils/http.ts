@@ -1,5 +1,19 @@
 import { NextRequest } from "next/server";
 
+const MAX_BODY_SIZE = parseInt(process.env.MAX_BODY_SIZE || "524288", 10); // 512KB default
+
+/**
+ * Reject requests whose Content-Length exceeds the configured limit.
+ * Returns null if the request is OK, or an error message string to reject.
+ */
+export function validateBodySize(request: NextRequest): string | null {
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && parseInt(contentLength, 10) > MAX_BODY_SIZE) {
+    return `Request body too large. Maximum is ${Math.round(MAX_BODY_SIZE / 1024)}KB.`;
+  }
+  return null;
+}
+
 /** Build Cache-Control headers for a given max-age in seconds. */
 export function cacheHeaders(seconds: number): Record<string, string> {
   return {

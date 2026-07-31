@@ -3,28 +3,26 @@ import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
 import { validate } from "@/lib/server/middleware/validate";
 import { completeSessionSchema } from "@/lib/server/validators/sudokuValidator";
 import { completeSession, getSession } from "@/lib/server/services/sudoku/sessionService";
-import { verifyCompletion, calculateScore } from "@/lib/server/services/sudoku/verificationService";
-import {
-  updateUserStatsOnComplete,
-  updatePuzzleStatsOnComplete,
-} from "@/lib/server/services/sudoku/statisticsService";
+import { verifyCompletion } from "@/lib/server/services/sudoku/verificationService";
 import SudokuPuzzle from "@/lib/server/models/SudokuPuzzle";
 import { connectDB } from "@/lib/server/db";
 import { rateLimit } from "@/lib/server/utils/http";
 import { withAuth } from "../../../route-helpers";
+import { completionBus } from "@/lib/server/games/completion";
+import { ensureGameSubscriptions } from "@/lib/server/games/subscriptions";
 
-export const POST = withAuth(async (req: NextRequest, user, params) => {
+export const POST = withAuth(async (req: NextRequest, actor, params) => {
   if (!rateLimit(req, "sudoku-complete", 30)) {
     return errorResponse(429, "rate_limited", "Too many requests");
   }
 
-  let body: any = {};
+  let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch {}
 
   const val = validate(completeSessionSchema, body);
   if (val.error) return val.error;
 
-  const session = await getSession(params.id, user.id);
+  const session = await getSession(params.id, actor);
   if (session.status !== "playing") throw new Error("session_not_active");
 
   await connectDB();
@@ -38,25 +36,32 @@ export const POST = withAuth(async (req: NextRequest, user, params) => {
 
   const hintsUsed = val.data!.hintsUsed ?? session.hintsUsed ?? 0;
   const mistakes = val.data!.mistakes ?? session.mistakes ?? 0;
-  const score = calculateScore(
-    puzzle.difficulty as any,
-    val.data!.elapsedTime,
-    hintsUsed,
-    mistakes
-  );
   const moves = val.data!.moves ?? session.moves ?? 0;
 
   const updated = await completeSession(
-    params.id, user.id, val.data!.board, val.data!.elapsedTime,
-    hintsUsed, mistakes, moves, score
+    params.id, actor, val.data!.board, val.data!.elapsedTime,
+    hintsUsed, mistakes, moves
   );
 
-  updateUserStatsOnComplete(params.id, user.id).catch(() => {});
-  updatePuzzleStatsOnComplete(params.id).catch(() => {});
+  ensureGameSubscriptions();
+  completionBus.emit({
+    playerId: actor.id,
+    sessionId: params.id,
+    gameType: "sudoku",
+    puzzleId: session.puzzleId,
+    difficulty: puzzle.difficulty,
+    score: updated.score,
+    elapsedTime: updated.elapsedTime,
+    mistakes,
+    hintsUsed,
+    completedAt: new Date(),
+    isReplay: session.isReplay || false,
+    isGuest: actor.type === "guest",
+  });
 
   return successResponse({
     ...updated,
-    score,
+    score: updated.score,
     moves,
     hintsUsed,
     mistakes,

@@ -6,7 +6,7 @@ import { saveProgress } from "@/lib/server/services/sudoku/sessionService";
 import { rateLimit } from "@/lib/server/utils/http";
 import { withAuth } from "../../../route-helpers";
 
-const handler = withAuth(async (req: NextRequest, user, params) => {
+const handler = withAuth(async (req: NextRequest, actor, params) => {
   if (!rateLimit(req, "sudoku-save", 60)) {
     return errorResponse(429, "rate_limited", "Too many requests");
   }
@@ -17,7 +17,7 @@ const handler = withAuth(async (req: NextRequest, user, params) => {
   const val = validate(saveProgressSchema, body);
   if (val.error) return val.error;
 
-  const session = await saveProgress(params.id, user.id, val.data!);
+  const session = await saveProgress(params.id, actor, val.data!);
   return successResponse(session);
 });
 

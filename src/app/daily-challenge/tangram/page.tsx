@@ -26,7 +26,7 @@ function TangramDailyChallengeContent() {
     setMounted(true)
     markGameAsPlayed('tangram')
 
-    api('/api/v1/tangram/daily/completion').then(res => {
+    api('/api/v1/games/tangram/daily/completion').then(res => {
       if (res.success) {
         const payload = res.payload as any
         if (payload?.completed) {

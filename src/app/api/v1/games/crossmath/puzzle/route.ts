@@ -17,11 +17,14 @@ export async function GET(request: NextRequest) {
 
   await connectDB()
 
-  // Auth-optional: use user ID if available, otherwise anonymous
+  // Auth-optional: use user ID if available, then guest ID, otherwise anonymous
   let userId = "anonymous"
   const authResult = await auth(request)
   if (!("error" in authResult)) {
     userId = authResult.user.id
+  } else {
+    const guestId = request.headers.get("x-guest-id")
+    if (guestId) userId = guestId
   }
 
   try {

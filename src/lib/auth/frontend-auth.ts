@@ -488,6 +488,29 @@ export async function fetchBillingHistory(): Promise<any> {
   return res.payload;
 }
 
+export function getGuestId(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("puzzroo_guest_id");
+}
+
+export function ensureGuestId(): string {
+  let id = getGuestId()
+  if (!id) {
+    id = crypto.randomUUID()
+    try {
+      localStorage.setItem("puzzroo_guest_id", id)
+    } catch {}
+  }
+  return id
+}
+
+export async function signInGuest(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (getAccessToken()) return true;
+  ensureGuestId()
+  return true
+}
+
 export async function fetchGameStats(): Promise<any> {
   const res = await api("/api/v1/games/stats");
   if (!res.success) return null;
@@ -558,6 +581,18 @@ function mapUser(u: any): User {
     linkedProviders: u.linkedProviders || [],
     hasPassword: u.hasPassword,
     isVerified: u.isVerified,
+  };
+}
+
+function mapUserForStorage(u: any): Partial<User> {
+  return {
+    id: u.id,
+    publicId: u.publicId,
+    name: u.name || u.username,
+    username: u.username,
+    usernameSet: u.usernameSet,
+    role: u.role || "free",
+    avatar: u.avatar,
   };
 }
 

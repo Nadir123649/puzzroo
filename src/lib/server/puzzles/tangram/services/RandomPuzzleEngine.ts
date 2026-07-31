@@ -25,30 +25,27 @@ export class RandomPuzzleEngine {
 
     const excludeIds: string[] = []
 
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const distinctPromises: Promise<any[]>[] = []
     if (excludeCompleted) {
-      const completed = await TangramPlaySession.find({
-        userId,
-        status: "completed",
-      }).distinct("puzzleId")
-      excludeIds.push(...completed.map((id: any) => id.toString()))
+      distinctPromises.push(
+        TangramPlaySession.find({ userId, status: "completed" }).distinct("puzzleId")
+      )
     }
-
     if (excludeActive) {
-      const active = await TangramPlaySession.find({
-        userId,
-        status: { $in: ["playing", "paused"] },
-      }).distinct("puzzleId")
-      excludeIds.push(...active.map((id: any) => id.toString()))
+      distinctPromises.push(
+        TangramPlaySession.find({ userId, status: { $in: ["playing", "paused"] } }).distinct("puzzleId")
+      )
+    }
+    if (excludeRecentAbandons) {
+      distinctPromises.push(
+        TangramPlaySession.find({ userId, status: "abandoned", lastSaveAt: { $gte: twentyFourHoursAgo } }).distinct("puzzleId")
+      )
     }
 
-    if (excludeRecentAbandons) {
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-      const recentAbandons = await TangramPlaySession.find({
-        userId,
-        status: "abandoned",
-        lastSaveAt: { $gte: twentyFourHoursAgo },
-      }).distinct("puzzleId")
-      excludeIds.push(...recentAbandons.map((id: any) => id.toString()))
+    const distinctResults = await Promise.all(distinctPromises)
+    for (const ids of distinctResults) {
+      for (const id of ids) excludeIds.push(id.toString())
     }
 
     if (excludeIds.length > 0) {

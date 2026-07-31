@@ -6,12 +6,16 @@ export const startSessionSchema = z.object({
   puzzleId: z.string().min(1, "puzzleId is required"),
 })
 
+const timerFields = {
+  elapsedTime: z.number().min(0).max(86400),
+  hintsUsed: z.number().min(0).max(1000),
+  mistakes: z.number().min(0).max(10000),
+  moves: z.number().min(0).max(100000),
+}
+
 export const saveProgressSchema = z.object({
   grid: z.record(z.string(), z.number()),
-  elapsedTime: z.number().min(0),
-  hintsUsed: z.number().min(0),
-  mistakes: z.number().min(0),
-  moves: z.number().min(0),
+  ...timerFields,
 })
 
 export const verifyGridSchema = z.object({
@@ -19,10 +23,7 @@ export const verifyGridSchema = z.object({
 })
 
 export const completeSessionSchema = verifyGridSchema.extend({
-  elapsedTime: z.number().min(0),
-  hintsUsed: z.number().min(0),
-  mistakes: z.number().min(0),
-  moves: z.number().min(0),
+  ...timerFields,
 })
 
 export const sessionListQuerySchema = z.object({
@@ -51,6 +52,11 @@ export const sessionHistoryQuerySchema = z.object({
 
 export const abandonSessionSchema = z.object({
   reason: z.string().optional(),
+})
+
+export const startDailySessionSchema = z.object({
+  puzzleId: z.string().min(1, "puzzleId is required"),
+  dailyChallengeId: z.string().min(1, "dailyChallengeId is required"),
 })
 
 export const replaySessionSchema = z.object({

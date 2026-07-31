@@ -15,13 +15,12 @@ export const POST = withAuth(async (req, user, params) => {
 
   return successResponse({
     isComplete: result.isComplete,
+    valid: result.valid,
     accuracy: result.accuracy,
-    totalCellsRequired: result.totalCellsRequired,
-    correctCells: result.correctCells,
-    incorrectCells: result.incorrectCells,
-    mistakes: result.mistakes,
-    pieces: result.pieces,
-    rowValidation: result.rowValidation,
-    columnValidation: result.columnValidation,
+    piecesCorrect: result.piecesCorrect,
+    totalPieces: result.totalPieces,
+    pieceResults: result.pieceResults,
+    errors: result.errors,
+    coverage: result.coverage,
   })
 })

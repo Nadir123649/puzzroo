@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { CellState, CellPosition } from '@shared/lib/nonogram/types'
 import { shouldHaveThickBorder } from '@shared/lib/nonogram/helpers'
 import { useCallback, useState, useEffect } from 'react'
@@ -10,7 +11,7 @@ interface NonogramCellProps {
   position: CellPosition
   isSelected: boolean
   isPreview?: boolean
-  previewMode?: 'fill' | 'mark' // Which mode is active during preview
+  previewMode?: 'fill' | 'mark'
   isMobile?: boolean
   onClick: (position: CellPosition) => void
   onDragStart?: (position: CellPosition) => void
@@ -18,7 +19,7 @@ interface NonogramCellProps {
   isDragging?: boolean
 }
 
-export function NonogramCell({
+export const NonogramCell = React.memo(function NonogramCellComponent({
   state,
   position,
   isSelected,
@@ -175,4 +176,4 @@ export function NonogramCell({
       )}
     </button>
   )
-}
+})

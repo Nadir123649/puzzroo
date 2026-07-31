@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/server/db';
 import { successResponse, errorResponse } from '@/lib/server/utils/apiResponse';
-import { auth } from '@/lib/server/middleware/auth';
 import { rateLimit } from '@/lib/server/utils/http';
 import { sessionService } from '@/lib/server/puzzles/crossmath/services/SessionService';
+import { resolveActor } from '../_actor';
 
 export async function GET(request: NextRequest) {
   if (!rateLimit(request, 'crossmath-history', 30)) {
@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
   const status = params.status as string | undefined;
 
   await connectDB();
-  const userResult = await auth(request);
-  if ('error' in userResult) return userResult.error;
+  const actor = await resolveActor(request);
+  if (!actor) return errorResponse(401, 'auth_required', 'Authentication or guest ID required');
 
   try {
-    const result = await sessionService.getSessionHistory(userResult.user.id, {
+    const result = await sessionService.getSessionHistory(actor, {
       limit,
       difficulty,
       status,

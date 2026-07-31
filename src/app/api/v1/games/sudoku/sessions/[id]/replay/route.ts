@@ -4,12 +4,12 @@ import { replayPuzzle, getSession } from "@/lib/server/services/sudoku/sessionSe
 import { rateLimit } from "@/lib/server/utils/http";
 import { withAuth } from "../../../route-helpers";
 
-export const POST = withAuth(async (req: NextRequest, user, params) => {
+export const POST = withAuth(async (req: NextRequest, actor, params) => {
   if (!rateLimit(req, "sudoku-replay", 15)) {
     return errorResponse(429, "rate_limited", "Too many requests");
   }
 
-  const existingSession = await getSession(params.id, user.id);
-  const session = await replayPuzzle(user.id, existingSession.puzzleId);
-  return successResponse(session, 201);
+  const existingSession = await getSession(params.id, actor);
+  const result = await replayPuzzle(actor, existingSession.puzzleId);
+  return successResponse(result, 201);
 });

@@ -51,7 +51,7 @@ function getTodayDateParam(): string {
 }
 
 import { gameApi } from '@/lib/api/gameApi'
-import { getAccessToken } from '@/lib/auth/frontend-auth'
+import { getAccessToken, signInGuest } from '@/lib/auth/frontend-auth'
 
 // Module-level guard to cancel StrictMode double-mount in dev
 let _nonogramMountGuard = false
@@ -150,6 +150,7 @@ export function useNonogram(initialPuzzleId?: string) {
   const [maxHints, setMaxHints] = useState(5)
   const [errorCell, setErrorCell] = useState<CellPosition | null>(null)
   const [mistakeCount, setMistakeCount] = useState(0)
+  const [moveCount, setMoveCount] = useState(0)
 
   // Hovered Cell and Mouse coordinates for tooltip
   const [hoveredCell, setHoveredCell] = useState<CellPosition | null>(null)
@@ -186,7 +187,10 @@ export function useNonogram(initialPuzzleId?: string) {
     if (sessionCreatedRef.current) return null
     completionCalledRef.current = false
     if (typeof window === 'undefined') return null
-    if (!getAccessToken()) return null
+    if (!getAccessToken()) {
+      await signInGuest()
+      if (!getAccessToken()) return null
+    }
     try {
       const res = await gameApi.createSession('nonogram', puzzleId, diff)
       if (res && (res.sessionId || res._id || res.id)) {
@@ -198,30 +202,32 @@ export function useNonogram(initialPuzzleId?: string) {
     return null
   }
 
-  function saveMoveNow(g: CellState[][], elapsed: number, hints: number, mists: number) {
+  function saveMoveNow(g: CellState[][], elapsed: number, hints: number, mists: number, moves: number) {
     if (!sessionIdRef.current) return
     abortRef.current?.abort()
     const ac = new AbortController()
     abortRef.current = ac
     gameApi.saveMove('nonogram', sessionIdRef.current, {
       grid: g,
-      elapsedSeconds: elapsed,
+      elapsedTime: elapsed,
       hintsUsed: hints,
       mistakes: mists,
+      moves,
     }, ac.signal).catch(err => {
       if (err?.name !== 'AbortError') console.error('[nonogram] save move failed', err)
     })
   }
 
-  async function completePuzzle(g: CellState[][], elapsed: number, hints: number, mists: number) {
+  async function completePuzzle(g: CellState[][], elapsed: number, hints: number, mists: number, moves: number) {
     if (!sessionIdRef.current || completionCalledRef.current) return
     completionCalledRef.current = true
     try {
       await gameApi.completeSession('nonogram', sessionIdRef.current, {
         grid: g,
-        elapsedSeconds: elapsed,
+        elapsedTime: elapsed,
         hintsUsed: hints,
         mistakes: mists,
+        moves,
       })
     } catch { /* ignore */ }
   }
@@ -233,7 +239,9 @@ export function useNonogram(initialPuzzleId?: string) {
     const key = JSON.stringify({ g: grid, h: hintsUsed, m: mistakeCount })
     if (key === lastMoveKeyRef.current) return
     lastMoveKeyRef.current = key
-    saveMoveNow(grid, elapsedSeconds, hintsUsed, mistakeCount)
+    const initialTime = currentPuzzle?.estimatedTime || (difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300)
+    const elapsed = Math.max(0, initialTime - elapsedSeconds)
+    saveMoveNow(grid, elapsed, hintsUsed, mistakeCount, moveCount)
   }, [grid, hintsUsed, mistakeCount, elapsedSeconds, gameStatus])
 
   /**
@@ -249,6 +257,7 @@ export function useNonogram(initialPuzzleId?: string) {
       setCurrentPuzzle(puzzle)
       setGrid(createEmptyGrid(puzzle.size))
       setMistakeCount(0)
+      setMoveCount(0)
       setSelectionHistory([])
 
       // Set initial countdown time based on estimatedTime
@@ -312,6 +321,7 @@ export function useNonogram(initialPuzzleId?: string) {
         setCurrentPuzzle(puzzle)
         setGrid(saved.grid)
         setMistakeCount(saved.mistakeCount)
+        setMoveCount(saved.moveCount || 0)
         setElapsedSeconds(saved.elapsedSeconds)
         setGameStatus('playing') // always resume as playing
         setHintsUsed(saved.hintsUsed)
@@ -416,6 +426,7 @@ export function useNonogram(initialPuzzleId?: string) {
         elapsedSeconds,
         hintsUsed,
         mistakeCount,
+        moveCount,
         timestamp: Date.now(),
       })
     }
@@ -459,18 +470,19 @@ export function useNonogram(initialPuzzleId?: string) {
 
       // Also report completion to the API when logged in (fire-and-forget)
       if (getAccessToken()) {
+        const initialTime = currentPuzzle.estimatedTime || (difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300)
+        const elapsed = Math.max(0, initialTime - elapsedSeconds)
         void gameApi.complete('nonogram', {
           puzzleId: currentPuzzle.id,
           difficulty: currentPuzzle.difficulty as 'easy' | 'medium' | 'hard' | 'expert',
-          score: undefined,
-          time: elapsedSeconds,
+          time: elapsed,
           hintsUsed: hintsUsed,
           mistakes: mistakeCount,
-          moves: undefined,
+          moves: moveCount,
         }).catch(() => {
           // best-effort; ignore failures
         })
-        void completePuzzle(grid, elapsedSeconds, hintsUsed, mistakeCount)
+        void completePuzzle(grid, elapsed, hintsUsed, mistakeCount, moveCount)
       }
 
       clearGameState()
@@ -563,6 +575,7 @@ export function useNonogram(initialPuzzleId?: string) {
           return nextMistakes
         })
         // Show error feedback permanently (don't revert)
+        setMoveCount((prev) => prev + 1)
         setGrid((prevGrid) => {
           const newGrid = prevGrid.map((row) => [...row])
           newGrid[position.row][position.col] = 'error'
@@ -572,6 +585,7 @@ export function useNonogram(initialPuzzleId?: string) {
       }
     }
 
+    setMoveCount((prev) => prev + 1)
     setGrid((prevGrid) => {
       const newGrid = prevGrid.map((row) => [...row])
       newGrid[position.row][position.col] = newState
@@ -741,6 +755,7 @@ export function useNonogram(initialPuzzleId?: string) {
     const previewCells = Array.from(dragPreviewCells)
 
     if (previewCells.length > 0) {
+      let changedCount = 0
       setGrid((prevGrid) => {
         const newGrid = prevGrid.map((row) => [...row])
         let newMistakes = mistakeCount
@@ -771,6 +786,7 @@ export function useNonogram(initialPuzzleId?: string) {
           }
 
           if (cellNewState === currentState) continue
+          changedCount++
 
           // Validation logic for fill mode
           if (action === 'fill' && validationMode === 'assisted' && currentState !== 'error') {
@@ -798,6 +814,9 @@ export function useNonogram(initialPuzzleId?: string) {
 
         return newGrid
       })
+      if (changedCount > 0) {
+        setMoveCount((prev) => prev + changedCount)
+      }
     }
 
     setIsDragging(false)
@@ -821,6 +840,7 @@ export function useNonogram(initialPuzzleId?: string) {
       setElapsedSeconds(initialSeconds)
       setHintsUsed(0)
       setMistakeCount(0)
+      setMoveCount(0)
       setGameStatus('playing')
       setRowValidation(Array(currentPuzzle.size).fill('incomplete'))
       setColumnValidation(Array(currentPuzzle.size).fill('incomplete'))

@@ -79,6 +79,8 @@ export interface SessionResponse {
   pausedAt: string | null;
   lastSavedAt: string;
   isReplay?: boolean;
+  gameType: string;
+  dailyChallengeId?: string | null;
 }
 
 export interface SudokuPuzzleInfo {
@@ -91,4 +93,9 @@ export interface SudokuPuzzleInfo {
 export interface ContinuePlayingResponse {
   hasActiveSession: boolean;
   session?: SessionResponse & { puzzle: SudokuPuzzleInfo };
+}
+
+export interface ReplayResponse {
+  session: SessionResponse;
+  puzzle: SudokuPuzzleInfo;
 }

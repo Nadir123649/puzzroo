@@ -5,7 +5,7 @@ import { saveProgressSchema } from "@/lib/server/puzzles/nonogram/validators"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { rateLimit } from "@/lib/server/utils/http"
 
-export const PUT = withAuth(async (req, user, params) => {
+async function saveHandler(req: NextRequest, user: { id: string; role: string }, params: { id: string }) {
   if (!rateLimit(req, "nonogram-save", 60)) {
     return errorResponse(429, "rate_limited", "Too many requests")
   }
@@ -21,4 +21,8 @@ export const PUT = withAuth(async (req, user, params) => {
   const { grid, elapsedTime, hintsUsed, mistakes, moves } = val.data
   const result = await sessionService.saveProgress(params.id, user.id, grid, elapsedTime, hintsUsed, mistakes, moves)
   return successResponse(result)
-})
+}
+
+const wrapped = withAuth(saveHandler)
+export const PUT = wrapped
+export const POST = wrapped

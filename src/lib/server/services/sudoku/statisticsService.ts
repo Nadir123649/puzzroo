@@ -2,8 +2,8 @@ import { connectDB } from "@/lib/server/db";
 import PlaySession from "@/lib/server/models/sudoku/PlaySession";
 import UserStatistics from "@/lib/server/models/sudoku/UserStatistics";
 import PuzzleStatistics from "@/lib/server/models/sudoku/PuzzleStatistics";
-import DailyChallenge from "@/lib/server/models/sudoku/DailyChallenge";
 import type { Difficulty, UserStatsResponse } from "./types";
+import mongoose from "mongoose";
 
 function computeStreaks(dates: Date[]): { current: number; longest: number } {
   if (dates.length === 0) return { current: 0, longest: 0 };
@@ -146,22 +146,17 @@ export async function getUserStats(userId: string): Promise<UserStatsResponse | 
 
 export async function updateUserStatsOnComplete(sessionId: string, userId: string) {
   await connectDB();
-  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
-  if (!session) return;
 
-  const stats = await UserStatistics.findOne({ userId });
-  const data = {
-    gamesPlayed: 1,
-    gamesCompleted: 1,
-    totalPlayTime: session.elapsedTime || 0,
-    totalScore: session.score || 0,
-    totalHintsUsed: session.hintsUsed || 0,
-    totalMistakes: session.mistakes || 0,
-    lastPlayedAt: new Date(),
-  };
+  const session = await PlaySession.findById(sessionId).lean();
+  if (!session) return;
+  if (!session.userId) return;
+
+  const [stats, allSessions] = await Promise.all([
+    UserStatistics.findOne({ userId }),
+    PlaySession.find({ userId }).lean(),
+  ]);
 
   if (!stats) {
-    const allSessions = await PlaySession.find({ userId }).lean();
     const fav = findFavoriteDifficulty(allSessions);
 
     await UserStatistics.create({
@@ -169,24 +164,24 @@ export async function updateUserStatsOnComplete(sessionId: string, userId: strin
       gamesPlayed: allSessions.length,
       gamesCompleted: allSessions.filter(s => s.status === "completed").length,
       gamesAbandoned: allSessions.filter(s => s.status === "abandoned").length,
-      totalPlayTime: data.totalPlayTime,
-      averageSolveTime: data.totalPlayTime,
-      totalScore: data.totalScore,
-      highestScore: data.totalScore,
-      totalHintsUsed: data.totalHintsUsed,
-      totalMistakes: data.totalMistakes,
+      totalPlayTime: session.elapsedTime || 0,
+      averageSolveTime: session.elapsedTime || 0,
+      totalScore: session.score || 0,
+      highestScore: session.score || 0,
+      totalHintsUsed: session.hintsUsed || 0,
+      totalMistakes: session.mistakes || 0,
       favoriteDifficulty: fav,
-      lastPlayedAt: data.lastPlayedAt,
+      lastPlayedAt: new Date(),
     });
     return;
   }
 
-  stats.gamesPlayed += data.gamesPlayed;
-  stats.gamesCompleted += data.gamesCompleted;
-  stats.totalPlayTime += data.totalPlayTime;
-  stats.totalScore += data.totalScore;
-  stats.totalHintsUsed += data.totalHintsUsed;
-  stats.totalMistakes += data.totalMistakes;
+  stats.gamesPlayed += 1;
+  stats.gamesCompleted += 1;
+  stats.totalPlayTime += session.elapsedTime || 0;
+  stats.totalScore += session.score || 0;
+  stats.totalHintsUsed += session.hintsUsed || 0;
+  stats.totalMistakes += session.mistakes || 0;
 
   if ((session.score || 0) > stats.highestScore) {
     stats.highestScore = session.score || 0;
@@ -200,24 +195,19 @@ export async function updateUserStatsOnComplete(sessionId: string, userId: strin
     };
   }
 
-  const completed = await PlaySession.find({ userId, status: "completed" })
-    .select("completedAt").lean();
+  const completed = allSessions.filter(s => s.status === "completed");
   const completedDates = completed
     .filter(s => s.completedAt)
     .map(s => new Date(s.completedAt!));
   const streaks = computeStreaks(completedDates);
   stats.currentStreak = streaks.current;
   stats.longestStreak = Math.max(streaks.longest, stats.longestStreak);
-
-  const allSessions = await PlaySession.find({ userId }).lean();
   stats.favoriteDifficulty = findFavoriteDifficulty(allSessions);
   stats.lastPlayedAt = new Date();
 
-  const completedTime = completed
-    .filter(s => s.status === "completed")
-    .reduce((sum, s) => sum + (s.elapsedTime || 0), 0);
-  stats.averageSolveTime = stats.gamesCompleted > 0
-    ? Math.round(completedTime / stats.gamesCompleted)
+  const completedTime = completed.reduce((sum, s) => sum + (s.elapsedTime || 0), 0);
+  stats.averageSolveTime = completed.length > 0
+    ? Math.round(completedTime / completed.length)
     : 0;
 
   await stats.save();
@@ -225,8 +215,9 @@ export async function updateUserStatsOnComplete(sessionId: string, userId: strin
 
 export async function updateUserStatsOnAbandon(sessionId: string, userId: string) {
   await connectDB();
-  const session = await PlaySession.findOne({ _id: sessionId, userId }).lean();
+  const session = await PlaySession.findById(sessionId).lean();
   if (!session) return;
+  if (!session.userId) return;
 
   const stats = await UserStatistics.findOne({ userId });
   if (stats) {
@@ -247,6 +238,7 @@ export async function updatePuzzleStatsOnComplete(sessionId: string) {
   await connectDB();
   const session = await PlaySession.findById(sessionId).lean();
   if (!session) return;
+  if (!session.userId) return;
 
   let stats = await PuzzleStatistics.findOne({ puzzleId: session.puzzleId });
 

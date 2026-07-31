@@ -43,34 +43,36 @@ export async function getPuzzlesByDifficulty(difficulty: Difficulty, cursor?: st
 export async function getRandomPuzzle(
   userId?: string,
   difficulty?: Difficulty,
-  excludeIds?: string[]
+  excludeIds?: string[],
+  guestId?: string
 ) {
   await connectDB();
 
   const diff = difficulty || "medium";
   const exclusions = new Set(excludeIds || []);
+  const ownerField = guestId ? "guestId" : (userId ? "userId" : undefined);
 
-  if (userId) {
-    const [activeSessions, completedSessions] = await Promise.all([
+  if (ownerField) {
+    const ownerValue = guestId || userId!;
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [activeSessions, completedSessions, recentAbandoned] = await Promise.all([
       PlaySession.find({
-        userId,
+        [ownerField]: ownerValue,
         status: { $in: ["playing", "paused"] },
       }).select("puzzleId").lean(),
       PlaySession.find({
-        userId,
+        [ownerField]: ownerValue,
         status: "completed",
+      }).select("puzzleId").lean(),
+      PlaySession.find({
+        [ownerField]: ownerValue,
+        status: "abandoned",
+        updatedAt: { $gte: twentyFourHoursAgo },
       }).select("puzzleId").lean(),
     ]);
 
     for (const s of activeSessions) exclusions.add(String(s.puzzleId));
     for (const s of completedSessions) exclusions.add(String(s.puzzleId));
-
-    const recentAbandoned = await PlaySession.find({
-      userId,
-      status: "abandoned",
-      updatedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-    }).select("puzzleId").lean();
-
     for (const s of recentAbandoned) exclusions.add(String(s.puzzleId));
   }
 

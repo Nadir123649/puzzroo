@@ -74,6 +74,7 @@ const nextConfig = {
                     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://connect.facebook.net https://*.stripe.com",
                     "style-src 'self' 'unsafe-inline'",
                     'upgrade-insecure-requests',
+                    'report-uri /api/v1/system/csp-report',
                   ].join('; '),
                 },
               ]

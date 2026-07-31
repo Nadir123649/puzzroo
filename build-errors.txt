@@ -1,0 +1,24 @@
+
+> puzzroo@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.2.7 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 23.7s
+  Running TypeScript ...
+Failed to type check.
+
+./src/app/api/v1/games/tangram/sessions/[id]/verify/route.ts:19:32
+Type error: Property 'totalCellsRequired' does not exist on type '{ isComplete: boolean; valid: boolean; accuracy: number; piecesCorrect: number; totalPieces: number; pieceResults: { pieceId: TangramPieceId; correct: boolean; positionMatch: boolean; rotationMatch: boolean; error: string | undefined; }[]; errors: string[]; coverage: { ...; } | undefined; }'.
+
+  17 |     isComplete: result.isComplete,
+  18 |     accuracy: result.accuracy,
+> 19 |     totalCellsRequired: result.totalCellsRequired,
+     |                                ^
+  20 |     correctCells: result.correctCells,
+  21 |     incorrectCells: result.incorrectCells,
+  22 |     mistakes: result.mistakes,
+Next.js build worker exited with code: 1 and signal: null
+
