@@ -67,7 +67,10 @@ export async function handleOAuth(
   const { uid, email, name, picture } = decoded;
   const firebaseProvider = decoded.firebase?.sign_in_provider;
   if (firebaseProvider !== provider) {
-    return undefined;
+    throw Object.assign(
+      new Error(`Provider mismatch: token signed with ${firebaseProvider}, requested ${provider}`),
+      { code: "provider_mismatch" }
+    );
   }
   // Normalize email so it always matches the lowercase-stored value. Without
   // this a differently-cased email from the provider would fail to match an

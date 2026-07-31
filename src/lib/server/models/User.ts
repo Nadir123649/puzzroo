@@ -23,6 +23,11 @@ const userSchema = new mongoose.Schema(
     linkedProviders: { type: [String], default: [] },
     pendingEmail: { type: String, default: null },
     pendingPasswordHash: { type: String, default: null },
+    // Browser-local guest key (localStorage puzzroo_guest_id). Set when a
+    // guest doc is created on OAuth sign-in so their progress can be found
+    // and transferred; kept after conversion so later logins from the same
+    // browser keep linking new guest sessions to the same account.
+    guestId: { type: String, default: null, unique: true, sparse: true },
     avatar: { type: String, default: null },
     role: {
       type: String,

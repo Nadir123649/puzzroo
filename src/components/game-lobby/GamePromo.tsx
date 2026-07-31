@@ -71,7 +71,7 @@ export function GamePromo() {
 
           {/* Subscribe Button - only for guests */}
           {!authed && (
-            <Link href="/signup" className="w-full">
+            <Link prefetch={false} href="/signup" className="w-full">
               <button className="w-full h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
                 Subscribe
               </button>
@@ -80,7 +80,7 @@ export function GamePromo() {
 
           {/* Log In Button - only for guests */}
           {!authed && (
-            <Link href="/login" className="w-full">
+            <Link prefetch={false} href="/login" className="w-full">
               <button className="w-full h-[46px] rounded-full border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] hover:text-white text-[#6949FF] font-urbanist font-semibold text-[16px] transition-all duration-200 active:scale-95">
                 Log In
               </button>

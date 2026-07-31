@@ -88,7 +88,7 @@ export default function ChooseUsernamePage() {
 
           {/* Logo & Header */}
           <div className="flex flex-col items-center mb-8">
-            <Link href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none">
+            <Link prefetch={false} href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none">
               <Image
                 src={images.logo}
                 alt="Puzzroo Logo"

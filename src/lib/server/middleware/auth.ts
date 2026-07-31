@@ -13,6 +13,17 @@ const ALLOWED_ORIGINS = [
   "https://puzzroo-beta.vercel.app",
 ].filter(Boolean) as string[];
 
+// In-memory cache for the per-request LoginSession (jti) validity check so
+// authenticated API calls skip the DB roundtrip. Short TTL bounds staleness
+// after logout/revoke; those flows call invalidateSessionCache() directly.
+const SESSION_CACHE_TTL_MS = 30_000;
+const sessionCache = new Map<string, { valid: boolean; expiresAt: number }>();
+
+export function invalidateSessionCache(jti?: string) {
+  if (jti) sessionCache.delete(jti);
+  else sessionCache.clear();
+}
+
 function validateOrigin(request: NextRequest): boolean {
   const method = request.method.toUpperCase();
   if (["GET", "HEAD", "OPTIONS"].includes(method)) return true;
@@ -45,10 +56,21 @@ export async function auth(request: NextRequest) {
     };
 
     if (decoded.jti) {
-      await connectDB();
-      const session = await LoginSession.findById(decoded.jti);
-      if (!session || session.userId.toString() !== decoded.id || session.status !== "active") {
-        return { error: errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.") };
+      const now = Date.now();
+      const cached = sessionCache.get(decoded.jti);
+      if (cached && cached.expiresAt > now) {
+        if (!cached.valid) {
+          return { error: errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.") };
+        }
+      } else {
+        await connectDB();
+        const session = await LoginSession.findById(decoded.jti);
+        const valid =
+          !!session && session.userId.toString() === decoded.id && session.status === "active";
+        sessionCache.set(decoded.jti, { valid, expiresAt: now + SESSION_CACHE_TTL_MS });
+        if (!valid) {
+          return { error: errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.") };
+        }
       }
     }
 

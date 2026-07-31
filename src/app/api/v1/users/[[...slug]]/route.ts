@@ -4,7 +4,7 @@ import LoginSession from "@/lib/server/models/LoginSession";
 import { connectDB } from "@/lib/server/db";
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
 import { formatUser } from "@/lib/server/utils/formatUser";
-import { auth } from "@/lib/server/middleware/auth";
+import { auth, invalidateSessionCache } from "@/lib/server/middleware/auth";
 import { generatePublicId } from "@/lib/server/utils/publicId";
 import { validate } from "@/lib/server/middleware/validate";
 import { updateProfileSchema } from "@/lib/server/validators/authValidator";
@@ -96,6 +96,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       if (!user) return errorResponse(404, "user_not_found", "User not found");
       await trackServer({ userId: userResult.userId, event: "account_deleted", request });
       await LoginSession.deleteMany({ userId: userResult.userId });
+      invalidateSessionCache();
       await user.deleteOne();
       const res = successResponse({ message: "Account deleted successfully" });
       res.cookies.delete("refreshToken");
