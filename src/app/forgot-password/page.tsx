@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
           
           {/* Logo & Header */}
           <div className="flex flex-col items-center mb-6">
-            <Link href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none">
+            <Link prefetch={false} href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none">
               <Image
                 src={images.logo}
                 alt="Puzzroo Logo"
@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
                   Check your inbox at <strong className="text-[#212121] dark:text-white">{email}</strong> for instructions.
                 </p>
               </div>
-              <Link href="/login" className="w-full">
+              <Link prefetch={false} href="/login" className="w-full">
                 <Button variant="outline" className="w-full h-[48px] rounded-full text-base font-urbanist font-semibold">
                   Back to Log In
                 </Button>
@@ -127,7 +127,7 @@ export default function ForgotPasswordPage() {
 
               {/* Back to Login */}
               <div className="text-center pt-2">
-                <Link href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline">
+                <Link prefetch={false} href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline">
                   Back to Log In
                 </Link>
               </div>

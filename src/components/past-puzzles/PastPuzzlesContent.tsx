@@ -308,7 +308,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
                     </p>
                   </div>
                   
-                  <Link href="/signup">
+                  <Link prefetch={false} href="/signup">
                     <Button
                       size="md"
                       className="whitespace-nowrap"

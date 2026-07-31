@@ -27,10 +27,14 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
-          // Allow OAuth popups to keep a window reference and avoid the
-          // storage-partitioning that breaks Firebase's redirect state on
-          // mobile (Vercel/Next apply Cross-Origin-Opener-Policy: same-origin).
-          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
+          // NOTE: no Cross-Origin-Opener-Policy here. `same-origin-allow-popups`
+          // only preserves the opener reference for SAME-origin popups; a
+          // cross-origin Google popup still lands in a separate browsing
+          // context group, which makes Chrome block window.closed/window.close
+          // reads (console warnings) and degrades Firebase's popup channel.
+          // With no COOP header at all, the popup shares the opener's group
+          // and Firebase's popup flow works silently.
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
 
           // ── production-only security headers ──
           ...(production
@@ -42,10 +46,6 @@ const nextConfig = {
                 {
                   key: 'X-Frame-Options',
                   value: 'DENY',
-                },
-                {
-                  key: 'X-Content-Type-Options',
-                  value: 'nosniff',
                 },
                 {
                   key: 'Referrer-Policy',

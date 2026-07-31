@@ -98,7 +98,7 @@ export function AccessModal({ isOpen, onClose, gameIcon }: AccessModalProps) {
             </div>
 
             {/* Register Button */}
-            <Link href="/signup" className="w-full">
+            <Link prefetch={false} href="/signup" className="w-full">
               <button 
                 onClick={onClose}
                 className="w-full min-w-[280px] h-[46px] px-8 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"

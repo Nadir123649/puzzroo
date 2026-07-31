@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import User from "@/lib/server/models/User";
 import LoginSession from "@/lib/server/models/LoginSession";
 import { connectDB } from "@/lib/server/db";
@@ -8,7 +9,7 @@ import { successResponse, errorResponse, getOrigin } from "@/lib/server/utils/ap
 import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
 import { cookieOptions } from "@/lib/server/utils/cookieOptions";
 import { sendVerificationEmail } from "@/lib/server/services/emailService";
-import { auth } from "@/lib/server/middleware/auth";
+import { auth, invalidateSessionCache } from "@/lib/server/middleware/auth";
 import { validate } from "@/lib/server/middleware/validate";
 import { registerSchema, loginSchema, changePasswordSchema, chooseUsernameSchema, unlinkProviderSchema, manageEmailSchema } from "@/lib/server/validators/authValidator";
 import { formatUser } from "@/lib/server/utils/formatUser";
@@ -126,6 +127,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         auditLog({ eventType: "auth:logout", userId: who.user.id, sessionId: who.user.jti }).catch(() => {});
         if (who.user.jti) {
           await LoginSession.findByIdAndUpdate(who.user.jti, { status: "logged_out", isCurrent: false });
+          invalidateSessionCache(who.user.jti);
         }
       }
       const res = NextResponse.json({ success: true, payload: { message: "Logged out successfully" }, timestamp: Date.now() }, { status: 200 });
@@ -140,6 +142,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
       await LoginSession.updateMany({ userId: userResult.user.id, status: "active" }, { status: "logged_out", isCurrent: false });
+      invalidateSessionCache();
       const res = NextResponse.json({ success: true, payload: { message: "Logged out from all devices" }, timestamp: Date.now() }, { status: 200 });
       res.cookies.delete("refreshToken");
       return res;
@@ -169,22 +172,53 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }
 
         // ── Refresh token rotation (atomic) ──
+        // Raw driver ops: the running server's cached Mongoose schema may
+        // predate the `rotatedAt` field, so strict-mode casts would fail.
         let tokenVersion: number | undefined;
         if (decoded.jti) {
-          const updated = await LoginSession.findOneAndUpdate(
-            { _id: decoded.jti, tokenVersion: decoded.ver ?? 0 },
-            { $inc: { tokenVersion: 1 } },
-            { new: true, select: { tokenVersion: 1 } }
+          const updated = await LoginSession.collection.findOneAndUpdate(
+            { _id: new mongoose.Types.ObjectId(decoded.jti), tokenVersion: decoded.ver ?? 0 },
+            { $inc: { tokenVersion: 1 }, $set: { rotatedAt: new Date() } },
+            { returnDocument: "after", projection: { tokenVersion: 1, status: 1, userId: 1, rotatedAt: 1 } }
           );
           if (!updated) {
-            const sessionExists = await LoginSession.findById(decoded.jti).select("_id").lean();
-            const errRes = !sessionExists
-              ? errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.")
-              : errorResponse(401, "token_reused", "Refresh token has already been used. Please sign in again.");
-            errRes.cookies.delete("refreshToken");
-            return errRes;
+            // Version mismatch: either a genuine replay of a stale token, or
+            // two refreshes racing (multi-tab / parallel client calls sharing
+            // one cookie). Within a short window after the last rotation,
+            // re-issue with the CURRENT version so the racer succeeds instead
+            // of killing the session.
+            const session = await LoginSession.collection.findOne(
+              { _id: new mongoose.Types.ObjectId(decoded.jti) },
+              { projection: { tokenVersion: 1, status: 1, userId: 1, rotatedAt: 1 } }
+            );
+            const sessionMissing =
+              !session || session.status !== "active" || session.userId.toString() !== decoded.id;
+            if (sessionMissing) {
+              const errRes = errorResponse(401, "session_revoked", "Session has been revoked. Please sign in again.");
+              errRes.cookies.delete("refreshToken");
+              return errRes;
+            }
+            const rotatedAt = (session as any).rotatedAt?.getTime?.() ?? 0;
+            // A missing rotatedAt means this session rotated under the OLD
+            // pre-rotatedAt code: we can't distinguish a concurrent race from
+            // a replay, but the token is httpOnly + short-lived, so the safe
+            // UX call is to re-issue at the current version and start writing
+            // rotatedAt from now on. Without this, the first refresh after a
+            // server upgrade would hard-fail every legacy session.
+            const withinGrace = rotatedAt === 0 || Date.now() - rotatedAt < 15_000;
+            if (!withinGrace) {
+              const errRes = errorResponse(401, "token_reused", "Refresh token has already been used. Please sign in again.");
+              errRes.cookies.delete("refreshToken");
+              return errRes;
+            }
+            tokenVersion = (session as any).tokenVersion ?? 0;
+            await LoginSession.collection.updateOne(
+              { _id: (session as any)._id },
+              { $set: { rotatedAt: new Date() } }
+            );
+          } else {
+            tokenVersion = (updated as any).tokenVersion;
           }
-          tokenVersion = updated.tokenVersion;
         }
 
         const tokenPayload = buildTokenPayload(user, decoded.jti, tokenVersion);

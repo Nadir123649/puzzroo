@@ -171,7 +171,7 @@ export function Navbar() {
 
           {/* LEFT: Logo + Brand */}
           <div className="flex items-center gap-[clamp(8px,1vw,12px)] select-none">
-            <Link
+            <Link prefetch={false}
               href="/"
               className="flex items-center gap-[clamp(8px,1vw,12px)] cursor-pointer"
               onClick={(e) => {
@@ -214,11 +214,11 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
             {/* Logged Out Actions Container */}
             <div className="logged-out-only items-center gap-[clamp(8px,1vw,16px)]">
-              <Link href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
+              <Link prefetch={false} href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
                 Sign up
               </Link>
 
-              <Link href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
+              <Link prefetch={false} href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
                 Login
               </Link>
 
@@ -244,7 +244,7 @@ export function Navbar() {
             {/* Logged In Actions Container */}
             <div className="logged-in-only items-center gap-[clamp(8px,1vw,16px)]">
               {/* Subscribe Us Button - Only for logged in users */}
-              <Link
+              <Link prefetch={false}
                 href="/subscription"
                 className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
               >
@@ -308,10 +308,10 @@ export function Navbar() {
                   {user.email}
                 </p>
               </div>
-              <Link href="/account-information" onClick={() => setIsMenuOpen(false)} className="font-urbanist font-semibold text-[15px] py-1 text-[#212121] dark:text-white">
+              <Link prefetch={false} href="/account-information" onClick={() => setIsMenuOpen(false)} className="font-urbanist font-semibold text-[15px] py-1 text-[#212121] dark:text-white">
                 Account
               </Link>
-              <Link href="/subscription" onClick={() => setIsMenuOpen(false)} className="font-urbanist font-semibold text-[15px] py-1 text-[#212121] dark:text-white">
+              <Link prefetch={false} href="/subscription" onClick={() => setIsMenuOpen(false)} className="font-urbanist font-semibold text-[15px] py-1 text-[#212121] dark:text-white">
                 Subscription
               </Link>
               <button
@@ -328,10 +328,10 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/signup" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full h-[40px] rounded-full bg-[#6949FF] text-white text-[16px] font-semibold font-urbanist transition-all duration-200">
+              <Link prefetch={false} href="/signup" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full h-[40px] rounded-full bg-[#6949FF] text-white text-[16px] font-semibold font-urbanist transition-all duration-200">
                 Sign up
               </Link>
-              <Link href="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] dark:text-white text-[16px] font-semibold font-urbanist transition-all duration-200">
+              <Link prefetch={false} href="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] dark:text-white text-[16px] font-semibold font-urbanist transition-all duration-200">
                 Login
               </Link>
             </>
