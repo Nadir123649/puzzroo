@@ -3,7 +3,9 @@
 import React, { useState } from 'react'
 import { InfoPageLayout } from '@/components/layout/InfoPageLayout'
 import { Button } from '@/components/ui/button'
-import { Mail, Clock, ShieldCheck, Send } from 'lucide-react'
+import { Clock, ShieldCheck, Send } from 'lucide-react'
+import Image from 'next/image'
+import { images } from '@/lib/utils'
 import { submitContact } from '@/lib/auth/frontend-auth'
 
 export default function ContactUsPage() {
@@ -112,7 +114,7 @@ export default function ContactUsPage() {
                   {/* Email */}
                   <div className="flex gap-3">
                     <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                      <Mail size={16} className="text-[#6949FF]" />
+                      <Image src={images.gmailIcon} width={16} height={16} alt="Email" />
                     </div>
                     <div>
                       <p className="font-urbanist text-[11px] font-bold text-[#757575] dark:text-[#BDBDBD] uppercase tracking-wide">

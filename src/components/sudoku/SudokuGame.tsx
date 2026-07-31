@@ -286,7 +286,7 @@ export function SudokuGame() {
         maxMistakes={maxMistakes}
         score={score}
         onPlayAgain={() => handleNewGame(true)}
-        onNewGame={() => handleNewGame(false)}
+        onNewGame={isFromPastPuzzles ? undefined : () => handleNewGame(false)}
         onBackToGames={handleBackToGames}
         onClose={() => setShowModal(false)}
       />
@@ -300,7 +300,7 @@ export function SudokuGame() {
         maxMistakes={maxMistakes}
         score={score}
         onPlayAgain={() => handleNewGame(true)}
-        onNewGame={() => handleNewGame(false)}
+        onNewGame={isFromPastPuzzles ? undefined : () => handleNewGame(false)}
         onBackToGames={handleBackToGames}
         onClose={() => setShowModal(false)}
       />

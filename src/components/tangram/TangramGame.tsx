@@ -555,7 +555,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
         difficulty={puzzle?.difficulty || 'easy'}
         timeRemaining={timeRemaining}
         isTimeUp={gameStatus === 'lost'}
-        onPlayAgain={handleRetry}
+        onPlayAgain={gameStatus === 'lost' && mode === 'normal' && !isFromPastPuzzles ? handleNewGame : handleRetry}
         onRestart={handleRestart}
         onNewPuzzle={mode === 'normal' && !isFromPastPuzzles ? handleNewGame : undefined}
         onBackToLobby={handleBackToLobby}

@@ -483,7 +483,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                               className={`flex items-center justify-center border border-[#D0D3DC] dark:border-[#616161] bg-[var(--color-primary)] text-white transition-all duration-150 ${isHovered ? 'ring-2 ring-[#6949FF] ring-offset-1' : ''}`}
                               style={{ width: `${clueSize}px`, height: `${clueSize}px` }}
                             >
-                              <span className="font-urbanist font-bold text-white" style={{ fontSize: '11px' }}>0</span>
+                              <span className="font-urbanist font-bold text-white select-none" style={{ fontSize: '11px' }}>0</span>
                             </div>
                           ) : (
                             clue.values.map((value, vIdx) => {
@@ -509,7 +509,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                                   style={{ width: `${clueSize}px`, height: `${clueSize}px` }}
                                 >
                                   <span
-                                    className={`font-urbanist font-bold ${textColor}`}
+                                    className={`font-urbanist font-bold ${textColor} select-none` + (isCompleted ? ' opacity-50' : '')}
                                     style={{ fontSize: `${fontSize}px` }}
                                   >
                                     {value}
@@ -544,7 +544,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                               className={`flex items-center justify-center border border-[#D0D3DC] dark:border-[#616161] bg-[var(--color-primary)] text-white transition-all duration-150 ${isHovered ? 'ring-2 ring-[#6949FF] ring-offset-1' : ''}`}
                               style={{ width: `${clueSize}px`, height: `${clueSize}px` }}
                             >
-                              <span className="font-urbanist font-bold text-white" style={{ fontSize: '11px' }}>0</span>
+                              <span className="font-urbanist font-bold text-white select-none" style={{ fontSize: '11px' }}>0</span>
                             </div>
                           ) : (
                             clue.values.map((value, vIdx) => {
@@ -570,7 +570,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                                   style={{ width: `${clueSize}px`, height: `${clueSize}px` }}
                                 >
                                   <span
-                                    className={`font-urbanist font-bold ${textColor}`}
+                                    className={`font-urbanist font-bold ${textColor} select-none` + (isCompleted ? ' opacity-50' : '')}
                                     style={{ fontSize: `${fontSize}px` }}
                                   >
                                     {value}
@@ -846,7 +846,10 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
         <NonogramModal
           isOpen={(gameStatus === 'won' || gameStatus === 'lost') && showCompletionModal}
           difficulty={currentPuzzle.difficulty}
-          time={elapsedSeconds}
+          time={(() => {
+            const initialTime = currentPuzzle.estimatedTime || (currentPuzzle.difficulty === 'expert' ? 1200 : currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300)
+            return Math.max(0, initialTime - elapsedSeconds)
+          })()}
           completionPercentage={progress.percentComplete}
           hintsUsed={hintsUsed}
           mistakes={mistakeCount}
