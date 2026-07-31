@@ -138,12 +138,20 @@ export function useCrossMath(initialPuzzleId?: string) {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const sessionIdRef = useRef<string | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
   const sessionCreatedRef = useRef(false)
   const completionCalledRef = useRef(false)
   const hintsUsedRef = useRef(0)
   const movesRef = useRef(0)
   const restoredRef = useRef(false)
+
+  // Single authoritative save pipeline: serialized, coalescing, never overlapping.
+  // A save is only sent when the previous one completed; intermediate snapshots
+  // are coalesced into the latest one, so no request is ever aborted.
+  const saveQueueRef = useRef<{
+    inFlight: boolean
+    pending: { grid: Cell[][]; elapsed: number; hints: number; mists: number; diff: string } | null
+  }>({ inFlight: false, pending: null })
+  const drainPromiseRef = useRef<Promise<void> | null>(null)
 
   function gridToRecord(grid: Cell[][]): Record<string, number> {
     const record: Record<string, number> = {}
@@ -177,6 +185,8 @@ export function useCrossMath(initialPuzzleId?: string) {
       if (res && (res.sessionId || res._id || res.id)) {
         sessionIdRef.current = res.sessionId || res._id || res.id
         sessionCreatedRef.current = true
+        movesRef.current = res.moves || 0
+        hintsUsedRef.current = res.hintsUsed || 0
         return res
       }
     } catch { /* no session */ }
@@ -198,28 +208,53 @@ export function useCrossMath(initialPuzzleId?: string) {
     return restored
   }
 
-   function saveMoveNow(grid: Cell[][], elapsed: number, hints: number, mists: number, diff: string) {
-    if (!sessionIdRef.current) return
-    abortRef.current?.abort()
-    const ac = new AbortController()
-    abortRef.current = ac
-    const currentMoves = movesRef.current + 1
-    movesRef.current = currentMoves
-    gameApi.saveMove('crossmath', sessionIdRef.current, {
-      grid: gridToRecord(grid),
-      elapsedTime: elapsedFromCountdown(elapsed, diff),
-      hintsUsed: hints,
-      mistakes: mists,
-      moves: currentMoves,
-    }, ac.signal).catch(err => {
-      if (err?.name !== 'AbortError') console.error('[crossmath] save move failed', err)
-    })
+  function drainSaveQueue(): Promise<void> {
+    if (!sessionIdRef.current) return Promise.resolve()
+    if (!drainPromiseRef.current) {
+      drainPromiseRef.current = (async () => {
+        try {
+          while (saveQueueRef.current.pending) {
+            const item = saveQueueRef.current.pending
+            saveQueueRef.current.pending = null
+            try {
+              await gameApi.saveMove('crossmath', sessionIdRef.current!, {
+                grid: gridToRecord(item.grid),
+                elapsedTime: elapsedFromCountdown(item.elapsed, item.diff),
+                hintsUsed: item.hints,
+                mistakes: item.mists,
+                moves: movesRef.current,
+              })
+            } catch (err) {
+              // Network/server failure: drop the snapshot, keep local state.
+              // The next save carries the full grid and self-heals the server.
+              console.error('[crossmath] save move failed', err)
+              break
+            }
+          }
+        } finally {
+          drainPromiseRef.current = null
+          // A save may have been enqueued between the last loop check and
+          // this finally — never orphan it.
+          if (saveQueueRef.current.pending) void drainSaveQueue()
+        }
+      })()
+    }
+    return drainPromiseRef.current
+  }
+
+  function saveMoveNow(grid: Cell[][], elapsed: number, hints: number, mists: number, diff: string) {
+    if (!sessionIdRef.current || completionCalledRef.current) return
+    movesRef.current += 1
+    saveQueueRef.current.pending = { grid, elapsed, hints, mists, diff }
+    void drainSaveQueue()
   }
 
   async function completePuzzle(grid: Cell[][], elapsed: number, diff: string, finalScore?: number, finalMistakes?: number) {
     if (!sessionIdRef.current || completionCalledRef.current) return
     completionCalledRef.current = true
     try {
+      // All pending saves must land before the terminal transition
+      await drainSaveQueue()
       await gameApi.completeSession('crossmath', sessionIdRef.current, {
         grid: gridToRecord(grid),
         elapsedTime: elapsedFromCountdown(elapsed, diff),
@@ -233,6 +268,8 @@ export function useCrossMath(initialPuzzleId?: string) {
   async function failSession() {
     if (!sessionIdRef.current) return
     try {
+      // All pending saves must land before the terminal transition
+      await drainSaveQueue()
       await gameApi.abandonCrossMathSession(sessionIdRef.current)
     } catch { /* ignore */ }
   }
@@ -299,7 +336,7 @@ export function useCrossMath(initialPuzzleId?: string) {
               setMistakes(serverSession.mistakes || 0)
               setScore(0)
               setTime(Math.max(0, getInitialTime((serverSession.difficulty || difficulty) as Difficulty) - (serverSession.elapsedTime || 0)))
-              setGameStatus((serverSession.sessionStatus || 'playing') as 'playing' | 'won' | 'lost')
+              setGameStatus((serverSession.sessionStatus === 'paused' ? 'playing' : serverSession.sessionStatus || 'playing') as 'playing' | 'won' | 'lost')
               if (serverSession.difficulty) setDifficulty(serverSession.difficulty as Difficulty)
               setSelectedCell(null)
               setIsTyping(false)
@@ -308,6 +345,8 @@ export function useCrossMath(initialPuzzleId?: string) {
 
               sessionIdRef.current = serverSession.sessionId
               sessionCreatedRef.current = true
+              movesRef.current = serverSession.moves || 0
+              hintsUsedRef.current = serverSession.hintsUsed || 0
 
               const limit = (serverSession.difficulty || difficulty) === 'hard' ? 2 : serverPuzzle.maxMistakes
               setMaxMistakes(limit)
@@ -870,7 +909,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     let replaySessionCreated = false
     if (prevSessionId) {
       try {
-        const result = await gameApi.replayCrossMathSession(prevSessionId)
+        const result = await gameApi.replayCrossMathSession(prevSessionId, currentPuzzle.id)
         if (result && result.sessionId) {
           sessionIdRef.current = result.sessionId
           sessionCreatedRef.current = true
@@ -906,6 +945,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     clearGameState()
     completionCalledRef.current = false
     movesRef.current = 0
+    hintsUsedRef.current = 0
 
     if (!replaySessionCreated) {
       sessionCreatedRef.current = false
@@ -947,6 +987,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     clearGameState()
     completionCalledRef.current = false
     movesRef.current = 0
+    hintsUsedRef.current = 0
     sessionCreatedRef.current = false
     sessionIdRef.current = null
     if (!getAccessToken()) ensureGuestId()
