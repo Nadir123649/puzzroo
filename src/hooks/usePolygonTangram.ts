@@ -691,14 +691,16 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         )
 
         if (snapResult?.shouldSnap) {
-          // Trigger pulse animation on successful snap
-          if (onSnapSuccess) {
+          // Trigger pulse animation only if it wasn't already snapped (prevents pulse on simple click)
+          if (onSnapSuccess && !piece.isSnapped) {
             setTimeout(() => onSnapSuccess(), 0)
           }
           // Deselect piece on successful snap
-          setTimeout(() => {
-            setSelectedPiece(null)
-          }, 0)
+          if (!piece.isSnapped) {
+            setTimeout(() => {
+              setSelectedPiece(null)
+            }, 0)
+          }
 
           // Snap: use target polygon and target center
           return {
@@ -826,8 +828,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setHintsUsed(h => h + 1)
     setHintPiece(chosenPieceId)
 
-    // Hard mode: 1 second hint. Easy/Medium: 5 seconds
-    const hintDuration = difficulty === 'hard' ? 1000 : 5000
+    // Hard mode: 2 second hint. Easy/Medium: 5 seconds
+    const hintDuration = difficulty === 'hard' ? 2000 : 5000
 
     hintTimeoutRef.current = setTimeout(() => {
       setHintPiece(null)
@@ -937,6 +939,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   }, [difficulty, puzzle])
 
   const replayPuzzle = useCallback(() => {
+    setPieces([])
     setSelectedPiece(null)
     setGameStatus('playing')
     setHasWonOnce(false)
@@ -980,7 +983,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         }
         if (!cancelled) {
             writeCache(p)
-            setPuzzle(p)
+            setPuzzle({ ...p })
             if (getAccessToken()) {
               initSession(p.id, difficulty)
             } else {

@@ -31,7 +31,7 @@ export function CrossMathNumberPad({
   }
 
   return (
-    <div className="w-full mt-4">
+    <div className={`w-full ${difficulty === 'easy' ? 'mt-4' : '-mt-2'}`}>
       <div className="flex flex-col gap-[12px]">
         {rows.map((row, rowIndex) => (
           <div

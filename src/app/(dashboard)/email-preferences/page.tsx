@@ -1,13 +1,17 @@
 'use client'
 
 import { Mail, Shield, Bell, BookOpen } from 'lucide-react'
+import Image from 'next/image'
+import { images } from '@/lib/utils'
 import { notify } from '@/lib/toast'
 import { useEmailPreferences, type EmailPreference } from '@/hooks/useEmailPreferences'
 
 const getIcon = (iconName: string) => {
   switch (iconName) {
     case 'mail':
-      return Mail
+      return function GmailIconComp(props: any) { 
+        return <Image src={images.gmailIcon} width={props.size || 18} height={props.size || 18} alt="Email" className={props.className} /> 
+      }
     case 'bell':
       return Bell
     case 'shield':
