@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Eye, EyeOff, X, Lock } from 'lucide-react'
 import { notify } from '@/lib/toast'
@@ -25,6 +25,13 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
   const [isLoading, setIsLoading] = useState(false)
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotSent, setForgotSent] = useState(false)
+  const [unlocked, setUnlocked] = useState(false)
+
+  // Re-arm the anti-autofill mask on every open so Chrome re-detects the
+  // fields as text, not password.
+  useEffect(() => {
+    if (isOpen) setUnlocked(false)
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -146,7 +153,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col gap-5">
             {error && (
               <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl">
                 <p className="font-urbanist text-[14px] font-semibold text-red-600 dark:text-red-400 text-center">
@@ -178,10 +185,14 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
               </label>
               <div className="relative flex items-center">
                 <input
-                  type={showCurrentPassword ? "text" : "password"}
+                  type={unlocked && !showCurrentPassword ? "password" : "text"}
                   value={currentPassword}
+                  readOnly={!unlocked}
+                  onFocus={() => setUnlocked(true)}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Enter current password"
+                  autoComplete="off"
+                  data-lpignore="true"
                   required
                   className="w-full h-[52px] bg-[#FAFAFA] dark:bg-[#15171C] border border-[#EEEEEE] dark:border-[#2A2D35] rounded-xl px-5 font-urbanist text-[15px] text-[#212121] dark:text-white placeholder-[#BDBDBD] dark:placeholder-[#757575] focus:outline-none focus:border-[#6949FF] dark:focus:border-[#6949FF] focus:bg-white dark:focus:bg-[#1A1D23] transition-all"
                 />
@@ -212,11 +223,15 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
               </label>
               <div className="relative flex items-center">
                 <input
-                  type={showNewPassword ? "text" : "password"}
+                  type={unlocked && !showNewPassword ? "password" : "text"}
                   value={newPassword}
                   maxLength={20}
+                  readOnly={!unlocked}
+                  onFocus={() => setUnlocked(true)}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
+                  autoComplete="off"
+                  data-lpignore="true"
                   required
                   className="w-full h-[52px] bg-[#FAFAFA] dark:bg-[#15171C] border border-[#EEEEEE] dark:border-[#2A2D35] rounded-xl px-5 font-urbanist text-[15px] text-[#212121] dark:text-white placeholder-[#BDBDBD] dark:placeholder-[#757575] focus:outline-none focus:border-[#6949FF] dark:focus:border-[#6949FF] focus:bg-white dark:focus:bg-[#1A1D23] transition-all"
                 />
@@ -237,11 +252,15 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
               </label>
               <div className="relative flex items-center">
                 <input
-                  type={showConfirmPassword ? "text" : "password"}
+                  type={unlocked && !showConfirmPassword ? "password" : "text"}
                   value={confirmPassword}
                   maxLength={20}
+                  readOnly={!unlocked}
+                  onFocus={() => setUnlocked(true)}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
+                  autoComplete="off"
+                  data-lpignore="true"
                   required
                   className="w-full h-[52px] bg-[#FAFAFA] dark:bg-[#15171C] border border-[#EEEEEE] dark:border-[#2A2D35] rounded-xl px-5 font-urbanist text-[15px] text-[#212121] dark:text-white placeholder-[#BDBDBD] dark:placeholder-[#757575] focus:outline-none focus:border-[#6949FF] dark:focus:border-[#6949FF] focus:bg-white dark:focus:bg-[#1A1D23] transition-all"
                 />

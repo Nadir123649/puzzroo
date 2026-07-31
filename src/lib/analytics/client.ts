@@ -2,7 +2,7 @@
 
 import { getAccessToken, isLoggedIn } from "@/lib/auth/frontend-auth";
 
-type CallType = "page" | "track" | "identify";
+type CallType = "track" | "identify";
 
 interface QueuedEvent {
   type: CallType;
@@ -10,7 +10,6 @@ interface QueuedEvent {
   properties?: Record<string, any>;
   anonymousId: string | null;
   sessionId: string | null;
-  path?: string | null;
   url?: string | null;
   referrer?: string | null;
   title?: string | null;
@@ -27,12 +26,6 @@ const MAX_BATCH = 20;
 
 let queue: QueuedEvent[] = [];
 let flushScheduled = false;
-
-// Throttle page views: SPA navigations (every link/card click) would
-// otherwise fire one track API call per click. One pageview per 30s keeps
-// analytics meaningful without spamming the network tab.
-const PAGEVIEW_THROTTLE_MS = 30_000;
-let lastPageviewAt = 0;
 
 function uuid(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
@@ -143,25 +136,6 @@ if (typeof window !== "undefined") {
   window.addEventListener("pagehide", () => flush(true));
 }
 
-export function page(path?: string, properties?: Record<string, any>) {
-  // No tracking for logged-out users — don't even fire the API.
-  if (!isLoggedIn()) return;
-  const now = Date.now();
-  if (now - lastPageviewAt < PAGEVIEW_THROTTLE_MS) return;
-  lastPageviewAt = now;
-  const ctx = baseContext();
-  enqueue({
-    type: "page",
-    event: "$pageview",
-    properties: properties || {},
-    anonymousId: getAnonymousId(),
-    sessionId: getSessionId(),
-    ...ctx,
-    path: path || (ctx as any).path,
-    ts: Date.now(),
-  });
-}
-
 export function track(event: string, properties?: Record<string, any>) {
   if (!isLoggedIn()) return;
   enqueue({
@@ -198,4 +172,4 @@ export function reset() {
   } catch {}
 }
 
-export const analytics = { page, track, identify, reset };
+export const analytics = { track, identify, reset };

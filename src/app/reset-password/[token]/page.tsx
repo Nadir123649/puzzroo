@@ -159,7 +159,7 @@ export default function ResetPasswordPage() {
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} autoComplete="off" className="space-y-5">
               {/* General Error */}
               {errors.general && (
                 <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
@@ -188,7 +188,8 @@ export default function ResetPasswordPage() {
                       errors.password ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                     }`}
                     placeholder="Enter your password"
-                    autoComplete="new-password"
+                    autoComplete="off"
+                    data-lpignore="true"
                   />
                   <button
                     type="button"
@@ -224,7 +225,8 @@ export default function ResetPasswordPage() {
                       errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                     }`}
                     placeholder="Confirm your password"
-                    autoComplete="new-password"
+                    autoComplete="off"
+                    data-lpignore="true"
                   />
                   <button
                     type="button"

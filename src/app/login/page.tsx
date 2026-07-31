@@ -121,7 +121,7 @@ function LoginPageContent() {
             </h2>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} autoComplete="off" className="space-y-5">
               {/* Verification Banner */}
               {verifiedBanner === 'success' && (
                 <div className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
@@ -184,7 +184,7 @@ function LoginPageContent() {
                     errors.identifier ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                   }`}
                   placeholder="Enter your email or username"
-                  autoComplete="username"
+                  autoComplete="new-password"
                 />
                 {errors.identifier && (
                   <span className="font-urbanist font-semibold text-[12px] text-red-500">
@@ -219,7 +219,7 @@ function LoginPageContent() {
                       errors.password ? 'border-red-500 focus:ring-red-500' : 'border-[#E0E0E0] dark:border-[#35383F]'
                     }`}
                     placeholder="Enter your password"
-                    autoComplete="current-password"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"

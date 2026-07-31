@@ -124,7 +124,7 @@ export async function api<T = any>(
   // Create the promise for this request
   const requestPromise = (async () => {
     try {
-      let res = await fetch(url, { ...fetchOptions, headers, credentials: "include", keepalive: true });
+      let res = await fetch(url, { ...fetchOptions, headers, credentials: "include", keepalive: !(fetchOptions.body instanceof FormData) });
 
       // Auto-refresh on 401 only for logged-in users
       if (res.status === 401 && userIsLoggedIn) {
@@ -133,7 +133,7 @@ export async function api<T = any>(
           setAccessToken(newToken);
           if (onRefresh) onRefresh(newToken);
           headers["Authorization"] = `Bearer ${newToken}`;
-          res = await fetch(url, { ...fetchOptions, headers, credentials: "include", keepalive: true });
+          res = await fetch(url, { ...fetchOptions, headers, credentials: "include", keepalive: !(fetchOptions.body instanceof FormData) });
         } else if (!sessionExpiredNotified) {
           // Refresh failed — could be a transient blip (network hiccup, rate
           // limit). Retry once with a short delay before declaring the session
@@ -145,7 +145,7 @@ export async function api<T = any>(
             setAccessToken(retryToken);
             if (onRefresh) onRefresh(retryToken);
             headers["Authorization"] = `Bearer ${retryToken}`;
-            res = await fetch(url, { ...fetchOptions, headers, credentials: "include", keepalive: true });
+            res = await fetch(url, { ...fetchOptions, headers, credentials: "include", keepalive: !(fetchOptions.body instanceof FormData) });
           } else if (!sessionExpiredNotified) {
             sessionExpiredNotified = true;
             notify.errorKey("SYSTEM_SESSION_EXPIRED");
