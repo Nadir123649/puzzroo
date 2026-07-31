@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { Suspense, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -68,6 +68,29 @@ function useCurrentDate() {
 }
 
 export function GameHero({ name, image, imageLight, difficulties, gameSlug }: GameHeroProps) {
+  return (
+    <Suspense
+      fallback={
+        <section className="w-full bg-white dark:bg-[#181A20] transition-colors duration-300 pt-12 md:pt-16 pb-12 relative">
+          <div className="w-full px-[20px]">
+            <div className="flex flex-col items-center gap-5 md:gap-6">
+              <div className="w-[129px] h-[129px] relative flex items-center justify-center bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] p-[14px]">
+                <Image src={image} alt={name} width={101} height={101} className="w-[101px] h-[101px] object-contain" />
+              </div>
+              <h1 className="font-urbanist font-bold text-[30px] md:text-[48px] leading-[120%] text-center text-[#212121] dark:text-white transition-colors duration-300">
+                {name}
+              </h1>
+            </div>
+          </div>
+        </section>
+      }
+    >
+      <GameHeroContent name={name} image={image} imageLight={imageLight} difficulties={difficulties} gameSlug={gameSlug} />
+    </Suspense>
+  )
+}
+
+function GameHeroContent({ name, image, imageLight, difficulties, gameSlug }: GameHeroProps) {
   const { theme } = useTheme()
   const router = useRouter()
   const { setSelectedDifficulty } = useGameLobby()
