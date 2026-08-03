@@ -1,8 +1,3 @@
-/**
- * Tangram Past Puzzles Page
- * Shows archive of past Tangram puzzles
- */
-
 'use client'
 
 import { useState, useEffect } from 'react'

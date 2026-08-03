@@ -231,6 +231,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const moveHistoryRef = useRef<PieceState[][]>([])
   const historyIndexRef = useRef(-1)
   const puzzleRef = useRef<PolygonPuzzle | null>(puzzle)
+  const isReplayingRef = useRef(false)
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -478,6 +479,25 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         isSnapped: false
       }
     })
+    // If replaying or resetting, force fresh initialPieces layout in tray
+    if (isReplayingRef.current) {
+      isReplayingRef.current = false
+      if (typeof window !== 'undefined') {
+        try {
+          Object.keys(localStorage).forEach(k => {
+            if (k.startsWith('puzzroo_tangram_game_')) {
+              localStorage.removeItem(k)
+            }
+          })
+        } catch {}
+      }
+      setPieces(initialPieces)
+      setMoveHistory([initialPieces])
+      setHistoryIndex(0)
+      lastCommittedStateRef.current = initialPieces
+      return
+    }
+
     // Check if there is a saved state in LocalStorage first!
     if (typeof window !== 'undefined') {
       try {
@@ -488,7 +508,11 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         if (savedRaw) {
           const saved = JSON.parse(savedRaw)
           if (saved.puzzleId === puzzle.id && saved.difficulty === difficulty && saved.pieceStates && saved.pieceStates.length > 0) {
-            // Restore from LocalStorage!
+            const isFullySolved = saved.pieceStates.every((s: any) => s.placed || s.snapped)
+            if (isFullySolved) {
+              localStorage.removeItem(storageKey)
+            } else {
+              // Restore from LocalStorage!
             const restoredPieces = initialPieces.map(p => {
               const savedPiece = saved.pieceStates.find((s: any) => s.pieceId === p.id)
               if (savedPiece) {
@@ -525,10 +549,11 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             setHistoryIndex(0)
             lastCommittedStateRef.current = restoredPieces
 
-            const remaining = getInitialTime(difficulty) - saved.elapsedSeconds
-            setTimeRemaining(Math.max(0, remaining))
-            setHintsUsed(saved.hintsUsed)
-            return // Skip standard tray layout initialization
+              const remaining = getInitialTime(difficulty) - saved.elapsedSeconds
+              setTimeRemaining(Math.max(0, remaining))
+              setHintsUsed(saved.hintsUsed)
+              return // Skip standard tray layout initialization
+            }
           }
         }
       } catch (e) {
@@ -691,14 +716,16 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         )
 
         if (snapResult?.shouldSnap) {
-          // Trigger pulse animation on successful snap
-          if (onSnapSuccess) {
+          // Trigger pulse animation only if it wasn't already snapped (prevents pulse on simple click)
+          if (onSnapSuccess && !piece.isSnapped) {
             setTimeout(() => onSnapSuccess(), 0)
           }
           // Deselect piece on successful snap
-          setTimeout(() => {
-            setSelectedPiece(null)
-          }, 0)
+          if (!piece.isSnapped) {
+            setTimeout(() => {
+              setSelectedPiece(null)
+            }, 0)
+          }
 
           // Snap: use target polygon and target center
           return {
@@ -826,8 +853,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setHintsUsed(h => h + 1)
     setHintPiece(chosenPieceId)
 
-    // Hard mode: 1 second hint. Easy/Medium: 5 seconds
-    const hintDuration = difficulty === 'hard' ? 1000 : 5000
+    // Hard mode: 2 second hint. Easy/Medium: 5 seconds
+    const hintDuration = difficulty === 'hard' ? 2000 : 5000
 
     hintTimeoutRef.current = setTimeout(() => {
       setHintPiece(null)
@@ -860,6 +887,16 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   }, [])
 
   const resetGame = useCallback(() => {
+    isReplayingRef.current = true
+    if (typeof window !== 'undefined') {
+      try {
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('puzzroo_tangram_game_')) {
+            localStorage.removeItem(k)
+          }
+        })
+      } catch {}
+    }
     // Clear pieces first to prevent validation from running
     setPieces([])
     setSelectedPiece(null)
@@ -898,6 +935,16 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   }, [difficulty])
 
   const newGame = useCallback(() => {
+    isReplayingRef.current = true
+    if (typeof window !== 'undefined') {
+      try {
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('puzzroo_tangram_game_')) {
+            localStorage.removeItem(k)
+          }
+        })
+      } catch {}
+    }
     // Clear pieces first to prevent validation from running
     setPieces([])
     setSelectedPiece(null)
@@ -937,6 +984,17 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   }, [difficulty, puzzle])
 
   const replayPuzzle = useCallback(() => {
+    isReplayingRef.current = true
+    if (typeof window !== 'undefined') {
+      try {
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('puzzroo_tangram_game_')) {
+            localStorage.removeItem(k)
+          }
+        })
+      } catch {}
+    }
+    setPieces([])
     setSelectedPiece(null)
     setGameStatus('playing')
     setHasWonOnce(false)
@@ -953,53 +1011,14 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     sessionIdRef.current = null
     setHistoryIndex(0)
 
-    // Re-fetch the same puzzle by id and reset it to the tray (cache-first)
     const current = puzzle
-    const id = current?.id
-    let cancelled = false
-      ; (async () => {
-        setLoading(true)
-        try {
-          let p: PolygonPuzzle
-          if (isDailyChallenge) {
-          const res = await gameApi.getDailyPuzzle('tangram', dateParam || undefined)
-          if (!res || !(res as any).id) throw new Error('invalid_puzzle')
-          p = res as unknown as PolygonPuzzle
-          } else if (id) {
-            const cached = readCache(id)
-            if (cached) {
-              p = cached
-            } else {
-            const res = await gameApi.getPuzzleById('tangram', id)
-            if (!res || !(res as any).id) throw new Error('invalid_puzzle')
-            p = res as unknown as PolygonPuzzle
-          }
-        } else {
-          if (!current) throw new Error('no_current_puzzle')
-          p = current
-        }
-        if (!cancelled) {
-            writeCache(p)
-            setPuzzle(p)
-            if (getAccessToken()) {
-              initSession(p.id, difficulty)
-            } else {
-              await signInGuest()
-              if (getAccessToken()) {
-                initSession(p.id, difficulty)
-              }
-            }
-          }
-        } catch {
-          if (!cancelled) {
-          setLoading(false)
-          }
-        } finally {
-          if (!cancelled) setLoading(false)
-        }
-      })()
-    return () => { cancelled = true }
-  }, [difficulty, isDailyChallenge, dateParam])
+    if (current) {
+      setPuzzle({ ...current, _t: Date.now() } as any)
+      if (getAccessToken()) {
+        initSession(current.id, difficulty)
+      }
+    }
+  }, [difficulty, puzzle])
 
   const undoMove = useCallback(() => {
     const currentIdx = historyIndexRef.current

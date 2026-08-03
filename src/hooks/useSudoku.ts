@@ -249,19 +249,14 @@ export function useSudoku() {
       moves: Number(currentMoveCount),
     }, abortController.signal).then((res: any) => {
       if (res && res.error) {
-        console.error('[sudoku] save move failed:', res.error)
+        // Non-fatal: session may have ended or not yet be active — game state is preserved locally
         return
       }
       sessionDataRef.current = res
       movesRef.current = currentMoveCount
     }).catch(err => {
-      if (err?.name !== 'AbortError') {
-        if (err?.message?.includes('Route not found')) {
-          console.error('[sudoku] Save API route temporarily unavailable, will retry on next move')
-        } else {
-          console.error('[sudoku] save move failed', err)
-        }
-      }
+      // Silently ignore AbortError (navigation) and known transient session states
+      if (err?.name === 'AbortError') return
     })
   }
 
@@ -532,6 +527,9 @@ export function useSudoku() {
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const startTimeRef = useRef<number | null>(null)
 
+  // Track mistakes per cell to avoid duplicate penalties
+  const cellMistakesRef = useRef<Map<string, Set<number>>>(new Map())
+
   // Current refs for latest values
   const currentBoardRef = useRef(gameState.currentBoard)
   const scoreRef = useRef(gameState.score)
@@ -568,7 +566,7 @@ export function useSudoku() {
    * Timer management
    */
   useEffect(() => {
-    if (gameState.gameStatus === 'playing') {
+    if (isInitialized && gameState.gameStatus === 'playing') {
       if (startTimeRef.current === null) {
         startTimeRef.current = Date.now() - (gameState.time * 1000)
       }
@@ -584,6 +582,10 @@ export function useSudoku() {
         clearInterval(timerRef.current)
         timerRef.current = null
       }
+      if (!isInitialized || gameState.gameStatus !== 'playing') {
+        // Reset start time so it recalculates when playing resumes or initialization completes
+        startTimeRef.current = null
+      }
     }
 
     return () => {
@@ -591,7 +593,7 @@ export function useSudoku() {
         clearInterval(timerRef.current)
       }
     }
-  }, [gameState.gameStatus, gameState.time])
+  }, [gameState.gameStatus, isInitialized])
 
   /**
    * Add score feedback animation
@@ -705,9 +707,18 @@ export function useSudoku() {
         newBoard[selectedCell.row][selectedCell.col].isError = true
         newBoard[selectedCell.row][selectedCell.col].isCorrect = false
 
+        const cellKey = `${selectedCell.row}-${selectedCell.col}`
+        const cellMistakes = cellMistakesRef.current.get(cellKey) || new Set<number>()
+        const isDuplicateMistake = cellMistakes.has(num)
+        
+        if (!isDuplicateMistake) {
+          cellMistakes.add(num)
+          cellMistakesRef.current.set(cellKey, cellMistakes)
+        }
+
         setGameState((prev) => {
-          const newScore = Math.max(0, prev.score - 5)
-          const newMistakes = prev.mistakes + 1
+          const newScore = isDuplicateMistake ? prev.score : Math.max(0, prev.score - 5)
+          const newMistakes = isDuplicateMistake ? prev.mistakes : prev.mistakes + 1
           return {
             ...prev,
             currentBoard: newBoard,
@@ -717,9 +728,11 @@ export function useSudoku() {
           }
         })
 
-        addScoreFeedback(-5)
+        if (!isDuplicateMistake) {
+          addScoreFeedback(-5)
+        }
 
-        const nextMistakes = gameState.mistakes + 1
+        const nextMistakes = isDuplicateMistake ? gameState.mistakes : gameState.mistakes + 1
         saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, nextMistakes)
 
         // Check game over

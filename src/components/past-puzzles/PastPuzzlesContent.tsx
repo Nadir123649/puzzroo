@@ -397,6 +397,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
 
       {/* Calendar Modal */}
       <CalendarModal
+        key={`${showCalendarModal}-${selectedDate ?? 'none'}`}
         isOpen={showCalendarModal}
         onClose={() => setShowCalendarModal(false)}
         gameId={gameId}
@@ -405,7 +406,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
       />
 
       {/* Loading Overlay */}
-      <GameLoader isOpen={isLoading || isNavigatingBack || initialLoading} text={isNavigatingBack ? "Navigating..." : (initialLoading ? (backParam === 'past' ? "Back to past puzzles..." : "") : "Loading puzzle...")} />
+      <GameLoader isOpen={isLoading || isNavigatingBack || initialLoading} text={isNavigatingBack ? "Back to lobby..." : "Back to past puzzles..."} />
     </>
   )
 }

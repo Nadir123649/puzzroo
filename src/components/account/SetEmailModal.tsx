@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { X, Mail, Eye, EyeOff } from 'lucide-react'
+import { X, Eye, EyeOff } from 'lucide-react'
+import Image from 'next/image'
+import { images } from '@/lib/utils'
 import { notify } from '@/lib/toast'
 import { manageEmail } from '@/lib/auth/frontend-auth'
 import { Button } from '@/components/ui/button'
@@ -118,7 +120,7 @@ export function SetEmailModal({ isOpen, onClose, currentEmail, hasPassword }: Se
         <div className="p-4 sm:p-10">
           <div className="flex flex-col items-center text-center mb-8">
             <div className="w-16 h-16 bg-purple-50 dark:bg-[#6949FF]/10 rounded-2xl flex items-center justify-center mb-5 border border-purple-100 dark:border-[#6949FF]/20 shadow-sm">
-              <Mail className="w-8 h-8 text-[#6949FF]" />
+              <Image src={images.gmailIcon} width={32} height={32} alt="Email" className="w-8 h-8" />
             </div>
             <h2 className="font-urbanist font-bold text-[28px] text-[#212121] dark:text-white mb-2">
               {currentEmail ? 'Update Email' : 'Set Email'}

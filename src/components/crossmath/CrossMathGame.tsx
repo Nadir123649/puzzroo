@@ -314,8 +314,8 @@ export function CrossMathGame() {
          time={(() => {
            const getInitialTime = (diff: string) => {
              switch (diff) {
-               case 'hard': return 600
-               case 'medium': return 420
+               case 'hard': return 120
+               case 'medium': return 180
                default: return 300
              }
            }

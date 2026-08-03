@@ -239,7 +239,7 @@ export function useNonogram(initialPuzzleId?: string) {
     const key = JSON.stringify({ g: grid, h: hintsUsed, m: mistakeCount })
     if (key === lastMoveKeyRef.current) return
     lastMoveKeyRef.current = key
-    const initialTime = currentPuzzle?.estimatedTime || (difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300)
+    const initialTime = difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
     const elapsed = Math.max(0, initialTime - elapsedSeconds)
     saveMoveNow(grid, elapsed, hintsUsed, mistakeCount, moveCount)
   }, [grid, hintsUsed, mistakeCount, elapsedSeconds, gameStatus])
@@ -260,8 +260,8 @@ export function useNonogram(initialPuzzleId?: string) {
       setMoveCount(0)
       setSelectionHistory([])
 
-      // Set initial countdown time based on estimatedTime
-      setElapsedSeconds(puzzle.estimatedTime || (diff === 'expert' ? 1200 : diff === 'hard' ? 900 : diff === 'medium' ? 600 : 300))
+      // Set initial countdown time based on difficulty: easy=5m (300), medium=10m (600), hard=15m (900), expert=20m (1200)
+      setElapsedSeconds(diff === 'expert' ? 1200 : diff === 'hard' ? 900 : diff === 'medium' ? 600 : 300)
 
       setHintsUsed(0)
       setMaxHints(getHintLimits(diff))
@@ -470,7 +470,7 @@ export function useNonogram(initialPuzzleId?: string) {
 
       // Also report completion to the API when logged in (fire-and-forget)
       if (getAccessToken()) {
-        const initialTime = currentPuzzle.estimatedTime || (difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300)
+        const initialTime = difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
         const elapsed = Math.max(0, initialTime - elapsedSeconds)
         void gameApi.complete('nonogram', {
           puzzleId: currentPuzzle.id,
