@@ -50,13 +50,16 @@ export const CrossMathCell = React.memo(function CrossMathCellComponent({ cell, 
 
   // Correct state
   if (cell.isCorrect && isEditable) {
-    bgColor = 'bg-[#E8DFFF] dark:bg-[#2D2640]' // Purple tint for correct
+    bgColor = 'bg-[#E8F5E9] dark:bg-[#1B2F1F]' // Green tint for correct
   }
 
   // Border - keep consistent width, change color only
   let borderClass = 'border-[2px] border-[#E0E0E0] dark:border-[#35383F]'
   if (isSelected && isEditable) {
     borderClass = 'border-[2px] border-[#6949FF]' // Same width, different color
+  }
+  if (cell.isCorrect && isEditable) {
+    borderClass = 'border-[2px] border-[#4CAF50]'
   }
   if (cell.isError) {
     borderClass = 'border-[2px] border-[#FF6B6B]'
@@ -66,6 +69,9 @@ export const CrossMathCell = React.memo(function CrossMathCellComponent({ cell, 
   let textColor = 'text-[#212121] dark:text-[#FAFAFA]' // Default
   if (isOperator) {
     textColor = 'text-[#757575] dark:text-[#9E9E9E]' // Operators lighter
+  }
+  if (cell.isCorrect && isEditable) {
+    textColor = 'text-[#4CAF50]'
   }
   if (cell.isError) {
     textColor = 'text-[#FF6B6B]'

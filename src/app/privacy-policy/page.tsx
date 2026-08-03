@@ -1,4 +1,9 @@
+import { Metadata } from 'next'
 import { InfoPageLayout } from '@/components/layout/InfoPageLayout'
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+}
 
 export default function PrivacyPolicyPage() {
   return (

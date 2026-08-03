@@ -50,6 +50,7 @@ export default function CrossMathPage() {
 
   return (
     <>
+      <title>CrossMath | Puzzroo Games</title>
       <GameLoader isOpen={initialLoading} text="Loading puzzle..." />
       <AppLayout>
         <main className="flex-grow flex flex-col">

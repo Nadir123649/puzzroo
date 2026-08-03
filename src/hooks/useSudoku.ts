@@ -381,6 +381,7 @@ export function useSudoku() {
                 sessionCreatedRef.current = true
                 hintsUsedRef.current = serverSession.hintsUsed || 0
                 movesRef.current = serverSession.moves || 0
+                startTimeRef.current = Date.now() - ((serverSession.elapsedTime || 0) * 1000)
                 setIsInitialized(true)
                 setLoading(false)
                 return
@@ -419,6 +420,7 @@ export function useSudoku() {
                 sessionCreatedRef.current = true
                 hintsUsedRef.current = dcSession.hintsUsed || 0
                 movesRef.current = dcSession.moves || 0
+                startTimeRef.current = Date.now() - ((dcSession.elapsedTime || 0) * 1000)
                 setIsInitialized(true)
                 setLoading(false)
                 return
@@ -453,6 +455,7 @@ export function useSudoku() {
               gameStatus: saved.gameStatus as GameStatus,
             })
             puzzleIdRef.current = saved.puzzleId
+            startTimeRef.current = Date.now() - ((saved.time || 0) * 1000)
             setIsInitialized(true)
             if (!getAccessToken()) ensureGuestId()
             await initSession(puzzle.id)
@@ -485,6 +488,7 @@ export function useSudoku() {
                 })
                 hintsUsedRef.current = sessionData.hintsUsed || 0
                 movesRef.current = sessionData.moves || 0
+                startTimeRef.current = Date.now() - ((sessionData.elapsedTime || 0) * 1000)
               }
             }
           }

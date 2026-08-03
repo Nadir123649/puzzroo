@@ -193,7 +193,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     return null
   }
 
-  function restoreFromSession(sessionData: any, freshBoard: Cell[][]) {
+  function restoreFromSession(sessionData: any, freshBoard: Cell[][], solution: Record<string, number | string>) {
     const g = sessionData.grid as Record<string, number>
     if (!g || Object.keys(g).length === 0) return null
     const restored = freshBoard.map(row => row.map(cell => ({ ...cell })))
@@ -203,6 +203,10 @@ export function useCrossMath(initialPuzzleId?: string) {
       if (target && target.isEditable) {
         target.value = val
         target.type = 'number'
+        const correctValue = getCorrectValue(solution as Record<string, number>, r, c)
+        const isCorrect = correctValue !== null && val === correctValue
+        target.isCorrect = isCorrect
+        target.isError = !isCorrect
       }
     }
     return restored
@@ -329,6 +333,10 @@ export function useCrossMath(initialPuzzleId?: string) {
                 if (target && target.isEditable) {
                   target.value = val as number
                   target.type = 'number'
+                  const correctValue = getCorrectValue(serverPuzzle.solution, r, c)
+                  const isCorrect = correctValue !== null && val === correctValue
+                  target.isCorrect = isCorrect
+                  target.isError = !isCorrect
                 }
               }
 
@@ -490,7 +498,7 @@ export function useCrossMath(initialPuzzleId?: string) {
             clearGameState(undefined, targetDiff)
             const sessionData = await initSession(puzzle.id, targetDiff, isDailyChallenge, dcId)
             if (sessionData && !savedGame) {
-              const restored = restoreFromSession(sessionData, puzzle.grid)
+              const restored = restoreFromSession(sessionData, puzzle.grid, puzzle.solution)
               if (restored) {
                 setBoard(restored)
                 setMistakes(sessionData.mistakes || 0)

@@ -63,12 +63,15 @@ function ChessContent() {
 
 export default function ChessPage() {
   return (
-    <AppLayout>
-      <main className="flex-grow flex flex-col">
-        <Suspense fallback={<div className="flex-grow" />}>
-          <ChessContent />
-        </Suspense>
-      </main>
-    </AppLayout>
+    <>
+      <title>Chess | Puzzroo Games</title>
+      <AppLayout>
+        <main className="flex-grow flex flex-col">
+          <Suspense fallback={<div className="flex-grow" />}>
+            <ChessContent />
+          </Suspense>
+        </main>
+      </AppLayout>
+    </>
   )
 }

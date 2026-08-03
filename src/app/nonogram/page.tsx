@@ -40,6 +40,7 @@ export default function NonogramPage() {
 
   return (
     <>
+      <title>Nonogram | Puzzroo Games</title>
       <GameLoader isOpen={initialLoading} text="Loading puzzle..." />
       <AppLayout>
         <main className="flex-grow flex flex-col">
