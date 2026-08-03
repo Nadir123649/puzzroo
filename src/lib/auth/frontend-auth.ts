@@ -320,11 +320,13 @@ export async function ensureSession(): Promise<void> {
           setAuthUser(JSON.stringify({ ...current, ...updated }));
           applyUserTheme(updated.theme);
           window.dispatchEvent(new Event("auth-change"));
-        } else {
-          throw new Error("token_revoked");
         }
-      } catch {
-        clearClientSession();
+        // A failed /users/me is TRANSIENT, not proof the session died: during
+        // rapid page refreshes the per-IP rate limit (429) or a network blip
+        // makes this fail while the refresh cookie is perfectly alive. The
+        // session-exists probe above is the authoritative liveness check and
+        // the api() 401 flow handles genuinely revoked sessions — never log
+        // out from a profile fetch failure.
       } finally {
         refreshPromise = null;
       }

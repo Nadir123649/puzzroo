@@ -150,7 +150,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // ──── POST /api/v1/auth/refresh ────
     if (action === "refresh") {
-      const rl = checkRateLimit(request, "auth:refresh", 20, 60_000);
+      const rl = checkRateLimit(request, "auth:refresh", 120, 60_000);
       if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const refreshToken = request.cookies.get("refreshToken")?.value;
       if (!refreshToken) {
@@ -199,19 +199,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               errRes.cookies.delete("refreshToken");
               return errRes;
             }
-            const rotatedAt = (session as any).rotatedAt?.getTime?.() ?? 0;
-            // A missing rotatedAt means this session rotated under the OLD
-            // pre-rotatedAt code: we can't distinguish a concurrent race from
-            // a replay, but the token is httpOnly + short-lived, so the safe
-            // UX call is to re-issue at the current version and start writing
-            // rotatedAt from now on. Without this, the first refresh after a
-            // server upgrade would hard-fail every legacy session.
-            const withinGrace = rotatedAt === 0 || Date.now() - rotatedAt < 15_000;
-            if (!withinGrace) {
-              const errRes = errorResponse(401, "token_reused", "Refresh token has already been used. Please sign in again.");
-              errRes.cookies.delete("refreshToken");
-              return errRes;
-            }
+            // The session is alive but this refresh token's version is stale:
+            // a rotation race (multi-tab / parallel refreshes / keepalive
+            // requests outliving a page refresh). Re-issue at the CURRENT
+            // version so the late racer succeeds instead of killing the
+            // session — and never delete the cookie, so one tab's late
+            // refresh can't log out every other tab.
             tokenVersion = (session as any).tokenVersion ?? 0;
             sessionRemember = (session as any).remember as boolean | undefined;
             await LoginSession.collection.updateOne(
@@ -501,7 +494,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // ──── GET /api/v1/auth/me ────
     if (action === "me") {
-      const rl = checkRateLimit(request, "auth:me", 30, 60_000);
+      const rl = checkRateLimit(request, "auth:me", 120, 60_000);
       if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const userResult = await auth(request);
       if ("error" in userResult) return userResult.error;
