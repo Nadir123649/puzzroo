@@ -232,7 +232,8 @@ export function useSudoku() {
   const pendingSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   function saveMoveNow(board: SudokuBoard, elapsed: number, hints: number, mists: number) {
-    if (!sessionIdRef.current) return
+    const sessionId = sessionIdRef.current
+    if (!sessionId) return
     
     const now = Date.now()
     if (pendingSaveTimeoutRef.current) {
@@ -255,7 +256,7 @@ export function useSudoku() {
       const abortController = new AbortController()
       abortRef.current = abortController
       
-      gameApi.saveMove('sudoku', sessionIdRef.current, {
+      gameApi.saveMove('sudoku', sessionId, {
         board: boardString,
         elapsedTime: Number(elapsed),
         hintsUsed: Number(hints),
