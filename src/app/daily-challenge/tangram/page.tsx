@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Check, Clock, ArrowLeft, Target } from 'lucide-react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { TangramGame } from '@/components/tangram/TangramGame'
@@ -18,15 +18,33 @@ function formatTime(seconds?: number): string {
 
 function TangramDailyChallengeContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const dateParam = searchParams?.get('date')
   const [mounted, setMounted] = useState(false)
   const [completionCheck, setCompletionCheck] = useState<'loading' | 'completed' | 'not-completed'>('loading')
   const [completionStats, setCompletionStats] = useState<any>(null)
+
+  const backPath = '/past-puzzles/tangram'
 
   useEffect(() => {
     setMounted(true)
     markGameAsPlayed('tangram')
 
-    api('/api/v1/games/tangram/daily/completion').then(res => {
+    let isoDate: string | undefined = undefined
+    if (dateParam) {
+      const parts = dateParam.split('-')
+      if (parts.length === 3) {
+        const [m, d, y] = parts
+        const fullYear = y.length === 2 ? `20${y}` : y
+        isoDate = `${fullYear}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+      } else {
+        isoDate = dateParam
+      }
+    }
+
+    const params = isoDate ? { date: isoDate } : undefined
+
+    api('/api/v1/games/tangram/daily/completion', { params }).then(res => {
       if (res.success) {
         const payload = res.payload as any
         if (payload?.completed) {
@@ -39,7 +57,7 @@ function TangramDailyChallengeContent() {
     }).catch(() => {
       setCompletionCheck('not-completed')
     })
-  }, [])
+  }, [dateParam])
 
   if (!mounted || completionCheck === 'loading') {
     return null
@@ -47,7 +65,7 @@ function TangramDailyChallengeContent() {
 
   if (completionCheck === 'completed') {
     return (
-      <div className="flex-grow flex items-center justify-center px-4">
+      <div className="flex-grow flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] p-6 md:p-8 text-center">
           <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check size={32} className="text-green-600" strokeWidth={3} />
@@ -57,10 +75,10 @@ function TangramDailyChallengeContent() {
             Challenge Completed
           </h1>
           <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] mb-6">
-            Today's Tangram Daily Challenge
+            {dateParam ? `Tangram Daily Challenge (${dateParam})` : "Today's Tangram Daily Challenge"}
           </p>
 
-          {(completionStats?.elapsedSeconds !== undefined || completionStats?.accuracy) && (
+          {(completionStats?.elapsedSeconds !== undefined || completionStats?.accuracy !== undefined) && (
             <div className="grid grid-cols-2 gap-3 mb-6">
               {completionStats.elapsedSeconds !== undefined && (
                 <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
@@ -84,7 +102,7 @@ function TangramDailyChallengeContent() {
           )}
 
           <button
-            onClick={() => router.push('/past-puzzles/tangram')}
+            onClick={() => router.push(backPath)}
             className="w-full h-[48px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
           >
             <ArrowLeft size={18} />
@@ -97,7 +115,7 @@ function TangramDailyChallengeContent() {
 
   return (
     <>
-      <TangramHero backTo="/past-puzzles/tangram" />
+      <TangramHero backTo={backPath} />
       <TangramGame mode="daily" />
     </>
   )

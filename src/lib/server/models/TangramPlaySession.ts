@@ -6,9 +6,17 @@ const tangramPlaySessionSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
       index: true,
     },
+    guestId: { type: String, default: null },
+    gameType: {
+      type: String,
+      enum: ["tangram", "daily_challenge"],
+      default: "tangram",
+      index: true,
+    },
+    dailyChallengeId: { type: String, default: null, index: true },
     puzzleId: { type: String, required: true },
     difficulty: {
       type: String,
@@ -22,6 +30,7 @@ const tangramPlaySessionSchema = new mongoose.Schema(
     },
     pieceStates: [
       {
+        _id: false,
         pieceId: { type: String, required: true },
         position: {
           x: { type: Number, default: 0 },
@@ -30,6 +39,7 @@ const tangramPlaySessionSchema = new mongoose.Schema(
         rotation: { type: Number, default: 0 },
         flipped: { type: Boolean, default: false },
         placed: { type: Boolean, default: false },
+        snapped: { type: Boolean, default: false },
       },
     ],
     mistakes: { type: Number, default: 0 },
@@ -58,16 +68,42 @@ const tangramPlaySessionSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-tangramPlaySessionSchema.index({ userId: 1, puzzleId: 1 })
+// One active session per (owner, puzzle) — unique while playing/paused.
+// Partial filters require the owner field to be a real string/ObjectId so
+// user docs never collide on the guest index (null would be a shared key).
 tangramPlaySessionSchema.index(
   { userId: 1, puzzleId: 1, status: 1 },
   {
     unique: true,
-    partialFilterExpression: { status: { $in: ["playing", "paused"] } },
+    partialFilterExpression: { status: { $in: ["playing", "paused"] }, userId: { $type: "objectId" } },
   }
 )
-tangramPlaySessionSchema.index({ userId: 1, status: 1 })
+tangramPlaySessionSchema.index(
+  { guestId: 1, puzzleId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["playing", "paused"] }, guestId: { $type: "string" } },
+  }
+)
+// One active session per (owner, daily challenge).
+tangramPlaySessionSchema.index(
+  { userId: 1, dailyChallengeId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["playing", "paused"] }, userId: { $type: "objectId" } },
+  }
+)
+tangramPlaySessionSchema.index(
+  { guestId: 1, dailyChallengeId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["playing", "paused"] }, guestId: { $type: "string" } },
+  }
+)
+
 tangramPlaySessionSchema.index({ userId: 1, status: 1, lastSaveAt: -1 })
+tangramPlaySessionSchema.index({ guestId: 1, status: 1, lastSaveAt: -1 })
+tangramPlaySessionSchema.index({ guestId: 1 })
 tangramPlaySessionSchema.index({ puzzleId: 1, status: 1 })
 tangramPlaySessionSchema.index({ completedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
 
