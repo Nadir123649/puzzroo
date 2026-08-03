@@ -1,0 +1,44 @@
+
+> puzzroo@0.1.0 dev
+> next dev -p 3000
+
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.100.223:3000
+- Environments: .env.local
+✓ Ready in 546ms
+
+ GET /cross-math?difficulty=hard 200 in 571ms (next.js: 97ms, proxy.ts: 150ms, application-code: 324ms)
+ GET /manifest.webmanifest 200 in 89ms (next.js: 74ms, application-code: 15ms)
+ GET /api/v1/games/crossmath/continue?difficulty=hard 401 in 2.4s (next.js: 477ms, application-code: 1952ms)
+ POST /api/v1/games/crossmath/sessions 201 in 612ms (next.js: 82ms, application-code: 530ms)
+ GET / 200 in 154ms (next.js: 28ms, proxy.ts: 6ms, application-code: 120ms)
+✓ Compiled in 304ms
+ GET /cross-math?difficulty=hard 200 in 517ms (next.js: 119ms, proxy.ts: 39ms, application-code: 358ms)
+ GET /cross-math?difficulty=hard 200 in 262ms (next.js: 51ms, proxy.ts: 24ms, application-code: 187ms)
+ GET /cross-math?difficulty=hard 200 in 192ms (next.js: 15ms, proxy.ts: 8ms, application-code: 169ms)
+ GET /cross-math?difficulty=hard 200 in 191ms (next.js: 43ms, proxy.ts: 8ms, application-code: 141ms)
+ GET /cross-math?difficulty=hard 200 in 218ms (next.js: 65ms, proxy.ts: 10ms, application-code: 144ms)
+ GET /cross-math?difficulty=hard 200 in 210ms (next.js: 8ms, proxy.ts: 86ms, application-code: 116ms)
+ GET /cross-math?difficulty=hard 200 in 119ms (next.js: 6ms, proxy.ts: 4ms, application-code: 109ms)
+ GET /cross-math?difficulty=hard 200 in 78ms (next.js: 6ms, proxy.ts: 6ms, application-code: 66ms)
+ GET /cross-math?difficulty=hard 200 in 42ms (next.js: 7ms, proxy.ts: 5ms, application-code: 30ms)
+ GET /manifest.webmanifest 200 in 32ms (next.js: 26ms, application-code: 6ms)
+ POST /api/v1/auth/register 201 in 5.7s (next.js: 1374ms, application-code: 4.3s)
+ POST /api/v1/auth/login 200 in 786ms (next.js: 8ms, application-code: 778ms)
+ POST /api/v1/auth/refresh 200 in 198ms (next.js: 3ms, application-code: 194ms)
+ POST /api/v1/auth/refresh 200 in 405ms (next.js: 6ms, application-code: 399ms)
+ POST /api/v1/auth/refresh 200 in 413ms (next.js: 13ms, application-code: 400ms)
+ POST /api/v1/auth/refresh 200 in 384ms (next.js: 5ms, application-code: 379ms)
+ POST /api/v1/auth/refresh 200 in 551ms (next.js: 9ms, application-code: 542ms)
+ POST /api/v1/auth/refresh 200 in 499ms (next.js: 3ms, application-code: 496ms)
+ GET / 200 in 182ms (next.js: 9ms, proxy.ts: 4ms, application-code: 169ms)
+ GET /manifest.webmanifest 200 in 12ms (next.js: 5ms, application-code: 7ms)
+ GET /login 200 in 60ms (next.js: 26ms, proxy.ts: 4ms, application-code: 29ms)
+ GET /manifest.webmanifest 200 in 11ms (next.js: 4ms, application-code: 6ms)
+ POST /api/v1/auth/login 200 in 580ms (next.js: 11ms, application-code: 569ms)
+ GET / 200 in 38ms (next.js: 5ms, proxy.ts: 5ms, application-code: 29ms)
+ GET /manifest.webmanifest 200 in 10ms (next.js: 3ms, application-code: 7ms)
+ POST /api/v1/track 202 in 488ms (next.js: 59ms, application-code: 429ms)
+ GET / 200 in 101ms (next.js: 6ms, proxy.ts: 4ms, application-code: 91ms)
+ GET /manifest.webmanifest 200 in 9ms (next.js: 3ms, application-code: 6ms)
