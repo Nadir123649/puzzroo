@@ -49,6 +49,8 @@ export function SudokuGame() {
     requestHint,
     removeScoreFeedback,
     loading,
+    undoMove,
+    canUndo,
   } = useSudoku()
 
 
@@ -152,11 +154,12 @@ export function SudokuGame() {
               <SudokuControls
                 notesMode={notesMode}
                 availableHints={availableHints}
-                onUndo={() => handleNewGame(true)}
+                onUndo={undoMove}
+                canUndo={canUndo}
                 onErase={eraseCell}
                 onTogglePencil={toggleNotesMode}
                 onHint={requestHint}
-                showReset={!isFromPastPuzzles}
+                showReset={true}
               />
 
               {/* Number Pad */}
@@ -179,15 +182,27 @@ export function SudokuGame() {
                   Replay Game
                 </Button>
               ) : (
-                <Button
-                  onClick={() => handleNewGame(false)}
-                  disabled={isResetting}
-                  fullWidth
-                  size="md"
-                  className="h-[46px]"
-                >
-                  New Game
-                </Button>
+                <div className="w-full flex flex-col gap-2.5">
+                  <Button
+                    onClick={() => handleNewGame(false)}
+                    disabled={isResetting}
+                    fullWidth
+                    size="md"
+                    className="h-[46px]"
+                  >
+                    New Game
+                  </Button>
+                  <Button
+                    onClick={() => handleNewGame(true)}
+                    disabled={isResetting}
+                    fullWidth
+                    size="md"
+                    variant="outline"
+                    className="h-[46px]"
+                  >
+                    Replay Game
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -239,12 +254,13 @@ export function SudokuGame() {
             <SudokuControls
               notesMode={notesMode}
               availableHints={availableHints}
-              onUndo={() => handleNewGame(true)}
+              onUndo={undoMove}
+              canUndo={canUndo}
               onErase={eraseCell}
               onTogglePencil={toggleNotesMode}
               onHint={requestHint}
               mobile
-              showReset={!isFromPastPuzzles}
+              showReset={true}
             />
 
              {/* Action Button Mobile - New Game or Replay Game */}
@@ -259,15 +275,27 @@ export function SudokuGame() {
                   Replay Game
                 </Button>
               ) : (
-                <Button
-                  onClick={() => handleNewGame(false)}
-                  disabled={isResetting}
-                  fullWidth
-                  size="md"
-                  className="h-[46px]"
-                >
-                  New Game
-                </Button>
+                <div className="w-full flex flex-col gap-2.5">
+                  <Button
+                    onClick={() => handleNewGame(false)}
+                    disabled={isResetting}
+                    fullWidth
+                    size="md"
+                    className="h-[46px]"
+                  >
+                    New Game
+                  </Button>
+                  <Button
+                    onClick={() => handleNewGame(true)}
+                    disabled={isResetting}
+                    fullWidth
+                    size="md"
+                    variant="outline"
+                    className="h-[46px]"
+                  >
+                    Replay Game
+                  </Button>
+                </div>
               )}
           </div>
 

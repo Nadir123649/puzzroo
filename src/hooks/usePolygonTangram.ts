@@ -1021,12 +1021,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setHintsUsed(newHintsUsed)
     setHintPiece(chosenPieceId)
 
-    // Save to server when a hint is taken with its related context
-    const elapsed = elapsedFromCountdown(timeRemainingRef.current, difficulty)
-    saveMoveNow(piecesRef.current, elapsed, newHintsUsed)
-
-    // Hard mode: 2 second hint. Easy/Medium: 5 seconds
-    const hintDuration = difficulty === 'hard' ? 2000 : 5000
+    // Easy: 3s, Medium: 2s, Hard: 1s
+    const hintDuration = difficulty === 'hard' ? 1000 : difficulty === 'medium' ? 2000 : 3000
 
     hintTimeoutRef.current = setTimeout(() => {
       setHintPiece(null)
@@ -1181,7 +1177,9 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     setHasWonOnce(false)
     setTimeRemaining(getInitialTime(difficulty))
     setScore(0)
+    setHintsUsed(0)
     setHintPiece(null)
+    shownHints.current.clear()
     if (hintTimeoutRef.current) {
       clearTimeout(hintTimeoutRef.current)
       hintTimeoutRef.current = null
