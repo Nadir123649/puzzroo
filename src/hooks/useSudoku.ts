@@ -376,6 +376,12 @@ export function useSudoku() {
               if (restored) {
                 const status = serverSession.status === 'completed' ? 'won'
                   : serverSession.status === 'abandoned' ? 'lost' : 'playing'
+                // Local autosave runs every second — fresher than the server
+                // elapsed (saved on moves / close-flush). Prefer it when it
+                // matches the same puzzle so the timer resumes exactly where
+                // it paused, even if the close-flush was lost (crash, kill).
+                const local = loadGameState(undefined, currentDiff)
+                const localTime = local && local.puzzleId === serverSession.puzzleId ? local.time : undefined
                 setGameState({
                   currentBoard: restored,
                   initialBoard: convertToSudokuBoard(freshArr),
@@ -383,7 +389,7 @@ export function useSudoku() {
                   puzzleId: serverSession.puzzleId,
                   mistakes: serverSession.mistakes || 0,
                   score: serverSession.score || 0,
-                  time: (serverSession.elapsedTime || 0) + savedGapSeconds(serverSession.lastSavedAt),
+                  time: localTime ?? (serverSession.elapsedTime || 0),
                   gameStatus: status as GameStatus,
                 })
                 puzzleIdRef.current = serverSession.puzzleId
@@ -421,7 +427,7 @@ export function useSudoku() {
                   puzzleId: dcSession.puzzleId,
                   mistakes: dcSession.mistakes || 0,
                   score: dcSession.score || 0,
-                  time: (dcSession.elapsedTime || 0) + savedGapSeconds(dcSession.lastSavedAt),
+                  time: dcSession.elapsedTime || 0,
                   gameStatus: status as GameStatus,
                 })
                 puzzleIdRef.current = dcSession.puzzleId
@@ -451,7 +457,7 @@ export function useSudoku() {
                   puzzleId: saved.puzzleId,
                   mistakes: saved.mistakes,
                   score: saved.score,
-                  time: saved.time + savedGapSeconds(saved.savedAt),
+                  time: saved.time,
                   gameStatus: saved.gameStatus as GameStatus,
                 })
                 puzzleIdRef.current = saved.puzzleId
@@ -496,7 +502,7 @@ export function useSudoku() {
                 // (baseline set from time=0). Re-baseline so the restored
                 // elapsedTime survives the next tick instead of snapping back
                 // to ~0.
-                startTimeRef.current = Date.now() - ((sessionData.elapsedTime || 0) + savedGapSeconds(sessionData.lastSavedAt)) * 1000
+                startTimeRef.current = Date.now() - (sessionData.elapsedTime || 0) * 1000
                 setGameState({
                   currentBoard: restored,
                   initialBoard: next.initialBoard,
@@ -504,7 +510,7 @@ export function useSudoku() {
                   puzzleId: sessionData.puzzleId || next.puzzleId,
                   mistakes: sessionData.mistakes || 0,
                   score: sessionData.score || 0,
-                  time: (sessionData.elapsedTime || 0) + savedGapSeconds(sessionData.lastSavedAt),
+                  time: sessionData.elapsedTime || 0,
                   gameStatus: next.gameStatus,
                 })
                 hintsUsedRef.current = sessionData.hintsUsed || 0
@@ -559,6 +565,7 @@ export function useSudoku() {
   const scoreRef = useRef(gameState.score)
   const mistakesRef = useRef(gameState.mistakes)
   const timeRef = useRef(gameState.time)
+  const lastLocalSaveAtRef = useRef(Date.now())
 
   useEffect(() => {
     currentBoardRef.current = gameState.currentBoard
@@ -583,8 +590,43 @@ export function useSudoku() {
         time: gameState.time,
         gameStatus: gameState.gameStatus,
       }, undefined, difficulty)
+      lastLocalSaveAtRef.current = Date.now()
     }
   }, [gameState, difficulty, isInitialized])
+
+  /**
+   * Flush the exact close-moment elapsed time to the server when the page is
+   * closed or hidden (tab close, navigation, back button). Server saves only
+   * run on moves, so without this the restored timer would rewind to the last
+   * move. Restores use the stored elapsed as-is (timer pauses while away).
+   */
+  useEffect(() => {
+    if (!isInitialized || gameState.gameStatus !== 'playing') return
+
+    const flushElapsed = () => {
+      if (!sessionIdRef.current || completionCalledRef.current) return
+      const boardStr = sudokuBoardToString(currentBoardRef.current)
+      if (!boardStr || boardStr.length !== 81) return
+      const elapsed = (timeRef.current || 0) + savedGapSeconds(lastLocalSaveAtRef.current)
+      Promise.resolve(gameApi.saveMove('sudoku', sessionIdRef.current, {
+        board: boardStr,
+        elapsedTime: elapsed,
+        hintsUsed: hintsUsedRef.current,
+        mistakes: mistakesRef.current,
+        moves: movesRef.current,
+      })).catch(() => { /* best-effort close flush */ })
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flushElapsed()
+    }
+    window.addEventListener('pagehide', flushElapsed)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('pagehide', flushElapsed)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [isInitialized, gameState.gameStatus])
 
   /**
    * Timer management

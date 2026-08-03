@@ -137,19 +137,20 @@ describe('sudoku resume time', () => {
     expect(shown[0]).toMatch(/01:3[5-9]/)
   })
 
-  it('STEP-1: advances time by gap since lastSavedAt (no rewind)', async () => {
-    gameApiMock.getContinue.mockResolvedValue({
-      hasActiveSession: true,
-      session: sessionWithMoves({ lastSavedAt: new Date(Date.now() - 120000).toISOString() }),
-    })
+  it('pagehide: flushes exact elapsed time so resume does not rewind', async () => {
+    gameApiMock.getContinue.mockResolvedValue({ hasActiveSession: true, session: sessionWithMoves() })
 
     render(<SudokuGame />)
     await sleep(200)
     await sleep(2000)
 
-    const shown = screen.getAllByText(/0[0-9]:[0-9]{2}/).map((n) => n.textContent)
+    window.dispatchEvent(new Event('pagehide'))
 
-    expect(shown[0]).toMatch(/03:3[3-8]/)
+    expect(gameApiMock.saveMove).toHaveBeenCalled()
+    const [game, sessionId, payload] = gameApiMock.saveMove.mock.calls.at(-1)
+    expect(game).toBe('sudoku')
+    expect(sessionId).toBe('s1')
+    expect(payload.elapsedTime).toBeGreaterThanOrEqual(96)
   })
 })
 
@@ -220,7 +221,7 @@ describe('crossmath resume time', () => {
     expect(shown[0]).toBe('03:23')
   })
 
-  it('STEP-1: advances countdown by gap since lastSaveAt (no rewind)', async () => {
+  it('pagehide: flushes exact remaining time so resume does not rewind', async () => {
     gameApiMock.getContinueCrossMath.mockResolvedValue({
       hasActiveSession: true,
       session: {
@@ -233,7 +234,6 @@ describe('crossmath resume time', () => {
         moves: 1,
         mistakes: 0,
         hintsUsed: 0,
-        lastSaveAt: new Date(Date.now() - 120000).toISOString(),
         puzzle: puzzleDoc,
       },
     })
@@ -242,8 +242,12 @@ describe('crossmath resume time', () => {
     await sleep(200)
     await sleep(2000)
 
-    const shown = screen.getAllByText(/0[0-9]:[0-9]{2}/).map((n) => n.textContent)
+    window.dispatchEvent(new Event('pagehide'))
 
-    expect(shown[0]).toBe('01:23')
+    expect(gameApiMock.saveMove).toHaveBeenCalled()
+    const [game, sessionId, payload] = gameApiMock.saveMove.mock.calls.at(-1)
+    expect(game).toBe('crossmath')
+    expect(sessionId).toBe('cs1')
+    expect(payload.elapsedTime).toBeGreaterThanOrEqual(96)
   })
 })

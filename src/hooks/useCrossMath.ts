@@ -147,10 +147,15 @@ export function useCrossMath(initialPuzzleId?: string) {
   }, [])
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const timeValueRef = useRef(getInitialTime(getInitialDifficulty()))
+  const boardRef = useRef<Cell[][]>([])
+  const difficultyRef = useRef<Difficulty>(getInitialDifficulty())
+  const lastLocalSaveAtRef = useRef(Date.now())
   const sessionIdRef = useRef<string | null>(null)
   const sessionCreatedRef = useRef(false)
   const completionCalledRef = useRef(false)
   const hintsUsedRef = useRef(0)
+  const mistakesRef = useRef(0)
   const movesRef = useRef(0)
   const restoredRef = useRef(false)
 
@@ -345,7 +350,14 @@ export function useCrossMath(initialPuzzleId?: string) {
               setBoard(freshBoard)
               setMistakes(serverSession.mistakes || 0)
               setScore(0)
-              setTime(Math.max(0, getInitialTime((serverSession.difficulty || difficulty) as Difficulty) - ((serverSession.elapsedTime || 0) + savedGapSeconds(serverSession.lastSaveAt))))
+              // Local autosave runs every second — fresher than the server
+              // elapsed (saved on moves / close-flush). Prefer it when it
+              // matches the same puzzle so the countdown resumes exactly
+              // where it paused, even if the close-flush was lost.
+              const localElapsed = savedGame && savedGame.puzzleId === serverSession.puzzleId
+                ? getInitialTime((serverSession.difficulty || difficulty) as Difficulty) - savedGame.time
+                : null
+              setTime(Math.max(0, getInitialTime((serverSession.difficulty || difficulty) as Difficulty) - (localElapsed ?? (serverSession.elapsedTime || 0))))
               setGameStatus((serverSession.sessionStatus === 'paused' ? 'playing' : serverSession.sessionStatus || 'playing') as 'playing' | 'won' | 'lost')
               if (serverSession.difficulty) setDifficulty(serverSession.difficulty as Difficulty)
               setSelectedCell(null)
@@ -458,7 +470,7 @@ export function useCrossMath(initialPuzzleId?: string) {
             setBoard(freshBoard)
             setMistakes(savedGame.mistakes)
             setScore(savedGame.score)
-            setTime(Math.max(0, savedGame.time - savedGapSeconds(savedGame.savedAt)))
+            setTime(savedGame.time)
             setGameStatus(savedGame.gameStatus as 'playing' | 'won' | 'lost')
             setSelectedCell(null)
             setIsTyping(false)
@@ -504,7 +516,7 @@ export function useCrossMath(initialPuzzleId?: string) {
               if (restored) {
                 setBoard(restored)
                 setMistakes(sessionData.mistakes || 0)
-                setTime(Math.max(0, getInitialTime(targetDiff) - ((sessionData.elapsedTime || 0) + savedGapSeconds(sessionData.lastSaveAt))))
+                setTime(Math.max(0, getInitialTime(targetDiff) - (sessionData.elapsedTime || 0)))
                 const usedCount = new Map<number, number>()
                 restored.forEach(row => {
                   row.forEach(cell => {
@@ -545,8 +557,46 @@ export function useCrossMath(initialPuzzleId?: string) {
         time,
         gameStatus,
       }, undefined, difficulty)
+      timeValueRef.current = time
+      boardRef.current = board
+      difficultyRef.current = difficulty
+      mistakesRef.current = mistakes
+      lastLocalSaveAtRef.current = Date.now()
     }
   }, [board, difficulty, mistakes, score, time, gameStatus, currentPuzzle])
+
+  /**
+   * Flush the exact close-moment elapsed time to the server when the page is
+   * closed or hidden (tab close, navigation, back button). Server saves only
+   * run on moves, so without this the restored countdown would rewind to the
+   * last move. Restores use the stored elapsed as-is (timer pauses while away).
+   */
+  useEffect(() => {
+    if (gameStatus !== 'playing' || board.length === 0) return
+
+    const flushElapsed = () => {
+      if (!sessionIdRef.current || completionCalledRef.current) return
+      if (boardRef.current.length === 0) return
+      const elapsed = elapsedFromCountdown(timeValueRef.current, difficultyRef.current) + savedGapSeconds(lastLocalSaveAtRef.current)
+      Promise.resolve(gameApi.saveMove('crossmath', sessionIdRef.current, {
+        grid: gridToRecord(boardRef.current),
+        elapsedTime: elapsed,
+        hintsUsed: hintsUsedRef.current,
+        mistakes: mistakesRef.current,
+        moves: movesRef.current,
+      })).catch(() => { /* best-effort close flush */ })
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flushElapsed()
+    }
+    window.addEventListener('pagehide', flushElapsed)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('pagehide', flushElapsed)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [gameStatus, board.length])
 
   // Update challenge status to in-progress when game is loaded
   useEffect(() => {
