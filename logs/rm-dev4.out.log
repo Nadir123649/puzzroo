@@ -1,0 +1,60 @@
+
+> puzzroo@0.1.0 dev
+> next dev -p 3000
+
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.100.223:3000
+- Environments: .env.local
+✓ Ready in 731ms
+
+ GET /sudoku?difficulty=easy 200 in 698ms (next.js: 112ms, proxy.ts: 222ms, application-code: 365ms)
+ GET /manifest.webmanifest 200 in 105ms (next.js: 82ms, application-code: 23ms)
+ GET /api/v1/games/sudoku/continue?difficulty=easy 200 in 1891ms (next.js: 725ms, application-code: 1166ms)
+ GET /api/v1/games/sudoku/puzzle?difficulty=easy 200 in 734ms (next.js: 248ms, application-code: 486ms)
+ POST /api/v1/games/sudoku/sessions 201 in 323ms (next.js: 57ms, application-code: 266ms)
+ GET /sudoku?difficulty=easy 200 in 99ms (next.js: 10ms, proxy.ts: 8ms, application-code: 81ms)
+ GET /manifest.webmanifest 200 in 18ms (next.js: 7ms, application-code: 11ms)
+ GET /api/v1/games/sudoku/continue?difficulty=easy 200 in 173ms (next.js: 5ms, application-code: 167ms)
+ GET /cross-math?difficulty=easy 200 in 164ms (next.js: 43ms, proxy.ts: 6ms, application-code: 115ms)
+ GET /manifest.webmanifest 200 in 19ms (next.js: 7ms, application-code: 12ms)
+ GET /api/v1/games/crossmath/continue?difficulty=easy 200 in 708ms (next.js: 89ms, application-code: 619ms)
+ GET /api/v1/games/crossmath/puzzle?difficulty=easy 200 in 247ms (next.js: 66ms, application-code: 181ms)
+ POST /api/v1/games/crossmath/sessions 201 in 328ms (next.js: 69ms, application-code: 259ms)
+ GET /cross-math?difficulty=easy 200 in 97ms (next.js: 18ms, proxy.ts: 9ms, application-code: 70ms)
+ GET /manifest.webmanifest 200 in 16ms (next.js: 5ms, application-code: 11ms)
+ GET /api/v1/games/crossmath/continue?difficulty=easy 200 in 343ms (next.js: 5ms, application-code: 338ms)
+✓ Compiled in 78ms
+ GET /sudoku?difficulty=easy 200 in 428ms (next.js: 116ms, proxy.ts: 67ms, application-code: 245ms)
+ GET /manifest.webmanifest 200 in 51ms (next.js: 41ms, application-code: 9ms)
+ GET /api/v1/games/sudoku/continue?difficulty=easy 200 in 162ms (next.js: 69ms, application-code: 93ms)
+ GET /api/v1/games/sudoku/puzzle?difficulty=easy 200 in 513ms (next.js: 239ms, application-code: 274ms)
+ POST /api/v1/games/sudoku/sessions 201 in 324ms (next.js: 52ms, application-code: 272ms)
+ GET /sudoku?difficulty=easy 200 in 94ms (next.js: 15ms, proxy.ts: 7ms, application-code: 72ms)
+ GET /manifest.webmanifest 200 in 30ms (next.js: 19ms, application-code: 11ms)
+ GET /api/v1/games/sudoku/continue?difficulty=easy 200 in 181ms (next.js: 4ms, application-code: 178ms)
+ GET /cross-math?difficulty=easy 200 in 418ms (next.js: 112ms, proxy.ts: 8ms, application-code: 298ms)
+ GET /manifest.webmanifest 200 in 14ms (next.js: 5ms, application-code: 9ms)
+ GET /api/v1/games/crossmath/continue?difficulty=easy 200 in 233ms (next.js: 63ms, application-code: 170ms)
+ GET /api/v1/games/crossmath/puzzle?difficulty=easy 200 in 254ms (next.js: 69ms, application-code: 185ms)
+ POST /api/v1/games/crossmath/sessions 201 in 324ms (next.js: 56ms, application-code: 268ms)
+ GET /cross-math?difficulty=easy 200 in 87ms (next.js: 10ms, proxy.ts: 7ms, application-code: 69ms)
+ GET /manifest.webmanifest 200 in 19ms (next.js: 6ms, application-code: 12ms)
+ GET /api/v1/games/crossmath/continue?difficulty=easy 200 in 342ms (next.js: 5ms, application-code: 336ms)
+ GET /sudoku?difficulty=easy 200 in 90ms (next.js: 7ms, proxy.ts: 5ms, application-code: 78ms)
+ GET /manifest.webmanifest 200 in 14ms (next.js: 6ms, application-code: 8ms)
+ GET /api/v1/games/sudoku/continue?difficulty=easy 200 in 100ms (next.js: 5ms, application-code: 95ms)
+ GET /api/v1/games/sudoku/puzzle?difficulty=easy 200 in 268ms (next.js: 8ms, application-code: 260ms)
+ POST /api/v1/games/sudoku/sessions 201 in 265ms (next.js: 7ms, application-code: 258ms)
+ GET /sudoku?difficulty=easy 200 in 94ms (next.js: 9ms, proxy.ts: 8ms, application-code: 77ms)
+ GET /manifest.webmanifest 200 in 16ms (next.js: 6ms, application-code: 11ms)
+ GET /api/v1/games/sudoku/continue?difficulty=easy 200 in 175ms (next.js: 4ms, application-code: 170ms)
+ GET /cross-math?difficulty=easy 200 in 83ms (next.js: 7ms, proxy.ts: 5ms, application-code: 70ms)
+ GET /manifest.webmanifest 200 in 20ms (next.js: 13ms, application-code: 7ms)
+ GET /api/v1/games/crossmath/continue?difficulty=easy 200 in 197ms (next.js: 4ms, application-code: 193ms)
+ GET /api/v1/games/crossmath/puzzle?difficulty=easy 200 in 187ms (next.js: 5ms, application-code: 183ms)
+ POST /api/v1/games/crossmath/sessions 201 in 261ms (next.js: 5ms, application-code: 256ms)
+ GET /cross-math?difficulty=easy 200 in 79ms (next.js: 8ms, proxy.ts: 5ms, application-code: 66ms)
+ GET /manifest.webmanifest 200 in 15ms (next.js: 5ms, application-code: 10ms)
+ GET /api/v1/games/crossmath/continue?difficulty=easy 200 in 337ms (next.js: 5ms, application-code: 333ms)
+[?25h
