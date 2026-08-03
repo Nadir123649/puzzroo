@@ -61,6 +61,16 @@ function dateParamToApi(dateParam?: string | null): string | undefined {
   return `20${parts[2]}-${parts[0]}-${parts[1]}`
 }
 
+// Seconds between the last save and now — restores carry the elapsed time as
+// of the last save, so the timer must be advanced by this gap to resume from
+// the exact moment the player left, not from the moment of the last save.
+function savedGapSeconds(savedAt: unknown): number {
+  if (savedAt == null) return 0
+  const t = new Date(savedAt as string | number | Date).getTime()
+  if (Number.isNaN(t)) return 0
+  return Math.max(0, Math.round((Date.now() - t) / 1000))
+}
+
 const CACHE_KEY = 'puzzroo_sudoku_cache_by_id'
 
 // Module-level guard to cancel StrictMode double-mount in dev
@@ -373,7 +383,7 @@ export function useSudoku() {
                   puzzleId: serverSession.puzzleId,
                   mistakes: serverSession.mistakes || 0,
                   score: serverSession.score || 0,
-                  time: serverSession.elapsedTime || 0,
+                  time: (serverSession.elapsedTime || 0) + savedGapSeconds(serverSession.lastSavedAt),
                   gameStatus: status as GameStatus,
                 })
                 puzzleIdRef.current = serverSession.puzzleId
@@ -411,7 +421,7 @@ export function useSudoku() {
                   puzzleId: dcSession.puzzleId,
                   mistakes: dcSession.mistakes || 0,
                   score: dcSession.score || 0,
-                  time: dcSession.elapsedTime || 0,
+                  time: (dcSession.elapsedTime || 0) + savedGapSeconds(dcSession.lastSavedAt),
                   gameStatus: status as GameStatus,
                 })
                 puzzleIdRef.current = dcSession.puzzleId
@@ -426,6 +436,35 @@ export function useSudoku() {
             }
           }
 
+          // STEP 3: Resume from local save. Fetch the saved puzzle BY ID so
+          // random-difficulty games survive a page close/reopen — a fresh
+          // random fetch would never match the saved puzzle id.
+          if (!urlId && !isDailyChallenge) {
+            const saved = loadGameState(undefined, currentDiff)
+            if (saved && saved.difficulty === currentDiff) {
+              const savedPuzzle = await loadSudokuPuzzle({ kind: 'byId', id: saved.puzzleId }).catch(() => null)
+              if (savedPuzzle) {
+                setGameState({
+                  currentBoard: saved.currentBoard,
+                  initialBoard: saved.initialBoard,
+                  solution: saved.solution,
+                  puzzleId: saved.puzzleId,
+                  mistakes: saved.mistakes,
+                  score: saved.score,
+                  time: saved.time + savedGapSeconds(saved.savedAt),
+                  gameStatus: saved.gameStatus as GameStatus,
+                })
+                puzzleIdRef.current = saved.puzzleId
+                setIsInitialized(true)
+                if (!getAccessToken()) ensureGuestId()
+                await initSession(savedPuzzle.id)
+                return
+              }
+            }
+          }
+
+          if (cancelled) return
+
           // Build exclude param only if non-empty
           const exclude = gameState.puzzleId || undefined
           // Fetch or determine the target puzzle first
@@ -438,26 +477,6 @@ export function useSudoku() {
           if (cancelled) return
 
           const targetPuzzleId = isDailyChallenge && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id
-
-          // Only resume saved game if it matches the target puzzle ID
-          const saved = loadGameState(undefined, currentDiff)
-          if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === currentDiff) {
-            setGameState({
-              currentBoard: saved.currentBoard,
-              initialBoard: saved.initialBoard,
-              solution: saved.solution,
-              puzzleId: saved.puzzleId,
-              mistakes: saved.mistakes,
-              score: saved.score,
-              time: saved.time,
-              gameStatus: saved.gameStatus as GameStatus,
-            })
-            puzzleIdRef.current = saved.puzzleId
-            setIsInitialized(true)
-            if (!getAccessToken()) ensureGuestId()
-            await initSession(puzzle.id)
-            return
-          }
 
           const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
           setGameState(next)
@@ -473,6 +492,11 @@ export function useSudoku() {
               const solArr = Array.isArray(puzzle.solution) ? puzzle.solution : parseBoardStr(puzzle.solution as string)
               const restored = sudokuRestoreFromSession(sessionData, puzzleArr, solArr)
               if (restored) {
+                // The timer interval started when isInitialized flipped true
+                // (baseline set from time=0). Re-baseline so the restored
+                // elapsedTime survives the next tick instead of snapping back
+                // to ~0.
+                startTimeRef.current = Date.now() - ((sessionData.elapsedTime || 0) + savedGapSeconds(sessionData.lastSavedAt)) * 1000
                 setGameState({
                   currentBoard: restored,
                   initialBoard: next.initialBoard,
@@ -480,7 +504,7 @@ export function useSudoku() {
                   puzzleId: sessionData.puzzleId || next.puzzleId,
                   mistakes: sessionData.mistakes || 0,
                   score: sessionData.score || 0,
-                  time: sessionData.elapsedTime || 0,
+                  time: (sessionData.elapsedTime || 0) + savedGapSeconds(sessionData.lastSavedAt),
                   gameStatus: next.gameStatus,
                 })
                 hintsUsedRef.current = sessionData.hintsUsed || 0

@@ -23,6 +23,16 @@ import { getAccessToken, ensureGuestId } from '@/lib/auth/frontend-auth'
 // Module-level guard to cancel StrictMode double-mount in dev
 let _crossmathMountGuard = false
 
+// Seconds between the last save and now — restores carry the elapsed time as
+// of the last save, so the countdown must be advanced by this gap to resume
+// from the exact moment the player left, not from the moment of the last save.
+function savedGapSeconds(savedAt: unknown): number {
+  if (savedAt == null) return 0
+  const t = new Date(savedAt as string | number | Date).getTime()
+  if (Number.isNaN(t)) return 0
+  return Math.max(0, Math.round((Date.now() - t) / 1000))
+}
+
 function getTodayDateParam(): string {
   const d = new Date()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -335,7 +345,7 @@ export function useCrossMath(initialPuzzleId?: string) {
               setBoard(freshBoard)
               setMistakes(serverSession.mistakes || 0)
               setScore(0)
-              setTime(Math.max(0, getInitialTime((serverSession.difficulty || difficulty) as Difficulty) - (serverSession.elapsedTime || 0)))
+              setTime(Math.max(0, getInitialTime((serverSession.difficulty || difficulty) as Difficulty) - ((serverSession.elapsedTime || 0) + savedGapSeconds(serverSession.lastSaveAt))))
               setGameStatus((serverSession.sessionStatus === 'paused' ? 'playing' : serverSession.sessionStatus || 'playing') as 'playing' | 'won' | 'lost')
               if (serverSession.difficulty) setDifficulty(serverSession.difficulty as Difficulty)
               setSelectedCell(null)
@@ -448,7 +458,7 @@ export function useCrossMath(initialPuzzleId?: string) {
             setBoard(freshBoard)
             setMistakes(savedGame.mistakes)
             setScore(savedGame.score)
-            setTime(savedGame.time)
+            setTime(Math.max(0, savedGame.time - savedGapSeconds(savedGame.savedAt)))
             setGameStatus(savedGame.gameStatus as 'playing' | 'won' | 'lost')
             setSelectedCell(null)
             setIsTyping(false)
@@ -494,7 +504,7 @@ export function useCrossMath(initialPuzzleId?: string) {
               if (restored) {
                 setBoard(restored)
                 setMistakes(sessionData.mistakes || 0)
-                setTime(Math.max(0, getInitialTime(targetDiff) - (sessionData.elapsedTime || 0)))
+                setTime(Math.max(0, getInitialTime(targetDiff) - ((sessionData.elapsedTime || 0) + savedGapSeconds(sessionData.lastSaveAt))))
                 const usedCount = new Map<number, number>()
                 restored.forEach(row => {
                   row.forEach(cell => {
