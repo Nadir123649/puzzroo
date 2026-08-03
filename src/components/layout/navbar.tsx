@@ -256,7 +256,7 @@ export function Navbar() {
           <div className="flex md:hidden items-center gap-2 ml-[20px]">
             <button
               onClick={toggleTheme}
-              className="flex items-center justify-center w-8 h-8 rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
+              className="flex items-center justify-center w-11 h-11 rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
               aria-label="Toggle theme"
             >
               <img
@@ -274,7 +274,7 @@ export function Navbar() {
               <button
                 ref={hamburgerRef}
                 onClick={() => setIsMenuOpen(prev => !prev)}
-                className="w-10 h-10 rounded-lg flex items-center justify-center ml-1 hover:bg-gray-100 dark:hover:bg-[#1F222A] active:scale-95 transition-all duration-200"
+                className="w-11 h-11 rounded-lg flex items-center justify-center ml-1 hover:bg-gray-100 dark:hover:bg-[#1F222A] active:scale-95 transition-all duration-200"
                 aria-label="Toggle menu"
               >
                 <div className="w-5 h-4 flex flex-col justify-between">

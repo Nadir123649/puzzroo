@@ -133,9 +133,9 @@ export function FreeGames() {
 
       {/* Heading */}
       <div className="w-full flex items-center gap-2.5">
-        <h2 className="font-urbanist font-bold text-[24px] md:text-[clamp(2rem,5vw,3rem)] leading-tight text-[#181A20] dark:text-white transition-colors duration-300">
+        <h1 className="font-urbanist font-bold text-[24px] md:text-[clamp(2rem,5vw,3rem)] leading-tight text-[#181A20] dark:text-white transition-colors duration-300">
           Free Games
-        </h2>
+        </h1>
 
         <Image
           src={images.starIcon}

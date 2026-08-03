@@ -95,7 +95,7 @@ export function DifficultyTabs({
               buttonsRef.current[index] = el
             }}
             onClick={() => handleClick(index)}
-            className="relative flex flex-col items-center gap-1.5 group z-10"
+            className="relative flex flex-col items-center justify-center gap-1.5 group z-10 py-3 min-h-[44px]"
           >
             <span
               className={`font-urbanist font-bold text-[12px] sm:text-[13px] md:text-[14px] transition-all duration-700 ease-in-out px-4 sm:px-6 ${
