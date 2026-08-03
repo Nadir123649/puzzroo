@@ -5,6 +5,7 @@ import { leaderboardRepository } from "./LeaderboardRepository";
 
 export class LeaderboardService {
   async recordEntry(event: GameCompletion): Promise<void> {
+    if (event.isGuest) return; // guest ids are not ObjectIds; leaderboards are user-only
     await connectDB();
     const user = await User.findById(event.playerId).lean();
     if (!user) return;

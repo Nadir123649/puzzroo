@@ -1,4 +1,4 @@
-import { TOLERANCE, ALLOWED_ROTATIONS, BOARD } from './tolerance';
+import { TOLERANCE, ALLOWED_ROTATIONS } from './tolerance';
 import type { VerificationRequest, VerificationResult, PieceVerificationResult } from '../types';
 import TangramPuzzle from '../../models/TangramPuzzle';
 
@@ -59,20 +59,15 @@ export function transformPolygon(
   return result;
 }
 
-export function isInBounds(
+function isInBoundsRelative(
   polygon: number[][],
-  canvasWidth: number,
-  canvasHeight: number
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number
 ): boolean {
   for (const [x, y] of polygon) {
-    if (
-      x < -TOLERANCE.POSITION ||
-      y < -TOLERANCE.POSITION ||
-      x > canvasWidth + TOLERANCE.POSITION ||
-      y > canvasHeight + TOLERANCE.POSITION
-    ) {
-      return false;
-    }
+    if (x < minX || y < minY || x > maxX || y > maxY) return false;
   }
   return true;
 }
@@ -85,7 +80,7 @@ export function isRotationValid(rotation: number): boolean {
 }
 
 function orient(a: number[], b: number[], c: number[]): number {
-  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - b[0]);
+  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
 }
 
 export function polygonsOverlap(
@@ -255,9 +250,21 @@ export async function verifyPuzzleSolution(
 
   const targetPolygons = puzzle.individualPiecePolygons as number[][][];
   const targetIds = puzzle.pieceShapeIds as string[];
-  const canvasMeta = puzzle.metadata as { canvasSize?: { width: number; height: number } } | undefined;
-  const canvasWidth = canvasMeta?.canvasSize?.width || BOARD.SIZE;
-  const canvasHeight = canvasMeta?.canvasSize?.height || BOARD.SIZE;
+
+  // Puzzles are stored in their own local coordinate frame — dataset tilings
+  // live in different quadrants (some around [0,10], others around [-20,0]) —
+  // so bounds are relative to the puzzle's own tiling, not a fixed canvas.
+  const fullPolygon = puzzle.fullPolygon as number[][] | undefined;
+  let bboxMinX = -Infinity;
+  let bboxMinY = -Infinity;
+  let bboxMaxX = Infinity;
+  let bboxMaxY = Infinity;
+  if (fullPolygon && fullPolygon.length > 0) {
+    bboxMinX = Math.min(...fullPolygon.map((v) => v[0])) - TOLERANCE.POSITION;
+    bboxMinY = Math.min(...fullPolygon.map((v) => v[1])) - TOLERANCE.POSITION;
+    bboxMaxX = Math.max(...fullPolygon.map((v) => v[0])) + TOLERANCE.POSITION;
+    bboxMaxY = Math.max(...fullPolygon.map((v) => v[1])) + TOLERANCE.POSITION;
+  }
 
   const claimedSlots = new Set<number>();
   let correctCount = 0;
@@ -293,7 +300,7 @@ export async function verifyPuzzleSolution(
 
     if (pieceCorrect) correctCount++;
 
-    const inBounds = isInBounds(transformedPolygon, canvasWidth, canvasHeight);
+    const inBounds = isInBoundsRelative(transformedPolygon, bboxMinX, bboxMinY, bboxMaxX, bboxMaxY);
     const correctRotation = isRotationValid(state.rotation);
 
     let overlaps = false;

@@ -24,10 +24,10 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params: any)
     return errorResponse(400, "validation_error", parsed.error.issues[0].message)
   }
 
-  const { pieceStates, elapsedTime, hintsUsed, mistakes, moves } = parsed.data
+  const { pieceStates, elapsedSeconds, hintsUsed, mistakes, moves } = parsed.data
 
   const sessionResult = await sessionService.completeSession(
-    params.id, actor, pieceStates, elapsedTime, hintsUsed, mistakes, moves || 0
+    params.id, actor, pieceStates, elapsedSeconds, hintsUsed, mistakes, moves || 0
   )
 
   if (sessionResult.isCompleted && sessionResult.result) {

@@ -26,7 +26,8 @@ export const pieceStatesSchema = z
   .max(20, "pieceStates exceeds piece limit")
 
 const timerFields = {
-  elapsedTime: z.number().min(0).max(86400),
+  // Tangram contract (hook + legacy): elapsedSeconds, not elapsedTime.
+  elapsedSeconds: z.number().min(0).max(86400),
   hintsUsed: z.number().min(0).max(1000),
   mistakes: z.number().min(0).max(10000),
   moves: z.number().min(0).max(100000),
