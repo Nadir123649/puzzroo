@@ -55,7 +55,16 @@ function DailyChallengeContent() {
 
       try {
         const params: Record<string, string> = {}
-        if (dateParam) params.date = `${new Date().getFullYear()}-${dateParam}`
+        if (dateParam) {
+          const parts = dateParam.split('-')
+          if (parts.length === 3) {
+            const [m, d, y] = parts
+            const fullYear = y.length === 2 ? `20${y}` : y
+            params.date = `${fullYear}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+          } else {
+            params.date = dateParam
+          }
+        }
         const res = await api(`/api/v1/games/${gameIdForApi}/daily/completion`, { params })
 
         if (cancelled) return
