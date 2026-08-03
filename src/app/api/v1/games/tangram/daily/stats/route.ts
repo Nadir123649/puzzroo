@@ -1,18 +1,31 @@
 import { NextRequest } from "next/server";
 import { withAuth } from "../../route-helpers";
+import type { Actor } from "../../route-helpers";
 import DailyChallenge from "@/lib/server/models/DailyChallenge";
 import { successResponse } from "@/lib/server/utils/apiResponse";
 
-export const GET = withAuth(async (req, user) => {
+export const GET = withAuth(async (req: NextRequest, actor: Actor) => {
+  if (actor.type === "guest") {
+    return successResponse({
+      totalChallenges: 0,
+      completedChallenges: 0,
+      completionRate: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      bestTime: 0,
+      bestTimeDate: null,
+    });
+  }
+
   const [totalChallenges, completedChallenges, currentStreak, longestStreak] = await Promise.all([
-    DailyChallenge.countDocuments({ userId: user.id }),
-    DailyChallenge.countDocuments({ userId: user.id, status: "completed" }),
-    calculateDailyStreak(user.id, false),
-    calculateDailyStreak(user.id, true),
+    DailyChallenge.countDocuments({ userId: actor.id }),
+    DailyChallenge.countDocuments({ userId: actor.id, status: "completed" }),
+    calculateDailyStreak(actor.id, false),
+    calculateDailyStreak(actor.id, true),
   ]);
 
   const bestResult = await DailyChallenge.findOne({
-    userId: user.id,
+    userId: actor.id,
     status: "completed",
   })
     .sort({ elapsedSeconds: 1 })

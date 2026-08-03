@@ -1,5 +1,5 @@
 import TangramPuzzle from '@/lib/server/models/TangramPuzzle';
-import { verifyPuzzleSolution, checkCoverage } from '@/lib/server/tangram/geometry/engine';
+import { verifyPuzzleSolution, checkCoverage, transformPolygon } from '@/lib/server/tangram/geometry/engine';
 import type { TangramPieceState } from '@/lib/server/tangram/types';
 import type { TangramVerificationResult } from '../types';
 
@@ -39,7 +39,6 @@ export class VerificationEngine {
         const allPolygons = pieceStates.map((state: TangramPieceState) => {
           const idx = (puzzle.pieceShapeIds as string[])?.indexOf(state.pieceId);
           const original = idx >= 0 ? (puzzle.individualPiecePolygons as number[][][])[idx] : [];
-          const { transformPolygon } = require('@/lib/server/tangram/geometry/engine');
           return transformPolygon(original, state.position, state.rotation, state.flipped);
         });
         coverage = checkCoverage(allPolygons, puzzle.fullPolygon as number[][]);

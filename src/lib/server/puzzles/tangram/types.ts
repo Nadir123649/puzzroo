@@ -1,14 +1,28 @@
 export type SessionStatus = 'playing' | 'paused' | 'completed' | 'abandoned'
 
-export type TangramDifficulty = 'easy' | 'medium' | 'hard' | 'expert'
+export type TangramDifficulty = 'easy' | 'medium' | 'hard'
+
+export type TangramGameType = 'tangram' | 'daily_challenge'
+
+export interface TangramPieceStateRecord {
+  pieceId: string
+  position: { x: number; y: number }
+  rotation: number
+  flipped?: boolean
+  placed?: boolean
+  snapped?: boolean
+}
 
 export interface TangramSession {
   sessionId: string
-  userId: string
+  userId?: string
+  guestId?: string
+  gameType: TangramGameType
+  dailyChallengeId?: string | null
   puzzleId: string
   difficulty: TangramDifficulty
   status: SessionStatus
-  grid: any[][]
+  pieceStates: TangramPieceStateRecord[]
   startedAt: Date
   pausedAt?: Date | null
   completedAt?: Date | null
@@ -21,6 +35,8 @@ export interface TangramSession {
 
 export interface TangramSessionResult {
   accuracy: number
+  piecesCorrect: number
+  totalPieces: number
   completedAt: Date
   elapsedTime: number
   moves: number
@@ -53,9 +69,11 @@ export interface TangramVerificationResult {
 export interface SafeSessionResponse {
   sessionId: string
   puzzleId: string
+  gameType: TangramGameType
+  dailyChallengeId: string | null
   difficulty: TangramDifficulty
   sessionStatus: SessionStatus
-  grid: any[][]
+  pieceStates: TangramPieceStateRecord[]
   mistakes: number
   hintsUsed: number
   moves: number
@@ -119,6 +137,8 @@ export interface CompletionResult {
   hintsUsed: number
   score: number
   accuracy: number
+  piecesCorrect: number
+  totalPieces: number
 }
 
 export interface IncompleteSessionInfo {
