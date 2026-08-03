@@ -1,7 +1,6 @@
-import type { PieceValidationInput, PieceValidationOutput, Bounds } from './types';
 import { TOLERANCE, ALLOWED_ROTATIONS, BOARD } from './tolerance';
-import TangramPuzzle from '../../models/TangramPuzzle';
 import type { VerificationRequest, VerificationResult, PieceVerificationResult } from '../types';
+import TangramPuzzle from '../../models/TangramPuzzle';
 
 function pointToKey(p: number[]): string {
   return `${Math.round(p[0] * 1000)},${Math.round(p[1] * 1000)}`;
@@ -58,20 +57,6 @@ export function transformPolygon(
   result = result.map(([x, y]) => [x + position.x, y + position.y]);
 
   return result;
-}
-
-export function getBounds(polygon: number[][]): Bounds {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const [x, y] of polygon) {
-    if (x < minX) minX = x;
-    if (y < minY) minY = y;
-    if (x > maxX) maxX = x;
-    if (y > maxY) maxY = y;
-  }
-  return { minX, minY, maxX, maxY };
 }
 
 export function isInBounds(
@@ -246,52 +231,6 @@ export function checkCoverage(
   return {
     covered: errors.length === 0,
     coverageRatio,
-    errors,
-  };
-}
-
-export function validatePiece(
-  input: PieceValidationInput,
-  targetPolygons: number[][][],
-  canvasWidth: number,
-  canvasHeight: number,
-  allTransformedPolygons: number[][][]
-): PieceValidationOutput {
-  const errors: string[] = [];
-  const transformed = input.transformedPolygon;
-
-  const inBounds = isInBounds(transformed, canvasWidth, canvasHeight);
-  if (!inBounds) errors.push('Piece out of bounds');
-
-  const correctRotation = isRotationValid(input.rotation);
-  if (!correctRotation) errors.push(`Invalid rotation: ${input.rotation}`);
-
-  let overlaps = false;
-  for (let i = 0; i < allTransformedPolygons.length; i++) {
-    const other = allTransformedPolygons[i];
-    if (other === transformed) continue;
-    if (polygonsOverlap(transformed, other)) {
-      overlaps = true;
-      errors.push('Piece overlaps with another piece');
-      break;
-    }
-  }
-
-  let positionMatch = false;
-  for (const target of targetPolygons) {
-    if (verticesMatch(transformed, target)) {
-      positionMatch = true;
-      break;
-    }
-  }
-
-  return {
-    pieceId: input.pieceId,
-    valid: inBounds && correctRotation && !overlaps && positionMatch,
-    inBounds,
-    correctRotation,
-    overlaps,
-    positionMatch,
     errors,
   };
 }
