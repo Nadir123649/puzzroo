@@ -1,5 +1,5 @@
 import { notify } from '@/lib/toast'
-import { getAccessToken, setAccessToken, getGuestId } from '@/lib/auth/frontend-auth'
+import { getAccessToken, setAccessToken, getGuestId, hasStoredAuth } from '@/lib/auth/frontend-auth'
 
 type RefreshCallback = (token: string) => void;
 let onRefresh: RefreshCallback | null = null;
@@ -31,8 +31,8 @@ function isTokenExpired(token: string): boolean {
 
 export async function refreshAccessToken(): Promise<string | null> {
   if (!isClient) return null;
-  // If user is not logged in (no puzzroo_auth in localStorage), do not attempt refresh
-  if (!localStorage.getItem("puzzroo_auth")) return null;
+  // If user is not logged in (no puzzroo_auth flag), do not attempt refresh
+  if (!hasStoredAuth()) return null;
 
   if (refreshPromise) return refreshPromise;
 
@@ -42,6 +42,7 @@ export async function refreshAccessToken(): Promise<string | null> {
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
           localStorage.removeItem("puzzroo_auth");
+          sessionStorage.removeItem("puzzroo_auth");
         }
         return null;
       }
@@ -90,7 +91,7 @@ export async function api<T = any>(
   };
 
   let accessToken = getAccessToken();
-  const userIsLoggedIn = isClient && !!localStorage.getItem("puzzroo_auth");
+  const userIsLoggedIn = isClient && hasStoredAuth();
 
   if (!accessToken && userIsLoggedIn) {
     const newToken = await refreshAccessToken();
@@ -150,6 +151,7 @@ export async function api<T = any>(
             sessionExpiredNotified = true;
             notify.errorKey("SYSTEM_SESSION_EXPIRED");
             localStorage.removeItem("puzzroo_auth");
+            sessionStorage.removeItem("puzzroo_auth");
             setTimeout(() => { window.location.href = "/login"; }, 1500);
           }
         }

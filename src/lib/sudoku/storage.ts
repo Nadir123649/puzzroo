@@ -6,6 +6,7 @@
 'use client'
 
 import { SudokuBoard, GameStatus, Difficulty } from './types'
+import { getCurrentUser } from '@/lib/auth/frontend-auth'
 
 const STORAGE_KEY = 'puzzroo_sudoku_game'
 const STORAGE_VERSION = '1.0'
@@ -30,12 +31,9 @@ export interface SavedGameState {
 function getScopedKey(baseKey: string): string {
   if (!isBrowser) return baseKey
   try {
-    const userStr = localStorage.getItem("puzzroo_user")
-    if (userStr) {
-      const user = JSON.parse(userStr)
-      if (user && user.id) {
-        return `${baseKey}_${user.id}`
-      }
+    const user = getCurrentUser()
+    if (user && user.id) {
+      return `${baseKey}_${user.id}`
     }
   } catch {}
   return `${baseKey}_guest`

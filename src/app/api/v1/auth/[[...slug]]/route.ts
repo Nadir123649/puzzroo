@@ -7,13 +7,13 @@ import LoginSession from "@/lib/server/models/LoginSession";
 import { connectDB } from "@/lib/server/db";
 import { successResponse, errorResponse, getOrigin } from "@/lib/server/utils/apiResponse";
 import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
-import { cookieOptions } from "@/lib/server/utils/cookieOptions";
+import { cookieOptions, getRefreshCookieOptions } from "@/lib/server/utils/cookieOptions";
 import { sendVerificationEmail } from "@/lib/server/services/emailService";
 import { auth, invalidateSessionCache } from "@/lib/server/middleware/auth";
 import { validate } from "@/lib/server/middleware/validate";
 import { registerSchema, loginSchema, changePasswordSchema, chooseUsernameSchema, unlinkProviderSchema, manageEmailSchema } from "@/lib/server/validators/authValidator";
 import { formatUser } from "@/lib/server/utils/formatUser";
-import { authPayload, issueSession } from "@/lib/server/utils/authHelpers";
+import { authPayload, issueSession, getSessionRemember } from "@/lib/server/utils/authHelpers";
 import { generatePublicId } from "@/lib/server/utils/publicId";
 import { generateUniqueUsername } from "@/lib/server/utils/usernameGenerator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
@@ -108,12 +108,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // verification prompt client-side via `requiresVerification`.
       await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "password" }, request });
       auditLog({ eventType: "auth:login", userId: user._id.toString(), ip: getClientIp(request), userAgent: request.headers.get("user-agent") || undefined }).catch(() => {});
-      const { payload } = await issueSession(request, user, "email");
+      const { payload } = await issueSession(request, user, "email", rememberMe);
       const res = NextResponse.json(
         { success: true, payload, requiresVerification: !user.isVerified, timestamp: Date.now() },
         { status: 200 }
       );
-      res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
+      res.cookies.set("refreshToken", payload.token.refreshToken, getRefreshCookieOptions(rememberMe));
       return res;
     }
 
@@ -175,11 +175,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         // Raw driver ops: the running server's cached Mongoose schema may
         // predate the `rotatedAt` field, so strict-mode casts would fail.
         let tokenVersion: number | undefined;
+        let sessionRemember: boolean | undefined;
         if (decoded.jti) {
           const updated = await LoginSession.collection.findOneAndUpdate(
             { _id: new mongoose.Types.ObjectId(decoded.jti), tokenVersion: decoded.ver ?? 0 },
             { $inc: { tokenVersion: 1 }, $set: { rotatedAt: new Date() } },
-            { returnDocument: "after", projection: { tokenVersion: 1, status: 1, userId: 1, rotatedAt: 1 } }
+            { returnDocument: "after", projection: { tokenVersion: 1, status: 1, userId: 1, rotatedAt: 1, remember: 1 } }
           );
           if (!updated) {
             // Version mismatch: either a genuine replay of a stale token, or
@@ -189,7 +190,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             // of killing the session.
             const session = await LoginSession.collection.findOne(
               { _id: new mongoose.Types.ObjectId(decoded.jti) },
-              { projection: { tokenVersion: 1, status: 1, userId: 1, rotatedAt: 1 } }
+              { projection: { tokenVersion: 1, status: 1, userId: 1, rotatedAt: 1, remember: 1 } }
             );
             const sessionMissing =
               !session || session.status !== "active" || session.userId.toString() !== decoded.id;
@@ -212,18 +213,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               return errRes;
             }
             tokenVersion = (session as any).tokenVersion ?? 0;
+            sessionRemember = (session as any).remember as boolean | undefined;
             await LoginSession.collection.updateOne(
               { _id: (session as any)._id },
               { $set: { rotatedAt: new Date() } }
             );
           } else {
             tokenVersion = (updated as any).tokenVersion;
+            sessionRemember = (updated as any).remember as boolean | undefined;
           }
         }
 
         const tokenPayload = buildTokenPayload(user, decoded.jti, tokenVersion);
         const res = NextResponse.json({ success: true, payload: { token: tokenPayload }, timestamp: Date.now() }, { status: 200 });
-        res.cookies.set("refreshToken", tokenPayload.refreshToken, cookieOptions);
+        res.cookies.set("refreshToken", tokenPayload.refreshToken, getRefreshCookieOptions(sessionRemember ?? true));
         return res;
       } catch {
         const errRes = NextResponse.json(
@@ -262,9 +265,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await trackServer({ userId: user._id.toString(), event: "password_changed", request });
       auditLog({ eventType: "auth:password_changed", userId: user._id.toString(), sessionId: jti, ip: getClientIp(request) }).catch(() => {});
       const tokenVersion = jti ? await getSessionTokenVersion(jti) : undefined;
+      const remember = jti ? await getSessionRemember(jti) : true;
       const newTokens = buildTokenPayload(user, jti, tokenVersion);
       const res = NextResponse.json({ success: true, payload: { message: "Password changed successfully", token: newTokens }, timestamp: Date.now() }, { status: 200 });
-      res.cookies.set("refreshToken", newTokens.refreshToken, cookieOptions);
+      res.cookies.set("refreshToken", newTokens.refreshToken, getRefreshCookieOptions(remember));
       return res;
     }
 
@@ -304,7 +308,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const tokenVersion = jti ? await getSessionTokenVersion(jti) : undefined;
       const payload = authPayload(user, jti, tokenVersion);
       const res = NextResponse.json({ success: true, payload, timestamp: Date.now() }, { status: 200 });
-      res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
+      res.cookies.set("refreshToken", payload.token.refreshToken, getRefreshCookieOptions(jti ? await getSessionRemember(jti) : true));
       return res;
     }
 
@@ -481,6 +485,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   await connectDB();
 
   try {
+    // ──── GET /api/v1/auth/session-exists ────
+    // Cheapest possible boot-time probe: does the authoritative refresh cookie
+    // exist? Lets the client distinguish a live session from a stale access
+    // token that survived a browser restart (e.g. "Remember me" unchecked →
+    // session cookie died with the window while localStorage didn't). No DB,
+    // no token rotation — presence nearly equals validity because both the
+    // cookie and the refresh JWT expire after 7 days.
+    if (action === "session-exists") {
+      const rl = checkRateLimit(request, "auth:session-exists", 60, 60_000);
+      if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
+      const refreshToken = request.cookies.get("refreshToken")?.value;
+      return successResponse({ valid: !!refreshToken && refreshToken.trim().length > 0 });
+    }
+
     // ──── GET /api/v1/auth/me ────
     if (action === "me") {
       const rl = checkRateLimit(request, "auth:me", 30, 60_000);

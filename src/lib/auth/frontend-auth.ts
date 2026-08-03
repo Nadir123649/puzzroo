@@ -1,11 +1,157 @@
 import { api, refreshAccessToken } from "@/lib/api/client";
 
-// Access token is persisted so full page loads don't trigger a refresh round
-// trip (the token itself is valid for days). Only refresh when it truly
-// expires. Trade-off: localStorage is XSS-readable, same as puzzroo_user.
 const TOKEN_KEY = "puzzroo_access_token";
+const FLAG_KEY = "puzzroo_auth";
+const USER_KEY = "puzzroo_user";
 
 let currentAccessToken: string | null = null;
+
+// The access token used to be kept in localStorage so full page loads don't
+// trigger a refresh round trip. That still holds for REMEMBERED sessions.
+//
+// "Remember me" semantics on storage:
+//  - remembered (checkbox ON) → localStorage. Session survives across tabs and
+//    browser restarts (the refresh cookie is a 7-day cookie).
+//  - NOT remembered (checkbox OFF) → sessionStorage. Auth is scoped to the tab
+//    that signed in. Closing that tab — or opening a NEW tab — clears it, so
+//    the site opens logged-out. (The refresh cookie is a session cookie too.)
+//
+// Every auth read/write below routes through the active scope so both modes
+// stay consistent.
+
+const canUseStorage = () => typeof window !== "undefined";
+
+function getAuthScope(): Storage {
+  if (!canUseStorage()) return null as unknown as Storage;
+  try {
+    // sessionStorage flag wins: it means this session is tab-scoped.
+    if (sessionStorage.getItem(FLAG_KEY) === "true") return sessionStorage;
+    return localStorage;
+  } catch {
+    return localStorage;
+  }
+}
+
+export function hasStoredAuth(): boolean {
+  if (!canUseStorage()) return false;
+  try {
+    return sessionStorage.getItem(FLAG_KEY) === "true" || localStorage.getItem(FLAG_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function isRememberedSession(): boolean {
+  if (!canUseStorage()) return true;
+  return getAuthScope() !== sessionStorage;
+}
+
+function writeAccessToken(token: string, remember: boolean): void {
+  if (!canUseStorage()) return;
+  try {
+    if (remember) {
+      localStorage.setItem(TOKEN_KEY, token);
+      sessionStorage.removeItem(TOKEN_KEY);
+    } else {
+      sessionStorage.setItem(TOKEN_KEY, token);
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  } catch {}
+}
+
+function readAccessToken(): string | null {
+  if (!canUseStorage()) return null;
+  try { return getAuthScope().getItem(TOKEN_KEY); } catch { return null; }
+}
+
+function writeStoredUser(userJson: string, remember?: boolean): void {
+  if (!canUseStorage()) return;
+  const target = remember !== undefined ? (remember ? localStorage : sessionStorage) : getAuthScope();
+  try { target.setItem(USER_KEY, userJson); } catch {}
+}
+
+function readStoredUser(): User | null {
+  if (!canUseStorage()) return null;
+  try {
+    const raw = getAuthScope().getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+// One-shot full-session persist (login / oauth / bootstrap). Writes token +
+// flag + user into the chosen scope and scrubs the other scope so a remember
+// toggle can never leave a "logged in" ghost in localStorage.
+export function storeAuth(remember: boolean, token: string, userJson: string): void {
+  currentAccessToken = token;
+  if (!canUseStorage()) return;
+  const target = remember ? localStorage : sessionStorage;
+  const other = remember ? sessionStorage : localStorage;
+  try {
+    target.setItem(TOKEN_KEY, token);
+    target.setItem(FLAG_KEY, "true");
+    target.setItem(USER_KEY, userJson);
+    [TOKEN_KEY, FLAG_KEY, USER_KEY].forEach((k) => other.removeItem(k));
+  } catch {}
+}
+
+export function setAuthFlag(remember: boolean): void {
+  if (!canUseStorage()) return;
+  try {
+    (remember ? localStorage : sessionStorage).setItem(FLAG_KEY, "true");
+    (remember ? sessionStorage : localStorage).removeItem(FLAG_KEY);
+  } catch {}
+}
+
+export function setAuthUser(userJson: string, remember?: boolean): void {
+  if (remember !== undefined) {
+    if (!canUseStorage()) return;
+    const target = remember ? localStorage : sessionStorage;
+    const other = remember ? sessionStorage : localStorage;
+    try {
+      target.setItem(USER_KEY, userJson);
+      other.removeItem(USER_KEY);
+    } catch {}
+  } else {
+    writeStoredUser(userJson);
+  }
+}
+
+export function setAccessToken(token: string, remember?: boolean): void {
+  currentAccessToken = token;
+  writeAccessToken(token, remember === undefined ? isRememberedSession() : remember);
+}
+
+export function getAccessToken(): string | null {
+  if (currentAccessToken !== null) return currentAccessToken;
+  return readAccessToken();
+}
+
+export function clearAccessToken(): void {
+  currentAccessToken = null;
+  if (!canUseStorage()) return;
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+  } catch {}
+}
+
+// Wipes the full client-side auth state (token + flag + user) from BOTH
+// storages. Use this for logout / session-expiry / account deletion.
+export function clearAuthState(): void {
+  currentAccessToken = null;
+  if (!canUseStorage()) return;
+  try {
+    [localStorage, sessionStorage].forEach((s) => {
+      s.removeItem(TOKEN_KEY);
+      s.removeItem(FLAG_KEY);
+      s.removeItem(USER_KEY);
+    });
+  } catch {}
+}
+
+export function getStoredUser(): User | null {
+  return readStoredUser();
+}
 
 if (typeof window !== "undefined") {
   try {
@@ -13,25 +159,11 @@ if (typeof window !== "undefined") {
     if (legacy) {
       currentAccessToken = legacy;
       localStorage.removeItem("accessToken");
-      localStorage.setItem(TOKEN_KEY, legacy);
+      writeAccessToken(legacy, true);
     } else {
-      currentAccessToken = localStorage.getItem(TOKEN_KEY);
+      currentAccessToken = readAccessToken();
     }
   } catch {}
-}
-
-export function getAccessToken(): string | null {
-  return currentAccessToken;
-}
-
-export function setAccessToken(token: string): void {
-  currentAccessToken = token;
-  try { localStorage.setItem(TOKEN_KEY, token) } catch {}
-}
-
-export function clearAccessToken(): void {
-  currentAccessToken = null;
-  try { localStorage.removeItem(TOKEN_KEY) } catch {}
 }
 
 export interface User {
@@ -65,9 +197,7 @@ export async function login(identifier: string, password: string, rememberMe: bo
       return { success: false, error: err?.message || "Invalid email or password", code: err?.code };
     }
     const payload = res.payload as any;
-    setAccessToken(payload.token.accessToken);
-    localStorage.setItem("puzzroo_auth", "true");
-    localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
+    storeAuth(rememberMe, payload.token.accessToken, JSON.stringify(mapUser(payload.user)));
     applyUserTheme(payload.user?.theme);
     window.dispatchEvent(new Event("auth-change"));
     return { success: true };
@@ -78,9 +208,7 @@ export async function login(identifier: string, password: string, rememberMe: bo
 
 export async function logout(): Promise<void> {
   // Clear client state immediately so the UI reflects logged-out instantly.
-  clearAccessToken();
-  localStorage.removeItem("puzzroo_auth");
-  localStorage.removeItem("puzzroo_user");
+  clearAuthState();
   window.dispatchEvent(new Event("auth-change"));
 
   // Server cleanup + Firebase signOut — fire in background, never block.
@@ -96,7 +224,7 @@ export async function logout(): Promise<void> {
 
 export function isLoggedIn(): boolean {
   if (typeof window === "undefined") return false;
-  return !!currentAccessToken || !!localStorage.getItem("puzzroo_auth");
+  return !!getAccessToken() || hasStoredAuth();
 }
 
 function isTokenExpired(token: string): boolean {
@@ -121,9 +249,7 @@ function isTokenExpired(token: string): boolean {
 }
 
 function clearClientSession() {
-  clearAccessToken();
-  localStorage.removeItem("puzzroo_auth");
-  localStorage.removeItem("puzzroo_user");
+  clearAuthState();
   window.dispatchEvent(new Event("auth-change"));
   api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
 }
@@ -158,8 +284,30 @@ export async function ensureSession(): Promise<void> {
   }
   
   const token = getAccessToken();
-  const hasFlag = !!localStorage.getItem("puzzroo_auth");
+  const hasFlag = hasStoredAuth();
   if (!token && !hasFlag) return;
+
+  // A persistent-refresh session is the ONLY authority a page reload can trust.
+  // The access token (and cached profile) live in localStorage and outlive the
+  // server session: if "Remember me" was unchecked the refresh cookie is a
+  // session cookie, so closing the browser kills it while localStorage
+  // survives. Without this probe a stale token would masquerade as a live
+  // login for up to its expiry. A definitive `valid:false` logs us out; a
+  // network blip is inconclusive and leaves the state intact (the normal
+  // api() 401 flow handles genuinely expired sessions).
+  try {
+    const probe = await api<{ valid: boolean }>("/api/v1/auth/session-exists");
+    if (!probe.success) throw new Error("probe_failed");
+    if (probe.payload?.valid === false) {
+      clearClientSession();
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+      return;
+    }
+  } catch {
+    // Inconclusive — keep cached state, the 401 path will reconcile.
+  }
 
   if (token && !isTokenExpired(token)) {
     refreshPromise = (async () => {
@@ -167,9 +315,9 @@ export async function ensureSession(): Promise<void> {
         lastRefreshTime = Date.now();
         const meRes = await api("/api/v1/users/me");
         if (meRes.success) {
-          const current = getCurrentUser();
+          const current = getStoredUser();
           const updated = mapUser(meRes.payload as any);
-          localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
+          setAuthUser(JSON.stringify({ ...current, ...updated }));
           applyUserTheme(updated.theme);
           window.dispatchEvent(new Event("auth-change"));
         } else {
@@ -196,9 +344,9 @@ export async function ensureSession(): Promise<void> {
       try {
         const meRes = await api("/api/v1/users/me");
         if (meRes.success) {
-          const current = getCurrentUser();
+          const current = getStoredUser();
           const updated = mapUser(meRes.payload as any);
-          localStorage.setItem("puzzroo_user", JSON.stringify({ ...current, ...updated }));
+          setAuthUser(JSON.stringify({ ...current, ...updated }));
           applyUserTheme(updated.theme);
         }
       } catch {}
@@ -215,10 +363,7 @@ export async function ensureSession(): Promise<void> {
 }
 
 export function getCurrentUser(): User | null {
-  if (typeof window === "undefined") return null;
-  const str = localStorage.getItem("puzzroo_user");
-  if (!str) return null;
-  try { return JSON.parse(str); } catch { return null; }
+  return getStoredUser();
 }
 
 export async function getLastLoginInfo(): Promise<{ lastLogin: string; device: string; location: string } | null> {
@@ -269,7 +414,7 @@ export async function updateUser(updates: Partial<User>): Promise<boolean> {
     const payload = res.payload as any;
     const current = getCurrentUser();
     if (current) {
-      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload)));
+      setAuthUser(JSON.stringify(mapUser(payload)));
       window.dispatchEvent(new Event("auth-change"));
     }
     return true;
@@ -290,7 +435,7 @@ export async function manageEmail(email: string, password?: string): Promise<{ s
     const payload = res.payload as any;
     if (payload.user) {
       const current = getCurrentUser();
-      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser({ ...payload.user, provider: current?.provider })));
+      setAuthUser(JSON.stringify(mapUser({ ...payload.user, provider: current?.provider })));
       window.dispatchEvent(new Event("auth-change"));
     }
     return { success: true };
@@ -311,7 +456,7 @@ export async function unlinkProvider(provider: string): Promise<{ success: boole
     const payload = res.payload as any;
     if (payload.user) {
       const current = getCurrentUser();
-      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser({ ...payload.user, provider: current?.provider })));
+      setAuthUser(JSON.stringify(mapUser({ ...payload.user, provider: current?.provider })));
       window.dispatchEvent(new Event("auth-change"));
     }
     return { success: true };
@@ -334,8 +479,8 @@ export async function setUsername(username: string): Promise<{ success: boolean;
     if (payload.token?.accessToken) {
       setAccessToken(payload.token.accessToken);
     }
-    localStorage.setItem("puzzroo_auth", "true");
-    localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
+    setAuthFlag(isRememberedSession());
+    setAuthUser(JSON.stringify(mapUser(payload.user)));
     window.dispatchEvent(new Event("auth-change"));
     return { success: true };
   } catch {
@@ -355,8 +500,8 @@ export async function linkAndMerge(username: string): Promise<{ success: boolean
     const payload = res.payload as any;
     if (payload.token?.accessToken) {
       setAccessToken(payload.token.accessToken);
-      localStorage.setItem("puzzroo_auth", "true");
-      localStorage.setItem("puzzroo_user", JSON.stringify(mapUser(payload.user)));
+      setAuthFlag(isRememberedSession());
+      setAuthUser(JSON.stringify(mapUser(payload.user)));
       window.dispatchEvent(new Event("auth-change"));
     }
     return { success: true };
@@ -375,11 +520,11 @@ export async function bootstrapSession(): Promise<User | null> {
     const accessToken = refreshData?.payload?.token?.accessToken;
     if (!accessToken) return null;
     setAccessToken(accessToken);
-    localStorage.setItem("puzzroo_auth", "true");
+    setAuthFlag(true);
     const meRes = await api("/api/v1/users/me");
     if (!meRes.success) return null;
     const user = mapUser(meRes.payload as any);
-    localStorage.setItem("puzzroo_user", JSON.stringify(user));
+    setAuthUser(JSON.stringify(user));
     window.dispatchEvent(new Event("auth-change"));
     return user;
   } catch {
@@ -457,9 +602,7 @@ export async function deleteAccount(): Promise<{ success: boolean; error?: strin
     if (!res.success) {
       return { success: false, error: (res.payload as any)?.error?.message || "Failed to delete account" };
     }
-    clearAccessToken();
-    localStorage.removeItem("puzzroo_auth");
-    localStorage.removeItem("puzzroo_user");
+    clearAuthState();
     window.dispatchEvent(new Event("auth-change"));
     return { success: true };
   } catch {

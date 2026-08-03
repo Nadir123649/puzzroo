@@ -45,7 +45,7 @@ import { calculateCentroid, polygonToPoints } from '@shared/lib/tangram/polygon-
 import { validatePuzzle } from '@shared/lib/tangram/polygon-validation'
 import { attemptSnap, geometricallyMatches } from '@shared/lib/tangram/polygon-snapping'
 import { PIECE_CONFIG } from '@shared/lib/tangram/pieceConfig'
-import { getAccessToken, signInGuest } from '@/lib/auth/frontend-auth'
+import { getAccessToken, signInGuest, getCurrentUser } from '@/lib/auth/frontend-auth'
 
 const PIECE_COLORS: Record<TangramPieceId, string> = {
   baseTriangle1: '#4A90E2',
@@ -481,8 +481,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     // Check if there is a saved state in LocalStorage first!
     if (typeof window !== 'undefined') {
       try {
-        const userStr = localStorage.getItem('puzzroo_user')
-        const userId = userStr ? JSON.parse(userStr)?.id : 'guest'
+        const userStr = getCurrentUser()
+        const userId = userStr ? userStr.id : 'guest'
         const storageKey = `puzzroo_tangram_game_${userId}`
         const savedRaw = localStorage.getItem(storageKey)
         if (savedRaw) {
@@ -560,8 +560,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     // Save to LocalStorage
     if (typeof window !== 'undefined') {
       try {
-        const userStr = localStorage.getItem('puzzroo_user')
-        const userId = userStr ? JSON.parse(userStr)?.id : 'guest'
+        const userStr = getCurrentUser()
+        const userId = userStr ? userStr.id : 'guest'
         const storageKey = `puzzroo_tangram_game_${userId}`
         localStorage.setItem(storageKey, JSON.stringify({
           puzzleId: puzzle.id,
@@ -612,8 +612,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             // Clear local storage progress upon completion
             if (typeof window !== 'undefined') {
               try {
-                const userStr = localStorage.getItem('puzzroo_user')
-                const userId = userStr ? JSON.parse(userStr)?.id : 'guest'
+                const userStr = getCurrentUser()
+                const userId = userStr ? userStr.id : 'guest'
                 localStorage.removeItem(`puzzroo_tangram_game_${userId}`)
               } catch {}
             }

@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
+import { getAccessToken, hasStoredAuth, setAuthUser } from "@/lib/auth/frontend-auth";
 import type { User } from "@/lib/auth/frontend-auth";
 
 function mapUser(u: any): User {
@@ -32,15 +33,15 @@ function mapUser(u: any): User {
 
 async function fetchUser(): Promise<User | null> {
   if (typeof window === "undefined") return null;
-  const token = localStorage.getItem("accessToken");
+  const token = getAccessToken();
   if (!token) return null;
 
   try {
     const res = await api("/api/v1/users/me");
     if (!res.success) return null;
     const user = mapUser(res.payload as any);
-    // Update localStorage cache
-    localStorage.setItem("puzzroo_user", JSON.stringify(user));
+    // Update cached profile in the active session scope
+    setAuthUser(JSON.stringify(user));
     return user;
   } catch {
     return null;
@@ -55,7 +56,7 @@ export function useUser(enabled: boolean = true) {
   return useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
-    enabled: enabled && typeof window !== "undefined" && !!localStorage.getItem("accessToken"),
+    enabled: enabled && typeof window !== "undefined" && hasStoredAuth(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,

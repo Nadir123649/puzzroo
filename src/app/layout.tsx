@@ -146,7 +146,7 @@ export default function RootLayout({
                 }
 
                 // Check auth status early to prevent navbar layout flash/flicker
-                var isAuth = localStorage.getItem('puzzroo_auth') === 'true';
+                var isAuth = sessionStorage.getItem('puzzroo_auth') === 'true' || localStorage.getItem('puzzroo_auth') === 'true';
                 if (isAuth) {
                   document.documentElement.classList.add('user-logged-in');
                 } else {

@@ -1,4 +1,4 @@
-import { getAccessToken } from '@/lib/auth/frontend-auth'
+import { getAccessToken, getCurrentUser } from '@/lib/auth/frontend-auth'
 
 export type GameType = 'sudoku' | 'crossmath' | 'nonogram' | 'tangram'
 
@@ -22,12 +22,9 @@ function getScopedKey(gameType: GameType): string {
   const baseKey = STORAGE_KEYS[gameType]
   if (typeof window === 'undefined') return baseKey
   try {
-    const userStr = localStorage.getItem("puzzroo_user")
-    if (userStr) {
-      const user = JSON.parse(userStr)
-      if (user && user.id) {
-        return `${baseKey}_${user.id}`
-      }
+    const user = getCurrentUser()
+    if (user && user.id) {
+      return `${baseKey}_${user.id}`
     }
   } catch {}
   return `${baseKey}_guest`
