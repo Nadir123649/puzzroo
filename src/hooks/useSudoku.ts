@@ -638,10 +638,15 @@ export function useSudoku() {
       }
 
       timerRef.current = setInterval(() => {
-        if (startTimeRef.current !== null) {
-          const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
-          setGameState((prev) => ({ ...prev, time: elapsed }))
+        // Self-healing baseline: resetBoard/replayBoard null the baseline
+        // while the effect deps (status/initialized) never change, so the
+        // effect can't re-run to re-baseline. Re-derive from the latest
+        // time instead of stalling the timer at 00:00.
+        if (startTimeRef.current === null) {
+          startTimeRef.current = Date.now() - (timeRef.current * 1000)
         }
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
+        setGameState((prev) => ({ ...prev, time: elapsed }))
       }, 1000)
     } else {
       if (timerRef.current) {
@@ -974,7 +979,10 @@ export function useSudoku() {
     setNotesMode(false)
     setIsWinAnimating(false)
     setScoreFeedbacks([])
-    startTimeRef.current = null
+    // Explicit baseline: the timer keeps running (status stays 'playing'),
+    // so point it at now instead of nulling it and waiting for the
+    // (never re-running) effect.
+    startTimeRef.current = Date.now()
     hintsUsedRef.current = 0
     movesRef.current = 0
 
@@ -1010,7 +1018,10 @@ export function useSudoku() {
     setNotesMode(false)
     setIsWinAnimating(false)
     setScoreFeedbacks([])
-    startTimeRef.current = null
+    // Explicit baseline: the timer keeps running (status stays 'playing'),
+    // so point it at now instead of nulling it and waiting for the
+    // (never re-running) effect.
+    startTimeRef.current = Date.now()
     hintsUsedRef.current = 0
     movesRef.current = 0
 

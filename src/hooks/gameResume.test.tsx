@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { SudokuGame } from '@/components/sudoku/SudokuGame'
 import { CrossMathGame } from '@/components/crossmath/CrossMathGame'
+import { useSudoku } from '@/hooks/useSudoku'
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -152,6 +154,35 @@ describe('sudoku resume time', () => {
     expect(sessionId).toBe('s1')
     expect(payload.elapsedTime).toBeGreaterThanOrEqual(96)
   })
+
+  it('resetBoard: timer keeps counting after new game instead of freezing at 00:00', async () => {
+    gameApiMock.getContinue.mockResolvedValue({ hasActiveSession: false })
+    gameApiMock.getPuzzle.mockResolvedValue({ id: 'p1', difficulty: 'easy', puzzle: toGrid(PUZZLE_STR), solution: toGrid(SOLUTION_STR) })
+    gameApiMock.createSession.mockResolvedValue({ ...sessionWithMoves(), currentBoard: null, elapsedTime: 0, moves: 0 })
+
+    const Probe = () => {
+      const { time, resetBoard } = useSudoku()
+      return (
+        <div>
+          <span data-testid="sudoku-time">{time}</span>
+          <button data-testid="reset" onClick={() => resetBoard()}>reset</button>
+        </div>
+      )
+    }
+
+    render(<Probe />)
+    await sleep(150)
+    await sleep(1500)
+
+    const before = Number(screen.getByTestId('sudoku-time').textContent)
+    expect(before).toBeGreaterThan(0)
+
+    await userEvent.click(screen.getByTestId('reset'))
+    await sleep(1500)
+
+    const after = Number(screen.getByTestId('sudoku-time').textContent)
+    expect(after).toBeGreaterThan(0)
+  }, 12000)
 })
 
 describe('crossmath resume time', () => {
