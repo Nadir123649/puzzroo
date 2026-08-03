@@ -356,6 +356,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       elapsedSeconds: elapsed,
       hintsUsed: hints,
       mistakes: 0,
+      moves: 0,
     }, ac.signal).catch(err => {
       if (err?.name !== 'AbortError') console.error('[tangram] save move failed', err)
     })
@@ -730,11 +731,6 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     if (key === lastMoveKeyRef.current) return
     lastMoveKeyRef.current = key
 
-    // Save to server
-    if (sessionIdRef.current) {
-      saveMoveNow(pieces, elapsed, hintsUsed)
-    }
-
     // Save to LocalStorage
     if (typeof window !== 'undefined') {
       try {
@@ -1021,8 +1017,13 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     }
 
     shownHints.current.add(chosenPieceId)
-    setHintsUsed(h => h + 1)
+    const newHintsUsed = hintsUsed + 1
+    setHintsUsed(newHintsUsed)
     setHintPiece(chosenPieceId)
+
+    // Save to server when a hint is taken with its related context
+    const elapsed = elapsedFromCountdown(timeRemainingRef.current, difficulty)
+    saveMoveNow(piecesRef.current, elapsed, newHintsUsed)
 
     // Hard mode: 2 second hint. Easy/Medium: 5 seconds
     const hintDuration = difficulty === 'hard' ? 2000 : 5000
@@ -1242,9 +1243,16 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         setMoveHistory(history => [...history.slice(0, idx + 1), prev])
         return idx + 1
       })
+
+      const hasPlacedOrSnapped = prev.some(p => p.isPlaced || p.isSnapped)
+      if (hasPlacedOrSnapped) {
+        const elapsed = elapsedFromCountdown(timeRemainingRef.current, difficulty)
+        saveMoveNow(prev, elapsed, hintsUsedRef.current)
+      }
+
       return prev
     })
-  }, [])
+  }, [difficulty])
 
   const undoLastMove = useCallback(() => {
     // Find the most recently placed piece and return it to tray

@@ -6,6 +6,11 @@ import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { rateLimit } from "@/lib/server/utils/http"
 
 function dailyChallengeIdFromDate(dateStr: string): string {
+  const parts = dateStr.split("-")
+  if (parts.length === 3) {
+    const [y, m, d] = parts
+    return `daily-tangram-${m.padStart(2, "0")}-${d.padStart(2, "0")}-${y.slice(-2)}`
+  }
   const d = new Date(dateStr)
   const m = String(d.getMonth() + 1).padStart(2, "0")
   const day = String(d.getDate()).padStart(2, "0")

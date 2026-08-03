@@ -4,17 +4,18 @@ export const tangramDifficultySchema = z.enum(["easy", "medium", "hard"])
 
 export const startSessionSchema = z.object({
   puzzleId: z.string().min(1, "puzzleId is required"),
+  difficulty: tangramDifficultySchema.optional(),
 })
 
 const positionSchema = z.object({
-  x: z.number().min(-10000).max(10000),
-  y: z.number().min(-10000).max(10000),
+  x: z.coerce.number().min(-10000).max(10000),
+  y: z.coerce.number().min(-10000).max(10000),
 })
 
 const pieceStateSchema = z.object({
   pieceId: z.string().min(1).max(100),
   position: positionSchema,
-  rotation: z.number().min(-720).max(720),
+  rotation: z.coerce.number().min(-720).max(720),
   flipped: z.boolean().optional(),
   placed: z.boolean().optional(),
   snapped: z.boolean().optional(),
@@ -25,22 +26,35 @@ export const pieceStatesSchema = z
   .min(1, "pieceStates must not be empty")
   .max(20, "pieceStates exceeds piece limit")
 
-const timerFields = {
-  // Tangram contract (hook + legacy): elapsedSeconds, not elapsedTime.
-  elapsedSeconds: z.number().min(0).max(86400),
-  hintsUsed: z.number().min(0).max(1000),
-  mistakes: z.number().min(0).max(10000),
-  moves: z.number().min(0).max(100000),
-}
+const optionalNumberField = (max = 100000) =>
+  z.coerce.number().min(0).max(max).default(0).optional().transform((val) => val ?? 0)
+
+const elapsedSecondsField = z.preprocess(
+  (val, ctx) => {
+    if (val !== undefined && val !== null) return val
+    const parent = (ctx as any)?.parent
+    if (parent && parent.elapsedTime !== undefined) return parent.elapsedTime
+    return 0
+  },
+  z.coerce.number().min(0).max(86400).default(0)
+)
 
 export const saveProgressSchema = z.object({
   pieceStates: pieceStatesSchema,
-  ...timerFields,
+  elapsedSeconds: elapsedSecondsField,
+  elapsedTime: z.coerce.number().min(0).max(86400).optional(),
+  hintsUsed: optionalNumberField(1000),
+  mistakes: optionalNumberField(10000),
+  moves: optionalNumberField(100000),
 })
 
 export const completeSessionSchema = z.object({
   pieceStates: pieceStatesSchema,
-  ...timerFields,
+  elapsedSeconds: elapsedSecondsField,
+  elapsedTime: z.coerce.number().min(0).max(86400).optional(),
+  hintsUsed: optionalNumberField(1000),
+  mistakes: optionalNumberField(10000),
+  moves: optionalNumberField(100000),
 })
 
 export const verifySessionSchema = z.object({
