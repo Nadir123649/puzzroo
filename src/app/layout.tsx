@@ -20,12 +20,10 @@ export const viewport: Viewport = {
   themeColor: '#6949FF',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://enhance-wrinkle-disjoin.ngrok-free.dev'),
+  metadataBase: new URL('https://puzzroo-beta.vercel.app'),
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
