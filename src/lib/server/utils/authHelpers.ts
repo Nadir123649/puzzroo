@@ -1,4 +1,5 @@
 import User from "@/lib/server/models/User";
+import { isValidObjectId } from "mongoose";
 import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
 import { formatUser } from "@/lib/server/utils/formatUser";
 import { getFirebaseAuth } from "@/lib/server/config/firebase";
@@ -39,8 +40,8 @@ export function authPayload(user: any, sessionId?: string, tokenVersion?: number
 // Creates a fresh login session for `user` and returns a payload whose tokens
 // are bound to that session. Use this for every "log the user in" flow so the
 // issued access/refresh tokens carry a `jti` that maps back to a LoginSession.
-export async function issueSession(request: any, user: any, provider?: string) {
-  const session = await createSession(request, user._id.toString(), provider);
+export async function issueSession(request: any, user: any, provider?: string, remember = true) {
+  const session = await createSession(request, user._id.toString(), provider, true, remember);
   const sessionId = session._id.toString();
   const tokenVersion = (session as any).tokenVersion ?? 0;
   return { sessionId, payload: authPayload(user, sessionId, tokenVersion) };
@@ -53,11 +54,20 @@ export async function getSessionTokenVersion(sessionId: string): Promise<number>
   return (session as any)?.tokenVersion ?? 0;
 }
 
+/** Read the current remember flag from a LoginSession (default true). */
+export async function getSessionRemember(sessionId?: string): Promise<boolean> {
+  if (!sessionId || !isValidObjectId(sessionId)) return true;
+  const { default: LoginSession } = await import("@/lib/server/models/LoginSession");
+  const session = await LoginSession.findById(sessionId).select("remember").lean();
+  return (session as any)?.remember ?? true;
+}
+
 export async function handleOAuth(
   provider: string,
   firebaseToken: string,
   currentUserId?: string,
-  request?: any
+  request?: any,
+  remember = true
 ): Promise<{ payload: any; refreshToken: string; converted: boolean; sessionId?: string } | undefined> {
   if (!isFirebaseReady()) {
     return undefined;
@@ -147,7 +157,7 @@ export async function handleOAuth(
   let sessionId: string | undefined;
   let tokenVersion: number | undefined;
   if (request) {
-    const session = await createSession(request, user._id.toString(), mappedProvider);
+    const session = await createSession(request, user._id.toString(), mappedProvider, true, remember);
     sessionId = session._id.toString();
     tokenVersion = (session as any).tokenVersion ?? 0;
   }

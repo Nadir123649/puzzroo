@@ -22,7 +22,7 @@ function getDeviceFingerprint(request: NextRequest): string | null {
   return null;
 }
 
-export async function createSession(request: NextRequest, userId: string, provider?: string, markOthersInactive = true) {
+export async function createSession(request: NextRequest, userId: string, provider?: string, markOthersInactive = true, remember = true) {
   const ip = getClientIp(request);
   const ua = request.headers.get("user-agent");
   const parsed = parseUserAgent(ua);
@@ -45,6 +45,7 @@ export async function createSession(request: NextRequest, userId: string, provid
     location,
     isCurrent: true,
     provider: provider || null,
+    remember,
     lastSeenAt: new Date(),
     deviceFingerprint,
     status: "active" as const,
