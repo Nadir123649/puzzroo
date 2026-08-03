@@ -164,6 +164,7 @@ export function useSudoku() {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [isInitialized, setIsInitialized] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [boardHistory, setBoardHistory] = useState<SudokuBoard[]>([])
 
   const [gameState, setGameState] = useState<{
     currentBoard: SudokuBoard
@@ -228,46 +229,55 @@ export function useSudoku() {
   // Add a ref to track pending saves and prevent race conditions
   const savePendingRef = useRef(false)
   const lastSaveTimestampRef = useRef(0)
+  const pendingSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   function saveMoveNow(board: SudokuBoard, elapsed: number, hints: number, mists: number) {
     if (!sessionIdRef.current) return
     
     const now = Date.now()
+    if (pendingSaveTimeoutRef.current) {
+      clearTimeout(pendingSaveTimeoutRef.current)
+      pendingSaveTimeoutRef.current = null
+    }
+
+    const performSave = () => {
+      const boardString = sudokuBoardToString(board)
+      const currentMoveCount = movesRef.current + 1
+      const currentMistakes = mists
+      
+      savePendingRef.current = true
+      lastSaveTimestampRef.current = Date.now()
+      
+      setTimeout(() => {
+        savePendingRef.current = false
+      }, 500)
+      
+      const abortController = new AbortController()
+      abortRef.current = abortController
+      
+      gameApi.saveMove('sudoku', sessionIdRef.current, {
+        board: boardString,
+        elapsedTime: Number(elapsed),
+        hintsUsed: Number(hints),
+        mistakes: Number(currentMistakes),
+        moves: Number(currentMoveCount),
+      }, abortController.signal).then((res: any) => {
+        if (res && res.error) {
+          return
+        }
+        sessionDataRef.current = res
+        movesRef.current = currentMoveCount
+      }).catch(err => {
+        if (err?.name === 'AbortError') return
+      })
+    }
+
     if (savePendingRef.current || now - lastSaveTimestampRef.current < 300) {
+      pendingSaveTimeoutRef.current = setTimeout(performSave, 500)
       return
     }
     
-    const boardString = sudokuBoardToString(board)
-    const currentMoveCount = movesRef.current + 1
-    const currentMistakes = mists
-    
-    savePendingRef.current = true
-    lastSaveTimestampRef.current = now
-    
-    setTimeout(() => {
-      savePendingRef.current = false
-    }, 500)
-    
-    const abortController = new AbortController()
-    abortRef.current = abortController
-    
-    gameApi.saveMove('sudoku', sessionIdRef.current, {
-      board: boardString,
-      elapsedTime: Number(elapsed),
-      hintsUsed: Number(hints),
-      mistakes: Number(currentMistakes),
-      moves: Number(currentMoveCount),
-    }, abortController.signal).then((res: any) => {
-      if (res && res.error) {
-        // Non-fatal: session may have ended or not yet be active — game state is preserved locally
-        return
-      }
-      sessionDataRef.current = res
-      movesRef.current = currentMoveCount
-    }).catch(err => {
-      // Silently ignore AbortError (navigation) and known transient session states
-      if (err?.name === 'AbortError') return
-    })
+    performSave()
   }
 
   function sudokuRestoreFromSession(sessionData: any, puzzlePuzzle: number[][], puzzleSolution: number[][]): SudokuBoard | null {
@@ -687,6 +697,9 @@ export function useSudoku() {
       if (timerRef.current) {
         clearInterval(timerRef.current)
       }
+      if (pendingSaveTimeoutRef.current) {
+        clearTimeout(pendingSaveTimeoutRef.current)
+      }
     }
   }, [gameState.gameStatus, isInitialized])
 
@@ -776,6 +789,9 @@ export function useSudoku() {
 
       // No-op if the same value is already in the cell (avoid double-scoring).
       if (cell.value === num) return
+
+      // Push current board to history
+      setBoardHistory(prev => [...prev, cloneBoard(gameState.currentBoard)])
 
       // Notes mode - toggle note
       if (notesMode) {
@@ -906,6 +922,9 @@ export function useSudoku() {
     const cell = getCellAt(gameState.currentBoard, selectedCell)
     if (!cell || cell.fixed) return
 
+    // Push current board to history
+    setBoardHistory(prev => [...prev, cloneBoard(gameState.currentBoard)])
+
     const newBoard = clearCell(gameState.currentBoard, selectedCell)
     // Clear notes and reset state flags
     newBoard[selectedCell.row][selectedCell.col] = clearNotes(
@@ -953,6 +972,9 @@ export function useSudoku() {
 
     const correctValue = getCorrectValue(gameState.solution, targetCell)
     if (!correctValue) return
+
+    // Push current board to history
+    setBoardHistory(prev => [...prev, cloneBoard(gameState.currentBoard)])
 
     let newBoard = updateCellValue(gameState.currentBoard, targetCell, correctValue)
     newBoard[targetCell.row][targetCell.col] = clearNotes(
@@ -1003,6 +1025,7 @@ export function useSudoku() {
     setNotesMode(false)
     setIsWinAnimating(false)
     setScoreFeedbacks([])
+    setBoardHistory([])
     // Explicit baseline: the timer keeps running (status stays 'playing'),
     // so point it at now instead of nulling it and waiting for the
     // (never re-running) effect.
@@ -1042,6 +1065,7 @@ export function useSudoku() {
     setNotesMode(false)
     setIsWinAnimating(false)
     setScoreFeedbacks([])
+    setBoardHistory([])
     // Explicit baseline: the timer keeps running (status stays 'playing'),
     // so point it at now instead of nulling it and waiting for the
     // (never re-running) effect.
@@ -1136,6 +1160,22 @@ export function useSudoku() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedCell, enterNumber, eraseCell, gameState.gameStatus])
 
+  const undoMove = useCallback(() => {
+    setBoardHistory(prevHistory => {
+      if (prevHistory.length === 0) return prevHistory
+      const newHistory = [...prevHistory]
+      const lastBoard = newHistory.pop()
+      if (lastBoard) {
+        setGameState(prev => ({
+          ...prev,
+          currentBoard: lastBoard
+        }))
+        saveMoveNow(lastBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
+      }
+      return newHistory
+    })
+  }, [gameState.mistakes])
+
   return {
     // State
     board: gameState.currentBoard,
@@ -1152,6 +1192,7 @@ export function useSudoku() {
     difficulty,
     availableHints: calculateAvailableHints(gameState.score),
     scoreFeedbacks,
+    canUndo: boardHistory.length > 0,
 
     // Actions
     selectCell,
@@ -1165,5 +1206,6 @@ export function useSudoku() {
     changeDifficulty,
     removeScoreFeedback,
     abandonSession,
+    undoMove,
   }
 }

@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { InfoPageLayout } from '@/components/layout/InfoPageLayout'
 import { Button } from '@/components/ui/button'
-import { Clock, ShieldCheck, Send } from 'lucide-react'
+import { Clock, ShieldCheck, Send, HelpCircle } from 'lucide-react'
 import Image from 'next/image'
 import { images } from '@/lib/utils'
 import { submitContact } from '@/lib/auth/frontend-auth'
@@ -80,7 +80,7 @@ export default function ContactUsPage() {
         </p>
 
         {isSubmitted ? (
-          <div className="bg-white dark:bg-[#1F222A] rounded-[24px] p-8 text-center flex flex-col items-center gap-6 border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-lg shadow-purple-500/5 max-w-[560px] mx-auto transition-all duration-300">
+          <div className="bg-white dark:bg-[#1F222A] rounded-[24px] p-8 text-center flex flex-col items-center gap-6 border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-lg shadow-purple-500/5 max-w-[560px] mx-auto">
             <div className="w-16 h-16 bg-[#22C55E] rounded-full flex items-center justify-center text-white text-3xl font-bold animate-bounce shadow-lg shadow-green-500/20">
               ✓
             </div>
@@ -106,7 +106,10 @@ export default function ContactUsPage() {
             <div className="md:col-span-5 flex flex-col gap-4">
               
               {/* Contact Card */}
-              <div className="bg-gradient-to-br from-white to-[#F0EDFF]/30 dark:from-[#1F222A] dark:to-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 shadow-sm">
+              <div 
+                className="bg-[#FAF9FF] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 shadow-sm"
+                style={{ transform: 'translate3d(0, 0, 0)', backfaceVisibility: 'hidden' }}
+              >
                 <h3 className="font-urbanist font-bold text-[16px] text-[#212121] dark:text-white mb-4 flex items-center gap-2">
                   <span className="w-1.5 h-4 bg-[#6949FF] rounded-full inline-block"></span>
                   Support Info
@@ -161,9 +164,13 @@ export default function ContactUsPage() {
               </div>
 
               {/* Tips Card */}
-              <div className="bg-[#6949FF]/5 dark:bg-[#6949FF]/10 border border-[#6949FF]/20 rounded-2xl p-5">
-                <h4 className="font-urbanist font-bold text-[14px] text-[#6949FF] mb-1">
-                  💡 Frequently Asked Questions
+              <div 
+                className="bg-[#FAF9FF] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-5 shadow-sm"
+                style={{ transform: 'translate3d(0, 0, 0)', backfaceVisibility: 'hidden' }}
+              >
+                <h4 className="font-urbanist font-bold text-[14px] text-[#6949FF] mb-1.5 flex items-center gap-2">
+                  <HelpCircle size={16} className="text-[#6949FF]" />
+                  Frequently Asked Questions
                 </h4>
                 <p className="font-urbanist text-[13px] text-[#424242] dark:text-[#E0E0E0] leading-relaxed">
                   Before sending a message, you might find a quick answer in our{' '}
