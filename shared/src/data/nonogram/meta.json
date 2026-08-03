@@ -1,6 +1,6 @@
 {
   "game": "nonogram",
-  "generatorVersion": 1,
+  "generatorVersion": 2,
   "difficulties": [
     "easy",
     "medium",
@@ -28,5 +28,5 @@
       30
     ]
   },
-  "encoding": "sol is a size*size string of '0'/'1' (row-major); rowClues/columnClues are number[][]; empty line is []; every puzzle has a unique solution (line-solver verified)."
+  "encoding": "sol is a size*size string of '0'/'1' (row-major); rowClues/columnClues are number[][]; empty line is []; every puzzle has a unique solution (line-solver verified). All puzzles feature recognizable pixel-art shapes matching their title."
 }
