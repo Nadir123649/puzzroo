@@ -1,0 +1,23 @@
+[     225ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[     301ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   19442ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   19489ms] [LOG] [Fast Refresh] done in 148ms @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   22610ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   22707ms] [LOG] [Fast Refresh] done in 199ms @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   23012ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   23081ms] [LOG] [Fast Refresh] done in 171ms @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   23765ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   23780ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   29337ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   29352ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   35172ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   35192ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   35528ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   35548ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   35890ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   35912ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
+[   48587ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=4kR4bx3z2EEfJcxDvdXa9' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/:31
+[   51935ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=4kR4bx3z2EEfJcxDvdXa9' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/:31
+[   55274ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=4kR4bx3z2EEfJcxDvdXa9' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/:31
+[   58620ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=4kR4bx3z2EEfJcxDvdXa9' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/:31
+[   61960ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=4kR4bx3z2EEfJcxDvdXa9' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/:31

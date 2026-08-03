@@ -9,7 +9,7 @@ import {
 } from 'firebase/auth'
 import { getFirebaseAuth, googleProvider, facebookProvider } from '@/lib/config/firebase-client'
 import { api } from '@/lib/api/client'
-import { setAccessToken } from '@/lib/auth/frontend-auth'
+import { storeAuth } from '@/lib/auth/frontend-auth'
 import { notify, ToastMessages } from '@/lib/toast'
 
 export type OAuthProvider = 'google' | 'facebook'
@@ -202,9 +202,7 @@ export async function completeOAuthLogin(
     }
     const payload = res.payload as any
     const userData = mapUserData(payload, provider)
-    setAccessToken(payload.token.accessToken)
-    localStorage.setItem('puzzroo_auth', 'true')
-    localStorage.setItem('puzzroo_user', JSON.stringify(userData))
+    storeAuth(rememberMe, payload.token.accessToken, JSON.stringify(userData))
     window.dispatchEvent(new Event('auth-change'))
     if (opts.welcomeKey && payload.user.usernameSet) notify.successKey(opts.welcomeKey as any)
     opts.setSubmitting(false)

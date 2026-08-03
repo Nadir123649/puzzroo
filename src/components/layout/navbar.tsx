@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from '../../hooks/use-theme'
 import { images } from '@/lib/utils'
-import { isLoggedIn, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
+import { isLoggedIn, getCurrentUser, logout, hasStoredAuth } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
 
@@ -20,23 +20,20 @@ export function Navbar() {
 
   const [loggedIn, setLoggedIn] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('puzzroo_auth') === 'true'
+      return hasStoredAuth()
     }
     return false
   })
   const [user, setUser] = useState<{ name: string; email: string; avatar?: string | null } | null>(() => {
     if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem("puzzroo_user")
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          return {
-            name: parsed.name || parsed.username,
-            email: parsed.email,
-            avatar: parsed.avatar
-          }
+      const stored = getCurrentUser()
+      if (stored) {
+        return {
+          name: stored.name || stored.username,
+          email: stored.email,
+          avatar: stored.avatar
         }
-      } catch { }
+      }
     }
     return null
   })

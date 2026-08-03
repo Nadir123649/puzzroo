@@ -8,6 +8,10 @@ const loginSessionSchema = new mongoose.Schema(
     browser: { type: String, default: null },
     os: { type: String, default: null },
     deviceType: { type: String, enum: ["desktop", "mobile", "tablet", "unknown"], default: "unknown" },
+    // Whether the user chose "Remember me" at login. Controls how long the
+    // refresh cookie persists: remembered → 7-day cookie, not → session cookie
+    // (cleared when the browser closes). Preserved across token rotation.
+    remember: { type: Boolean, default: true },
     location: { type: String, default: null },
     isCurrent: { type: Boolean, default: true },
     provider: { type: String, default: null },

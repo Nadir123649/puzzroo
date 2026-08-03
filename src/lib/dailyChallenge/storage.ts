@@ -4,6 +4,7 @@
  */
 
 import { DailyChallengeStatus } from './types'
+import { getCurrentUser } from '@/lib/auth/frontend-auth'
 
 const STORAGE_KEY = 'puzzroo_daily_challenges'
 
@@ -19,12 +20,9 @@ interface ChallengeProgress {
 function getScopedKey(): string {
   if (typeof window === 'undefined') return STORAGE_KEY
   try {
-    const userStr = localStorage.getItem("puzzroo_user")
-    if (userStr) {
-      const user = JSON.parse(userStr)
-      if (user && user.id) {
-        return `${STORAGE_KEY}_${user.id}`
-      }
+    const user = getCurrentUser()
+    if (user && user.id) {
+      return `${STORAGE_KEY}_${user.id}`
     }
   } catch {}
   return `${STORAGE_KEY}_guest`

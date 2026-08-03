@@ -7,7 +7,7 @@ import { ChangeNameModal } from '@/components/account/ChangeNameModal'
 import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
 import { SetEmailModal } from '@/components/account/SetEmailModal'
 import { AvatarUpload } from '@/components/account/AvatarUpload'
-import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider, clearAccessToken } from '@/lib/auth/frontend-auth'
+import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider, setAuthUser, clearAuthState } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { Check, Activity, BarChart3, Monitor, Smartphone, Tablet, MapPin, Laptop, Trash2, Clock, Phone, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -83,22 +83,20 @@ export default function AccountInformationPage() {
   }
 
   const handleNameChanged = (newName: string) => {
-    const stored = localStorage.getItem('puzzroo_user')
+    const stored = getCurrentUser()
     if (stored) {
-      const parsed = JSON.parse(stored)
-      parsed.name = newName
-      localStorage.setItem('puzzroo_user', JSON.stringify(parsed))
+      stored.name = newName
+      setAuthUser(JSON.stringify(stored))
       window.dispatchEvent(new Event('auth-change'))
     }
     setLocalUser(prev => prev ? { ...prev, name: newName } : prev)
   }
 
   const handleAvatarChanged = (url: string | null) => {
-    const stored = localStorage.getItem('puzzroo_user')
+    const stored = getCurrentUser()
     if (stored) {
-      const parsed = JSON.parse(stored)
-      parsed.avatar = url
-      localStorage.setItem('puzzroo_user', JSON.stringify(parsed))
+      stored.avatar = url
+      setAuthUser(JSON.stringify(stored))
       window.dispatchEvent(new Event('auth-change'))
     }
     setLocalUser(prev => prev ? { ...prev, avatar: url } : prev)
@@ -124,9 +122,7 @@ export default function AccountInformationPage() {
       // If the revoked session was the current one, log out
       const wasCurrent = sessions.find(s => s.id === id)?.isCurrent
       if (wasCurrent) {
-        clearAccessToken()
-        localStorage.removeItem('puzzroo_auth')
-        localStorage.removeItem('puzzroo_user')
+        clearAuthState()
         window.location.href = '/login'
       }
     }

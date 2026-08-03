@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/server/db";
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
-import { cookieOptions } from "@/lib/server/utils/cookieOptions";
+import { getRefreshCookieOptions } from "@/lib/server/utils/cookieOptions";
 import { handleOAuth, isFirebaseReady } from "@/lib/server/utils/authHelpers";
 import { getOrCreateGuestUser } from "@/lib/server/utils/guestUser";
 import { transferGuestSessions } from "@/lib/server/utils/guestTransfer";
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const rl = checkRateLimit(request, `oauth:${provider}`, 10, 60_000);
       if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests. Try again later.");
       const { firebaseToken } = body;
+      const rememberMe = body.rememberMe === true;
       if (!firebaseToken) return errorResponse(400, "validation_error", "Firebase token is required");
       if (!isFirebaseReady()) {
         return errorResponse(503, "firebase_not_configured", "Firebase is not configured");
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           const guest = await getOrCreateGuestUser(guestId);
           if (guest) currentUserId = guest._id.toString();
         }
-        const result = await handleOAuth(firebaseProvider, firebaseToken, currentUserId, request);
+        const result = await handleOAuth(firebaseProvider, firebaseToken, currentUserId, request, rememberMe);
         if (!result) return errorResponse(500, "firebase_not_configured", "Firebase is not configured");
         if (result.converted) {
           await trackServer({ userId: result.payload.user.id, event: "guest_converted", properties: { method: provider }, request });
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }
         await trackServer({ userId: result.payload.user.id, event: "login", properties: { method: provider }, request });
         const res = NextResponse.json({ success: true, payload: result.payload, timestamp: Date.now() }, { status: 200 });
-        res.cookies.set("refreshToken", result.refreshToken, cookieOptions);
+        res.cookies.set("refreshToken", result.refreshToken, getRefreshCookieOptions(rememberMe));
         return res;
       } catch (error: any) {
         if (error?.code === "provider_mismatch") {
