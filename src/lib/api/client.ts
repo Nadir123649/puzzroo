@@ -1,5 +1,5 @@
 import { notify } from '@/lib/toast'
-import { getAccessToken, setAccessToken, getGuestId, hasStoredAuth, clearAuthState } from '@/lib/auth/frontend-auth'
+import { getAccessToken, setAccessToken, getGuestId, hasStoredAuth } from '@/lib/auth/frontend-auth'
 
 type RefreshCallback = (token: string) => void;
 let onRefresh: RefreshCallback | null = null;
@@ -40,10 +40,10 @@ export async function refreshAccessToken(): Promise<string | null> {
     try {
       const res = await fetch(`${API_BASE}/api/v1/auth/refresh`, { method: "POST", credentials: "include" });
       if (!res.ok) {
-        // A failed refresh is NOT proof of a dead session: it can be a rate
-        // limit (429), a transient network blip, or a rotation race. Only the
-        // api() 401 handler — after an authoritative session-exists probe —
-        // may clear the auth state.
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem("puzzroo_auth");
+          sessionStorage.removeItem("puzzroo_auth");
+        }
         return null;
       }
       const data = await res.json();
@@ -148,24 +148,11 @@ export async function api<T = any>(
             headers["Authorization"] = `Bearer ${retryToken}`;
             res = await fetch(url, { ...fetchOptions, headers, credentials: "include", keepalive: !(fetchOptions.body instanceof FormData) });
           } else if (!sessionExpiredNotified) {
-            // Refresh failed (rate limit, rotation race, network blip) — probe
-            // the authoritative refresh cookie before declaring the session
-            // dead. Cookie present → transient, keep the user logged in and
-            // let the next request retry. Cookie gone → definitive logout.
-            try {
-              const probe = await fetch(`${API_BASE}/api/v1/auth/session-exists`, { credentials: "include" });
-              const probeData = await probe.json().catch(() => null);
-              const cookieAlive = probe.ok && probeData?.payload?.valid === true;
-              if (!cookieAlive && !sessionExpiredNotified) {
-                sessionExpiredNotified = true;
-                notify.errorKey("SYSTEM_SESSION_EXPIRED");
-                clearAuthState();
-                window.dispatchEvent(new Event("auth-change"));
-                setTimeout(() => { window.location.href = "/login"; }, 1500);
-              }
-            } catch {
-              // Probe itself failed (offline) — transient, keep the session.
-            }
+            sessionExpiredNotified = true;
+            notify.errorKey("SYSTEM_SESSION_EXPIRED");
+            localStorage.removeItem("puzzroo_auth");
+            sessionStorage.removeItem("puzzroo_auth");
+            setTimeout(() => { window.location.href = "/login"; }, 1500);
           }
         }
       }

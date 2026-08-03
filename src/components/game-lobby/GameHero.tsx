@@ -191,23 +191,26 @@ function GameHeroContent({ name, image, imageLight, difficulties, gameSlug }: Ga
                 <>
                   <Image
                     src={imageLight}
-                    alt={name}
+                    alt=""
+                    role="presentation"
                     width={101}
                     height={101}
-                    className="w-[101px] h-[101px] object-contain absolute transition-opacity duration-300 opacity-100 dark:opacity-0"
+                    className="w-[101px] h-[101px] object-contain absolute block dark:hidden"
                   />
                   <Image
                     src={image}
-                    alt={name}
+                    alt=""
+                    role="presentation"
                     width={101}
                     height={101}
-                    className="w-[101px] h-[101px] object-contain absolute transition-opacity duration-300 opacity-0 dark:opacity-100"
+                    className="w-[101px] h-[101px] object-contain absolute hidden dark:block"
                   />
                 </>
               ) : (
                 <Image
                   src={image}
-                  alt={name}
+                  alt=""
+                  role="presentation"
                   width={101}
                   height={101}
                   className="w-[101px] h-[101px] object-contain"

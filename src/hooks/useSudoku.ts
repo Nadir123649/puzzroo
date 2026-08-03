@@ -397,6 +397,7 @@ export function useSudoku() {
                 sessionCreatedRef.current = true
                 hintsUsedRef.current = serverSession.hintsUsed || 0
                 movesRef.current = serverSession.moves || 0
+                startTimeRef.current = Date.now() - ((serverSession.elapsedTime || 0) * 1000)
                 setIsInitialized(true)
                 setLoading(false)
                 return
@@ -435,6 +436,7 @@ export function useSudoku() {
                 sessionCreatedRef.current = true
                 hintsUsedRef.current = dcSession.hintsUsed || 0
                 movesRef.current = dcSession.moves || 0
+                startTimeRef.current = Date.now() - ((dcSession.elapsedTime || 0) * 1000)
                 setIsInitialized(true)
                 setLoading(false)
                 return
@@ -484,6 +486,27 @@ export function useSudoku() {
 
           const targetPuzzleId = isDailyChallenge && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id
 
+          // Only resume saved game if it matches the target puzzle ID
+          const saved = loadGameState(undefined, currentDiff)
+          if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === currentDiff) {
+            setGameState({
+              currentBoard: saved.currentBoard,
+              initialBoard: saved.initialBoard,
+              solution: saved.solution,
+              puzzleId: saved.puzzleId,
+              mistakes: saved.mistakes,
+              score: saved.score,
+              time: saved.time,
+              gameStatus: saved.gameStatus as GameStatus,
+            })
+            puzzleIdRef.current = saved.puzzleId
+            startTimeRef.current = Date.now() - ((saved.time || 0) * 1000)
+            setIsInitialized(true)
+            if (!getAccessToken()) ensureGuestId()
+            await initSession(puzzle.id)
+            return
+          }
+
           const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
           setGameState(next)
           puzzleIdRef.current = next.puzzleId
@@ -515,6 +538,7 @@ export function useSudoku() {
                 })
                 hintsUsedRef.current = sessionData.hintsUsed || 0
                 movesRef.current = sessionData.moves || 0
+                startTimeRef.current = Date.now() - ((sessionData.elapsedTime || 0) * 1000)
               }
             }
           }

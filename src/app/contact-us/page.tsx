@@ -68,8 +68,10 @@ export default function ContactUsPage() {
   }
 
   return (
-    <InfoPageLayout title="Contact Us">
-      <div className="w-full pb-[40px] px-1 md:px-0">
+    <>
+      <title>Contact Us | Puzzroo Games</title>
+      <InfoPageLayout title="Contact Us">
+        <div className="w-full pb-[40px] px-1 md:px-0">
         
         {/* Subtitle */}
         <p className="font-urbanist font-medium text-[15px] md:text-[17px] leading-[150%] text-[#757575] dark:text-[#BDBDBD] mb-8 text-center max-w-[600px] mx-auto">

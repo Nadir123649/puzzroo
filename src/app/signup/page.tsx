@@ -123,6 +123,7 @@ export default function SignupPage() {
 
   return (
     <>
+      <title>Sign Up | Puzzroo Games</title>
       <GameLoader isOpen={initialLoading} text="Loading..." />
       <RedirectIfAuthenticated>
       <AppLayout>

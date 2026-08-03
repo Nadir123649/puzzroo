@@ -35,6 +35,7 @@ export default function SudokuPage() {
 
   return (
     <>
+      <title>Sudoku | Puzzroo Games</title>
       <GameLoader isOpen={initialLoading} text="Loading puzzle..." />
       <AppLayout>
         <main className="flex-grow flex flex-col">

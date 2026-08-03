@@ -55,6 +55,7 @@ export default function TangramPage() {
 
   return (
     <>
+      <title>Tangram | Puzzroo Games</title>
       <GameLoader isOpen={initialLoading} text="Loading puzzle..." />
       <AppLayout>
         <main className="flex-grow flex flex-col">
