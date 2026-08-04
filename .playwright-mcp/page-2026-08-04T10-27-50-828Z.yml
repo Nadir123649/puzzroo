@@ -1,0 +1,189 @@
+- generic [ref=f1e1]:
+  - generic [ref=f1e10]:
+    - banner [ref=f1e11]:
+      - generic [ref=f1e13]:
+        - link "Puzzroo" [ref=f1e15] [cursor=pointer]:
+          - /url: /
+        - generic [ref=f1e21]:
+          - link "Sign up" [ref=f1e22] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=f1e23] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [ref=f1e24] [cursor=pointer]:
+            - generic [ref=f1e25]: Dark Mode
+            - img "Theme icon" [ref=f1e26]
+    - main [ref=f1e27]:
+      - main [ref=f1e47]:
+        - generic [ref=f1e49]:
+          - button "Back to games" [ref=f1e50] [cursor=pointer]
+          - generic [ref=f1e53]:
+            - img "Sudoku" [ref=f1e55]
+            - heading "SUDOKU" [level=1] [ref=f1e56]
+        - generic [ref=f1e60]:
+          - grid "Sudoku board" [ref=f1e62]:
+            - button "Cell 1, 1, value 5, fixed" [ref=f1e63] [cursor=pointer]:
+              - generic [ref=f1e64]: "5"
+            - button "Cell 1, 2, value 2, fixed" [ref=f1e65] [cursor=pointer]:
+              - generic [ref=f1e66]: "2"
+            - button "Cell 1, 3, value 7, fixed" [ref=f1e67] [cursor=pointer]:
+              - generic [ref=f1e68]: "7"
+            - button "Cell 1, 4, value 9, fixed" [ref=f1e69] [cursor=pointer]:
+              - generic [ref=f1e70]: "9"
+            - button "Cell 1, 5, value 5" [ref=f1e71] [cursor=pointer]:
+              - generic [ref=f1e72]: "5"
+            - button "Cell 1, 6, value 1, fixed" [ref=f1e73] [cursor=pointer]:
+              - generic [ref=f1e74]: "1"
+            - button "Cell 1, 7, value 3, fixed" [ref=f1e75] [cursor=pointer]:
+              - generic [ref=f1e76]: "3"
+            - button "Cell 1, 8, value 8, fixed" [ref=f1e77] [cursor=pointer]:
+              - generic [ref=f1e78]: "8"
+            - button "Cell 1, 9, value 6, fixed" [ref=f1e79] [cursor=pointer]:
+              - generic [ref=f1e80]: "6"
+            - button "Cell 2, 1, empty" [ref=f1e81] [cursor=pointer]
+            - button "Cell 2, 2, empty" [ref=f1e82] [cursor=pointer]
+            - button "Cell 2, 3, value 1, fixed" [ref=f1e83] [cursor=pointer]:
+              - generic [ref=f1e84]: "1"
+            - button "Cell 2, 4, value 8, fixed" [ref=f1e85] [cursor=pointer]:
+              - generic [ref=f1e86]: "8"
+            - button "Cell 2, 5, value 4" [ref=f1e87] [cursor=pointer]:
+              - generic [ref=f1e88]: "4"
+            - button "Cell 2, 6, value 6, fixed" [ref=f1e89] [cursor=pointer]:
+              - generic [ref=f1e90]: "6"
+            - button "Cell 2, 7, empty" [ref=f1e91] [cursor=pointer]
+            - button "Cell 2, 8, value 9, fixed" [ref=f1e92] [cursor=pointer]:
+              - generic [ref=f1e93]: "9"
+            - button "Cell 2, 9, value 5, fixed" [ref=f1e94] [cursor=pointer]:
+              - generic [ref=f1e95]: "5"
+            - button "Cell 3, 1, value 9, fixed" [ref=f1e96] [cursor=pointer]:
+              - generic [ref=f1e97]: "9"
+            - button "Cell 3, 2, value 8, fixed" [ref=f1e98] [cursor=pointer]:
+              - generic [ref=f1e99]: "8"
+            - button "Cell 3, 3, value 6, fixed" [ref=f1e100] [cursor=pointer]:
+              - generic [ref=f1e101]: "6"
+            - button "Cell 3, 4, value 5, fixed" [ref=f1e102] [cursor=pointer]:
+              - generic [ref=f1e103]: "5"
+            - button "Cell 3, 5, value 2" [ref=f1e104] [cursor=pointer]:
+              - generic [ref=f1e105]: "2"
+            - button "Cell 3, 6, empty" [ref=f1e106] [cursor=pointer]
+            - button "Cell 3, 7, empty" [ref=f1e107] [cursor=pointer]
+            - button "Cell 3, 8, value 1, fixed" [ref=f1e108] [cursor=pointer]:
+              - generic [ref=f1e109]: "1"
+            - button "Cell 3, 9, value 7, fixed" [ref=f1e110] [cursor=pointer]:
+              - generic [ref=f1e111]: "7"
+            - button "Cell 4, 1, value 6, fixed" [ref=f1e112] [cursor=pointer]:
+              - generic [ref=f1e113]: "6"
+            - button "Cell 4, 2, empty" [ref=f1e114] [cursor=pointer]
+            - button "Cell 4, 3, empty" [ref=f1e115] [cursor=pointer]
+            - button "Cell 4, 4, empty" [ref=f1e116] [cursor=pointer]
+            - button "Cell 4, 5, empty" [ref=f1e117] [cursor=pointer]
+            - button "Cell 4, 6, empty" [ref=f1e118] [cursor=pointer]
+            - button "Cell 4, 7, value 7, fixed" [ref=f1e119] [cursor=pointer]:
+              - generic [ref=f1e120]: "7"
+            - button "Cell 4, 8, value 5, fixed" [ref=f1e121] [cursor=pointer]:
+              - generic [ref=f1e122]: "5"
+            - button "Cell 4, 9, value 2, fixed" [ref=f1e123] [cursor=pointer]:
+              - generic [ref=f1e124]: "2"
+            - button "Cell 5, 1, empty" [ref=f1e125] [cursor=pointer]
+            - button "Cell 5, 2, value 9, fixed" [ref=f1e126] [cursor=pointer]:
+              - generic [ref=f1e127]: "9"
+            - button "Cell 5, 3, empty" [ref=f1e128] [cursor=pointer]
+            - button "Cell 5, 4, value 1, fixed" [ref=f1e129] [cursor=pointer]:
+              - generic [ref=f1e130]: "1"
+            - button "Cell 5, 5, value 6, fixed" [ref=f1e131] [cursor=pointer]:
+              - generic [ref=f1e132]: "6"
+            - button "Cell 5, 6, empty" [ref=f1e133] [cursor=pointer]
+            - button "Cell 5, 7, value 8, fixed" [ref=f1e134] [cursor=pointer]:
+              - generic [ref=f1e135]: "8"
+            - button "Cell 5, 8, empty" [ref=f1e136] [cursor=pointer]
+            - button "Cell 5, 9, empty" [ref=f1e137] [cursor=pointer]
+            - button "Cell 6, 1, empty" [ref=f1e138] [cursor=pointer]
+            - button "Cell 6, 2, value 5, fixed" [ref=f1e139] [cursor=pointer]:
+              - generic [ref=f1e140]: "5"
+            - button "Cell 6, 3, value 8, fixed" [ref=f1e141] [cursor=pointer]:
+              - generic [ref=f1e142]: "8"
+            - button "Cell 6, 4, empty" [ref=f1e143] [cursor=pointer]
+            - button "Cell 6, 5, empty" [ref=f1e144] [cursor=pointer]
+            - button "Cell 6, 6, empty" [ref=f1e145] [cursor=pointer]
+            - button "Cell 6, 7, empty" [ref=f1e146] [cursor=pointer]
+            - button "Cell 6, 8, empty" [ref=f1e147] [cursor=pointer]
+            - button "Cell 6, 9, empty" [ref=f1e148] [cursor=pointer]
+            - button "Cell 7, 1, empty" [ref=f1e149] [cursor=pointer]
+            - button "Cell 7, 2, value 4, fixed" [ref=f1e150] [cursor=pointer]:
+              - generic [ref=f1e151]: "4"
+            - button "Cell 7, 3, empty" [ref=f1e152] [cursor=pointer]
+            - button "Cell 7, 4, empty" [ref=f1e153] [cursor=pointer]
+            - button "Cell 7, 5, empty" [ref=f1e154] [cursor=pointer]
+            - button "Cell 7, 6, empty" [ref=f1e155] [cursor=pointer]
+            - button "Cell 7, 7, value 9, fixed" [ref=f1e156] [cursor=pointer]:
+              - generic [ref=f1e157]: "9"
+            - button "Cell 7, 8, empty" [ref=f1e158] [cursor=pointer]
+            - button "Cell 7, 9, empty" [ref=f1e159] [cursor=pointer]
+            - button "Cell 8, 1, empty" [ref=f1e160] [cursor=pointer]
+            - button "Cell 8, 2, empty" [ref=f1e161] [cursor=pointer]
+            - button "Cell 8, 3, empty" [ref=f1e162] [cursor=pointer]
+            - button "Cell 8, 4, value 2, fixed" [ref=f1e163] [cursor=pointer]:
+              - generic [ref=f1e164]: "2"
+            - button "Cell 8, 5, value 8, fixed" [ref=f1e165] [cursor=pointer]:
+              - generic [ref=f1e166]: "8"
+            - button "Cell 8, 6, value 9, fixed" [ref=f1e167] [cursor=pointer]:
+              - generic [ref=f1e168]: "9"
+            - button "Cell 8, 7, value 6, fixed" [ref=f1e169] [cursor=pointer]:
+              - generic [ref=f1e170]: "6"
+            - button "Cell 8, 8, value 3, fixed" [ref=f1e171] [cursor=pointer]:
+              - generic [ref=f1e172]: "3"
+            - button "Cell 8, 9, empty" [ref=f1e173] [cursor=pointer]
+            - button "Cell 9, 1, empty" [ref=f1e174] [cursor=pointer]
+            - button "Cell 9, 2, value 6, fixed" [ref=f1e175] [cursor=pointer]:
+              - generic [ref=f1e176]: "6"
+            - button "Cell 9, 3, value 9, fixed" [ref=f1e177] [cursor=pointer]:
+              - generic [ref=f1e178]: "9"
+            - button "Cell 9, 4, empty" [ref=f1e179] [cursor=pointer]
+            - button "Cell 9, 5, empty" [ref=f1e180] [cursor=pointer]
+            - button "Cell 9, 6, empty" [ref=f1e181] [cursor=pointer]
+            - button "Cell 9, 7, empty" [ref=f1e182] [cursor=pointer]
+            - button "Cell 9, 8, empty" [ref=f1e183] [cursor=pointer]
+            - button "Cell 9, 9, empty" [ref=f1e184] [cursor=pointer]
+          - generic [ref=f1e185]:
+            - generic [ref=f1e187]:
+              - generic [ref=f1e189]:
+                - text: "Score:"
+                - generic [ref=f1e190]: "0"
+              - generic [ref=f1e191]:
+                - generic [ref=f1e192]:
+                  - text: "Mistakes:"
+                  - generic [ref=f1e193]: 1/3
+                - generic [ref=f1e194]:
+                  - text: "Time:"
+                  - generic [ref=f1e195]: 23:07
+            - generic [ref=f1e196]:
+              - button "Undo" [disabled] [ref=f1e197]
+              - button "Erase" [ref=f1e201] [cursor=pointer]
+              - button "Pencil mode" [active] [pressed] [ref=f1e205] [cursor=pointer]
+              - button "Hint" [disabled] [ref=f1e209]
+            - generic [ref=f1e213]:
+              - button "Number 1" [ref=f1e214] [cursor=pointer]: "1"
+              - button "Number 2" [ref=f1e215] [cursor=pointer]: "2"
+              - button "Number 3" [ref=f1e216] [cursor=pointer]: "3"
+              - button "Number 4" [ref=f1e217] [cursor=pointer]: "4"
+              - button "Number 5" [ref=f1e218] [cursor=pointer]: "5"
+              - button "Number 6" [ref=f1e219] [cursor=pointer]: "6"
+              - button "Number 7" [ref=f1e220] [cursor=pointer]: "7"
+              - button "Number 8" [ref=f1e221] [cursor=pointer]: "8"
+              - button "Number 9" [ref=f1e222] [cursor=pointer]: "9"
+            - generic [ref=f1e223]:
+              - button "New Game" [ref=f1e224] [cursor=pointer]
+              - button "Replay Game" [ref=f1e226] [cursor=pointer]
+    - contentinfo [ref=f1e28]:
+      - generic [ref=f1e30]:
+        - paragraph [ref=f1e32]: © 2026 Puzzroo
+        - generic [ref=f1e33]:
+          - link "FAQ" [ref=f1e34] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=f1e35] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=f1e36] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=f1e37] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=f1e43] [cursor=pointer]
+  - alert [ref=f1e228]

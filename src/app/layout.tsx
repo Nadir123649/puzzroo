@@ -93,11 +93,10 @@ export default function RootLayout({
         <style dangerouslySetInnerHTML={{
           __html: `
             /* Critical CSS to prevent flash - loaded immediately */
-            html { background-color: #ffffff; transition: none !important; }
+            html { background-color: #ffffff; }
             html.dark { background-color: #181A20 !important; color-scheme: dark; }
             html.dark body { background-color: #181A20 !important; }
             html.dark header { background-color: #181A20 !important; }
-            body { transition: none !important; }
           `
         }} />
         <script id="theme-init" dangerouslySetInnerHTML={{

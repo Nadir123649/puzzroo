@@ -41,20 +41,17 @@ function FloatingScore({ id, value, onComplete }: FloatingScoreProps) {
   const [stage, setStage] = useState<'enter' | 'float' | 'exit'>('enter')
 
   useEffect(() => {
-    // Enter stage (appear)
     const enterTimer = setTimeout(() => {
       setStage('float')
-    }, 50)
+    }, 100)
 
-    // Float stage (move up and fade)
     const floatTimer = setTimeout(() => {
       setStage('exit')
-    }, 800)
+    }, 1200)
 
-    // Exit stage (remove)
     const exitTimer = setTimeout(() => {
       onComplete(id)
-    }, 1200)
+    }, 1600)
 
     return () => {
       clearTimeout(enterTimer)

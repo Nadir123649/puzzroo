@@ -15,6 +15,7 @@ export interface SavedCrossMathState {
   score: number
   time: number
   gameStatus: string
+  history?: any[]
   savedAt: number
 }
 
@@ -71,6 +72,7 @@ export function saveGameState(state: Omit<SavedCrossMathState, 'version' | 'save
   try {
     const dataToSave: SavedCrossMathState = {
       ...state,
+      history: state.history && state.history.length > 0 ? state.history : undefined,
       version: STORAGE_VERSION,
       savedAt: Date.now(),
     }

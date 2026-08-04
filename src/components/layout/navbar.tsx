@@ -8,6 +8,7 @@ import { images } from '@/lib/utils'
 import { isLoggedIn, getCurrentUser, logout, hasStoredAuth } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
+import { Sun, Moon } from 'lucide-react'
 
 let globalMounted = false;
 
@@ -201,7 +202,7 @@ export function Navbar() {
                 </defs>
               </svg>
 
-              <span className="font-urbanist text-[24px] font-extrabold text-[clamp(20px,2.5vw,40px)] tracking-tight text-[#181A20] dark:text-white transition-colors duration-300">
+              <span className="font-urbanist text-[24px] font-extrabold text-[clamp(20px,2.5vw,40px)] tracking-tight text-[#181A20] dark:text-white">
                 Puzzroo
               </span>
             </Link>
@@ -211,31 +212,41 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-[clamp(8px,1vw,16px)] -mr-[15px]">
             {/* Logged Out Actions Container */}
             <div className="logged-out-only items-center gap-[clamp(8px,1vw,16px)]">
-              <Link prefetch={false} href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
-                Sign up
-              </Link>
+              <Link prefetch={false} href="/signup" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist active:scale-95">
+                    Sign up
+                  </Link>
 
-              <Link prefetch={false} href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95">
-                Login
-              </Link>
+                  <Link prefetch={false} href="/login" className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist active:scale-95">
+                    Login
+                  </Link>
 
-              <button
-                onClick={toggleTheme}
-                className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 transition-all duration-300 active:scale-95"
-                aria-label="Toggle theme"
-              >
-                <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white transition-colors duration-300">
-                  {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-                </span>
-                <img
-                  src={images.darkIcon}
-                  alt="Theme icon"
-                  width={20}
-                  height={20}
-                  className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
-                    }`}
-                />
-              </button>
+                  {/* Theme Toggle with Sun/Moon Morph Animation */}
+                  <button
+                    onClick={() => {
+                      toggleTheme()
+                      if (isMenuOpen) setIsMenuOpen(false)
+                    }}
+                    className="flex items-center justify-center gap-2 h-[38px] px-[clamp(12px,2vw,16px)] rounded-full hover:opacity-80 active:scale-95"
+                    aria-label="Toggle theme"
+                  >
+                    <span className="font-urbanist text-[14px] font-medium text-[#181A20] dark:text-white">
+                      {mounted && theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                    </span>
+
+                    {/* Sun icon morphs out, Moon morphs in */}
+                    <div className="relative w-5 h-5">
+                      <Sun
+                        size={20}
+                        className={`absolute inset-0 ${mounted && theme === 'light' ? 'theme-toggle-sun rotate-0 opacity-100' : 'theme-toggle-sun -rotate-180 opacity-0'}`}
+                        strokeWidth={2.5}
+                      />
+                      <Moon
+                        size={20}
+                        className={`absolute inset-0 ${mounted && theme === 'dark' ? 'theme-toggle-moon rotate-0 opacity-100' : 'theme-toggle-moon rotate-180 opacity-0'}`}
+                        strokeWidth={2.5}
+                      />
+                    </div>
+                  </button>
             </div>
 
             {/* Logged In Actions Container */}
@@ -243,7 +254,7 @@ export function Navbar() {
               {/* Subscribe Us Button - Only for logged in users */}
               <Link prefetch={false}
                 href="/subscription"
-                className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-300 active:scale-95"
+                className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist active:scale-95"
               >
                 Subscribe Us
               </Link>
@@ -252,21 +263,30 @@ export function Navbar() {
 
           </div>
 
-          {/* RIGHT: Mobile Actions - Theme + Hamburger */}
+            {/* RIGHT: Mobile Actions - Theme + Hamburger */}
           <div className="flex md:hidden items-center gap-2 ml-[20px]">
+            {/* Theme Toggle with Sun/Moon Morph Animation */}
             <button
-              onClick={toggleTheme}
-              className="flex items-center justify-center w-11 h-11 rounded-full hover:opacity-80 transition-all duration-200 active:scale-95"
+              onClick={() => {
+                toggleTheme()
+                if (isMenuOpen) setIsMenuOpen(false)
+              }}
+              className="flex items-center justify-center w-11 h-11 rounded-full hover:opacity-80 active:scale-95"
               aria-label="Toggle theme"
             >
-              <img
-                src={images.darkIcon}
-                alt="Theme icon"
-                width={20}
-                height={20}
-                className={`w-5 h-5 select-none transition-transform duration-500 ${mounted && theme === 'light' ? 'scale-x-[-1]' : ''
-                  }`}
-              />
+              {/* Sun icon morphs out, Moon morphs in */}
+              <div className="relative w-5 h-5">
+                <Sun
+                  size={20}
+                  className={`absolute inset-0 ${mounted && theme === 'light' ? 'theme-toggle-sun rotate-0 opacity-100' : 'theme-toggle-sun -rotate-180 opacity-0'}`}
+                  strokeWidth={2.5}
+                />
+                <Moon
+                  size={20}
+                  className={`absolute inset-0 ${mounted && theme === 'dark' ? 'theme-toggle-moon rotate-0 opacity-100' : 'theme-toggle-moon rotate-180 opacity-0'}`}
+                  strokeWidth={2.5}
+                />
+              </div>
             </button>
 
             {/* Hamburger Menu */}
@@ -274,13 +294,13 @@ export function Navbar() {
               <button
                 ref={hamburgerRef}
                 onClick={() => setIsMenuOpen(prev => !prev)}
-                className="w-11 h-11 rounded-lg flex items-center justify-center ml-1 hover:bg-gray-100 dark:hover:bg-[#1F222A] active:scale-95 transition-all duration-200"
+                className="w-11 h-11 rounded-lg flex items-center justify-center ml-1 hover:bg-gray-100 dark:hover:bg-[#1F222A] active:scale-95"
                 aria-label="Toggle menu"
               >
                 <div className="w-5 h-4 flex flex-col justify-between">
-                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`}></span>
-                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
-                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`}></span>
+                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white ${isMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`}></span>
+                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white ${isMenuOpen ? 'opacity-0' : ''}`}></span>
+                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white ${isMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`}></span>
                 </div>
               </button>
             )}
@@ -291,7 +311,7 @@ export function Navbar() {
       {/* Mobile Menu Dropdown */}
       <div
         ref={mobileMenuRef}
-        className={`md:hidden w-full bg-white dark:bg-[#181A20] px-[20px] border-t border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen && navbarMounted ? 'max-h-96 pb-4 opacity-100' : 'max-h-0 pb-0 opacity-0'
+        className={`md:hidden w-full bg-white dark:bg-[#181A20] px-[20px] border-t border-gray-100 dark:border-gray-800 overflow-hidden ease-in-out ${isMenuOpen && navbarMounted ? 'max-h-96 pb-4 opacity-100' : 'max-h-0 pb-0 opacity-0'
           }`}
       >
         <div className="flex flex-col gap-3 pt-4">
@@ -334,10 +354,10 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link prefetch={false} href="/signup" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full h-[40px] rounded-full bg-[#6949FF] text-white text-[16px] font-semibold font-urbanist transition-all duration-200">
+              <Link prefetch={false} href="/signup" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full h-[40px] rounded-full bg-[#6949FF] text-white text-[16px] font-semibold font-urbanist">
                 Sign up
               </Link>
-              <Link prefetch={false} href="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] dark:text-white text-[16px] font-semibold font-urbanist transition-all duration-200">
+              <Link prefetch={false} href="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] dark:text-white text-[16px] font-semibold font-urbanist">
                 Login
               </Link>
             </>
@@ -349,3 +369,4 @@ export function Navbar() {
 }
 
 export default Navbar
+

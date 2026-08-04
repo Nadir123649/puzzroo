@@ -175,11 +175,18 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
               }}
               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150 text-left"
             >
-              {theme === 'dark' ? (
-                <Sun size={18} className="text-[#6949FF]" strokeWidth={2} />
-              ) : (
-                <Moon size={18} className="text-[#6949FF]" strokeWidth={2} />
-              )}
+              <div className="relative w-4 h-4 mr-1">
+                <Sun
+                  size={18}
+                  className={`absolute inset-0 ${theme === 'light' ? 'theme-toggle-sun rotate-0 opacity-100' : 'theme-toggle-sun -rotate-180 opacity-0'}`}
+                  strokeWidth={2}
+                />
+                <Moon
+                  size={18}
+                  className={`absolute inset-0 ${theme === 'dark' ? 'theme-toggle-moon rotate-0 opacity-100' : 'theme-toggle-moon rotate-180 opacity-0'}`}
+                  strokeWidth={2}
+                />
+              </div>
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white transition-colors duration-300">
                 {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
               </span>

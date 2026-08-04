@@ -339,7 +339,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   return (
     <>
       <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 ${(isResetting || loading || isCurrentlyLoading) ? 'pointer-events-none select-none' : ''}`}>
-        <div className="w-full px-[20px] pb-[40px] flex justify-center">
+        <div className="w-full px-[20px] pb-[50px] flex justify-center">
           <div className="w-full max-w-[717.5px] flex flex-col items-center gap-[20px]">
             {!isCurrentlyLoading && (
               <>

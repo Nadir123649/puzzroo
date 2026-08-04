@@ -53,6 +53,7 @@ module.exports = {
         'float-medium': 'floatMedium 4s ease-in-out infinite',
         'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',
         'gradient-x': 'gradientX 8s ease infinite',
+        'theme-flash': 'themeFlash 0.45s cubic-bezier(0.4, 0, 0.2, 1) both',
       },
       keyframes: {
         fadeIn: {
@@ -83,9 +84,17 @@ module.exports = {
           '0%, 100%': { 'background-position': '0% 50%' },
           '50%': { 'background-position': '100% 50%' },
         },
+        themeFlash: {
+          '0%': { opacity: '0' },
+          '50%': { opacity: '0.3' },
+          '100%': { opacity: '0' },
+        },
       },
       backdropBlur: {
         xs: '2px',
+      },
+      transitionProperty: {
+        colors: 'background-color, color, border-color, box-shadow',
       },
     },
   },

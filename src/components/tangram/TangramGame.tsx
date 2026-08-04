@@ -197,7 +197,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   return (
     <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}>
       <div className="w-full max-w-[1380px] mx-auto px-[20px] flex justify-center overflow-visible">
-        <div className="w-full flex flex-col gap-[20px] pb-[20px] max-w-full overflow-visible">
+        <div className="w-full flex flex-col gap-[20px] md:pb-[50px] pb-[20px] max-w-full overflow-visible">
 
           {/* Puzzle Metadata */}
           <div className="text-center space-y-1 w-full mt-4">
