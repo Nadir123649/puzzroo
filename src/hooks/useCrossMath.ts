@@ -132,7 +132,8 @@ export function useCrossMath(initialPuzzleId?: string) {
     previousValue: number | string | undefined,
     previousType: Cell['type'],
     previousIsCorrect: boolean | undefined,
-    previousIsError: boolean | undefined
+    previousIsError: boolean | undefined,
+    scoreChange: number = 0
   ) => {
     setHistory(prev => [
       ...prev,
@@ -142,6 +143,7 @@ export function useCrossMath(initialPuzzleId?: string) {
         previousType,
         previousIsCorrect,
         previousIsError,
+        scoreChange,
       }
     ])
   }, [])
@@ -691,13 +693,18 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     setIsTyping(false)
 
-    // Save move in history stack for undo
+    // Save move in history stack for undo (include score change for undo)
+    // We calculate what score change will happen: correct = +CORRECT_ANSWER, wrong = +WRONG_ANSWER (negative)
+    const correctValueForHistory = getCorrectValue(currentPuzzle.solution, row, col)
+    const willBeCorrect = correctValueForHistory !== null && num === correctValueForHistory
+    const scoreChangeForHistory = willBeCorrect ? SCORING.CORRECT_ANSWER : SCORING.WRONG_ANSWER
     pushToHistory(
       { row, col },
       typeof cell.value === 'number' ? cell.value : undefined,
       cell.type,
       cell.isCorrect,
-      cell.isError
+      cell.isError,
+      scoreChangeForHistory
     )
 
     const newBoard = board.map(r => r.map(c => ({ ...c })))
@@ -930,7 +937,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     if (history.length === 0 || gameStatus !== 'playing') return
 
     const lastMove = history[history.length - 1]
-    const { position, previousValue, previousType, previousIsCorrect, previousIsError } = lastMove
+    const { position, previousValue, previousType, previousIsCorrect, previousIsError, scoreChange } = lastMove
     const { row, col } = position
 
     const newBoard = board.map(r => r.map(c => ({ ...c })))
@@ -962,6 +969,11 @@ export function useCrossMath(initialPuzzleId?: string) {
       value: previousValue,
       isCorrect: previousIsCorrect,
       isError: previousIsError,
+    }
+
+    // Revert score: undo the score change that was applied when this move was made
+    if (scoreChange !== 0) {
+      setScore(prev => Math.max(0, prev - scoreChange))
     }
 
     setBoard(newBoard)

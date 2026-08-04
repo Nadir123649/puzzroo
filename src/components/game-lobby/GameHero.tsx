@@ -118,7 +118,13 @@ function GameHeroContent({ name, image, imageLight, difficulties, gameSlug }: Ga
 
   useEffect(() => {
     if (backParam) {
-      const timer = setTimeout(() => setInitialLoading(false), 200)
+      const timer = setTimeout(() => {
+        setInitialLoading(false)
+        // Clean URL so page refresh doesn't trigger loader again
+        const url = new URL(window.location.href)
+        url.searchParams.delete('back')
+        router.replace(url.pathname + (url.search || ''), { scroll: false })
+      }, 200)
       return () => clearTimeout(timer)
     }
   }, [backParam])

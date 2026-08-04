@@ -29,40 +29,46 @@ export const CrossMathCell = React.memo(function CrossMathCellComponent({ cell, 
 
   // Background colors
   let bgColor = 'bg-white dark:bg-[#262A34]' // Empty editable
-  
+
   if (isOperator && cell.value) {
     bgColor = 'bg-[#F5F5F5] dark:bg-[#1F222A]' // Operator cells
   } else if (isNumber && !isEditable) {
-    bgColor = 'bg-[#E8DFFF] dark:bg-[#2D2640]' // Pre-filled numbers (purple tint like Sudoku correct cells)
+    bgColor = 'bg-[#E8DFFF] dark:bg-[#2D2640]' // Pre-filled numbers
   } else if (isNumber && isEditable) {
     bgColor = 'bg-white dark:bg-[#262A34]' // User-entered numbers
   }
 
-  // Selected state
-  if (isSelected && isEditable) {
-    bgColor = 'bg-[#E8DFFF] dark:bg-[#2D2640]' // Same as Sudoku selected
-  }
-
-  // Error state
+  // Error state (always red bg/text, even when selected)
   if (cell.isError) {
     bgColor = 'bg-[#FFE8E8] dark:bg-[#3D2020]'
   }
 
-  // Correct state
+  // Correct state (always green bg/text, even when selected)
   if (cell.isCorrect && isEditable) {
-    bgColor = 'bg-[#E8F5E9] dark:bg-[#1B2F1F]' // Green tint for correct
+    bgColor = 'bg-[#E8F5E9] dark:bg-[#1B2F1F]'
+  }
+
+  // Selected state (purple bg only for cells that are neither error nor correct)
+  if (isSelected && isEditable && !cell.isError && !cell.isCorrect) {
+    bgColor = 'bg-[#E8DFFF] dark:bg-[#2D2640]'
   }
 
   // Border - keep consistent width, change color only
   let borderClass = 'border-[2px] border-[#E0E0E0] dark:border-[#35383F]'
-  if (isSelected && isEditable) {
-    borderClass = 'border-[2px] border-[#6949FF]' // Same width, different color
-  }
-  if (cell.isCorrect && isEditable) {
-    borderClass = 'border-[2px] border-[#4CAF50]'
-  }
+
+  // Error border: red when not selected, purple when selected (selection indicator)
   if (cell.isError) {
-    borderClass = 'border-[2px] border-[#FF6B6B]'
+    borderClass = isSelected ? 'border-[2px] border-[#6949FF]' : 'border-[2px] border-[#FF6B6B]'
+  }
+
+  // Correct border: green when not selected, purple when selected (selection indicator)
+  if (cell.isCorrect && isEditable) {
+    borderClass = isSelected ? 'border-[2px] border-[#6949FF]' : 'border-[2px] border-[#4CAF50]'
+  }
+
+  // Selected border (purple for non-error, non-correct cells)
+  if (isSelected && isEditable && !cell.isError && !cell.isCorrect) {
+    borderClass = 'border-[2px] border-[#6949FF]'
   }
 
   // Text color
@@ -70,11 +76,20 @@ export const CrossMathCell = React.memo(function CrossMathCellComponent({ cell, 
   if (isOperator) {
     textColor = 'text-[#757575] dark:text-[#9E9E9E]' // Operators lighter
   }
+
+  // Error text (always red)
+  if (cell.isError) {
+    textColor = 'text-[#FF6B6B]'
+  }
+
+  // Correct text (always green)
   if (cell.isCorrect && isEditable) {
     textColor = 'text-[#4CAF50]'
   }
-  if (cell.isError) {
-    textColor = 'text-[#FF6B6B]'
+
+  // Selected text (purple for non-error, non-correct cells)
+  if (isSelected && isEditable && !cell.isError && !cell.isCorrect) {
+    textColor = 'text-[#6949FF]'
   }
 
   // Cursor

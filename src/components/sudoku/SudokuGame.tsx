@@ -182,23 +182,21 @@ export function SudokuGame() {
                   Replay Game
                 </Button>
               ) : (
-                <div className="w-full flex flex-col gap-2.5">
+                <div className="w-full flex flex-row gap-2">
                   <Button
                     onClick={() => handleNewGame(false)}
                     disabled={isResetting}
-                    fullWidth
-                    size="md"
-                    className="h-[46px]"
+                    size="sm"
+                    className="flex-1 h-[46px] whitespace-nowrap text-[13px] font-bold"
                   >
                     New Game
                   </Button>
                   <Button
                     onClick={() => handleNewGame(true)}
                     disabled={isResetting}
-                    fullWidth
-                    size="md"
+                    size="sm"
                     variant="outline"
-                    className="h-[46px]"
+                    className="flex-1 h-[46px] whitespace-nowrap text-[13px] font-bold"
                   >
                     Replay Game
                   </Button>
@@ -275,23 +273,21 @@ export function SudokuGame() {
                   Replay Game
                 </Button>
               ) : (
-                <div className="w-full flex flex-col gap-2.5">
+                <div className="w-full flex flex-row gap-2">
                   <Button
                     onClick={() => handleNewGame(false)}
                     disabled={isResetting}
-                    fullWidth
-                    size="md"
-                    className="h-[46px]"
+                    size="sm"
+                    className="flex-1 h-[46px] whitespace-nowrap text-[13px] font-bold"
                   >
                     New Game
                   </Button>
                   <Button
                     onClick={() => handleNewGame(true)}
                     disabled={isResetting}
-                    fullWidth
-                    size="md"
+                    size="sm"
                     variant="outline"
-                    className="h-[46px]"
+                    className="flex-1 h-[46px] whitespace-nowrap text-[13px] font-bold"
                   >
                     Replay Game
                   </Button>
