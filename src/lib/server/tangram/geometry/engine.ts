@@ -1,7 +1,6 @@
-import type { PieceValidationInput, PieceValidationOutput, Bounds } from './types';
-import { TOLERANCE, ALLOWED_ROTATIONS, BOARD } from './tolerance';
-import TangramPuzzle from '../../models/TangramPuzzle';
+import { TOLERANCE, ALLOWED_ROTATIONS } from './tolerance';
 import type { VerificationRequest, VerificationResult, PieceVerificationResult } from '../types';
+import TangramPuzzle from '../../models/TangramPuzzle';
 
 function pointToKey(p: number[]): string {
   return `${Math.round(p[0] * 1000)},${Math.round(p[1] * 1000)}`;
@@ -60,34 +59,15 @@ export function transformPolygon(
   return result;
 }
 
-export function getBounds(polygon: number[][]): Bounds {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const [x, y] of polygon) {
-    if (x < minX) minX = x;
-    if (y < minY) minY = y;
-    if (x > maxX) maxX = x;
-    if (y > maxY) maxY = y;
-  }
-  return { minX, minY, maxX, maxY };
-}
-
-export function isInBounds(
+function isInBoundsRelative(
   polygon: number[][],
-  canvasWidth: number,
-  canvasHeight: number
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number
 ): boolean {
   for (const [x, y] of polygon) {
-    if (
-      x < -TOLERANCE.POSITION ||
-      y < -TOLERANCE.POSITION ||
-      x > canvasWidth + TOLERANCE.POSITION ||
-      y > canvasHeight + TOLERANCE.POSITION
-    ) {
-      return false;
-    }
+    if (x < minX || y < minY || x > maxX || y > maxY) return false;
   }
   return true;
 }
@@ -100,62 +80,94 @@ export function isRotationValid(rotation: number): boolean {
 }
 
 function orient(a: number[], b: number[], c: number[]): number {
-  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - b[0]);
-}
-
-function onSegment(a: number[], b: number[], c: number[]): boolean {
-  return (
-    Math.min(a[0], b[0]) <= c[0] &&
-    c[0] <= Math.max(a[0], b[0]) &&
-    Math.min(a[1], b[1]) <= c[1] &&
-    c[1] <= Math.max(a[1], b[1])
-  );
-}
-
-function segmentsIntersect(
-  a: number[],
-  b: number[],
-  c: number[],
-  d: number[]
-): boolean {
-  const o1 = orient(a, b, c);
-  const o2 = orient(a, b, d);
-  const o3 = orient(c, d, a);
-  const o4 = orient(c, d, b);
-
-  if (o1 === 0 && onSegment(a, b, c)) return true;
-  if (o2 === 0 && onSegment(a, b, d)) return true;
-  if (o3 === 0 && onSegment(c, d, a)) return true;
-  if (o4 === 0 && onSegment(c, d, b)) return true;
-
-  return o1 > 0 !== o2 > 0 && o3 > 0 !== o4 > 0;
+  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
 }
 
 export function polygonsOverlap(
   poly1: number[][],
   poly2: number[][]
 ): boolean {
+  // Containment: a vertex strictly inside the other polygon means overlap.
+  for (const v of poly1) if (isPointInPolygon(v, poly2)) return true;
+  for (const v of poly2) if (isPointInPolygon(v, poly1)) return true;
+
+  // Proper crossings: an edge of one polygon strictly crosses an edge of the
+  // other. Touching (shared vertex, shared edge, T-junction where a vertex
+  // rests on an edge) is NOT an overlap — every valid tiling relies on it.
   for (let i = 0; i < poly1.length; i++) {
     const a = poly1[i];
     const b = poly1[(i + 1) % poly1.length];
     for (let j = 0; j < poly2.length; j++) {
       const c = poly2[j];
       const d = poly2[(j + 1) % poly2.length];
-      if (segmentsIntersect(a, b, c, d)) {
-        const sharedEdge =
-          (Math.abs(a[0] - c[0]) < TOLERANCE.VERTEX_MATCH &&
-            Math.abs(a[1] - c[1]) < TOLERANCE.VERTEX_MATCH &&
-            Math.abs(b[0] - d[0]) < TOLERANCE.VERTEX_MATCH &&
-            Math.abs(b[1] - d[1]) < TOLERANCE.VERTEX_MATCH) ||
-          (Math.abs(a[0] - d[0]) < TOLERANCE.VERTEX_MATCH &&
-            Math.abs(a[1] - d[1]) < TOLERANCE.VERTEX_MATCH &&
-            Math.abs(b[0] - c[0]) < TOLERANCE.VERTEX_MATCH &&
-            Math.abs(b[1] - c[1]) < TOLERANCE.VERTEX_MATCH);
-        if (!sharedEdge) return true;
-      }
+      if (segmentsProperlyCross(a, b, c, d)) return true;
     }
   }
   return false;
+}
+
+function isPointInPolygon(point: number[], polygon: number[][]): boolean {
+  const [x, y] = point;
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [xi, yi] = polygon[i];
+    const [xj, yj] = polygon[j];
+    const onBoundary =
+      Math.abs(pointSegDistance(point, polygon[i], polygon[j])) <= TOLERANCE.EDGE_MATCH &&
+      pointWithinBBox(point, polygon[i], polygon[j]);
+    if (onBoundary) return false; // resting on the boundary is touching, not containment
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function pointWithinBBox(p: number[], a: number[], b: number[]): boolean {
+  return (
+    p[0] >= Math.min(a[0], b[0]) - TOLERANCE.EDGE_MATCH &&
+    p[0] <= Math.max(a[0], b[0]) + TOLERANCE.EDGE_MATCH &&
+    p[1] >= Math.min(a[1], b[1]) - TOLERANCE.EDGE_MATCH &&
+    p[1] <= Math.max(a[1], b[1]) + TOLERANCE.EDGE_MATCH
+  );
+}
+
+function pointSegDistance(p: number[], a: number[], b: number[]): number {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(p[0] - a[0], p[1] - a[1]);
+  let t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+}
+
+function segmentsProperlyCross(
+  a: number[],
+  b: number[],
+  c: number[],
+  d: number[]
+): boolean {
+  // Dataset vertices are float-sloppy (~1e-3): pieces that share an edge do not
+  // store identical coordinates. Any touching — shared vertex, shared edge, or
+  // T-junction where a vertex rests on an edge — is legitimate in a tiling and
+  // must not count as a crossing. Only edges whose endpoints stay clear of the
+  // other segment can genuinely cross.
+  if (
+    pointSegDistance(a, c, d) <= TOLERANCE.EDGE_MATCH ||
+    pointSegDistance(b, c, d) <= TOLERANCE.EDGE_MATCH ||
+    pointSegDistance(c, a, b) <= TOLERANCE.EDGE_MATCH ||
+    pointSegDistance(d, a, b) <= TOLERANCE.EDGE_MATCH
+  ) {
+    return false;
+  }
+  const o1 = orient(a, b, c);
+  const o2 = orient(a, b, d);
+  const o3 = orient(c, d, a);
+  const o4 = orient(c, d, b);
+  const strad1 = (o1 > 0 && o2 < 0) || (o1 < 0 && o2 > 0);
+  const strad2 = (o3 > 0 && o4 < 0) || (o3 < 0 && o4 > 0);
+  return strad1 && strad2;
 }
 
 export function verticesMatch(
@@ -218,52 +230,6 @@ export function checkCoverage(
   };
 }
 
-export function validatePiece(
-  input: PieceValidationInput,
-  targetPolygons: number[][][],
-  canvasWidth: number,
-  canvasHeight: number,
-  allTransformedPolygons: number[][][]
-): PieceValidationOutput {
-  const errors: string[] = [];
-  const transformed = input.transformedPolygon;
-
-  const inBounds = isInBounds(transformed, canvasWidth, canvasHeight);
-  if (!inBounds) errors.push('Piece out of bounds');
-
-  const correctRotation = isRotationValid(input.rotation);
-  if (!correctRotation) errors.push(`Invalid rotation: ${input.rotation}`);
-
-  let overlaps = false;
-  for (let i = 0; i < allTransformedPolygons.length; i++) {
-    const other = allTransformedPolygons[i];
-    if (other === transformed) continue;
-    if (polygonsOverlap(transformed, other)) {
-      overlaps = true;
-      errors.push('Piece overlaps with another piece');
-      break;
-    }
-  }
-
-  let positionMatch = false;
-  for (const target of targetPolygons) {
-    if (verticesMatch(transformed, target)) {
-      positionMatch = true;
-      break;
-    }
-  }
-
-  return {
-    pieceId: input.pieceId,
-    valid: inBounds && correctRotation && !overlaps && positionMatch,
-    inBounds,
-    correctRotation,
-    overlaps,
-    positionMatch,
-    errors,
-  };
-}
-
 export async function verifyPuzzleSolution(
   request: VerificationRequest
 ): Promise<VerificationResult> {
@@ -284,9 +250,21 @@ export async function verifyPuzzleSolution(
 
   const targetPolygons = puzzle.individualPiecePolygons as number[][][];
   const targetIds = puzzle.pieceShapeIds as string[];
-  const canvasMeta = puzzle.metadata as { canvasSize?: { width: number; height: number } } | undefined;
-  const canvasWidth = canvasMeta?.canvasSize?.width || BOARD.SIZE;
-  const canvasHeight = canvasMeta?.canvasSize?.height || BOARD.SIZE;
+
+  // Puzzles are stored in their own local coordinate frame — dataset tilings
+  // live in different quadrants (some around [0,10], others around [-20,0]) —
+  // so bounds are relative to the puzzle's own tiling, not a fixed canvas.
+  const fullPolygon = puzzle.fullPolygon as number[][] | undefined;
+  let bboxMinX = -Infinity;
+  let bboxMinY = -Infinity;
+  let bboxMaxX = Infinity;
+  let bboxMaxY = Infinity;
+  if (fullPolygon && fullPolygon.length > 0) {
+    bboxMinX = Math.min(...fullPolygon.map((v) => v[0])) - TOLERANCE.POSITION;
+    bboxMinY = Math.min(...fullPolygon.map((v) => v[1])) - TOLERANCE.POSITION;
+    bboxMaxX = Math.max(...fullPolygon.map((v) => v[0])) + TOLERANCE.POSITION;
+    bboxMaxY = Math.max(...fullPolygon.map((v) => v[1])) + TOLERANCE.POSITION;
+  }
 
   const claimedSlots = new Set<number>();
   let correctCount = 0;
@@ -322,7 +300,7 @@ export async function verifyPuzzleSolution(
 
     if (pieceCorrect) correctCount++;
 
-    const inBounds = isInBounds(transformedPolygon, canvasWidth, canvasHeight);
+    const inBounds = isInBoundsRelative(transformedPolygon, bboxMinX, bboxMinY, bboxMaxX, bboxMaxY);
     const correctRotation = isRotationValid(state.rotation);
 
     let overlaps = false;

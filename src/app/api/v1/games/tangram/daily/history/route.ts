@@ -1,23 +1,51 @@
-import { NextRequest } from "next/server";
-import { withAuth } from "../../route-helpers";
-import DailyChallenge from "@/lib/server/models/DailyChallenge";
-import { successResponse } from "@/lib/server/utils/apiResponse";
+import { NextRequest } from "next/server"
+import { withAuth } from "../../route-helpers"
+import type { Actor } from "../../route-helpers"
+import DailyChallenge from "@/lib/server/models/DailyChallenge"
+import TangramPlaySession from "@/lib/server/models/TangramPlaySession"
+import { successResponse } from "@/lib/server/utils/apiResponse"
 
-export const GET = withAuth(async (req, user) => {
-  const url = new URL(req.url);
-  const limit = Math.min(parseInt(url.searchParams.get("limit") || "30"), 365);
-  const skip = parseInt(url.searchParams.get("skip") || "0");
+export const GET = withAuth(async (req: NextRequest, actor: Actor) => {
+  const url = new URL(req.url)
+  const limit = Math.min(parseInt(url.searchParams.get("limit") || "30"), 365)
+  const skip = parseInt(url.searchParams.get("skip") || "0")
+
+  if (actor.type === "guest") {
+    const filter = { guestId: actor.id, gameType: "daily_challenge" }
+    const [sessions, total] = await Promise.all([
+      TangramPlaySession.find(filter)
+        .sort({ completedAt: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      TangramPlaySession.countDocuments(filter),
+    ])
+
+    const results = sessions.map((s: any) => ({
+      date: s.dailyChallengeId?.replace("daily-tangram-", "") || s.createdAt?.toISOString?.().split("T")[0],
+      puzzleId: s.puzzleId,
+      difficulty: s.difficulty,
+      status: s.status,
+      elapsedSeconds: s.elapsedTime || 0,
+      hintsUsed: s.hintsUsed || 0,
+      mistakes: s.mistakes || 0,
+      accuracy: s.result?.accuracy || 0,
+      completedAt: s.completedAt,
+    }))
+
+    return successResponse({ challenges: results, total, limit, skip })
+  }
 
   const [challenges, total] = await Promise.all([
-    DailyChallenge.find({ userId: user.id })
+    DailyChallenge.find({ userId: actor.id })
       .sort({ date: -1 })
       .skip(skip)
       .limit(limit)
       .lean(),
-    DailyChallenge.countDocuments({ userId: user.id }),
-  ]);
+    DailyChallenge.countDocuments({ userId: actor.id }),
+  ])
 
-  const results = challenges.map((c) => ({
+  const results = challenges.map((c: any) => ({
     date: c.date,
     puzzleId: c.puzzleId,
     difficulty: c.difficulty,
@@ -27,7 +55,7 @@ export const GET = withAuth(async (req, user) => {
     mistakes: c.mistakes,
     accuracy: c.accuracy,
     completedAt: c.completedAt,
-  }));
+  }))
 
-  return successResponse({ challenges: results, total, limit, skip });
-});
+  return successResponse({ challenges: results, total, limit, skip })
+})

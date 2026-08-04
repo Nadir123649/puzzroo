@@ -199,100 +199,62 @@ export const gameApi = {
   },
 
 
-  // ---- Tangram-specific endpoints ----
+  // ---- Tangram (and shared) session lifecycle ----
 
-  async startTangramSession(puzzleId: string, difficulty: string) {
-    const res = await api<{ sessionId: string; pieceStates: unknown[]; status: string }>(
-      '/api/v1/tangram/session',
-      { method: 'POST', body: JSON.stringify({ puzzleId, difficulty }) }
+  async pauseSession(game: GameId, sessionId: string) {
+    const res = await api(`/api/v1/games/${game}/sessions/${sessionId}/pause`, { method: 'PATCH' });
+    return res.payload;
+  },
+
+  async resumeSession(game: GameId, sessionId: string) {
+    const res = await api(`/api/v1/games/${game}/sessions/${sessionId}/resume`, { method: 'PATCH' });
+    return res.payload;
+  },
+
+  async abandonSession(game: GameId, sessionId: string) {
+    const res = await api(`/api/v1/games/${game}/sessions/${sessionId}/abandon`, { method: 'POST' });
+    return res.payload;
+  },
+
+  async restartSession(game: GameId, sessionId: string) {
+    const res = await api(`/api/v1/games/${game}/sessions/${sessionId}/restart`, { method: 'POST' });
+    return res.payload;
+  },
+
+  async getCompletedPuzzles(game: GameId, params: { limit?: number; skip?: number } = {}) {
+    const res = await api<{ sessions: any[]; total: number }>(`/api/v1/games/${game}/completed`, { params });
+    return res.payload;
+  },
+
+  async getRecentSessions(game: GameId, limit = 10) {
+    const res = await api<{ sessions: any[] }>(`/api/v1/games/${game}/recent`, { params: { limit } });
+    return res.payload;
+  },
+
+  async getContinueDaily(game: GameId, dailyChallengeId: string) {
+    const res = await api<{ hasActiveSession: boolean; session?: any }>(
+      `/api/v1/games/${game}/daily/continue?dailyChallengeId=${encodeURIComponent(dailyChallengeId)}`
     );
     return res.payload;
   },
 
-  async pauseTangramSession(sessionId: string) {
-    const res = await api(`/api/v1/tangram/session/${sessionId}/pause`, { method: 'POST' });
-    return res.payload;
-  },
-
-  async resumeTangramSession(sessionId: string) {
-    const res = await api(`/api/v1/tangram/session/${sessionId}/resume`, { method: 'POST' });
-    return res.payload;
-  },
-
-  async saveTangramProgress(
-    sessionId: string,
-    data: { pieceStates: unknown[]; elapsedSeconds: number; hintsUsed?: number; mistakes?: number }
-  ) {
-    const res = await api(`/api/v1/tangram/session/${sessionId}/save`, {
+  async createDailySession(game: GameId, puzzleId: string, dailyChallengeId: string) {
+    const res = await api(`/api/v1/games/${game}/daily/sessions`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ puzzleId, dailyChallengeId }),
+      suppressToast: true,
     });
     return res.payload;
   },
 
-  async restartTangramSession(sessionId: string) {
-    const res = await api(`/api/v1/tangram/session/${sessionId}/restart`, { method: 'POST' });
-    return res.payload;
-  },
-
-  async replayTangramSession(sessionId: string) {
-    const res = await api(`/api/v1/tangram/session/${sessionId}/replay`, { method: 'POST' });
-    return res.payload;
-  },
-
-  async abandonTangramSession(sessionId: string, reason?: string) {
-    const res = await api(`/api/v1/tangram/session/${sessionId}/abandon`, {
-      method: 'POST',
-      body: JSON.stringify({ reason }),
-    });
-    return res.payload;
-  },
-
-  async verifyTangramSolution(sessionId: string, pieceStates: unknown[]) {
-    const res = await api('/api/v1/tangram/verify', {
-      method: 'POST',
-      body: JSON.stringify({ sessionId, pieceStates }),
-    });
-    return res.payload;
-  },
-
-  async completeTangramPuzzle(
-    sessionId: string,
-    pieceStates: unknown[],
-    elapsedSeconds: number,
-    hintsUsed?: number,
-    mistakes?: number
-  ) {
-    const res = await api('/api/v1/tangram/complete', {
-      method: 'POST',
-      body: JSON.stringify({ sessionId, pieceStates, elapsedSeconds, hintsUsed, mistakes }),
-    });
-    return res.payload;
-  },
-
-  async getTangramHistory(limit = 20, cursor?: string) {
-    const params: Record<string, string> = { limit: String(limit) };
-    if (cursor) params.cursor = cursor;
-    const res = await api<{ items: unknown[]; nextCursor: string | null }>(
-      '/api/v1/tangram/history',
-      { params }
-    );
-    return res.payload;
-  },
-
-  async getTangramStats() {
-    const res = await api('/api/v1/tangram/stats');
-    return res.payload;
-  },
-
-  async getTangramDailyHistory() {
-    const res = await api('/api/v1/tangram/daily/history');
-    return res.payload;
-  },
-
-  async getTangramDailyCompletion(date?: string) {
+  async getDailyCompletion(game: GameId, date?: string) {
     const params = date ? { date } : {};
-    const res = await api('/api/v1/games/tangram/daily/completion', { params });
+    const res = await api(`/api/v1/games/${game}/daily/completion`, { params });
+    return res.payload;
+  },
+
+  async getSession(game: GameId, sessionId: string) {
+    const res = await api(`/api/v1/games/${game}/sessions/${sessionId}`, { suppressToast: true });
     return res.payload;
   },
 
