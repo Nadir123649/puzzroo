@@ -28,13 +28,12 @@ from nonogram_shapes import collect_all_shapes
 
 # ── Configuration ────────────────────────────────────────────────────────────
 DEFAULT_OUT = HERE.parent.parent / "shared" / "src" / "data" / "nonogram"
-DIFFICULTIES = ("easy", "medium", "hard", "expert")
+DIFFICULTIES = ("easy", "medium", "hard")
 
 DIFFICULTY_CONFIG = {
-    "easy":   {"sizes": [10], "density": 0.55, "target": 1000},
-    "medium": {"sizes": [15], "density": 0.60, "target": 1000},
-    "hard":   {"sizes": [20], "density": 0.64, "target": 1000},
-    "expert": {"sizes": [25, 30], "density": 0.66, "target": 1000},
+    "easy":   {"sizes": [5], "density": 0.55, "target": 1000},
+    "medium": {"sizes": [10], "density": 0.60, "target": 1000},
+    "hard":   {"sizes": [15], "density": 0.64, "target": 1000},
 }
 
 
@@ -230,15 +229,11 @@ def generate_difficulty(difficulty: str, target_count: int, shapes: dict,
     puzzles: list[dict] = []
     seen_hashes: set[str] = set()
     shape_names = list(shapes.keys())
+    rng.shuffle(shape_names)  # spread titles across all categories
 
     print(f"\n[{difficulty}] Generating {target_count} puzzles (sizes: {sizes})...", flush=True)
 
-    # For expert, split between two sizes
-    if len(sizes) == 2:
-        per_size = target_count // 2
-        size_targets = [(sizes[0], per_size), (sizes[1], target_count - per_size)]
-    else:
-        size_targets = [(sizes[0], target_count)]
+    size_targets = [(sizes[0], target_count)]
 
     for target_size, size_count in size_targets:
         size_produced = 0
@@ -352,10 +347,9 @@ def write_meta(counts: dict, out_dir: Path):
         "difficulties": list(counts.keys()),
         "counts": counts,
         "sizesByDifficulty": {
-            "easy": [10],
-            "medium": [15],
-            "hard": [20],
-            "expert": [25, 30],
+            "easy": [5],
+            "medium": [10],
+            "hard": [15],
         },
         "encoding": (
             "sol is a size*size string of '0'/'1' (row-major); "

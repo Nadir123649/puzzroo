@@ -13,7 +13,7 @@
     "sudoku:validate": "py tools/puzzle-generators/validate_sudoku_dataset.py --min-count 900",
     "crossmath:generate": "py tools/puzzle-generators/export_crossmath.py --difficulty all --count 1000",
     "crossmath:validate": "py tools/puzzle-generators/validate_crossmath_dataset.py --min-count 900",
-    "nonogram:generate": "py tools/puzzle-generators/export_nonogram.py --difficulty all --count 1000",
+    "nonogram:generate": "py tools/puzzle-generators/generate_all_nonograms.py",
     "nonogram:validate": "py tools/puzzle-generators/validate_nonogram_dataset.py --min-count 1000",
     "db:seed": "tsx scripts/seed-puzzles.ts",
     "db:seed:dry": "tsx scripts/seed-puzzles.ts --dry",
