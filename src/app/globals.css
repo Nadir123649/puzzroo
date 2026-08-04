@@ -12,6 +12,19 @@ html {
 html.dark {
   background-color: #181A20 !important;
   color-scheme: dark;
+  transition: background-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  --color-navbar-bg: #181A20;
+  --color-navbar-bg-dark: #181A20;
+  --color-card: #1F222A;
+  --color-card-dark: #1F222A;
+  --color-muted: #BDBDBD;
+  --color-muted-light: #BDBDBD;
+  --color-primary-light: #A592FF;
+  --color-page: #1F222A;
+  --color-page-dark: #1F222A;
 }
 
 html.dark body {
@@ -21,11 +34,6 @@ html.dark body {
 /* Prevent navbar flash - apply dark styles immediately */
 html.dark header {
   background-color: #181A20 !important;
-}
-
-/* Disable transitions on page load to prevent flash */
-html:not(.hydrated) * {
-  transition: none !important;
 }
 
 :root {
@@ -47,6 +55,23 @@ html:not(.hydrated) * {
   
   /* Border Colors */
   --color-border: #35383F;
+  
+  /* Theme transition colors (migrate from hardcoded dark: classes) */
+  --color-navbar-bg: #ffffff;
+  --color-navbar-bg-dark: #181A20;
+  --color-card: #F0EDFF;
+  --color-card-dark: #1F222A;
+  --color-muted: #757575;
+  --color-muted-light: #BDBDBD;
+  --color-primary-light: #A592FF;
+  --color-page: #F5F5F5;
+  --color-page-dark: #1F222A;
+  
+  /* Transition: only color-related properties, no layout properties */
+  transition: background-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -61,26 +86,45 @@ html:not(.hydrated) * {
     --color-body: #E0E0E0;
     --color-bg-secondary: #1F222A;
     --color-bg-tertiary: #1F222A;
+    
+    /* Theme transition colors (dark overrides) */
+    --color-navbar-bg: #181A20;
+    --color-navbar-bg-dark: #181A20;
+    --color-card: #1F222A;
+    --color-card-dark: #1F222A;
+    --color-muted: #BDBDBD;
+    --color-muted-light: #BDBDBD;
+    --color-primary-light: #A592FF;
+    --color-page: #1F222A;
+    --color-page-dark: #1F222A;
   }
+}
+
+/* Sun/Moon morph animation for theme toggle */
+@keyframes sun-to-moon {
+  0% { transform: rotate(0deg) scale(1); opacity: 1; }
+  50% { transform: rotate(90deg) scale(0.8); opacity: 0.5; }
+  100% { transform: rotate(180deg) scale(1); opacity: 0; }
+}
+
+@keyframes moon-to-sun {
+  0% { transform: rotate(180deg) scale(1); opacity: 0; }
+  50% { transform: rotate(90deg) scale(0.8); opacity: 0.5; }
+  100% { transform: rotate(0deg) scale(1); opacity: 1; }
+}
+
+.theme-toggle-sun {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+.theme-toggle-moon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Consistent dark mode transition for all elements */
-* {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
-}
-
-/* Prevent transition on page load */
-.no-transitions * {
-  transition: none !important;
 }
 
 @layer utilities {
@@ -102,15 +146,32 @@ body {
   ::-webkit-scrollbar-thumb {
     background: #6949FF;
     border-radius: 4px;
+    transition: background-color 0.3s ease;
   }
   ::-webkit-scrollbar-thumb:hover {
     background: #5536E6;
+    transition: background-color 0.3s ease;
   }
 
   /* Firefox */
   * {
     scrollbar-width: thin;
     scrollbar-color: #6949FF transparent;
+    transition: scrollbar-color 0.3s ease;
+  }
+
+  /* Dark mode scrollbar */
+  html.dark ::-webkit-scrollbar-thumb {
+    background: #A592FF;
+    transition: background-color 0.3s ease;
+  }
+  html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #8B7BFF;
+    transition: background-color 0.3s ease;
+  }
+  html.dark * {
+    scrollbar-color: #A592FF transparent;
+    transition: scrollbar-color 0.3s ease;
   }
 }
 
@@ -129,9 +190,25 @@ body {
 .board-scroll-container::-webkit-scrollbar-thumb {
   background: #6949FF;
   border-radius: 4px;
+  transition: background-color 0.3s ease;
 }
 .board-scroll-container::-webkit-scrollbar-thumb:hover {
   background: #5536E6;
+  transition: background-color 0.3s ease;
+}
+
+/* Dark mode board container scrollbar */
+html.dark .board-scroll-container {
+  scrollbar-color: #A592FF transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+html.dark .board-scroll-container::-webkit-scrollbar-thumb {
+  background: #A592FF;
+  transition: background-color 0.3s ease;
+}
+html.dark .board-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #8B7BFF;
+  transition: background-color 0.3s ease;
 }
 
 /* Hide scrollbar utility class */

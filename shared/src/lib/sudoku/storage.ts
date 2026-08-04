@@ -24,6 +24,7 @@ export interface SavedGameState {
   score: number
   time: number
   gameStatus: GameStatus
+  history?: SudokuBoard[]
   savedAt: number
 }
 
@@ -60,6 +61,7 @@ export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>
   try {
     const dataToSave: SavedGameState = {
       ...state,
+      history: state.history && state.history.length > 0 ? state.history : undefined,
       version: STORAGE_VERSION,
       savedAt: Date.now(),
     }

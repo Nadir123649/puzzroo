@@ -135,18 +135,18 @@ export function useCrossMath(initialPuzzleId?: string) {
     previousIsError: boolean | undefined,
     scoreChange: number = 0
   ) => {
-    setHistory(prev => [
-      ...prev,
-      {
-        position,
-        previousValue,
-        previousType,
-        previousIsCorrect,
-        previousIsError,
-        scoreChange,
-      }
-    ])
-  }, [])
+      setHistory(prev => [
+        ...prev,
+        {
+          position,
+          previousValue,
+          previousType,
+          previousIsCorrect,
+          previousIsError,
+          scoreChange,
+        }
+      ].slice(-30))
+    }, [])
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const timeValueRef = useRef(getInitialTime(getInitialDifficulty()))
@@ -370,10 +370,10 @@ export function useCrossMath(initialPuzzleId?: string) {
               setTime(Math.max(0, getInitialTime((serverSession.difficulty || difficulty) as Difficulty) - (localElapsed ?? (serverSession.elapsedTime || 0))))
               setGameStatus((serverSession.sessionStatus === 'paused' ? 'playing' : serverSession.sessionStatus || 'playing') as 'playing' | 'won' | 'lost')
               if (serverSession.difficulty) setDifficulty(serverSession.difficulty as Difficulty)
-              setSelectedCell(null)
-              setIsTyping(false)
-              setHistory([])
-              clearGameState()
+             setSelectedCell(null)
+             setIsTyping(false)
+             setHistory(savedGame?.history || [])
+             clearGameState()
 
               sessionIdRef.current = serverSession.sessionId
               sessionCreatedRef.current = true
@@ -558,22 +558,23 @@ export function useCrossMath(initialPuzzleId?: string) {
 
   useEffect(() => {
     if (gameStatus === 'playing' && board.length > 0 && currentPuzzle) {
-      saveGameState({
-        board,
-        puzzleId: currentPuzzle.id,
-        difficulty,
-        mistakes,
-        score,
-        time,
-        gameStatus,
-      }, undefined, difficulty)
+   saveGameState({
+         board,
+         puzzleId: currentPuzzle.id,
+         difficulty,
+         mistakes,
+         score,
+         time,
+         gameStatus,
+         history,
+       }, undefined, difficulty)
       timeValueRef.current = time
       boardRef.current = board
       difficultyRef.current = difficulty
       mistakesRef.current = mistakes
       lastLocalSaveAtRef.current = Date.now()
     }
-  }, [board, difficulty, mistakes, score, time, gameStatus, currentPuzzle])
+  }, [board, difficulty, mistakes, score, time, gameStatus, currentPuzzle, history])
 
   /**
    * Flush the exact close-moment elapsed time to the server when the page is
