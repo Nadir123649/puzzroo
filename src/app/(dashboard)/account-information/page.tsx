@@ -496,7 +496,7 @@ export default function AccountInformationPage() {
                 </span>
               </div>
               <p className="font-urbanist font-bold text-[15px] md:text-[17px] text-[#181A20] dark:text-white">
-                {sessions[0].location || 'Unknown'}
+                {sessions[0].location || 'Local Network'}
               </p>
             </div>
           </div>

@@ -23,7 +23,7 @@ export const puzzleRegistry: Record<GameId, GameRegistryEntry> = {
   nonogram: {
     model: NonogramPuzzle,
     toResponse: nonogramToResponse,
-    difficulties: ["easy", "medium", "hard", "expert"],
+    difficulties: ["easy", "medium", "hard"],
   },
   crossmath: {
     model: CrossMathPuzzle,

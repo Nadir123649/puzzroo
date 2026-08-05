@@ -3,6 +3,8 @@ import type { PieceStateRecord } from "./PlaySessionRepository"
 import { verificationEngine } from "./VerificationEngine"
 import TangramPuzzle from "@/lib/server/models/TangramPuzzle"
 import TangramPlaySession from "@/lib/server/models/TangramPlaySession"
+import GameProgress from "@/lib/server/models/GameProgress"
+import UserStatistics from "@/lib/server/models/UserStatistics"
 import type { Actor } from "@/app/api/v1/games/tangram/route-helpers"
 import type {
   SafeSessionResponse,
@@ -117,6 +119,28 @@ export class SessionService {
         dailyChallengeId,
         difficulty: puzzleDoc.difficulty,
       })
+
+      if (userId && !guestId) {
+        Promise.all([
+          GameProgress.findOneAndUpdate(
+            { userId, gameId: "tangram", puzzleId },
+            {
+              $set: { difficulty: puzzleDoc.difficulty || "easy", updatedAt: new Date() },
+              $inc: { attempts: 1 },
+            },
+            { upsert: true }
+          ),
+          UserStatistics.findOneAndUpdate(
+            { userId, gameId: "tangram" },
+            {
+              $set: { lastPlayedAt: new Date() },
+              $inc: { totalPlayed: 1, [`perDifficulty.${puzzleDoc.difficulty || "easy"}.played`]: 1 },
+            },
+            { upsert: true }
+          ),
+        ]).catch(() => {})
+      }
+
       return toSafeSession(session.toObject())
     } catch (error: any) {
       if (error?.code === 11000) {

@@ -11,6 +11,7 @@ const timerFields = {
   hintsUsed: z.number().min(0).max(1000),
   mistakes: z.number().min(0).max(10000),
   moves: z.number().min(0).max(100000),
+  score: z.number().min(0).max(1000000).optional(),
 }
 
 export const saveProgressSchema = z.object({

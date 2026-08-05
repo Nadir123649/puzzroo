@@ -20,6 +20,8 @@ interface SeedResult {
 /**
  * Upsert a set of transformed docs into a model, keyed by puzzleId.
  * Idempotent: re-running only updates changed fields, never duplicates.
+ * Stale docs (puzzleId no longer in the dataset) are deactivated via isActive=false,
+ * so they stop appearing in random/catalog selection but history still resolves.
  */
 async function upsert(model: any, docs: any[], dry: boolean): Promise<SeedResult> {
   if (dry) {
@@ -33,10 +35,15 @@ async function upsert(model: any, docs: any[], dry: boolean): Promise<SeedResult
     },
   }));
   const result = await model.bulkWrite(ops, { ordered: false });
+  const currentIds = docs.map((d) => d.puzzleId);
+  const staleResult = await model.updateMany(
+    { game: docs[0]?.game, isActive: true, puzzleId: { $nin: currentIds } },
+    { $set: { isActive: false } }
+  );
   return {
     game: model.modelName,
     inserted: result.upsertedCount,
-    updated: result.modifiedCount,
+    updated: result.modifiedCount + staleResult.modifiedCount,
     total: docs.length,
   };
 }

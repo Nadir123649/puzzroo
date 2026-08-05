@@ -40,9 +40,9 @@ const crossMathPlaySessionSchema = new mongoose.Schema(
     abandonedAt: { type: Date, default: null },
     lastSaveAt: { type: Date, default: Date.now },
     isReplay: { type: Boolean, default: false },
+    score: { type: Number, default: 0 },
     restartCount: { type: Number, default: 0 },
     result: {
-      correct: { type: Number, default: 0 },
       total: { type: Number, default: 0 },
       accuracy: { type: Number, default: 0 },
       completedAt: { type: Date, default: null },

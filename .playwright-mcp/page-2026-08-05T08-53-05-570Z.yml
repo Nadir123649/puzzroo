@@ -1,0 +1,99 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - banner [ref=f1e3]:
+      - generic [ref=f1e5]:
+        - link "Puzzroo" [ref=f1e7] [cursor=pointer]:
+          - /url: /
+        - generic [ref=f1e13]:
+          - link "Sign up" [ref=f1e14] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=f1e15] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [ref=f1e16] [cursor=pointer]:
+            - generic [ref=f1e17]: Light Mode
+            - img "Theme icon" [ref=f1e18]
+    - main [ref=f1e19]:
+      - main [ref=f1e20]:
+        - generic [ref=f1e22]:
+          - button "Back to games" [ref=f1e23] [cursor=pointer]
+          - generic [ref=f1e26]:
+            - img "CrossMath" [ref=f1e28]
+            - heading "CROSS MATH" [level=1] [ref=f1e29]
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - button "Number 7" [disabled]: "7"
+                      - button "Operator +" [disabled]: +
+                      - button "Number 3" [ref=f1e37] [cursor=pointer]: "3"
+                      - button "Operator -" [disabled]: "-"
+                      - button "Number 3" [ref=f1e38] [cursor=pointer]: "3"
+                      - button "Operator +" [disabled]: +
+                      - button "Number 7" [disabled]: "7"
+                      - button "Operator -" [disabled]: "-"
+                      - button "Number 5" [ref=f1e39] [cursor=pointer]: "5"
+                      - button "Operator =" [disabled]: =
+                      - button "Number 9" [disabled]: "9"
+                      - button "Operator +" [disabled]: +
+                      - button "Number 9" [disabled]: "9"
+                      - button "Operator -" [disabled]: "-"
+                      - button "Empty cell" [ref=f1e78] [cursor=pointer]
+                      - button "Operator +" [disabled]: +
+                      - button "Empty cell" [ref=f1e99] [cursor=pointer]
+                      - button "Operator -" [disabled]: "-"
+                      - button "Number 5" [disabled]: "5"
+                      - button "Operator =" [disabled]: =
+                      - button "Number 12" [disabled]: "12"
+                - generic:
+                  - generic:
+                    - text: Difficulty
+                    - heading "hard" [level=3]
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - text: "Score:"
+                            - generic: "0"
+                        - generic:
+                          - generic:
+                            - text: "Mistakes:"
+                            - generic: 0/2
+                          - generic:
+                            - text: "Time:"
+                            - generic: 00:00
+                    - generic:
+                      - button "Reset" [disabled]
+                      - button "Erase"
+                      - button "Hint" [disabled]
+                    - generic:
+                      - generic:
+                        - generic:
+                          - button "Number 3": "3"
+                          - button "Number 5": "5"
+                          - button "Number 6": "6"
+                  - generic:
+                    - button "New Game" [disabled]
+                    - button "Replay" [disabled]
+          - generic [ref=f1e220]:
+            - generic [ref=f1e221]:
+              - img "Puzzroo Logo" [ref=f1e222]
+              - generic [ref=f1e223]: Puzzroo
+            - paragraph [ref=f1e226]: Loading puzzle...
+    - contentinfo [ref=f1e177]:
+      - generic [ref=f1e179]:
+        - paragraph [ref=f1e181]: © 2026 Puzzroo
+        - generic [ref=f1e182]:
+          - link "FAQ" [ref=f1e183] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=f1e184] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=f1e185] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=f1e186] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=f1e192] [cursor=pointer]
+  - alert [ref=f1e196]

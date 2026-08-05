@@ -7,7 +7,6 @@ import { getRandomPuzzle } from "@/lib/server/services/sudoku/puzzleService";
 import { sudokuToResponse } from "@/lib/server/puzzles/sudoku";
 import { rateLimit } from "@/lib/server/utils/http";
 import { auth } from "@/lib/server/middleware/auth";
-import { cacheHeaders } from "@/lib/server/utils/http";
 
 export async function GET(
   request: NextRequest,
@@ -47,7 +46,7 @@ export async function GET(
     });
 
     const res = successResponse(response);
-    Object.entries(cacheHeaders(30)).forEach(([k, v]) => res.headers.set(k, v));
+    res.headers.set("Cache-Control", "no-store");
     return res;
   } catch (error: any) {
     console.error("[sudoku/puzzle]", error);

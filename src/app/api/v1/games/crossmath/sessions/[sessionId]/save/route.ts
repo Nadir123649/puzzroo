@@ -27,7 +27,8 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params) => {
     parsed.data.elapsedTime,
     parsed.data.hintsUsed,
     parsed.data.mistakes,
-    parsed.data.moves
+    parsed.data.moves,
+    parsed.data.score
   )
   return successResponse(result)
 })

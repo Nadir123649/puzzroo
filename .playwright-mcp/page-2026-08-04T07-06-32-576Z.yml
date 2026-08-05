@@ -1,0 +1,115 @@
+- generic [active] [ref=f12e1]:
+  - generic [ref=f12e10]:
+    - banner [ref=f12e11]:
+      - generic [ref=f12e13]:
+        - link "Puzzroo" [ref=f12e15] [cursor=pointer]:
+          - /url: /
+        - generic [ref=f12e21]:
+          - link "Sign up" [ref=f12e22] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=f12e23] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [ref=f12e24] [cursor=pointer]:
+            - generic [ref=f12e25]: Light Mode
+            - img "Theme icon" [ref=f12e26]
+    - main [ref=f12e27]:
+      - main [ref=f12e47]:
+        - generic [ref=f12e49]:
+          - button "Back to games" [ref=f12e50] [cursor=pointer]
+          - generic [ref=f12e53]:
+            - img "Nonogram Light" [ref=f12e55]
+            - heading "NONOGRAM" [level=1] [ref=f12e56]
+        - generic [ref=f12e59]:
+          - generic [ref=f12e60]:
+            - generic [ref=f12e61]:
+              - generic [ref=f12e62]: Right Facing Fist
+              - generic [ref=f12e66]:
+                - generic [ref=f12e67]: generated
+                - generic [ref=f12e69]: ~1 min
+            - generic [ref=f12e74]: 00:04:52
+            - generic [ref=f12e76]:
+              - generic [ref=f12e77]:
+                - generic [ref=f12e78]: Progress
+                - generic [ref=f12e79]: 0%
+              - generic [ref=f12e81]: 0 / 6 cells
+          - generic [ref=f12e83]:
+            - button "Zoom out" [ref=f12e84] [cursor=pointer]
+            - generic [ref=f12e88]: 100%
+            - button "Zoom in" [ref=f12e89] [cursor=pointer]
+            - button "Reset" [ref=f12e93] [cursor=pointer]
+            - generic [ref=f12e94]: "Mistakes: 0/5"
+          - generic [ref=f12e95]:
+            - button "Fill mode - mark cells that belong to the image" [pressed] [ref=f12e96] [cursor=pointer]:
+              - generic [ref=f12e101]: Fill
+            - button "Mark mode - mark cells that should not belong to the image" [ref=f12e102] [cursor=pointer]:
+              - generic [ref=f12e105]: Mark
+          - generic [ref=f12e107]:
+            - generic [ref=f12e110]:
+              - generic [ref=f12e111]: "1"
+              - generic [ref=f12e114]: "1"
+              - generic [ref=f12e117]:
+                - generic [ref=f12e118]: "1"
+                - generic [ref=f12e120]: "1"
+              - generic [ref=f12e122]: "2"
+              - generic [ref=f12e125]: "0"
+            - generic [ref=f12e128]:
+              - generic [ref=f12e129]:
+                - generic [ref=f12e130]: "0"
+                - generic [ref=f12e133]: "0"
+                - generic [ref=f12e136]: "2"
+                - generic [ref=f12e139]:
+                  - generic [ref=f12e140]: "2"
+                  - generic [ref=f12e142]: "1"
+                - generic [ref=f12e144]: "1"
+              - generic [ref=f12e147]:
+                - button "Cell row 1, column 1, empty" [ref=f12e148]
+                - button "Cell row 1, column 2, empty" [ref=f12e149]
+                - button "Cell row 1, column 3, empty" [ref=f12e150]
+                - button "Cell row 1, column 4, empty" [ref=f12e151]
+                - button "Cell row 1, column 5, empty" [ref=f12e152]
+                - button "Cell row 2, column 1, empty" [ref=f12e153]
+                - button "Cell row 2, column 2, empty" [ref=f12e154]
+                - button "Cell row 2, column 3, empty" [ref=f12e155]
+                - button "Cell row 2, column 4, empty" [ref=f12e156]
+                - button "Cell row 2, column 5, empty" [ref=f12e157]
+                - button "Cell row 3, column 1, empty" [ref=f12e158]
+                - button "Cell row 3, column 2, empty" [ref=f12e159]
+                - button "Cell row 3, column 3, empty" [ref=f12e160]
+                - button "Cell row 3, column 4, empty" [ref=f12e161]
+                - button "Cell row 3, column 5, empty" [ref=f12e162]
+                - button "Cell row 4, column 1, empty" [ref=f12e163]
+                - button "Cell row 4, column 2, empty" [ref=f12e164]
+                - button "Cell row 4, column 3, empty" [ref=f12e165]
+                - button "Cell row 4, column 4, empty" [ref=f12e166]
+                - button "Cell row 4, column 5, empty" [ref=f12e167]
+                - button "Cell row 5, column 1, empty" [ref=f12e168]
+                - button "Cell row 5, column 2, empty" [ref=f12e169]
+                - button "Cell row 5, column 3, empty" [ref=f12e170]
+                - button "Cell row 5, column 4, empty" [ref=f12e171]
+                - button "Cell row 5, column 5, empty" [ref=f12e172]
+          - generic [ref=f12e173]:
+            - button "Use hint, 5 remaining" [ref=f12e174] [cursor=pointer]:
+              - generic [ref=f12e177]: "5"
+            - button "Replay" [ref=f12e178] [cursor=pointer]
+            - button "New Puzzle" [ref=f12e179] [cursor=pointer]
+          - paragraph [ref=f12e181]:
+            - strong [ref=f12e182]: F
+            - text: ": Fill Mode •"
+            - strong [ref=f12e183]: M
+            - text: ": Mark Mode • Click/Drag to interact • Arrow keys to navigate •"
+            - strong [ref=f12e184]: Enter
+            - text: ": Apply mode • Backspace to clear"
+    - contentinfo [ref=f12e28]:
+      - generic [ref=f12e30]:
+        - paragraph [ref=f12e32]: © 2026 Puzzroo
+        - generic [ref=f12e33]:
+          - link "FAQ" [ref=f12e34] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=f12e35] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=f12e36] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=f12e37] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=f12e43] [cursor=pointer]
+  - alert [ref=f12e185]

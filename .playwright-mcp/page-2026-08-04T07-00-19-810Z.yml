@@ -1,0 +1,197 @@
+- generic [active] [ref=f7e1]:
+  - generic [ref=f7e2]:
+    - banner [ref=f7e3]:
+      - generic [ref=f7e5]:
+        - link "Puzzroo" [ref=f7e7] [cursor=pointer]:
+          - /url: /
+        - generic [ref=f7e13]:
+          - link "Sign up" [ref=f7e14] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=f7e15] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [ref=f7e16] [cursor=pointer]:
+            - generic [ref=f7e17]: Light Mode
+            - img "Theme icon" [ref=f7e18]
+    - main [ref=f7e19]:
+      - main [ref=f7e20]:
+        - generic [ref=f7e23]:
+          - generic [ref=f7e24]:
+            - img "Nonogram" [ref=f7e25]
+            - img "Nonogram" [ref=f7e26]
+          - heading "Nonogram" [level=1] [ref=f7e27]
+          - generic [ref=f7e28]:
+            - generic [ref=f7e29]: "Difficulty:"
+            - generic [ref=f7e30]:
+              - button "Easy" [ref=f7e32] [cursor=pointer]
+              - button "Medium" [ref=f7e34] [cursor=pointer]
+              - button "Hard" [ref=f7e36] [cursor=pointer]
+          - button "Play ▶" [ref=f7e38] [cursor=pointer]:
+            - generic [ref=f7e39]: Play
+            - generic [ref=f7e40]: ▶
+          - generic [ref=f7e41]: OR
+          - link [ref=f7e43] [cursor=pointer]:
+            - /url: /daily-challenge/nonogram
+            - button "Daily Challenge" [ref=f7e44]
+          - link [ref=f7e45] [cursor=pointer]:
+            - /url: /past-puzzles/nonogram
+            - button "Past Puzzles" [ref=f7e46]
+        - generic [ref=f7e48]:
+          - generic [ref=f7e49]:
+            - heading "Pick a Puzzle" [level=2] [ref=f7e50]
+            - paragraph [ref=f7e51]: 1000 easy puzzles available
+          - generic [ref=f7e105]:
+            - button "Play Two Men Holding Hands puzzle" [ref=f7e106] [cursor=pointer]:
+              - img "Nonogram" [ref=f7e109]
+              - generic [ref=f7e110]:
+                - heading "Two Men Holding Hands" [level=3] [ref=f7e111]
+                - generic [ref=f7e112]: generated
+              - generic [ref=f7e113]:
+                - generic [ref=f7e114]:
+                  - generic [ref=f7e115]: Grid Size
+                  - generic [ref=f7e116]: 5x5
+                - generic [ref=f7e117]:
+                  - generic [ref=f7e118]: Est. Time
+                  - generic [ref=f7e122]: ~1 min
+              - generic [ref=f7e123]: Start Puzzle
+            - button "Play Clock Face Six Oclock puzzle" [ref=f7e127] [cursor=pointer]:
+              - img "Nonogram" [ref=f7e130]
+              - generic [ref=f7e131]:
+                - heading "Clock Face Six Oclock" [level=3] [ref=f7e132]
+                - generic [ref=f7e133]: generated
+              - generic [ref=f7e134]:
+                - generic [ref=f7e135]:
+                  - generic [ref=f7e136]: Grid Size
+                  - generic [ref=f7e137]: 5x5
+                - generic [ref=f7e138]:
+                  - generic [ref=f7e139]: Est. Time
+                  - generic [ref=f7e143]: ~1 min
+              - generic [ref=f7e144]: Start Puzzle
+            - button "Play Squared Cjk Unified Ideograph 55b6 puzzle" [ref=f7e148] [cursor=pointer]:
+              - img "Nonogram" [ref=f7e151]
+              - generic [ref=f7e152]:
+                - heading "Squared Cjk Unified Ideograph 55b6" [level=3] [ref=f7e153]
+                - generic [ref=f7e154]: generated
+              - generic [ref=f7e155]:
+                - generic [ref=f7e156]:
+                  - generic [ref=f7e157]: Grid Size
+                  - generic [ref=f7e158]: 5x5
+                - generic [ref=f7e159]:
+                  - generic [ref=f7e160]: Est. Time
+                  - generic [ref=f7e164]: ~1 min
+              - generic [ref=f7e165]: Start Puzzle
+            - button "Play Male Scientist puzzle" [ref=f7e169] [cursor=pointer]:
+              - img "Nonogram" [ref=f7e172]
+              - generic [ref=f7e173]:
+                - heading "Male Scientist" [level=3] [ref=f7e174]
+                - generic [ref=f7e175]: generated
+              - generic [ref=f7e176]:
+                - generic [ref=f7e177]:
+                  - generic [ref=f7e178]: Grid Size
+                  - generic [ref=f7e179]: 5x5
+                - generic [ref=f7e180]:
+                  - generic [ref=f7e181]: Est. Time
+                  - generic [ref=f7e185]: ~1 min
+              - generic [ref=f7e186]: Start Puzzle
+            - button "Play Weary Face puzzle" [ref=f7e190] [cursor=pointer]:
+              - img "Nonogram" [ref=f7e193]
+              - generic [ref=f7e194]:
+                - heading "Weary Face" [level=3] [ref=f7e195]
+                - generic [ref=f7e196]: generated
+              - generic [ref=f7e197]:
+                - generic [ref=f7e198]:
+                  - generic [ref=f7e199]: Grid Size
+                  - generic [ref=f7e200]: 5x5
+                - generic [ref=f7e201]:
+                  - generic [ref=f7e202]: Est. Time
+                  - generic [ref=f7e206]: ~1 min
+              - generic [ref=f7e207]: Start Puzzle
+            - button "Play Kiss puzzle" [ref=f7e211] [cursor=pointer]:
+              - img "Nonogram" [ref=f7e214]
+              - generic [ref=f7e215]:
+                - heading "Kiss" [level=3] [ref=f7e216]
+                - generic [ref=f7e217]: generated
+              - generic [ref=f7e218]:
+                - generic [ref=f7e219]:
+                  - generic [ref=f7e220]: Grid Size
+                  - generic [ref=f7e221]: 5x5
+                - generic [ref=f7e222]:
+                  - generic [ref=f7e223]: Est. Time
+                  - generic [ref=f7e227]: ~1 min
+              - generic [ref=f7e228]: Start Puzzle
+            - button "Play Left Right Arrow puzzle" [ref=f7e232] [cursor=pointer]:
+              - img "Nonogram" [ref=f7e235]
+              - generic [ref=f7e236]:
+                - heading "Left Right Arrow" [level=3] [ref=f7e237]
+                - generic [ref=f7e238]: generated
+              - generic [ref=f7e239]:
+                - generic [ref=f7e240]:
+                  - generic [ref=f7e241]: Grid Size
+                  - generic [ref=f7e242]: 5x5
+                - generic [ref=f7e243]:
+                  - generic [ref=f7e244]: Est. Time
+                  - generic [ref=f7e248]: ~1 min
+              - generic [ref=f7e249]: Start Puzzle
+            - button "Play Purple Heart puzzle" [ref=f7e253] [cursor=pointer]:
+              - img "Nonogram" [ref=f7e256]
+              - generic [ref=f7e257]:
+                - heading "Purple Heart" [level=3] [ref=f7e258]
+                - generic [ref=f7e259]: generated
+              - generic [ref=f7e260]:
+                - generic [ref=f7e261]:
+                  - generic [ref=f7e262]: Grid Size
+                  - generic [ref=f7e263]: 5x5
+                - generic [ref=f7e264]:
+                  - generic [ref=f7e265]: Est. Time
+                  - generic [ref=f7e269]: ~1 min
+              - generic [ref=f7e270]: Start Puzzle
+          - generic [ref=f7e274]:
+            - button "Previous Page" [disabled] [ref=f7e275]
+            - generic [ref=f7e278]: Page 1 of 125
+            - button "Next Page" [ref=f7e279] [cursor=pointer]
+        - generic [ref=f7e54]:
+          - generic [ref=f7e55]:
+            - heading "About Nonogram" [level=2] [ref=f7e56]
+            - paragraph [ref=f7e57]: Nonogram is a picture logic puzzle where you reveal a hidden image by filling in cells according to number clues. Each number indicates a consecutive group of filled cells in that row or column. Combine logical reasoning with artistic discovery as beautiful pixel art emerges from your deductions.
+          - generic [ref=f7e58]:
+            - heading "How To Play Easy Mode" [level=2] [ref=f7e59]
+            - paragraph [ref=f7e60]: Discover the joy of Nonogram picture puzzles! Start with rows and columns that have large numbers or only one or two groups. Mark cells as filled or empty based on the number clues provided. Cross-reference rows and columns to confirm your deductions. The completed puzzle reveals a recognizable pixel art image. Take your time learning the basic logic patterns. These beginner puzzles introduce you to the fundamental solving techniques.
+            - generic [ref=f7e61]:
+              - generic [ref=f7e62]:
+                - generic [ref=f7e63]: •
+                - paragraph [ref=f7e64]: Each number represents a group of consecutive filled cells sequentially
+              - generic [ref=f7e65]:
+                - generic [ref=f7e66]: •
+                - paragraph [ref=f7e67]: Multiple numbers mean multiple groups separated by empty cells throughout
+              - generic [ref=f7e68]:
+                - generic [ref=f7e69]: •
+                - paragraph [ref=f7e70]: At least one empty cell must exist between groups
+          - generic [ref=f7e71]:
+            - heading "Keyboard Controls" [level=2] [ref=f7e72]
+            - paragraph [ref=f7e73]: Left-click to fill cells. Right-click to mark cells as empty. Use ARROW KEYS to navigate. Press SPACE to toggle between fill and mark modes. Press U to undo.
+        - generic [ref=f7e76]:
+          - paragraph [ref=f7e77]: Want to access more games or features?
+          - link [ref=f7e78] [cursor=pointer]:
+            - /url: /signup
+            - button "Subscribe" [ref=f7e79]
+          - link [ref=f7e80] [cursor=pointer]:
+            - /url: /login
+            - button "Log In" [ref=f7e81]
+          - generic [ref=f7e82]:
+            - paragraph [ref=f7e282]: 4 August 2026
+            - generic [ref=f7e83]:
+              - generic [ref=f7e84]: ⏱
+              - generic [ref=f7e85]: "Next challenge in: 11h 59m 40s"
+    - contentinfo [ref=f7e86]:
+      - generic [ref=f7e88]:
+        - paragraph [ref=f7e90]: © 2026 Puzzroo
+        - generic [ref=f7e91]:
+          - link "FAQ" [ref=f7e92] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=f7e93] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=f7e94] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=f7e95] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=f7e101] [cursor=pointer]
+  - alert [ref=f7e283]

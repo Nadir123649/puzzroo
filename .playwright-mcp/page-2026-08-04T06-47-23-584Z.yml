@@ -1,0 +1,39 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img "Puzzroo Logo" [ref=e5]
+      - generic [ref=e6]: Puzzroo
+    - paragraph [ref=e9]: Loading puzzle...
+  - generic [ref=e10]:
+    - banner [ref=e11]:
+      - generic [ref=e13]:
+        - link "Puzzroo" [ref=e15] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e21]:
+          - link "Sign up" [ref=e22] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=e23] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [ref=e24] [cursor=pointer]:
+            - generic [ref=e25]: Light Mode
+            - img "Theme icon" [ref=e26]
+    - main [ref=e27]:
+      - main [ref=e28]:
+        - generic [ref=e30]:
+          - button "Back to games" [ref=e31] [cursor=pointer]
+          - generic [ref=e34]:
+            - img "Nonogram Light" [ref=e36]
+            - heading "NONOGRAM" [level=1] [ref=e37]
+    - contentinfo [ref=e38]:
+      - generic [ref=e40]:
+        - paragraph [ref=e42]: © 2026 Puzzroo
+        - generic [ref=e43]:
+          - link "FAQ" [ref=e44] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=e45] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=e46] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=e47] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=e53] [cursor=pointer]

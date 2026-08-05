@@ -1,14 +1,16 @@
 /**
  * Nonogram dataset integrity test.
  *
- * Verifies the generated flagship dataset (shared/src/data/nonogram):
- *   - 1000 puzzles per difficulty (easy/medium/hard/expert)
+ * Verifies the flagship dataset (shared/src/data/nonogram):
+ *   - active pools = gold native datasets: easy 10x10, medium 15x15,
+ *     hard 20x20, 50 puzzles each
  *   - every puzzle's row/column clues exactly match its solution
  *   - unique puzzle ids, no duplicate solution grids
- *   - each difficulty uses its expected grid sizes (expert = 25/30)
+ *   - each difficulty uses its expected grid sizes
  *
- * Full *uniqueness* (single-solution) is guaranteed by the generator's
- * line-solver and re-checked by tools/puzzle-generators/validate_nonogram_dataset.py.
+ * The Puzzroo grid standard is easy=10x10 / medium=15x15 / hard=20x20.
+ * Every puzzle's uniqueness is guaranteed by the source converters and
+ * re-checked by tools/puzzle-generators/qa_gold.py.
  */
 import { describe, it, expect } from 'vitest'
 import {
@@ -19,22 +21,27 @@ import {
 import { generateRowClues, generateColumnClues } from '@shared/lib/nonogram/helpers'
 import type { Difficulty } from '@shared/lib/nonogram/types'
 
-const TARGET_PER_DIFFICULTY = 1000
+const TARGET_PER_DIFFICULTY: Record<Difficulty, number> = {
+  easy: 50,
+  medium: 50,
+  hard: 50,
+}
 const EXPECTED_SIZES: Record<Difficulty, number[]> = {
   easy: [10],
   medium: [15],
   hard: [20],
-  expert: [25, 30],
 }
 
 describe('nonogram dataset', () => {
   const difficulties = Object.keys(EXPECTED_SIZES) as Difficulty[]
 
-  it('has the flagship volume (1000 per difficulty)', () => {
+  it('has the flagship volume (50 gold puzzles per difficulty)', () => {
     for (const diff of difficulties) {
-      expect(puzzleRegistry[diff].length).toBe(TARGET_PER_DIFFICULTY)
+      expect(puzzleRegistry[diff].length).toBe(TARGET_PER_DIFFICULTY[diff])
     }
-    expect(puzzleCounts.total).toBe(TARGET_PER_DIFFICULTY * difficulties.length)
+    expect(puzzleCounts.total).toBe(
+      TARGET_PER_DIFFICULTY.easy + TARGET_PER_DIFFICULTY.medium + TARGET_PER_DIFFICULTY.hard,
+    )
   })
 
   it('uses the expected grid sizes per difficulty', () => {

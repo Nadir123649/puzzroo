@@ -1,8 +1,14 @@
+import { NextRequest } from "next/server"
 import { withAuth } from "../../../route-helpers"
+import type { Actor } from "../../../route-helpers"
 import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService"
-import { successResponse } from "@/lib/server/utils/apiResponse"
+import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
+import { rateLimit } from "@/lib/server/utils/http"
 
-export const PATCH = withAuth(async (_req, user, params) => {
-  const session = await sessionService.resumeSession(params.id, user.id)
+export const PATCH = withAuth(async (req: NextRequest, actor: Actor, params: any) => {
+  if (!rateLimit(req, "nonogram-resume", 30)) {
+    return errorResponse(429, "rate_limited", "Too many requests")
+  }
+  const session = await sessionService.resumeSession(params.id, actor)
   return successResponse(session)
 })

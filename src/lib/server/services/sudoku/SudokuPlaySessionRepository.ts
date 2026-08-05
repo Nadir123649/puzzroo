@@ -145,6 +145,7 @@ export class SudokuPlaySessionRepository {
       mistakes?: number;
       moves?: number;
       notes?: string[][];
+      score?: number;
     },
     owner: Record<string, unknown>
   ) {
@@ -158,6 +159,7 @@ export class SudokuPlaySessionRepository {
     if (input.hintsUsed !== undefined) $max.hintsUsed = input.hintsUsed;
     if (input.mistakes !== undefined) $max.mistakes = input.mistakes;
     if (input.moves !== undefined) $max.moves = input.moves;
+    if (input.score !== undefined) $set.score = input.score;
     if (input.notes) $set.notes = input.notes;
 
     return PlaySession.findOneAndUpdate(

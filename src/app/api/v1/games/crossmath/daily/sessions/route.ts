@@ -4,8 +4,12 @@ import type { Actor } from "../../route-helpers"
 import { sessionService } from "@/lib/server/puzzles/crossmath/services/SessionService"
 import { startDailySessionSchema } from "@/lib/server/puzzles/crossmath/validators"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
+import { rateLimit } from "@/lib/server/utils/http"
 
 export const POST = withAuth(async (req: NextRequest, actor: Actor) => {
+  if (!rateLimit(req, "crossmath-daily-sessions", 60)) {
+    return errorResponse(429, "rate_limited", "Too many requests")
+  }
   const body = await req.json()
   const parsed = startDailySessionSchema.safeParse(body)
   if (!parsed.success) {

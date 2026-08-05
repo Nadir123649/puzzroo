@@ -1,6 +1,6 @@
-export type NonogramDifficulty = 'easy' | 'medium' | 'hard' | 'expert'
+export type NonogramDifficulty = 'easy' | 'medium' | 'hard'
 export type SessionStatus = 'playing' | 'paused' | 'completed' | 'abandoned'
-export type CellState = 'empty' | 'filled' | 'marked' | 'crossed'
+export type CellState = 'empty' | 'filled' | 'marked' | 'error'
 
 export interface VerificationResult {
   isComplete: boolean
@@ -16,6 +16,8 @@ export interface VerificationResult {
 export interface SafeSessionResponse {
   sessionId: string
   puzzleId: string
+  gameType?: "nonogram" | "daily_challenge"
+  dailyChallengeId?: string | null
   difficulty: NonogramDifficulty
   sessionStatus: SessionStatus
   grid: string[][]
@@ -31,6 +33,8 @@ export interface SafeSessionResponse {
   isReplay: boolean
   restartCount: number
   result?: {
+    correct?: number
+    total?: number
     accuracy: number
     completedAt?: string | null
     elapsedTime: number

@@ -20,7 +20,7 @@ export default async function NonogramLobbyPage() {
             name="Nonogram"
             image={images.gameCards.nonogram}
             imageLight={images.gameCards.nonogramWhite}
-            difficulties={['easy', 'medium', 'hard', 'expert']}
+            difficulties={['easy', 'medium', 'hard']}
             gameSlug="nonogram"
           />
           <NonogramPuzzleGrid />

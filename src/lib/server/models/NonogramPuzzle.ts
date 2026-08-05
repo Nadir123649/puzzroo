@@ -6,7 +6,7 @@ const nonogramPuzzleSchema = new mongoose.Schema(
     game: { type: String, default: "nonogram" },
     difficulty: {
       type: String,
-      enum: ["easy", "medium", "hard", "expert"],
+      enum: ["easy", "medium", "hard"],
       required: true,
     },
     size: { type: Number, required: true },

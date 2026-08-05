@@ -1,0 +1,566 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e454]:
+    - banner [ref=f2e455]:
+      - generic [ref=f2e457]:
+        - link "Puzzroo" [ref=f2e459] [cursor=pointer]:
+          - /url: /
+        - generic [ref=f2e465]:
+          - link "Sign up" [ref=f2e466] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=f2e467] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [ref=f2e468] [cursor=pointer]:
+            - generic [ref=f2e469]: Light Mode
+            - img "Theme icon" [ref=f2e470]
+    - main [ref=f2e471]:
+      - main [ref=f2e472]:
+        - generic [ref=f2e474]:
+          - button "Back to games" [ref=f2e475] [cursor=pointer]
+          - generic [ref=f2e478]:
+            - img "Nonogram Light" [ref=f2e480]
+            - heading "NONOGRAM" [level=1] [ref=f2e481]
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic: Lion
+                  - generic:
+                    - generic: animals
+                    - generic: ~20 min
+                - generic: 00:14:29
+                - generic:
+                  - generic:
+                    - generic: Progress
+                    - generic: 0%
+                  - generic: 0 / 198 cells
+              - generic:
+                - button "Zoom out"
+                - generic: 100%
+                - button "Zoom in"
+                - button "Reset"
+                - generic: "Mistakes: 0/2"
+              - generic:
+                - button "Fill mode - mark cells that belong to the image" [pressed]:
+                  - generic: Fill
+                - button "Mark mode - mark cells that should not belong to the image":
+                  - generic: Mark
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: "0"
+                      - generic: "3"
+                      - generic: "7"
+                      - generic: "9"
+                      - generic: "15"
+                      - generic: "17"
+                      - generic:
+                        - generic: "13"
+                        - generic: "1"
+                      - generic:
+                        - generic: "7"
+                        - generic: "5"
+                        - generic: "1"
+                        - generic: "2"
+                      - generic:
+                        - generic: "7"
+                        - generic: "3"
+                        - generic: "1"
+                        - generic: "2"
+                      - generic:
+                        - generic: "7"
+                        - generic: "3"
+                        - generic: "2"
+                      - generic:
+                        - generic: "7"
+                        - generic: "5"
+                        - generic: "1"
+                        - generic: "2"
+                      - generic:
+                        - generic: "13"
+                        - generic: "1"
+                        - generic: "1"
+                      - generic:
+                        - generic: "14"
+                        - generic: "2"
+                      - generic: "16"
+                      - generic:
+                        - generic: "10"
+                        - generic: "1"
+                      - generic: "10"
+                      - generic:
+                        - generic: "5"
+                        - generic: "1"
+                      - generic: "4"
+                      - generic: "0"
+                      - generic: "0"
+                  - generic:
+                    - generic:
+                      - generic: "0"
+                      - generic: "9"
+                      - generic: "12"
+                      - generic: "14"
+                      - generic: "16"
+                      - generic: "17"
+                      - generic: "17"
+                      - generic: "17"
+                      - generic:
+                        - generic: "5"
+                        - generic: "5"
+                      - generic:
+                        - generic: "6"
+                        - generic: "6"
+                      - generic: "15"
+                      - generic: "13"
+                      - generic: "10"
+                      - generic:
+                        - generic: "4"
+                        - generic: "4"
+                      - generic:
+                        - generic: "2"
+                        - generic: "2"
+                      - generic:
+                        - generic: "2"
+                        - generic: "2"
+                        - generic: "2"
+                        - generic: "2"
+                      - generic:
+                        - generic: "2"
+                        - generic: "2"
+                      - generic: "8"
+                      - generic: "4"
+                      - generic: "0"
+                    - generic:
+                      - button "Cell row 1, column 1, empty" [ref=f2e709]
+                      - button "Cell row 1, column 2, empty" [ref=f2e710]
+                      - button "Cell row 1, column 3, empty" [ref=f2e711]
+                      - button "Cell row 1, column 4, empty" [ref=f2e712]
+                      - button "Cell row 1, column 5, empty" [ref=f2e713]
+                      - button "Cell row 1, column 6, empty" [ref=f2e714]
+                      - button "Cell row 1, column 7, empty" [ref=f2e715]
+                      - button "Cell row 1, column 8, empty" [ref=f2e716]
+                      - button "Cell row 1, column 9, empty" [ref=f2e717]
+                      - button "Cell row 1, column 10, empty" [ref=f2e718]
+                      - button "Cell row 1, column 11, empty" [ref=f2e719]
+                      - button "Cell row 1, column 12, empty" [ref=f2e720]
+                      - button "Cell row 1, column 13, empty" [ref=f2e721]
+                      - button "Cell row 1, column 14, empty" [ref=f2e722]
+                      - button "Cell row 1, column 15, empty" [ref=f2e723]
+                      - button "Cell row 1, column 16, empty" [ref=f2e724]
+                      - button "Cell row 1, column 17, empty" [ref=f2e725]
+                      - button "Cell row 1, column 18, empty" [ref=f2e726]
+                      - button "Cell row 1, column 19, empty" [ref=f2e727]
+                      - button "Cell row 1, column 20, empty" [ref=f2e728]
+                      - button "Cell row 2, column 1, empty" [ref=f2e729]
+                      - button "Cell row 2, column 2, empty" [ref=f2e730]
+                      - button "Cell row 2, column 3, empty" [ref=f2e731]
+                      - button "Cell row 2, column 4, empty" [ref=f2e732]
+                      - button "Cell row 2, column 5, empty" [ref=f2e733]
+                      - button "Cell row 2, column 6, empty" [ref=f2e734]
+                      - button "Cell row 2, column 7, empty" [ref=f2e735]
+                      - button "Cell row 2, column 8, empty" [ref=f2e736]
+                      - button "Cell row 2, column 9, empty" [ref=f2e737]
+                      - button "Cell row 2, column 10, empty" [ref=f2e738]
+                      - button "Cell row 2, column 11, empty" [ref=f2e739]
+                      - button "Cell row 2, column 12, empty" [ref=f2e740]
+                      - button "Cell row 2, column 13, empty" [ref=f2e741]
+                      - button "Cell row 2, column 14, empty" [ref=f2e742]
+                      - button "Cell row 2, column 15, empty" [ref=f2e743]
+                      - button "Cell row 2, column 16, empty" [ref=f2e744]
+                      - button "Cell row 2, column 17, empty" [ref=f2e745]
+                      - button "Cell row 2, column 18, empty" [ref=f2e746]
+                      - button "Cell row 2, column 19, empty" [ref=f2e747]
+                      - button "Cell row 2, column 20, empty" [ref=f2e748]
+                      - button "Cell row 3, column 1, empty" [ref=f2e749]
+                      - button "Cell row 3, column 2, empty" [ref=f2e750]
+                      - button "Cell row 3, column 3, empty" [ref=f2e751]
+                      - button "Cell row 3, column 4, empty" [ref=f2e752]
+                      - button "Cell row 3, column 5, empty" [ref=f2e753]
+                      - button "Cell row 3, column 6, empty" [ref=f2e754]
+                      - button "Cell row 3, column 7, empty" [ref=f2e755]
+                      - button "Cell row 3, column 8, empty" [ref=f2e756]
+                      - button "Cell row 3, column 9, empty" [ref=f2e757]
+                      - button "Cell row 3, column 10, empty" [ref=f2e758]
+                      - button "Cell row 3, column 11, empty" [ref=f2e759]
+                      - button "Cell row 3, column 12, empty" [ref=f2e760]
+                      - button "Cell row 3, column 13, empty" [ref=f2e761]
+                      - button "Cell row 3, column 14, empty" [ref=f2e762]
+                      - button "Cell row 3, column 15, empty" [ref=f2e763]
+                      - button "Cell row 3, column 16, empty" [ref=f2e764]
+                      - button "Cell row 3, column 17, empty" [ref=f2e765]
+                      - button "Cell row 3, column 18, empty" [ref=f2e766]
+                      - button "Cell row 3, column 19, empty" [ref=f2e767]
+                      - button "Cell row 3, column 20, empty" [ref=f2e768]
+                      - button "Cell row 4, column 1, empty" [ref=f2e769]
+                      - button "Cell row 4, column 2, empty" [ref=f2e770]
+                      - button "Cell row 4, column 3, empty" [ref=f2e771]
+                      - button "Cell row 4, column 4, empty" [ref=f2e772]
+                      - button "Cell row 4, column 5, empty" [ref=f2e773]
+                      - button "Cell row 4, column 6, empty" [ref=f2e774]
+                      - button "Cell row 4, column 7, empty" [ref=f2e775]
+                      - button "Cell row 4, column 8, empty" [ref=f2e776]
+                      - button "Cell row 4, column 9, empty" [ref=f2e777]
+                      - button "Cell row 4, column 10, empty" [ref=f2e778]
+                      - button "Cell row 4, column 11, empty" [ref=f2e779]
+                      - button "Cell row 4, column 12, empty" [ref=f2e780]
+                      - button "Cell row 4, column 13, empty" [ref=f2e781]
+                      - button "Cell row 4, column 14, empty" [ref=f2e782]
+                      - button "Cell row 4, column 15, empty" [ref=f2e783]
+                      - button "Cell row 4, column 16, empty" [ref=f2e784]
+                      - button "Cell row 4, column 17, empty" [ref=f2e785]
+                      - button "Cell row 4, column 18, empty" [ref=f2e786]
+                      - button "Cell row 4, column 19, empty" [ref=f2e787]
+                      - button "Cell row 4, column 20, empty" [ref=f2e788]
+                      - button "Cell row 5, column 1, empty" [ref=f2e789]
+                      - button "Cell row 5, column 2, empty" [ref=f2e790]
+                      - button "Cell row 5, column 3, empty" [ref=f2e791]
+                      - button "Cell row 5, column 4, empty" [ref=f2e792]
+                      - button "Cell row 5, column 5, empty" [ref=f2e793]
+                      - button "Cell row 5, column 6, empty" [ref=f2e794]
+                      - button "Cell row 5, column 7, empty" [ref=f2e795]
+                      - button "Cell row 5, column 8, empty" [ref=f2e796]
+                      - button "Cell row 5, column 9, empty" [ref=f2e797]
+                      - button "Cell row 5, column 10, empty" [ref=f2e798]
+                      - button "Cell row 5, column 11, empty" [ref=f2e799]
+                      - button "Cell row 5, column 12, empty" [ref=f2e800]
+                      - button "Cell row 5, column 13, empty" [ref=f2e801]
+                      - button "Cell row 5, column 14, empty" [ref=f2e802]
+                      - button "Cell row 5, column 15, empty" [ref=f2e803]
+                      - button "Cell row 5, column 16, empty" [ref=f2e804]
+                      - button "Cell row 5, column 17, empty" [ref=f2e805]
+                      - button "Cell row 5, column 18, empty" [ref=f2e806]
+                      - button "Cell row 5, column 19, empty" [ref=f2e807]
+                      - button "Cell row 5, column 20, empty" [ref=f2e808]
+                      - button "Cell row 6, column 1, empty" [ref=f2e809]
+                      - button "Cell row 6, column 2, empty" [ref=f2e810]
+                      - button "Cell row 6, column 3, empty" [ref=f2e811]
+                      - button "Cell row 6, column 4, empty" [ref=f2e812]
+                      - button "Cell row 6, column 5, empty" [ref=f2e813]
+                      - button "Cell row 6, column 6, empty" [ref=f2e814]
+                      - button "Cell row 6, column 7, empty" [ref=f2e815]
+                      - button "Cell row 6, column 8, empty" [ref=f2e816]
+                      - button "Cell row 6, column 9, empty" [ref=f2e817]
+                      - button "Cell row 6, column 10, empty" [ref=f2e818]
+                      - button "Cell row 6, column 11, empty" [ref=f2e819]
+                      - button "Cell row 6, column 12, empty" [ref=f2e820]
+                      - button "Cell row 6, column 13, empty" [ref=f2e821]
+                      - button "Cell row 6, column 14, empty" [ref=f2e822]
+                      - button "Cell row 6, column 15, empty" [ref=f2e823]
+                      - button "Cell row 6, column 16, empty" [ref=f2e824]
+                      - button "Cell row 6, column 17, empty" [ref=f2e825]
+                      - button "Cell row 6, column 18, empty" [ref=f2e826]
+                      - button "Cell row 6, column 19, empty" [ref=f2e827]
+                      - button "Cell row 6, column 20, empty" [ref=f2e828]
+                      - button "Cell row 7, column 1, empty" [ref=f2e829]
+                      - button "Cell row 7, column 2, empty" [ref=f2e830]
+                      - button "Cell row 7, column 3, empty" [ref=f2e831]
+                      - button "Cell row 7, column 4, empty" [ref=f2e832]
+                      - button "Cell row 7, column 5, empty" [ref=f2e833]
+                      - button "Cell row 7, column 6, empty" [ref=f2e834]
+                      - button "Cell row 7, column 7, empty" [ref=f2e835]
+                      - button "Cell row 7, column 8, empty" [ref=f2e836]
+                      - button "Cell row 7, column 9, empty" [ref=f2e837]
+                      - button "Cell row 7, column 10, empty" [ref=f2e838]
+                      - button "Cell row 7, column 11, empty" [ref=f2e839]
+                      - button "Cell row 7, column 12, empty" [ref=f2e840]
+                      - button "Cell row 7, column 13, empty" [ref=f2e841]
+                      - button "Cell row 7, column 14, empty" [ref=f2e842]
+                      - button "Cell row 7, column 15, empty" [ref=f2e843]
+                      - button "Cell row 7, column 16, empty" [ref=f2e844]
+                      - button "Cell row 7, column 17, empty" [ref=f2e845]
+                      - button "Cell row 7, column 18, empty" [ref=f2e846]
+                      - button "Cell row 7, column 19, empty" [ref=f2e847]
+                      - button "Cell row 7, column 20, empty" [ref=f2e848]
+                      - button "Cell row 8, column 1, empty" [ref=f2e849]
+                      - button "Cell row 8, column 2, empty" [ref=f2e850]
+                      - button "Cell row 8, column 3, empty" [ref=f2e851]
+                      - button "Cell row 8, column 4, empty" [ref=f2e852]
+                      - button "Cell row 8, column 5, empty" [ref=f2e853]
+                      - button "Cell row 8, column 6, empty" [ref=f2e854]
+                      - button "Cell row 8, column 7, empty" [ref=f2e855]
+                      - button "Cell row 8, column 8, empty" [ref=f2e856]
+                      - button "Cell row 8, column 9, empty" [ref=f2e857]
+                      - button "Cell row 8, column 10, empty" [ref=f2e858]
+                      - button "Cell row 8, column 11, empty" [ref=f2e859]
+                      - button "Cell row 8, column 12, empty" [ref=f2e860]
+                      - button "Cell row 8, column 13, empty" [ref=f2e861]
+                      - button "Cell row 8, column 14, empty" [ref=f2e862]
+                      - button "Cell row 8, column 15, empty" [ref=f2e863]
+                      - button "Cell row 8, column 16, empty" [ref=f2e864]
+                      - button "Cell row 8, column 17, empty" [ref=f2e865]
+                      - button "Cell row 8, column 18, empty" [ref=f2e866]
+                      - button "Cell row 8, column 19, empty" [ref=f2e867]
+                      - button "Cell row 8, column 20, empty" [ref=f2e868]
+                      - button "Cell row 9, column 1, empty" [ref=f2e869]
+                      - button "Cell row 9, column 2, empty" [ref=f2e870]
+                      - button "Cell row 9, column 3, empty" [ref=f2e871]
+                      - button "Cell row 9, column 4, empty" [ref=f2e872]
+                      - button "Cell row 9, column 5, empty" [ref=f2e873]
+                      - button "Cell row 9, column 6, empty" [ref=f2e874]
+                      - button "Cell row 9, column 7, empty" [ref=f2e875]
+                      - button "Cell row 9, column 8, empty" [ref=f2e876]
+                      - button "Cell row 9, column 9, empty" [ref=f2e877]
+                      - button "Cell row 9, column 10, empty" [ref=f2e878]
+                      - button "Cell row 9, column 11, empty" [ref=f2e879]
+                      - button "Cell row 9, column 12, empty" [ref=f2e880]
+                      - button "Cell row 9, column 13, empty" [ref=f2e881]
+                      - button "Cell row 9, column 14, empty" [ref=f2e882]
+                      - button "Cell row 9, column 15, empty" [ref=f2e883]
+                      - button "Cell row 9, column 16, empty" [ref=f2e884]
+                      - button "Cell row 9, column 17, empty" [ref=f2e885]
+                      - button "Cell row 9, column 18, empty" [ref=f2e886]
+                      - button "Cell row 9, column 19, empty" [ref=f2e887]
+                      - button "Cell row 9, column 20, empty" [ref=f2e888]
+                      - button "Cell row 10, column 1, empty" [ref=f2e889]
+                      - button "Cell row 10, column 2, empty" [ref=f2e890]
+                      - button "Cell row 10, column 3, empty" [ref=f2e891]
+                      - button "Cell row 10, column 4, empty" [ref=f2e892]
+                      - button "Cell row 10, column 5, empty" [ref=f2e893]
+                      - button "Cell row 10, column 6, empty" [ref=f2e894]
+                      - button "Cell row 10, column 7, empty" [ref=f2e895]
+                      - button "Cell row 10, column 8, empty" [ref=f2e896]
+                      - button "Cell row 10, column 9, empty" [ref=f2e897]
+                      - button "Cell row 10, column 10, empty" [ref=f2e898]
+                      - button "Cell row 10, column 11, empty" [ref=f2e899]
+                      - button "Cell row 10, column 12, empty" [ref=f2e900]
+                      - button "Cell row 10, column 13, empty" [ref=f2e901]
+                      - button "Cell row 10, column 14, empty" [ref=f2e902]
+                      - button "Cell row 10, column 15, empty" [ref=f2e903]
+                      - button "Cell row 10, column 16, empty" [ref=f2e904]
+                      - button "Cell row 10, column 17, empty" [ref=f2e905]
+                      - button "Cell row 10, column 18, empty" [ref=f2e906]
+                      - button "Cell row 10, column 19, empty" [ref=f2e907]
+                      - button "Cell row 10, column 20, empty" [ref=f2e908]
+                      - button "Cell row 11, column 1, empty" [ref=f2e909]
+                      - button "Cell row 11, column 2, empty" [ref=f2e910]
+                      - button "Cell row 11, column 3, empty" [ref=f2e911]
+                      - button "Cell row 11, column 4, empty" [ref=f2e912]
+                      - button "Cell row 11, column 5, empty" [ref=f2e913]
+                      - button "Cell row 11, column 6, empty" [ref=f2e914]
+                      - button "Cell row 11, column 7, empty" [ref=f2e915]
+                      - button "Cell row 11, column 8, empty" [ref=f2e916]
+                      - button "Cell row 11, column 9, empty" [ref=f2e917]
+                      - button "Cell row 11, column 10, empty" [ref=f2e918]
+                      - button "Cell row 11, column 11, empty" [ref=f2e919]
+                      - button "Cell row 11, column 12, empty" [ref=f2e920]
+                      - button "Cell row 11, column 13, empty" [ref=f2e921]
+                      - button "Cell row 11, column 14, empty" [ref=f2e922]
+                      - button "Cell row 11, column 15, empty" [ref=f2e923]
+                      - button "Cell row 11, column 16, empty" [ref=f2e924]
+                      - button "Cell row 11, column 17, empty" [ref=f2e925]
+                      - button "Cell row 11, column 18, empty" [ref=f2e926]
+                      - button "Cell row 11, column 19, empty" [ref=f2e927]
+                      - button "Cell row 11, column 20, empty" [ref=f2e928]
+                      - button "Cell row 12, column 1, empty" [ref=f2e929]
+                      - button "Cell row 12, column 2, empty" [ref=f2e930]
+                      - button "Cell row 12, column 3, empty" [ref=f2e931]
+                      - button "Cell row 12, column 4, empty" [ref=f2e932]
+                      - button "Cell row 12, column 5, empty" [ref=f2e933]
+                      - button "Cell row 12, column 6, empty" [ref=f2e934]
+                      - button "Cell row 12, column 7, empty" [ref=f2e935]
+                      - button "Cell row 12, column 8, empty" [ref=f2e936]
+                      - button "Cell row 12, column 9, empty" [ref=f2e937]
+                      - button "Cell row 12, column 10, empty" [ref=f2e938]
+                      - button "Cell row 12, column 11, empty" [ref=f2e939]
+                      - button "Cell row 12, column 12, empty" [ref=f2e940]
+                      - button "Cell row 12, column 13, empty" [ref=f2e941]
+                      - button "Cell row 12, column 14, empty" [ref=f2e942]
+                      - button "Cell row 12, column 15, empty" [ref=f2e943]
+                      - button "Cell row 12, column 16, empty" [ref=f2e944]
+                      - button "Cell row 12, column 17, empty" [ref=f2e945]
+                      - button "Cell row 12, column 18, empty" [ref=f2e946]
+                      - button "Cell row 12, column 19, empty" [ref=f2e947]
+                      - button "Cell row 12, column 20, empty" [ref=f2e948]
+                      - button "Cell row 13, column 1, empty" [ref=f2e949]
+                      - button "Cell row 13, column 2, empty" [ref=f2e950]
+                      - button "Cell row 13, column 3, empty" [ref=f2e951]
+                      - button "Cell row 13, column 4, empty" [ref=f2e952]
+                      - button "Cell row 13, column 5, empty" [ref=f2e953]
+                      - button "Cell row 13, column 6, empty" [ref=f2e954]
+                      - button "Cell row 13, column 7, empty" [ref=f2e955]
+                      - button "Cell row 13, column 8, empty" [ref=f2e956]
+                      - button "Cell row 13, column 9, empty" [ref=f2e957]
+                      - button "Cell row 13, column 10, empty" [ref=f2e958]
+                      - button "Cell row 13, column 11, empty" [ref=f2e959]
+                      - button "Cell row 13, column 12, empty" [ref=f2e960]
+                      - button "Cell row 13, column 13, empty" [ref=f2e961]
+                      - button "Cell row 13, column 14, empty" [ref=f2e962]
+                      - button "Cell row 13, column 15, empty" [ref=f2e963]
+                      - button "Cell row 13, column 16, empty" [ref=f2e964]
+                      - button "Cell row 13, column 17, empty" [ref=f2e965]
+                      - button "Cell row 13, column 18, empty" [ref=f2e966]
+                      - button "Cell row 13, column 19, empty" [ref=f2e967]
+                      - button "Cell row 13, column 20, empty" [ref=f2e968]
+                      - button "Cell row 14, column 1, empty" [ref=f2e969]
+                      - button "Cell row 14, column 2, empty" [ref=f2e970]
+                      - button "Cell row 14, column 3, empty" [ref=f2e971]
+                      - button "Cell row 14, column 4, empty" [ref=f2e972]
+                      - button "Cell row 14, column 5, empty" [ref=f2e973]
+                      - button "Cell row 14, column 6, empty" [ref=f2e974]
+                      - button "Cell row 14, column 7, empty" [ref=f2e975]
+                      - button "Cell row 14, column 8, empty" [ref=f2e976]
+                      - button "Cell row 14, column 9, empty" [ref=f2e977]
+                      - button "Cell row 14, column 10, empty" [ref=f2e978]
+                      - button "Cell row 14, column 11, empty" [ref=f2e979]
+                      - button "Cell row 14, column 12, empty" [ref=f2e980]
+                      - button "Cell row 14, column 13, empty" [ref=f2e981]
+                      - button "Cell row 14, column 14, empty" [ref=f2e982]
+                      - button "Cell row 14, column 15, empty" [ref=f2e983]
+                      - button "Cell row 14, column 16, empty" [ref=f2e984]
+                      - button "Cell row 14, column 17, empty" [ref=f2e985]
+                      - button "Cell row 14, column 18, empty" [ref=f2e986]
+                      - button "Cell row 14, column 19, empty" [ref=f2e987]
+                      - button "Cell row 14, column 20, empty" [ref=f2e988]
+                      - button "Cell row 15, column 1, empty" [ref=f2e989]
+                      - button "Cell row 15, column 2, empty" [ref=f2e990]
+                      - button "Cell row 15, column 3, empty" [ref=f2e991]
+                      - button "Cell row 15, column 4, empty" [ref=f2e992]
+                      - button "Cell row 15, column 5, empty" [ref=f2e993]
+                      - button "Cell row 15, column 6, empty" [ref=f2e994]
+                      - button "Cell row 15, column 7, empty" [ref=f2e995]
+                      - button "Cell row 15, column 8, empty" [ref=f2e996]
+                      - button "Cell row 15, column 9, empty" [ref=f2e997]
+                      - button "Cell row 15, column 10, empty" [ref=f2e998]
+                      - button "Cell row 15, column 11, empty" [ref=f2e999]
+                      - button "Cell row 15, column 12, empty" [ref=f2e1000]
+                      - button "Cell row 15, column 13, empty" [ref=f2e1001]
+                      - button "Cell row 15, column 14, empty" [ref=f2e1002]
+                      - button "Cell row 15, column 15, empty" [ref=f2e1003]
+                      - button "Cell row 15, column 16, empty" [ref=f2e1004]
+                      - button "Cell row 15, column 17, empty" [ref=f2e1005]
+                      - button "Cell row 15, column 18, empty" [ref=f2e1006]
+                      - button "Cell row 15, column 19, empty" [ref=f2e1007]
+                      - button "Cell row 15, column 20, empty" [ref=f2e1008]
+                      - button "Cell row 16, column 1, empty" [ref=f2e1009]
+                      - button "Cell row 16, column 2, empty" [ref=f2e1010]
+                      - button "Cell row 16, column 3, empty" [ref=f2e1011]
+                      - button "Cell row 16, column 4, empty" [ref=f2e1012]
+                      - button "Cell row 16, column 5, empty" [ref=f2e1013]
+                      - button "Cell row 16, column 6, empty" [ref=f2e1014]
+                      - button "Cell row 16, column 7, empty" [ref=f2e1015]
+                      - button "Cell row 16, column 8, empty" [ref=f2e1016]
+                      - button "Cell row 16, column 9, empty" [ref=f2e1017]
+                      - button "Cell row 16, column 10, empty" [ref=f2e1018]
+                      - button "Cell row 16, column 11, empty" [ref=f2e1019]
+                      - button "Cell row 16, column 12, empty" [ref=f2e1020]
+                      - button "Cell row 16, column 13, empty" [ref=f2e1021]
+                      - button "Cell row 16, column 14, empty" [ref=f2e1022]
+                      - button "Cell row 16, column 15, empty" [ref=f2e1023]
+                      - button "Cell row 16, column 16, empty" [ref=f2e1024]
+                      - button "Cell row 16, column 17, empty" [ref=f2e1025]
+                      - button "Cell row 16, column 18, empty" [ref=f2e1026]
+                      - button "Cell row 16, column 19, empty" [ref=f2e1027]
+                      - button "Cell row 16, column 20, empty" [ref=f2e1028]
+                      - button "Cell row 17, column 1, empty" [ref=f2e1029]
+                      - button "Cell row 17, column 2, empty" [ref=f2e1030]
+                      - button "Cell row 17, column 3, empty" [ref=f2e1031]
+                      - button "Cell row 17, column 4, empty" [ref=f2e1032]
+                      - button "Cell row 17, column 5, empty" [ref=f2e1033]
+                      - button "Cell row 17, column 6, empty" [ref=f2e1034]
+                      - button "Cell row 17, column 7, empty" [ref=f2e1035]
+                      - button "Cell row 17, column 8, empty" [ref=f2e1036]
+                      - button "Cell row 17, column 9, empty" [ref=f2e1037]
+                      - button "Cell row 17, column 10, empty" [ref=f2e1038]
+                      - button "Cell row 17, column 11, empty" [ref=f2e1039]
+                      - button "Cell row 17, column 12, empty" [ref=f2e1040]
+                      - button "Cell row 17, column 13, empty" [ref=f2e1041]
+                      - button "Cell row 17, column 14, empty" [ref=f2e1042]
+                      - button "Cell row 17, column 15, empty" [ref=f2e1043]
+                      - button "Cell row 17, column 16, empty" [ref=f2e1044]
+                      - button "Cell row 17, column 17, empty" [ref=f2e1045]
+                      - button "Cell row 17, column 18, empty" [ref=f2e1046]
+                      - button "Cell row 17, column 19, empty" [ref=f2e1047]
+                      - button "Cell row 17, column 20, empty" [ref=f2e1048]
+                      - button "Cell row 18, column 1, empty" [ref=f2e1049]
+                      - button "Cell row 18, column 2, empty" [ref=f2e1050]
+                      - button "Cell row 18, column 3, empty" [ref=f2e1051]
+                      - button "Cell row 18, column 4, empty" [ref=f2e1052]
+                      - button "Cell row 18, column 5, empty" [ref=f2e1053]
+                      - button "Cell row 18, column 6, empty" [ref=f2e1054]
+                      - button "Cell row 18, column 7, empty" [ref=f2e1055]
+                      - button "Cell row 18, column 8, empty" [ref=f2e1056]
+                      - button "Cell row 18, column 9, empty" [ref=f2e1057]
+                      - button "Cell row 18, column 10, empty" [ref=f2e1058]
+                      - button "Cell row 18, column 11, empty" [ref=f2e1059]
+                      - button "Cell row 18, column 12, empty" [ref=f2e1060]
+                      - button "Cell row 18, column 13, empty" [ref=f2e1061]
+                      - button "Cell row 18, column 14, empty" [ref=f2e1062]
+                      - button "Cell row 18, column 15, empty" [ref=f2e1063]
+                      - button "Cell row 18, column 16, empty" [ref=f2e1064]
+                      - button "Cell row 18, column 17, empty" [ref=f2e1065]
+                      - button "Cell row 18, column 18, empty" [ref=f2e1066]
+                      - button "Cell row 18, column 19, empty" [ref=f2e1067]
+                      - button "Cell row 18, column 20, empty" [ref=f2e1068]
+                      - button "Cell row 19, column 1, empty" [ref=f2e1069]
+                      - button "Cell row 19, column 2, empty" [ref=f2e1070]
+                      - button "Cell row 19, column 3, empty" [ref=f2e1071]
+                      - button "Cell row 19, column 4, empty" [ref=f2e1072]
+                      - button "Cell row 19, column 5, empty" [ref=f2e1073]
+                      - button "Cell row 19, column 6, empty" [ref=f2e1074]
+                      - button "Cell row 19, column 7, empty" [ref=f2e1075]
+                      - button "Cell row 19, column 8, empty" [ref=f2e1076]
+                      - button "Cell row 19, column 9, empty" [ref=f2e1077]
+                      - button "Cell row 19, column 10, empty" [ref=f2e1078]
+                      - button "Cell row 19, column 11, empty" [ref=f2e1079]
+                      - button "Cell row 19, column 12, empty" [ref=f2e1080]
+                      - button "Cell row 19, column 13, empty" [ref=f2e1081]
+                      - button "Cell row 19, column 14, empty" [ref=f2e1082]
+                      - button "Cell row 19, column 15, empty" [ref=f2e1083]
+                      - button "Cell row 19, column 16, empty" [ref=f2e1084]
+                      - button "Cell row 19, column 17, empty" [ref=f2e1085]
+                      - button "Cell row 19, column 18, empty" [ref=f2e1086]
+                      - button "Cell row 19, column 19, empty" [ref=f2e1087]
+                      - button "Cell row 19, column 20, empty" [ref=f2e1088]
+                      - button "Cell row 20, column 1, empty" [ref=f2e1089]
+                      - button "Cell row 20, column 2, empty" [ref=f2e1090]
+                      - button "Cell row 20, column 3, empty" [ref=f2e1091]
+                      - button "Cell row 20, column 4, empty" [ref=f2e1092]
+                      - button "Cell row 20, column 5, empty" [ref=f2e1093]
+                      - button "Cell row 20, column 6, empty" [ref=f2e1094]
+                      - button "Cell row 20, column 7, empty" [ref=f2e1095]
+                      - button "Cell row 20, column 8, empty" [ref=f2e1096]
+                      - button "Cell row 20, column 9, empty" [ref=f2e1097]
+                      - button "Cell row 20, column 10, empty" [ref=f2e1098]
+                      - button "Cell row 20, column 11, empty" [ref=f2e1099]
+                      - button "Cell row 20, column 12, empty" [ref=f2e1100]
+                      - button "Cell row 20, column 13, empty" [ref=f2e1101]
+                      - button "Cell row 20, column 14, empty" [ref=f2e1102]
+                      - button "Cell row 20, column 15, empty" [ref=f2e1103]
+                      - button "Cell row 20, column 16, empty" [ref=f2e1104]
+                      - button "Cell row 20, column 17, empty" [ref=f2e1105]
+                      - button "Cell row 20, column 18, empty" [ref=f2e1106]
+                      - button "Cell row 20, column 19, empty" [ref=f2e1107]
+                      - button "Cell row 20, column 20, empty" [ref=f2e1108]
+              - generic:
+                - button "Use hint, 2 remaining":
+                  - generic: "2"
+                - button "Replay"
+                - button "New Puzzle" [active]
+              - generic:
+                - paragraph:
+                  - strong: F
+                  - text: ": Fill Mode •"
+                  - strong: M
+                  - text: ": Mark Mode • Click/Drag to interact • Arrow keys to navigate •"
+                  - strong: Enter
+                  - text: ": Apply mode • Backspace to clear"
+        - generic [ref=f2e1132]:
+          - generic [ref=f2e1133]:
+            - img "Puzzroo Logo" [ref=f2e1134]
+            - generic [ref=f2e1135]: Puzzroo
+          - paragraph [ref=f2e1138]: Loading puzzle...
+    - contentinfo [ref=f2e1121]:
+      - generic [ref=f2e1123]:
+        - paragraph [ref=f2e1125]: © 2026 Puzzroo
+        - generic [ref=f2e1126]:
+          - link "FAQ" [ref=f2e1127] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=f2e1128] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=f2e1129] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=f2e1130] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=f2e101] [cursor=pointer]
+  - alert [ref=f2e284]

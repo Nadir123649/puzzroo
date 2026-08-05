@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server"
 import { withAuth } from "../../../route-helpers"
+import type { Actor } from "../../../route-helpers"
 import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService"
 import { saveProgressSchema } from "@/lib/server/puzzles/nonogram/validators"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { rateLimit } from "@/lib/server/utils/http"
 
-async function saveHandler(req: NextRequest, user: { id: string; role: string }, params: { id: string }) {
+async function saveHandler(req: NextRequest, actor: Actor, params: { id: string }) {
   if (!rateLimit(req, "nonogram-save", 60)) {
     return errorResponse(429, "rate_limited", "Too many requests")
   }
@@ -19,7 +20,7 @@ async function saveHandler(req: NextRequest, user: { id: string; role: string },
   }
 
   const { grid, elapsedTime, hintsUsed, mistakes, moves } = val.data
-  const result = await sessionService.saveProgress(params.id, user.id, grid, elapsedTime, hintsUsed, mistakes, moves)
+  const result = await sessionService.saveProgress(params.id, actor, grid, elapsedTime, hintsUsed, mistakes, moves)
   return successResponse(result)
 }
 

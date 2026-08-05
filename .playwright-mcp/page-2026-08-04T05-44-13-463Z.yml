@@ -1,0 +1,197 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e5]:
+        - link "Puzzroo" [ref=e7] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e13]:
+          - link "Sign up" [ref=e14] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=e15] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: Light Mode
+            - img "Theme icon" [ref=e18]
+    - main [ref=e19]:
+      - main [ref=e20]:
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - img "Nonogram" [ref=e25]
+            - img "Nonogram" [ref=e26]
+          - heading "Nonogram" [level=1] [ref=e27]
+          - generic [ref=e28]:
+            - generic [ref=e29]: "Difficulty:"
+            - generic [ref=e30]:
+              - button "Easy" [ref=e32] [cursor=pointer]
+              - button "Medium" [ref=e34] [cursor=pointer]
+              - button "Hard" [active] [ref=e36] [cursor=pointer]
+          - button "Play ▶" [ref=e38] [cursor=pointer]:
+            - generic [ref=e39]: Play
+            - generic [ref=e40]: ▶
+          - generic [ref=e41]: OR
+          - link [ref=e43] [cursor=pointer]:
+            - /url: /daily-challenge/nonogram
+            - button "Daily Challenge" [ref=e44]
+          - link [ref=e45] [cursor=pointer]:
+            - /url: /past-puzzles/nonogram
+            - button "Past Puzzles" [ref=e46]
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - heading "Pick a Puzzle" [level=2] [ref=e50]
+            - paragraph [ref=e51]: 1000 hard puzzles available
+          - generic [ref=e96]:
+            - button "Play White Flower puzzle" [ref=e453] [cursor=pointer]:
+              - img "Nonogram" [ref=e456]
+              - generic [ref=e457]:
+                - heading "White Flower" [level=3] [ref=e458]
+                - generic [ref=e459]: generated
+              - generic [ref=e460]:
+                - generic [ref=e461]:
+                  - generic [ref=e462]: Grid Size
+                  - generic [ref=e463]: 15x15
+                - generic [ref=e464]:
+                  - generic [ref=e465]: Est. Time
+                  - generic [ref=e469]: ~11 min
+              - generic [ref=e470]: Start Puzzle
+            - button "Play Woman Biking puzzle" [ref=e474] [cursor=pointer]:
+              - img "Nonogram" [ref=e477]
+              - generic [ref=e478]:
+                - heading "Woman Biking" [level=3] [ref=e479]
+                - generic [ref=e480]: generated
+              - generic [ref=e481]:
+                - generic [ref=e482]:
+                  - generic [ref=e483]: Grid Size
+                  - generic [ref=e484]: 15x15
+                - generic [ref=e485]:
+                  - generic [ref=e486]: Est. Time
+                  - generic [ref=e490]: ~11 min
+              - generic [ref=e491]: Start Puzzle
+            - button "Play Last Quarter Moon With Face puzzle" [ref=e495] [cursor=pointer]:
+              - img "Nonogram" [ref=e498]
+              - generic [ref=e499]:
+                - heading "Last Quarter Moon With Face" [level=3] [ref=e500]
+                - generic [ref=e501]: generated
+              - generic [ref=e502]:
+                - generic [ref=e503]:
+                  - generic [ref=e504]: Grid Size
+                  - generic [ref=e505]: 15x15
+                - generic [ref=e506]:
+                  - generic [ref=e507]: Est. Time
+                  - generic [ref=e511]: ~11 min
+              - generic [ref=e512]: Start Puzzle
+            - button "Play Glowing Star puzzle" [ref=e516] [cursor=pointer]:
+              - img "Nonogram" [ref=e519]
+              - generic [ref=e520]:
+                - heading "Glowing Star" [level=3] [ref=e521]
+                - generic [ref=e522]: generated
+              - generic [ref=e523]:
+                - generic [ref=e524]:
+                  - generic [ref=e525]: Grid Size
+                  - generic [ref=e526]: 15x15
+                - generic [ref=e527]:
+                  - generic [ref=e528]: Est. Time
+                  - generic [ref=e532]: ~11 min
+              - generic [ref=e533]: Start Puzzle
+            - button "Play Anticlockwise Downwards And Upwards Open Circle Arrows puzzle" [ref=e537] [cursor=pointer]:
+              - img "Nonogram" [ref=e540]
+              - generic [ref=e541]:
+                - heading "Anticlockwise Downwards And Upwards Open Circle Arrows" [level=3] [ref=e542]
+                - generic [ref=e543]: generated
+              - generic [ref=e544]:
+                - generic [ref=e545]:
+                  - generic [ref=e546]: Grid Size
+                  - generic [ref=e547]: 15x15
+                - generic [ref=e548]:
+                  - generic [ref=e549]: Est. Time
+                  - generic [ref=e553]: ~11 min
+              - generic [ref=e554]: Start Puzzle
+            - button "Play Snow Capped Mountain puzzle" [ref=e558] [cursor=pointer]:
+              - img "Nonogram" [ref=e561]
+              - generic [ref=e562]:
+                - heading "Snow Capped Mountain" [level=3] [ref=e563]
+                - generic [ref=e564]: generated
+              - generic [ref=e565]:
+                - generic [ref=e566]:
+                  - generic [ref=e567]: Grid Size
+                  - generic [ref=e568]: 15x15
+                - generic [ref=e569]:
+                  - generic [ref=e570]: Est. Time
+                  - generic [ref=e574]: ~11 min
+              - generic [ref=e575]: Start Puzzle
+            - button "Play See No Evil Monkey puzzle" [ref=e579] [cursor=pointer]:
+              - img "Nonogram" [ref=e582]
+              - generic [ref=e583]:
+                - heading "See No Evil Monkey" [level=3] [ref=e584]
+                - generic [ref=e585]: generated
+              - generic [ref=e586]:
+                - generic [ref=e587]:
+                  - generic [ref=e588]: Grid Size
+                  - generic [ref=e589]: 15x15
+                - generic [ref=e590]:
+                  - generic [ref=e591]: Est. Time
+                  - generic [ref=e595]: ~11 min
+              - generic [ref=e596]: Start Puzzle
+            - button "Play First Place Medal puzzle" [ref=e600] [cursor=pointer]:
+              - img "Nonogram" [ref=e603]
+              - generic [ref=e604]:
+                - heading "First Place Medal" [level=3] [ref=e605]
+                - generic [ref=e606]: generated
+              - generic [ref=e607]:
+                - generic [ref=e608]:
+                  - generic [ref=e609]: Grid Size
+                  - generic [ref=e610]: 15x15
+                - generic [ref=e611]:
+                  - generic [ref=e612]: Est. Time
+                  - generic [ref=e616]: ~11 min
+              - generic [ref=e617]: Start Puzzle
+          - generic [ref=e265]:
+            - button "Previous Page" [disabled] [ref=e266]
+            - generic [ref=e269]: Page 1 of 125
+            - button "Next Page" [ref=e270] [cursor=pointer]
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - heading "About Nonogram" [level=2] [ref=e56]
+            - paragraph [ref=e57]: Nonogram is a picture logic puzzle where you reveal a hidden image by filling in cells according to number clues. Each number indicates a consecutive group of filled cells in that row or column. Combine logical reasoning with artistic discovery as beautiful pixel art emerges from your deductions.
+          - generic [ref=e58]:
+            - heading "How To Play Hard Mode" [level=2] [ref=e621]
+            - paragraph [ref=e60]: Decode complex Nonogram puzzles with sophisticated logical deduction. Apply advanced techniques involving simultaneous analysis of multiple rows and columns. Work with edge cases where clue combinations have subtle but critical implications. One incorrect cell cascades into errors throughout the entire puzzle. The final images are highly detailed and rewarding. This difficulty demands exceptional logical thinking, patience, and precise analysis at every step.
+            - generic [ref=e61]:
+              - generic [ref=e62]:
+                - generic [ref=e63]: •
+                - paragraph [ref=e64]: Each number represents a group of consecutive filled cells sequentially
+              - generic [ref=e65]:
+                - generic [ref=e66]: •
+                - paragraph [ref=e67]: Multiple numbers mean multiple groups separated by empty cells throughout
+              - generic [ref=e68]:
+                - generic [ref=e69]: •
+                - paragraph [ref=e70]: At least one empty cell must exist between groups
+          - generic [ref=e71]:
+            - heading "Keyboard Controls" [level=2] [ref=e72]
+            - paragraph [ref=e73]: Left-click to fill cells. Right-click to mark cells as empty. Use ARROW KEYS to navigate. Press SPACE to toggle between fill and mark modes. Press U to undo.
+        - generic [ref=e76]:
+          - paragraph [ref=e77]: Want to access more games or features?
+          - link [ref=e78] [cursor=pointer]:
+            - /url: /signup
+            - button "Subscribe" [ref=e79]
+          - link [ref=e80] [cursor=pointer]:
+            - /url: /login
+            - button "Log In" [ref=e81]
+          - generic [ref=e82]:
+            - paragraph [ref=e273]: 4 August 2026
+            - generic [ref=e83]:
+              - generic [ref=e84]: ⏱
+              - generic [ref=e85]: "Next challenge in: 13h 15m 47s"
+    - contentinfo [ref=e86]:
+      - generic [ref=e88]:
+        - paragraph [ref=e90]: © 2026 Puzzroo
+        - generic [ref=e91]:
+          - link "FAQ" [ref=e92] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=e93] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=e94] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=e95] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=e279] [cursor=pointer]
+  - alert [ref=e283]
