@@ -1031,7 +1031,7 @@ export function useSudoku() {
     newBoard[selectedCell.row][selectedCell.col].isError = false
 
     setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
-    saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes, gameState.score)
+    saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
   }, [selectedCell, gameState])
 
   /**
