@@ -27,6 +27,7 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params: any)
     accuracy: result.accuracy,
     piecesCorrect: result.piecesCorrect,
     totalPieces: result.totalPieces,
+    totalCellsRequired: result.totalPieces,
     pieceResults: result.pieceResults,
     errors: result.errors,
     coverage: result.coverage,

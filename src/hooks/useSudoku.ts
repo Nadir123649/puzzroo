@@ -232,14 +232,9 @@ export function useSudoku() {
   const lastSaveTimestampRef = useRef(0)
   const pendingSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-<<<<<<< HEAD
-  function saveMoveNow(board: SudokuBoard, elapsed: number, hints: number, mists: number, score: number) {
-    if (!sessionIdRef.current) return
-=======
   function saveMoveNow(board: SudokuBoard, elapsed: number, hints: number, mists: number) {
     const sessionId = sessionIdRef.current
     if (!sessionId) return
->>>>>>> c6e6823f40ae6a0f0ac65c85498f75c04d0d44c0
     
     const now = Date.now()
     if (pendingSaveTimeoutRef.current) {
@@ -284,44 +279,8 @@ export function useSudoku() {
       return
     }
     
-<<<<<<< HEAD
-    const boardString = sudokuBoardToString(board)
-    const currentMoveCount = movesRef.current + 1
-    const currentMistakes = mists
-    
-    savePendingRef.current = true
-    lastSaveTimestampRef.current = now
-    
-    setTimeout(() => {
-      savePendingRef.current = false
-    }, 500)
-    
-    const abortController = new AbortController()
-    abortRef.current = abortController
-    
-    gameApi.saveMove('sudoku', sessionIdRef.current, {
-      board: boardString,
-      elapsedTime: Number(elapsed),
-      hintsUsed: Number(hints),
-      mistakes: Number(currentMistakes),
-      moves: Number(currentMoveCount),
-      score: Number(score),
-    }, abortController.signal).then((res: any) => {
-      if (res && res.error) {
-        // Non-fatal: session may have ended or not yet be active — game state is preserved locally
-        return
-      }
-      sessionDataRef.current = res
-      movesRef.current = currentMoveCount
-    }).catch(err => {
-      // Silently ignore AbortError (navigation) and known transient session states
-      if (err?.name === 'AbortError') return
-    })
-=======
     performSave()
->>>>>>> c6e6823f40ae6a0f0ac65c85498f75c04d0d44c0
   }
-
   /**
    * True if an earlier cell (row-major order) in the same row, column, or
    * 3x3 box already holds the same value. Restores match in-game error
@@ -933,7 +892,7 @@ export function useSudoku() {
       if (notesMode) {
         const newBoard = updateCellNote(gameState.currentBoard, selectedCell, num)
         setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
-        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes, gameState.score)
+        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
         return
       }
 
@@ -980,7 +939,7 @@ export function useSudoku() {
         }
 
         const nextMistakes = isDuplicateMistake ? gameState.mistakes : gameState.mistakes + 1
-        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, nextMistakes, gameState.score)
+        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, nextMistakes)
 
         // Check game over
         if (nextMistakes >= INITIAL_GAME_STATE.maxMistakes) {
@@ -1013,7 +972,7 @@ export function useSudoku() {
         if (scoreDelta > 0) {
           addScoreFeedback(scoreDelta)
         }
-        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes, gameState.score)
+        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
 
         // Check for win - validate entire board using Sudoku rules
         if (isBoardComplete(newBoard) && isValidCompletedBoard(newBoard)) {
@@ -1125,7 +1084,7 @@ export function useSudoku() {
     hintsUsedRef.current += 1
     updateScore(-20) // -20 for hint
     setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
-    saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes, gameState.score)
+    saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
 
     // Check for win - validate entire board using Sudoku rules
     if (isBoardComplete(newBoard) && isValidCompletedBoard(newBoard)) {
@@ -1276,7 +1235,7 @@ export function useSudoku() {
       }
 
       if (e.key === 'Escape') {
-        saveMoveNow(gameState.currentBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes, gameState.score)
+        saveMoveNow(gameState.currentBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
         void abandonSession()
         return
       }
