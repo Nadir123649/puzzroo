@@ -26,6 +26,8 @@ export interface SavedGameState {
   time: number
   gameStatus: GameStatus
   savedAt: number
+  selectedCell?: Position | null
+  history?: SudokuBoard[]
 }
 
 function getScopedKey(baseKey: string): string {

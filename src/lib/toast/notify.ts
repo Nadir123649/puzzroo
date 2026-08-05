@@ -22,38 +22,42 @@ function baseOptions(duration: number, options?: ToastOptions): ToastOptions {
 
 export const notify = {
   success(message: string, options?: ToastOptions): string | null {
-    return toast.success(message, baseOptions(DEFAULT_DURATION, options))
+    return toast.success(message, baseOptions(DEFAULT_DURATION, { id: message, ...options }))
   },
 
   error(message: string, options?: ToastOptions): string | null {
-    return toast.error(message, baseOptions(PERSISTENT_DURATION, options))
+    return toast.error(message, baseOptions(PERSISTENT_DURATION, { id: message, ...options }))
   },
 
   info(message: string, options?: ToastOptions): string | null {
-    return toast(message, baseOptions(DEFAULT_DURATION, options))
+    return toast(message, baseOptions(DEFAULT_DURATION, { id: message, ...options }))
   },
 
   loading(message: string, options?: ToastOptions): string | null {
-    return toast.loading(message, { ...options })
+    return toast.loading(message, { id: message, ...options })
   },
 
   /**
    * Convenience for keyed success/error messages with optional `{n}` vars.
    */
   key(key: ToastKey, vars?: Record<string, string | number>, options?: ToastOptions): string | null {
-    return toast(formatToast(key, vars), baseOptions(DEFAULT_DURATION, options))
+    const message = formatToast(key, vars)
+    return toast(message, baseOptions(DEFAULT_DURATION, { id: message, ...options }))
   },
 
   successKey(key: ToastKey, vars?: Record<string, string | number>, options?: ToastOptions): string | null {
-    return toast.success(formatToast(key, vars), baseOptions(DEFAULT_DURATION, options))
+    const message = formatToast(key, vars)
+    return toast.success(message, baseOptions(DEFAULT_DURATION, { id: message, ...options }))
   },
 
   errorKey(key: ToastKey, vars?: Record<string, string | number>, options?: ToastOptions): string | null {
-    return toast.error(formatToast(key, vars), baseOptions(PERSISTENT_DURATION, options))
+    const message = formatToast(key, vars)
+    return toast.error(message, baseOptions(PERSISTENT_DURATION, { id: message, ...options }))
   },
 
   infoKey(key: ToastKey, vars?: Record<string, string | number>, options?: ToastOptions): string | null {
-    return toast(formatToast(key, vars), baseOptions(DEFAULT_DURATION, options))
+    const message = formatToast(key, vars)
+    return toast(message, baseOptions(DEFAULT_DURATION, { id: message, ...options }))
   },
 
   /**
@@ -82,7 +86,8 @@ export const notify = {
    * Show an error toast derived from an API result.
    */
   errorFromResult(result: ApiLike, fallbackKey: ToastKey = 'SYSTEM_GENERIC_ERROR'): string | null {
-    return toast.error(notify.fromResult(result, fallbackKey), baseOptions(PERSISTENT_DURATION))
+    const message = notify.fromResult(result, fallbackKey)
+    return toast.error(message, baseOptions(PERSISTENT_DURATION, { id: message }))
   },
 
   /**
@@ -97,6 +102,8 @@ export const notify = {
     },
     options?: ToastOptions
   ): Promise<T> {
+    // For promise toasts, we generate a unique ID so it doesn't clash with static message IDs
+    // but the library updates the loading toast internally.
     return toast.promise(
       promise,
       {

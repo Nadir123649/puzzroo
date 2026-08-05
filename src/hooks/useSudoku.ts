@@ -165,6 +165,7 @@ export function useSudoku() {
   const [isInitialized, setIsInitialized] = useState(false)
   const [loading, setLoading] = useState(true)
   const [boardHistory, setBoardHistory] = useState<SudokuBoard[]>([])
+  const [selectedCell, setSelectedCell] = useState<Position | null>(null)
 
   const [gameState, setGameState] = useState<{
     currentBoard: SudokuBoard
@@ -422,21 +423,37 @@ export function useSudoku() {
                  // Local autosave runs every second — fresher than the server
                  // save (debounced/throttled). Prefer local board when available
                  // so a move entered moments before refresh is not lost.
+                 const pId = serverSession.puzzleId || (serverSession.puzzle && (serverSession.puzzle.id || serverSession.puzzle._id)) || ''
                  const local = loadGameState(undefined, currentDiff)
-                 const localBoard = (local && local.puzzleId === serverSession.puzzleId) ? local.currentBoard : null
-                 const localTime = local && local.puzzleId === serverSession.puzzleId ? local.time : undefined
+                 const localBoard = (local && (local.puzzleId === pId || local.puzzleId === serverSession.puzzleId)) ? local.currentBoard : null
+                 const localTime = (local && (local.puzzleId === pId || local.puzzleId === serverSession.puzzleId)) ? local.time : undefined
+                 
+                 if (localBoard) {
+                   for (let r = 0; r < 9; r++) {
+                     for (let c = 0; c < 9; c++) {
+                       if (!restored[r][c].value && localBoard[r][c].notes) {
+                         restored[r][c].notes = [...localBoard[r][c].notes]
+                       }
+                       if (!restored[r][c].value && localBoard[r][c].value) {
+                         restored[r][c] = { ...localBoard[r][c] }
+                       }
+                     }
+                   }
+                 }
+
                   setGameState({
-                    currentBoard: localBoard ?? restored,
+                    currentBoard: restored,
                     initialBoard: convertToSudokuBoard(freshArr),
                     solution: convertToSudokuBoard(solArr),
-                    puzzleId: serverSession.puzzleId,
+                    puzzleId: serverSession.puzzleId || pId,
                     mistakes: serverSession.mistakes || 0,
                     score: serverSession.score || 0,
                     time: localTime ?? (serverSession.elapsedTime || 0),
                     gameStatus: status as GameStatus,
                   })
                   setBoardHistory(local?.history || [])
-                  puzzleIdRef.current = serverSession.puzzleId
+                  if (local?.selectedCell) setSelectedCell(local.selectedCell)
+                  puzzleIdRef.current = serverSession.puzzleId || pId
                 sessionIdRef.current = serverSession.id
                 sessionCreatedRef.current = true
                 hintsUsedRef.current = serverSession.hintsUsed || 0
@@ -465,21 +482,37 @@ export function useSudoku() {
               if (restored) {
                 const status = dcSession.status === 'completed' ? 'won'
                   : dcSession.status === 'abandoned' ? 'lost' : 'playing'
+                 const pId = dcSession.puzzleId || (dcSession.puzzle && (dcSession.puzzle.id || dcSession.puzzle._id)) || ''
                  const local = loadGameState(undefined, currentDiff)
-                 const localBoard = (local && local.puzzleId === dcSession.puzzleId) ? local.currentBoard : null
-                 const localTime = local && local.puzzleId === dcSession.puzzleId ? local.time : undefined
+                 const localBoard = (local && (local.puzzleId === pId || local.puzzleId === dcSession.puzzleId)) ? local.currentBoard : null
+                 const localTime = (local && (local.puzzleId === pId || local.puzzleId === dcSession.puzzleId)) ? local.time : undefined
+                 
+                 if (localBoard) {
+                   for (let r = 0; r < 9; r++) {
+                     for (let c = 0; c < 9; c++) {
+                       if (!restored[r][c].value && localBoard[r][c].notes) {
+                         restored[r][c].notes = [...localBoard[r][c].notes]
+                       }
+                       if (!restored[r][c].value && localBoard[r][c].value) {
+                         restored[r][c] = { ...localBoard[r][c] }
+                       }
+                     }
+                   }
+                 }
+
                  setGameState({
-                   currentBoard: localBoard ?? restored,
+                   currentBoard: restored,
                    initialBoard: convertToSudokuBoard(freshArr),
                    solution: convertToSudokuBoard(solArr),
-                   puzzleId: dcSession.puzzleId,
+                   puzzleId: dcSession.puzzleId || pId,
                    mistakes: dcSession.mistakes || 0,
                    score: dcSession.score || 0,
                    time: localTime ?? (dcSession.elapsedTime || 0),
                    gameStatus: status as GameStatus,
                  })
                  setBoardHistory(local?.history || [])
-                puzzleIdRef.current = dcSession.puzzleId
+                 if (local?.selectedCell) setSelectedCell(local.selectedCell)
+                puzzleIdRef.current = dcSession.puzzleId || pId
                 sessionIdRef.current = dcSession.id
                 sessionCreatedRef.current = true
                 hintsUsedRef.current = dcSession.hintsUsed || 0
@@ -511,6 +544,7 @@ export function useSudoku() {
                   gameStatus: saved.gameStatus as GameStatus,
                 })
                 setBoardHistory(saved.history || [])
+                if (saved.selectedCell) setSelectedCell(saved.selectedCell)
                 puzzleIdRef.current = saved.puzzleId
                 setIsInitialized(true)
                 if (!getAccessToken()) ensureGuestId()
@@ -549,6 +583,7 @@ export function useSudoku() {
               gameStatus: saved.gameStatus as GameStatus,
             })
             setBoardHistory(saved.history || [])
+            if (saved.selectedCell) setSelectedCell(saved.selectedCell)
             puzzleIdRef.current = saved.puzzleId
             startTimeRef.current = Date.now() - ((saved.time || 0) * 1000)
             setIsInitialized(true)
@@ -575,16 +610,35 @@ export function useSudoku() {
                 // elapsedTime survives the next tick instead of snapping back
                 // to ~0.
                 startTimeRef.current = Date.now() - (sessionData.elapsedTime || 0) * 1000
+                
+                const pId = sessionData.puzzleId || next.puzzleId
+                const local = loadGameState(undefined, currentDiff)
+                const localBoard = (local && (local.puzzleId === pId)) ? local.currentBoard : null
+                
+                if (localBoard) {
+                  for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                      if (!restored[r][c].value && localBoard[r][c].notes) {
+                        restored[r][c].notes = [...localBoard[r][c].notes]
+                      }
+                      if (!restored[r][c].value && localBoard[r][c].value) {
+                        restored[r][c] = { ...localBoard[r][c] }
+                      }
+                    }
+                  }
+                }
+
                 setGameState({
                   currentBoard: restored,
                   initialBoard: next.initialBoard,
                   solution: next.solution,
-                  puzzleId: sessionData.puzzleId || next.puzzleId,
+                  puzzleId: pId,
                   mistakes: sessionData.mistakes || 0,
                   score: sessionData.score || 0,
                   time: sessionData.elapsedTime || 0,
                   gameStatus: next.gameStatus,
                 })
+                if (local?.selectedCell) setSelectedCell(local.selectedCell)
                 hintsUsedRef.current = sessionData.hintsUsed || 0
                 movesRef.current = sessionData.moves || 0
                 startTimeRef.current = Date.now() - ((sessionData.elapsedTime || 0) * 1000)
@@ -620,7 +674,6 @@ export function useSudoku() {
   }, [isInitialized, isDailyChallenge, dateParam])
 
   // UI state
-  const [selectedCell, setSelectedCell] = useState<Position | null>(null)
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null)
   const [notesMode, setNotesMode] = useState(false)
   const [isWinAnimating, setIsWinAnimating] = useState(false)
@@ -663,6 +716,7 @@ export function useSudoku() {
         time: gameState.time,
         gameStatus: gameState.gameStatus,
         history: boardHistory,
+        selectedCell,
       }, undefined, difficulty)
       lastLocalSaveAtRef.current = Date.now()
     }
@@ -1068,6 +1122,7 @@ export function useSudoku() {
     setIsWinAnimating(false)
     setScoreFeedbacks([])
     setBoardHistory([])
+    cellMistakesRef.current.clear()
     // Explicit baseline: the timer keeps running (status stays 'playing'),
     // so point it at now instead of nulling it and waiting for the
     // (never re-running) effect.
@@ -1108,6 +1163,7 @@ export function useSudoku() {
     setIsWinAnimating(false)
     setScoreFeedbacks([])
     setBoardHistory([])
+    cellMistakesRef.current.clear()
     // Explicit baseline: the timer keeps running (status stays 'playing'),
     // so point it at now instead of nulling it and waiting for the
     // (never re-running) effect.
