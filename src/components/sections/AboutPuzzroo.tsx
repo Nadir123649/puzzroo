@@ -60,7 +60,7 @@ export function AboutPuzzroo() {
                 <div className="font-urbanist font-medium text-[10px] md:text-[12px] text-white/80">Active Players</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 md:p-5">
-                <div className="font-urbanist font-bold text-[16px] md:text-[28px] text-white">6</div>
+                <div className="font-urbanist font-bold text-[16px] md:text-[28px] text-white">8</div>
                 <div className="font-urbanist font-medium text-[10px] md:text-[12px] text-white/80">Puzzle Games</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 md:p-5">

@@ -7,6 +7,7 @@ import { User, CreditCard, Bell, History, LogOut, Activity, Sun, Moon } from 'lu
 import { logout, getCurrentUser } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { useTheme } from '../../hooks/use-theme'
+import { images } from '@/lib/utils'
 
 interface ProfileDropdownProps {
   userName: string
@@ -175,18 +176,13 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
               }}
               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150 text-left"
             >
-              <div className="relative w-4 h-4 mr-1">
-                <Sun
-                  size={18}
-                  className={`absolute inset-0 ${theme === 'light' ? 'theme-toggle-sun rotate-0 opacity-100' : 'theme-toggle-sun -rotate-180 opacity-0'}`}
-                  strokeWidth={2}
-                />
-                <Moon
-                  size={18}
-                  className={`absolute inset-0 ${theme === 'dark' ? 'theme-toggle-moon rotate-0 opacity-100' : 'theme-toggle-moon rotate-180 opacity-0'}`}
-                  strokeWidth={2}
-                />
-              </div>
+              <img
+                src={images.darkIcon}
+                alt="Theme icon"
+                width={18}
+                height={18}
+                className={`w-[18px] h-[18px] select-none transition-transform duration-200 mr-2 ${theme === 'light' ? 'scale-x-[-1]' : ''}`}
+              />
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white transition-colors duration-300">
                 {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
               </span>
