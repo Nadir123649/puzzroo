@@ -153,16 +153,14 @@ export function Features() {
                 </div>
 
                 {/* Tablet Feature Right Image */}
-                <div className="flex justify-center md:flex lg:hidden">
-                  <div className="relative w-full aspect-[359/559] rounded-[12px] overflow-hidden">
+                <div className="flex justify-center md:flex lg:hidden mt-6">
+                  <div className="relative w-full h-[550px] rounded-[12px] overflow-hidden bg-[#6949FF]">
                     <Image
                       src={images.featureStars}
                       alt="Premium Features"
-                      width={359}
-                      height={559}
+                      fill
                       sizes="(max-width: 1024px) 100vw, 359px"
-                      className="w-full h-auto object-cover"
-                      style={{ width: '100%', height: 'auto' }}
+                      className="object-cover object-[center_48%]"
                     />
                   </div>
                 </div>

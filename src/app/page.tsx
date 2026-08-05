@@ -9,7 +9,7 @@ import { AboutPuzzroo } from "@/components/sections/AboutPuzzroo";
 export default function Home() {
   return (
     <AppLayout>
-      <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[50px]">
+      <div className="w-full max-w-[1380px] mx-auto flex-grow flex flex-col pb-0 md:pb-[px]">
         <Hero />
         <FreeGames />
         <div className="md:mb-12">

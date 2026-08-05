@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { ensureSession, updateUser, isLoggedIn } from '@/lib/auth/frontend-auth'
-import { ThemeOverlay } from '@/components/layout/ThemeOverlay'
 
 type Theme = 'light' | 'dark'
 
@@ -38,6 +37,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light')
     }
     window.addEventListener('theme-change', syncTheme)
+
+    // Enable transitions after initial render
+    requestAnimationFrame(() => {
+      document.documentElement.classList.add('hydrated')
+    })
     
     setMounted(true)
 
@@ -74,16 +78,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggleTheme = () => {
     const root = window.document.documentElement
     const nextTheme: Theme = theme === 'light' ? 'dark' : 'light'
-    const isDarkToLight = theme === 'dark' && nextTheme === 'light'
-    const isLightToDark = theme === 'light' && nextTheme === 'dark'
-
-    if (isDarkToLight) {
-      // Flash to white
-      document.dispatchEvent(new Event('theme-transition-start'))
-    } else if (isLightToDark) {
-      // Flash to dark
-      document.dispatchEvent(new Event('theme-transition-start'))
-    }
 
     if (nextTheme === 'dark') {
       root.classList.add('dark')
@@ -103,7 +97,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, mounted }}>
-      <ThemeOverlay />
       {children}
     </ThemeContext.Provider>
   )

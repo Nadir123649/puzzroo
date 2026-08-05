@@ -93,10 +93,26 @@ export default function RootLayout({
         <style dangerouslySetInnerHTML={{
           __html: `
             /* Critical CSS to prevent flash - loaded immediately */
-            html { background-color: #ffffff; }
-            html.dark { background-color: #181A20 !important; color-scheme: dark; }
-            html.dark body { background-color: #181A20 !important; }
-            html.dark header { background-color: #181A20 !important; }
+            html { 
+              background-color: #ffffff;
+            }
+            html.dark { 
+              background-color: #181A20 !important; 
+              color-scheme: dark;
+            }
+            html.dark body { 
+              background-color: #181A20 !important;
+            }
+            html.dark header { 
+              background-color: #181A20 !important;
+            }
+            /* Ensure all theme transitions are synchronized */
+            * {
+              transition-property: background-color, border-color, color, fill, stroke;
+              transition-duration: 200ms;
+              transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+              transition-delay: 0ms;
+            }
           `
         }} />
         <script id="theme-init" dangerouslySetInnerHTML={{

@@ -201,7 +201,7 @@ function GameHeroContent({ name, image, imageLight, difficulties, gameSlug }: Ga
                     role="presentation"
                     width={101}
                     height={101}
-                    className="w-[101px] h-[101px] object-contain absolute block dark:hidden"
+                    className="w-[101px] h-[101px] object-contain absolute opacity-100 dark:opacity-0 transition-opacity duration-300"
                   />
                   <Image
                     src={image}
@@ -209,7 +209,7 @@ function GameHeroContent({ name, image, imageLight, difficulties, gameSlug }: Ga
                     role="presentation"
                     width={101}
                     height={101}
-                    className="w-[101px] h-[101px] object-contain absolute hidden dark:block"
+                    className="w-[101px] h-[101px] object-contain absolute opacity-0 dark:opacity-100 transition-opacity duration-300"
                   />
                 </>
               ) : (

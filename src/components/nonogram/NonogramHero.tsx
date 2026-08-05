@@ -92,7 +92,7 @@ export function NonogramHero({ backTo }: NonogramHeroProps = {}) {
                 alt="Nonogram Light"
                 width={101}
                 height={101}
-                className="w-[101px] h-[101px] object-contain dark:hidden"
+                className="w-[101px] h-[101px] object-contain absolute opacity-100 dark:opacity-0 transition-opacity duration-200"
                 priority
               />
               {/* Dark Theme Image */}
@@ -101,7 +101,7 @@ export function NonogramHero({ backTo }: NonogramHeroProps = {}) {
                 alt="Nonogram Dark"
                 width={101}
                 height={101}
-                className="w-[101px] h-[101px] object-contain hidden dark:block"
+                className="w-[101px] h-[101px] object-contain absolute opacity-0 dark:opacity-100 transition-opacity duration-200"
                 priority
               />
             </div>
