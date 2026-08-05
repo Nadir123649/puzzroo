@@ -1,22 +1,28 @@
 /**
- * Nonogram Puzzle Dataset (generated)
+ * Nonogram Puzzle Dataset (gold)
  *
- * Source of truth: tools/puzzle-generators/export_nonogram.py writes
- *   shared/src/data/nonogram/{easy,medium,hard,expert}.json
+ * Source of truth: tools/puzzle-generators/ (generate_easy_gold.py for
+ * easy-gold.json, svg_to_grid.js + generate_gold.py for the 15x15/20x20
+ * medium-gold.json / hard-gold.json native datasets, hand-authored pixel art
+ * shapes, human-verified, QA-gated).
+ *
+ * Active integration: easy/medium/hard = the gold JSON datasets (50 native
+ * puzzles each, rasterized from hand-authored SVGs, all line-solvable with
+ * unique solutions, human-reviewed). Legacy easy.json / medium.json / hard.json
+ * archived under ./archive/ as reference data.
+ *
  * Each JSON record stores the solution compactly as a `sol` 0/1 string plus
  * `rowClues`/`columnClues` as number[][]. This module decodes them into the
  * app's PuzzleData shape (solution: number[][]; rowClues/columnClues: Clue[]).
  *
  * Every puzzle is uniqueness-guaranteed and line-solvable (no guessing),
- * verified by validate_nonogram_dataset.py at generation time.
+ * verified at generation time.
  */
 
-import easyJson from './easy.json'
-import mediumJson from './medium.json'
-import hardJson from './hard.json'
-import expertJson from './expert.json'
+import easyGoldJson from './easy-gold.json'
+import mediumGoldJson from './medium-gold.json'
+import hardGoldJson from './hard-gold.json'
 import type { Difficulty, PuzzleData } from '@shared/lib/nonogram/types'
-import { dailyPuzzles } from './daily'
 
 interface RawRecord {
   id: string
@@ -128,17 +134,15 @@ function buildPool(raw: unknown): PuzzleData[] {
   return out
 }
 
-export const easyPuzzles: PuzzleData[] = buildPool(easyJson)
-export const mediumPuzzles: PuzzleData[] = buildPool(mediumJson)
-export const hardPuzzles: PuzzleData[] = buildPool(hardJson)
-export const expertPuzzles: PuzzleData[] = buildPool(expertJson)
+export const easyPuzzles: PuzzleData[] = buildPool(easyGoldJson)
+export const mediumPuzzles: PuzzleData[] = buildPool(mediumGoldJson)
+export const hardPuzzles: PuzzleData[] = buildPool(hardGoldJson)
 
 // Puzzle Registry - Central source of truth
 export const puzzleRegistry: Record<Difficulty, PuzzleData[]> = {
   easy: easyPuzzles,
   medium: mediumPuzzles,
   hard: hardPuzzles,
-  expert: expertPuzzles,
 }
 
 // All puzzles flattened
@@ -146,15 +150,11 @@ export const allPuzzles: PuzzleData[] = [
   ...easyPuzzles,
   ...mediumPuzzles,
   ...hardPuzzles,
-  ...expertPuzzles,
 ]
-
-// Daily puzzles
-export { dailyPuzzles }
 
 // Get puzzle by ID
 export function getPuzzleById(id: string): PuzzleData | undefined {
-  return allPuzzles.find((p) => p.id === id) || dailyPuzzles.find((p) => p.id === id)
+  return allPuzzles.find((p) => p.id === id)
 }
 
 // Get puzzles by difficulty
@@ -166,7 +166,7 @@ export function getPuzzlesByDifficulty(difficulty: Difficulty): PuzzleData[] {
 export function getRandomPuzzle(difficulty: Difficulty): PuzzleData {
   let puzzles = getPuzzlesByDifficulty(difficulty)
   if (puzzles.length === 0) {
-    for (const d of ['easy', 'medium', 'hard', 'expert'] as Difficulty[]) {
+    for (const d of ['easy', 'medium', 'hard'] as Difficulty[]) {
       const fb = getPuzzlesByDifficulty(d)
       if (fb.length > 0) { puzzles = fb; break }
     }
@@ -174,14 +174,6 @@ export function getRandomPuzzle(difficulty: Difficulty): PuzzleData {
   if (puzzles.length === 0) throw new Error(`No nonogram puzzles available`)
   const randomIndex = Math.floor(Math.random() * puzzles.length)
   return puzzles[randomIndex]
-}
-
-// Get daily puzzle (rotates every day)
-export function getTodaysDailyPuzzle(): PuzzleData {
-  const today = new Date()
-  const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000)
-  const puzzleIndex = dayOfYear % dailyPuzzles.length
-  return dailyPuzzles[puzzleIndex]
 }
 
 // Get puzzles by category
@@ -200,7 +192,5 @@ export const puzzleCounts = {
   easy: easyPuzzles.length,
   medium: mediumPuzzles.length,
   hard: hardPuzzles.length,
-  expert: expertPuzzles.length,
   total: allPuzzles.length,
-  daily: dailyPuzzles.length,
 }

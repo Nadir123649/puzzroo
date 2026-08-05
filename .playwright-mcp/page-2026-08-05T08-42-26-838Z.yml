@@ -1,0 +1,82 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e553]:
+    - banner [ref=e554]:
+      - generic [ref=e556]:
+        - link "Puzzroo" [ref=e558] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e564]:
+          - link "Sign up" [ref=e565] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=e566] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [ref=e567] [cursor=pointer]:
+            - generic [ref=e568]: Light Mode
+            - img "Theme icon" [ref=e569]
+    - main [ref=e570]:
+      - generic [ref=e571]:
+        - generic [ref=e574]:
+          - img "Cross Math" [ref=e576]
+          - heading "Cross Math" [level=1] [ref=e577]
+          - generic [ref=e578]:
+            - generic [ref=e579]: "Difficulty:"
+            - generic [ref=e580]:
+              - button "Easy" [ref=e582] [cursor=pointer]
+              - button "Medium" [ref=e584] [cursor=pointer]
+              - button "Hard" [ref=e586] [cursor=pointer]
+          - button "Play ▶" [ref=e588] [cursor=pointer]:
+            - generic [ref=e589]: Play
+            - generic [ref=e590]: ▶
+          - generic [ref=e591]: OR
+          - link [ref=e593] [cursor=pointer]:
+            - /url: /daily-challenge/cross-math
+            - button "Daily Challenge" [ref=e594]
+          - link [ref=e595] [cursor=pointer]:
+            - /url: /past-puzzles/cross-math
+            - button "Past Puzzles" [ref=e596]
+        - generic [ref=e599]:
+          - generic [ref=e600]:
+            - heading "About Cross Math" [level=2] [ref=e601]
+            - paragraph [ref=e602]: Cross Math combines the challenge of mathematical equations with the logic of crossword-style puzzles. Fill in the missing numbers to complete equations that work both horizontally and vertically. Perfect for sharpening your arithmetic skills and logical thinking in an engaging puzzle format.
+          - generic [ref=e603]:
+            - heading "How To Play Hard Mode" [level=2] [ref=e604]
+            - paragraph [ref=e605]: Conquer complex CrossMath challenges with expert strategies. Master the complete order of operations with multiple nested calculations in each equation. Analyze how every number placement impacts all connected equations throughout the grid. Use systematic elimination to narrow down possibilities before testing solutions. Think strategically about the interaction between horizontal and vertical constraints. Verify each placement carefully as mistakes compound quickly at this difficulty.
+            - generic [ref=e606]:
+              - generic [ref=e607]:
+                - generic [ref=e608]: •
+                - paragraph [ref=e609]: Fill blank cells with numbers 1-9 to complete equations
+              - generic [ref=e610]:
+                - generic [ref=e611]: •
+                - paragraph [ref=e612]: Each equation must be mathematically correct
+              - generic [ref=e613]:
+                - generic [ref=e614]: •
+                - paragraph [ref=e615]: Use logical deduction - no guessing required
+          - generic [ref=e616]:
+            - heading "Keyboard Controls" [level=2] [ref=e617]
+            - paragraph [ref=e618]: Tap a blank cell to select it. Use the number pad to enter your answer. Use the Undo button or press U to undo your last entry. Use the Eraser button to clear a cell.
+        - generic [ref=e621]:
+          - paragraph [ref=e622]: Want to access more games or features?
+          - link [ref=e623] [cursor=pointer]:
+            - /url: /signup
+            - button "Subscribe" [ref=e624]
+          - link [ref=e625] [cursor=pointer]:
+            - /url: /login
+            - button "Log In" [ref=e626]
+          - generic [ref=e627]:
+            - paragraph [ref=e628]: 5 August 2026
+            - generic [ref=e629]:
+              - generic [ref=e630]: ⏱
+              - generic [ref=e631]: "Next challenge in: 10h 17m 33s"
+    - contentinfo [ref=e632]:
+      - generic [ref=e634]:
+        - paragraph [ref=e636]: © 2026 Puzzroo
+        - generic [ref=e637]:
+          - link "FAQ" [ref=e638] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=e639] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=e640] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=e641] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=e549] [cursor=pointer]
+  - alert [ref=e642]

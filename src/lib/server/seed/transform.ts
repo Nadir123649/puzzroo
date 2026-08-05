@@ -11,10 +11,9 @@ import mediumSudoku from "@shared/data/sudoku/medium.json";
 import hardSudoku from "@shared/data/sudoku/hard.json";
 import expertSudoku from "@shared/data/sudoku/expert.json";
 
-import easyNonogram from "@shared/data/nonogram/easy.json";
-import mediumNonogram from "@shared/data/nonogram/medium.json";
-import hardNonogram from "@shared/data/nonogram/hard.json";
-import expertNonogram from "@shared/data/nonogram/expert.json";
+import easyGoldNonogram from "@shared/data/nonogram/easy-gold.json";
+import mediumGoldNonogram from "@shared/data/nonogram/medium-gold.json";
+import hardGoldNonogram from "@shared/data/nonogram/hard-gold.json";
 
 import easyCrossMath from "@shared/data/crossmath/easy.json";
 import mediumCrossMath from "@shared/data/crossmath/medium.json";
@@ -78,7 +77,9 @@ export function sudokuDocs(): IndexedDoc[] {
 }
 
 export function nonogramDocs(): IndexedDoc[] {
-  const raw = [...easyNonogram, ...mediumNonogram, ...hardNonogram, ...expertNonogram] as any[];
+  // Active pools are the gold native datasets (10x10/15x15/20x20, 50 each).
+  // Legacy easy/medium/hard JSON files remain untouched as reference data.
+  const raw = [...easyGoldNonogram, ...mediumGoldNonogram, ...hardGoldNonogram] as any[];
   const docs = raw.map((r) => ({
     puzzleId: r.id,
     game: "nonogram",

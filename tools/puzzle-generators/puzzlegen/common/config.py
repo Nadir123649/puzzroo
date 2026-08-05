@@ -61,12 +61,14 @@ CROSSMATH_MAX_RESULT = 30
 # Densities chosen so every size reliably yields UNIQUE, fully line-solvable
 # puzzles (no guessing). Large grids need higher fill because line-solving
 # relies on overlap deductions from large blocks; difficulty comes from size.
-#   easy   -> 10x10   (recognizable curated pictures + procedural fill)
-#   medium -> 15x15   (recognizable curated pictures + procedural fill)
-#   hard   -> 20x20   (procedural, large board)
-#   expert -> 25x25 + 30x30 (procedural, industry-standard largest boards)
-NONOGRAM_SIZES = {"easy": [10], "medium": [15], "hard": [20], "expert": [25, 30]}
-NONOGRAM_DENSITY = {"easy": 0.55, "medium": 0.60, "hard": 0.64, "expert": 0.66}
+#   easy   -> 10x10
+#   medium -> 15x15
+#   hard   -> 20x20
+# The shipped dataset (shared/src/data/nonogram) is produced from the
+# hand-authored gold pixel shapes via svg_to_grid.js + generate_gold.py; the
+# procedural generator below is kept for dev/regeneration workflows.
+NONOGRAM_SIZES = {"easy": [10], "medium": [15], "hard": [20]}
+NONOGRAM_DENSITY = {"easy": 0.55, "medium": 0.60, "hard": 0.64}
 
 
 def all_buckets() -> list[Bucket]:

@@ -1,6 +1,6 @@
 import UserStatistics from "@/lib/server/models/UserStatistics";
 import PuzzleStatistics from "@/lib/server/models/PuzzleStatistics";
-import PlaySession from "@/lib/server/models/PlaySession";
+import NonogramPlaySession from "@/lib/server/models/NonogramPlaySession";
 import type { NonogramDifficulty, PlayerStats } from "../types";
 
 export class StatisticsService {
@@ -75,7 +75,7 @@ export class StatisticsService {
         )
       : accuracy;
 
-    const completedSessions = await PlaySession.find({
+    const completedSessions = await NonogramPlaySession.find({
       userId,
       status: "completed",
     })

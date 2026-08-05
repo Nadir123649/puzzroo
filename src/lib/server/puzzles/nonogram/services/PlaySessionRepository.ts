@@ -3,9 +3,14 @@ import NonogramPlaySession from "@/lib/server/models/NonogramPlaySession"
 import type { NonogramDifficulty, SessionStatus } from "../types"
 
 interface CreateSessionInput {
-  userId: string
+  userId?: string
+  guestId?: string
   puzzleId: string
+  gameType?: "nonogram" | "daily_challenge"
+  dailyChallengeId?: string
   difficulty: NonogramDifficulty
+  grid?: string[][]
+  isReplay?: boolean
 }
 
 interface SessionQuery {
@@ -16,54 +21,96 @@ interface SessionQuery {
 
 export class PlaySessionRepository {
   async create(input: CreateSessionInput) {
-    return NonogramPlaySession.create({
+    const doc: Record<string, unknown> = {
       sessionId: uuidv4(),
-      userId: input.userId,
       puzzleId: input.puzzleId,
+      gameType: input.gameType || "nonogram",
       difficulty: input.difficulty,
       status: "playing",
-      grid: [],
+      grid: input.grid || [],
+      isReplay: input.isReplay || false,
       startedAt: new Date(),
       lastSaveAt: new Date(),
-    })
+    }
+    if (input.dailyChallengeId) {
+      doc.dailyChallengeId = input.dailyChallengeId
+    }
+    if (input.guestId) {
+      doc.guestId = input.guestId
+    } else {
+      doc.userId = input.userId
+    }
+    return NonogramPlaySession.create(doc)
   }
 
   async findById(sessionId: string) {
     return NonogramPlaySession.findOne({ sessionId })
   }
 
-  async findByUserAndPuzzle(userId: string, puzzleId: string) {
-    return NonogramPlaySession.findOne({ userId, puzzleId })
-  }
-
-  async findActiveByUserAndPuzzle(userId: string, puzzleId: string) {
-    return NonogramPlaySession.findOne({
-      userId,
+  async findActiveByUserAndPuzzle(puzzleId: string, userId?: string, guestId?: string) {
+    const filter: Record<string, unknown> = {
       puzzleId,
       status: { $in: ["playing", "paused"] },
-    })
+    }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
+    return NonogramPlaySession.findOne(filter)
   }
 
   async findByUserAndStatus(
-    userId: string,
-    status: SessionStatus | SessionStatus[]
+    status: SessionStatus | SessionStatus[],
+    userId?: string,
+    guestId?: string,
+    gameType?: "nonogram" | "daily_challenge",
+    difficulty?: string
   ) {
     const statuses = Array.isArray(status) ? status : [status]
-    return NonogramPlaySession.findOne({
-      userId,
-      status: { $in: statuses },
-    }).sort({ lastSaveAt: -1 })
+    const filter: Record<string, unknown> = { status: { $in: statuses } }
+    if (gameType) {
+      filter.$or = [
+        { gameType },
+        { gameType: { $exists: false } },
+      ]
+    }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
+    if (difficulty) {
+      filter.difficulty = difficulty
+    }
+    return NonogramPlaySession.findOne(filter).sort({ lastSaveAt: -1 })
   }
 
-  async findByUser(
-    userId: string,
-    query: SessionQuery = {}
-  ) {
-    const filter: Record<string, unknown> = { userId }
+  async findActiveDailyByChallenge(dailyChallengeId: string, userId?: string, guestId?: string) {
+    const filter: Record<string, unknown> = {
+      dailyChallengeId,
+      gameType: "daily_challenge",
+      status: { $in: ["playing", "paused"] },
+    }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
+    return NonogramPlaySession.findOne(filter).sort({ lastSaveAt: -1 })
+  }
+
+  async findByUser(query: SessionQuery = {}, userId?: string, guestId?: string) {
+    const filter: Record<string, unknown> = {}
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
     if (query.status) {
       filter.status = query.status
     }
-    const total = await NonogramPlaySession.countDocuments(filter)
+    const total = await NonogramPlaySession.countDocuments(filter).catch(() => 0)
     const sessions = await NonogramPlaySession.find(filter)
       .sort({ lastSaveAt: -1 })
       .skip(query.skip || 0)
@@ -72,79 +119,69 @@ export class PlaySessionRepository {
     return { sessions, total }
   }
 
-  async findRecentByUser(userId: string, limit = 10) {
-    return NonogramPlaySession.find({ userId })
+  async findRecentByUser(limit = 10, userId?: string, guestId?: string) {
+    const filter: Record<string, unknown> = {}
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
+    return NonogramPlaySession.find(filter)
       .sort({ lastSaveAt: -1 })
       .limit(limit)
       .lean()
   }
 
-  async updateStatus(sessionId: string, status: SessionStatus) {
-    return NonogramPlaySession.findOneAndUpdate(
-      { sessionId },
-      { $set: { status } },
-      { new: true }
-    )
-  }
-
   async saveProgress(
     sessionId: string,
-    userId: string,
-    grid: any,
+    grid: string[][],
     elapsedTime: number,
     hintsUsed: number,
     mistakes: number,
-    moves: number
+    moves: number,
+    userId?: string,
+    guestId?: string
   ) {
+    const filter: Record<string, unknown> = { sessionId, status: { $in: ["playing", "paused"] } }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
     return NonogramPlaySession.findOneAndUpdate(
-      {
-        sessionId,
-        userId: userId,
-        status: { $in: ["playing", "paused"] },
-      },
+      filter,
       {
         $set: {
           grid,
-          elapsedTime,
-          hintsUsed,
-          mistakes,
           lastSaveAt: new Date(),
         },
-        $max: { moves },
+        $max: { elapsedTime, hintsUsed, mistakes, moves },
       },
-      { new: true }
-    )
-  }
-
-  async saveGrid(sessionId: string, grid: any, elapsedTime: number, moves?: number) {
-    const update: Record<string, any> = {
-      $set: {
-        grid,
-        elapsedTime,
-        lastSaveAt: new Date(),
-      },
-    }
-    if (moves !== undefined) {
-      update.$max = { moves }
-    }
-    return NonogramPlaySession.findOneAndUpdate(
-      { sessionId },
-      update,
-      { new: true }
+      { returnDocument: "after" }
     )
   }
 
   async complete(
     sessionId: string,
-    result: { correct: number; total: number; accuracy: number; elapsedTime: number; moves: number; mistakes: number; hintsUsed: number; score: number }
+    result: { correct: number; total: number; accuracy: number; elapsedTime: number; moves: number; mistakes: number; hintsUsed: number; score: number },
+    grid: string[][],
+    userId?: string,
+    guestId?: string
   ) {
     const now = new Date()
+    const filter: Record<string, unknown> = { sessionId, status: { $in: ["playing", "paused"] } }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
     return NonogramPlaySession.findOneAndUpdate(
-      { sessionId, status: { $in: ["playing", "paused"] } },
+      filter,
       {
         $set: {
           status: "completed",
           completedAt: now,
+          grid,
           "result.correct": result.correct,
           "result.total": result.total,
           "result.accuracy": result.accuracy,
@@ -161,13 +198,19 @@ export class PlaySessionRepository {
           lastSaveAt: now,
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     )
   }
 
-  async abandon(sessionId: string) {
+  async abandon(sessionId: string, userId?: string, guestId?: string) {
+    const filter: Record<string, unknown> = { sessionId, status: { $in: ["playing", "paused"] } }
+    if (guestId) {
+      filter.guestId = guestId
+    } else if (userId) {
+      filter.userId = userId
+    }
     return NonogramPlaySession.findOneAndUpdate(
-      { sessionId, status: { $in: ["playing", "paused"] } },
+      filter,
       {
         $set: {
           status: "abandoned",
@@ -175,7 +218,7 @@ export class PlaySessionRepository {
           lastSaveAt: new Date(),
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     )
   }
 
@@ -183,7 +226,7 @@ export class PlaySessionRepository {
     return NonogramPlaySession.findOneAndUpdate(
       { sessionId },
       { $inc: { restartCount: 1 } },
-      { new: true }
+      { returnDocument: "after" }
     )
   }
 

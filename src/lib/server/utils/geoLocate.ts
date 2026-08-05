@@ -2,46 +2,84 @@
 // Results are cached per-IP for 24h (city/country rarely change) and
 // concurrent lookups for the same IP share one in-flight promise.
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const FETCH_TIMEOUT_MS = 1500;
+const PUBLIC_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const LOCAL_CACHE_TTL_MS = 10 * 1000; // 10s for local/dev connections so VPN changes are detected dynamically
+const FETCH_TIMEOUT_MS = 2500;
 
-const cache = new Map<string, { location: string | null; expiresAt: number }>();
-const inFlight = new Map<string, Promise<string | null>>();
+const cache = new Map<string, { location: string; expiresAt: number }>();
+const inFlight = new Map<string, Promise<string>>();
 
-export async function geoLocate(ip: string | null): Promise<string | null> {
-  if (!ip || ip === "127.0.0.1" || ip === "::1" || ip === "localhost" || ip.startsWith("192.168.") || ip.startsWith("10.")) {
-    return null;
-  }
+const isLocalIp = (ip: string | null): boolean => {
+  if (!ip) return true;
+  return (
+    ip === "127.0.0.1" ||
+    ip === "::1" ||
+    ip === "localhost" ||
+    ip.startsWith("192.168.") ||
+    ip.startsWith("10.") ||
+    ip.startsWith("172.16.") ||
+    ip.startsWith("172.31.")
+  );
+};
 
-  const cached = cache.get(ip);
-  if (cached) {
-    if (cached.expiresAt > Date.now()) return cached.location;
-    cache.delete(ip);
-  }
+export async function geoLocate(ip: string | null, forceRefresh = false): Promise<string> {
+  const isLocal = isLocalIp(ip);
+  const cacheKey = isLocal ? "self" : (ip as string);
 
-  const pending = inFlight.get(ip);
-  if (pending) return pending;
-
-  const lookup = (async () => {
-    try {
-      const res = await fetch(
-        `https://ip-api.com/json/${ip}?fields=city,country`,
-        { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) }
-      );
-      if (!res.ok) return null;
-      const data = await res.json();
-      const location = data.city && data.country
-        ? `${data.city}, ${data.country}`
-        : data.country || null;
-      cache.set(ip, { location, expiresAt: Date.now() + CACHE_TTL_MS });
-      return location;
-    } catch {
-      return null;
-    } finally {
-      inFlight.delete(ip);
+  if (!forceRefresh) {
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      if (cached.expiresAt > Date.now()) return cached.location;
+      cache.delete(cacheKey);
     }
+  }
+
+  const pending = inFlight.get(cacheKey);
+  if (pending && !forceRefresh) return pending;
+
+  const lookup = (async (): Promise<string> => {
+    const targetUrlPrimary = isLocal ? "https://ipwho.is/" : `https://ipwho.is/${ip}`;
+    const targetUrlFallback = isLocal ? "http://ip-api.com/json/" : `http://ip-api.com/json/${ip}?fields=city,country`;
+    const ttl = isLocal ? LOCAL_CACHE_TTL_MS : PUBLIC_CACHE_TTL_MS;
+
+    try {
+      // Primary: ipwho.is (Free HTTPS API)
+      const res = await fetch(targetUrlPrimary, {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success !== false && (data.city || data.country)) {
+          const loc = data.city && data.country ? `${data.city}, ${data.country}` : data.country;
+          cache.set(cacheKey, { location: loc, expiresAt: Date.now() + ttl });
+          return loc;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+
+    try {
+      // Fallback: http://ip-api.com/json (Free HTTP)
+      const res = await fetch(targetUrlFallback, {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.city || data.country) {
+          const loc = data.city && data.country ? `${data.city}, ${data.country}` : data.country;
+          cache.set(cacheKey, { location: loc, expiresAt: Date.now() + ttl });
+          return loc;
+        }
+      }
+    } catch {
+      // Fallback failed
+    }
+
+    return "Unknown Location";
   })();
 
-  inFlight.set(ip, lookup);
+  inFlight.set(cacheKey, lookup);
   return lookup;
 }
+

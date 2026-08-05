@@ -158,10 +158,10 @@ export function useNonogram(initialPuzzleId?: string) {
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false)
-  const [dragDirection, setDragDirection] = useState<DragDirection>(null)
   const [dragPreviewCells, setDragPreviewCells] = useState<Set<string>>(new Set())
   const [dragAction, setDragAction] = useState<'fill' | 'erase' | 'mark' | 'unmark' | null>(null)
   const dragStartPos = useRef<CellPosition | null>(null)
+  const dragPathRef = useRef<string[]>([])
 
   const hasDraggedRef = useRef(false)
   const wasDraggingRef = useRef(false)
@@ -602,73 +602,36 @@ export function useNonogram(initialPuzzleId?: string) {
     return `${position.row}-${position.col}`
   }
 
-  // Helper: Determine drag direction
-  const determineDragDirection = useCallback((
-    start: CellPosition,
-    current: CellPosition
-  ): DragDirection => {
-    const rowDiff = Math.abs(current.row - start.row)
-    const colDiff = Math.abs(current.col - start.col)
-
-    if (rowDiff === 0 && colDiff === 0) return null
-
-    // Lock to dominant direction
-    if (rowDiff > colDiff) return 'vertical'
-    if (colDiff > rowDiff) return 'horizontal'
-
-    // Equal movement - keep previous direction or default to horizontal
-    return dragDirection || 'horizontal'
-  }, [dragDirection])
-
   // Helper: Update the drag preview path
   const updateDragPreview = useCallback((currentPos: CellPosition) => {
     if (!dragStartPos.current || !currentPuzzle) return
-
-    const start = dragStartPos.current
-    const direction = determineDragDirection(start, currentPos)
     
-    // Set/update drag direction lock
-    let activeDirection = dragDirection
-    if (activeDirection === null && direction !== null) {
-      setDragDirection(direction)
-      activeDirection = direction
-    }
+    const key = `${currentPos.row}-${currentPos.col}`
+    const path = dragPathRef.current
 
-    const preview = new Set<string>()
-    
-    if (activeDirection === 'horizontal') {
-      const row = start.row
-      const minCol = Math.min(start.col, currentPos.col)
-      const maxCol = Math.max(start.col, currentPos.col)
-      for (let col = minCol; col <= maxCol; col++) {
-        const cellState = grid[row]?.[col]
-        const isLocked = cellState === 'filled' && currentPuzzle.solution[row]?.[col] === 1
-        if (!isLocked) {
-          preview.add(`${row}-${col}`)
-        }
-      }
-    } else if (activeDirection === 'vertical') {
-      const col = start.col
-      const minRow = Math.min(start.row, currentPos.row)
-      const maxRow = Math.max(start.row, currentPos.row)
-      for (let row = minRow; row <= maxRow; row++) {
-        const cellState = grid[row]?.[col]
-        const isLocked = cellState === 'filled' && currentPuzzle.solution[row]?.[col] === 1
-        if (!isLocked) {
-          preview.add(`${row}-${col}`)
-        }
-      }
+    // If hovering over the last cell again, do nothing
+    if (path.length > 0 && path[path.length - 1] === key) return
+
+    const existingIndex = path.indexOf(key)
+
+    if (existingIndex !== -1) {
+      // Backtracking: truncate the path to the existing index (removing cells drawn after it)
+      path.length = existingIndex + 1
+      setDragPreviewCells(new Set(path))
     } else {
-      // No direction determined yet, just the start cell
-      const cellState = grid[start.row]?.[start.col]
-      const isLocked = cellState === 'filled' && currentPuzzle.solution[start.row]?.[start.col] === 1
+      // New cell: check if it's lockable, if not, add it
+      const cellState = grid[currentPos.row]?.[currentPos.col]
+      const isLocked = cellState === 'filled' && currentPuzzle.solution[currentPos.row]?.[currentPos.col] === 1
       if (!isLocked) {
-        preview.add(`${start.row}-${start.col}`)
+        path.push(key)
+        setDragPreviewCells((prev) => {
+          const next = new Set(prev)
+          next.add(key)
+          return next
+        })
       }
     }
-
-    setDragPreviewCells(preview)
-  }, [dragStartPos, dragDirection, grid, currentPuzzle, determineDragDirection])
+  }, [grid, currentPuzzle])
 
   // Start drag
   const handleDragStart = useCallback((position: CellPosition) => {
@@ -685,7 +648,6 @@ export function useNonogram(initialPuzzleId?: string) {
     }
 
     setIsDragging(true)
-    setDragDirection(null)
     dragStartPos.current = position
 
     // Determine the action based on the starting cell state and inputMode
@@ -700,8 +662,10 @@ export function useNonogram(initialPuzzleId?: string) {
 
     // Set initial preview with the start cell
     const preview = new Set<string>()
-    preview.add(`${position.row}-${position.col}`)
+    const startKey = `${position.row}-${position.col}`
+    preview.add(startKey)
     setDragPreviewCells(preview)
+    dragPathRef.current = [startKey]
 
     hasDraggedRef.current = false
   }, [currentPuzzle, gameStatus, grid, inputMode])
@@ -820,7 +784,6 @@ export function useNonogram(initialPuzzleId?: string) {
     }
 
     setIsDragging(false)
-    setDragDirection(null)
     dragStartPos.current = null
     setDragPreviewCells(new Set())
     setDragAction(null)

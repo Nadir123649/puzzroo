@@ -4,7 +4,7 @@ import { connectDB } from "@/lib/server/db"
 import { randomPuzzleEngine } from "@/lib/server/puzzles/tangram/services/RandomPuzzleEngine"
 import { tangramToResponse } from "@/lib/server/puzzles/tangram"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
-import { cacheHeaders, rateLimit } from "@/lib/server/utils/http"
+import { rateLimit } from "@/lib/server/utils/http"
 import { tangramDifficultySchema } from "@/lib/server/puzzles/tangram/validators"
 
 export async function GET(request: NextRequest) {
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     const response = tangramToResponse(puzzle)
     const res = successResponse(response)
-    Object.entries(cacheHeaders(30)).forEach(([k, v]) => res.headers.set(k, v))
+    res.headers.set("Cache-Control", "no-store")
     return res
   } catch (error: any) {
     const code = error.message || "internal_error"

@@ -1,10 +1,10 @@
 """Validate the generated Nonogram datasets (industry-standard guarantees).
 
-For every puzzle in shared/src/data/nonogram/{easy,medium,hard,expert}.json:
+For every puzzle in shared/src/data/nonogram/{easy,medium,hard}.json:
   * structure (sol length == size*size; row/column clue counts == size)
   * rowClues/columnClues exactly match the solution (empty line encoded as [])
   * EXACTLY ONE solution — verified by the line-solver completing to the same
-    grid (the generator's uniqueness guarantee, re-checked here)
+    grid (the converter's uniqueness guarantee, re-checked here)
   * unique puzzle id and no duplicate solution grids
   * every difficulty meets its expected size set
 
@@ -26,12 +26,14 @@ sys.path.insert(0, str(HERE))
 
 from puzzlegen.nonogram.line_solver import clue_from_line, is_line_solvable
 
-DIFFICULTIES = ("easy", "medium", "hard", "expert")
+DIFFICULTIES = ("easy", "medium", "hard")
 EXPECTED_SIZES = {
-    "easy": [10],
-    "medium": [15],
-    "hard": [20],
-    "expert": [25, 30],
+    "easy": [5],
+    "medium": [10],
+    "hard": [15],
+}
+SINGLE_FILE_SIZES = {
+    "easy-gold.json": [10],
 }
 
 
@@ -69,7 +71,8 @@ def validate_difficulty(name: str, path: Path, min_count: int) -> bool:
         row_clues = rec.get("rowClues", [])
         col_clues = rec.get("columnClues", [])
 
-        if size not in EXPECTED_SIZES[name]:
+        expected = SINGLE_FILE_SIZES.get(name, EXPECTED_SIZES.get(name, []))
+        if size not in expected:
             bad_size += 1
             ok = False
         if len(sol) != size * size or len(row_clues) != size or len(col_clues) != size:
@@ -122,16 +125,29 @@ def validate_difficulty(name: str, path: Path, min_count: int) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Validate generated Nonogram datasets.")
     ap.add_argument("--data", type=str,
-                    default=str(HERE.parent.parent.parent / "shared" / "src" / "data" / "nonogram"))
+                    default=str(HERE.parent.parent / "shared" / "src" / "data" / "nonogram"))
     ap.add_argument("--min-count", type=int, default=1)
+    ap.add_argument("--file", type=str, default=None,
+                    help="validate a single file (e.g. easy-gold.json) "
+                         "with --size; skips the standard trio")
+    ap.add_argument("--size", type=int, default=None,
+                    help="expected grid size for --file validation")
     args = ap.parse_args()
 
     data_dir = Path(args.data)
     print(f"Validating Nonogram datasets in {data_dir}")
     all_ok = True
-    for name in DIFFICULTIES:
-        if not validate_difficulty(name, data_dir / f"{name}.json", args.min_count):
+
+    if args.file:
+        if args.size is None:
+            print("[FAIL] --size is required with --file")
+            return 1
+        if not validate_difficulty(args.file, data_dir / args.file, args.min_count):
             all_ok = False
+    else:
+        for name in DIFFICULTIES:
+            if not validate_difficulty(name, data_dir / f"{name}.json", args.min_count):
+                all_ok = False
 
     if all_ok:
         print("All Nonogram datasets valid.")

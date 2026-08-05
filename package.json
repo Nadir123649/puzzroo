@@ -13,10 +13,12 @@
     "sudoku:validate": "py tools/puzzle-generators/validate_sudoku_dataset.py --min-count 900",
     "crossmath:generate": "py tools/puzzle-generators/export_crossmath.py --difficulty all --count 1000",
     "crossmath:validate": "py tools/puzzle-generators/validate_crossmath_dataset.py --min-count 900",
-    "nonogram:generate": "py tools/puzzle-generators/generate_all_nonograms.py",
-    "nonogram:validate": "py tools/puzzle-generators/validate_nonogram_dataset.py --min-count 1000",
+    "nonogram:generate": "py tools/puzzle-generators/generate_easy_gold.py",
+    "nonogram:validate": "py tools/puzzle-generators/qa_gold.py",
     "db:seed": "tsx scripts/seed-puzzles.ts",
     "db:seed:dry": "tsx scripts/seed-puzzles.ts --dry",
+    "db:reset:nonogram": "tsx scripts/resetNonogramSessions.ts",
+    "db:reset:nonogram:dry": "tsx scripts/resetNonogramSessions.ts --dry",
     "db:indexes": "tsx scripts/ensureIndexes.ts"
   },
   "dependencies": {

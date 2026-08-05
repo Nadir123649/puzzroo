@@ -20,6 +20,7 @@ export interface SaveProgressInput {
   hintsUsed?: number;
   mistakes?: number;
   moves?: number;
+  score?: number;
 }
 
 export interface VerifyCompletionInput {

@@ -157,6 +157,7 @@ export function useCrossMath(initialPuzzleId?: string) {
   const hintsUsedRef = useRef(0)
   const mistakesRef = useRef(0)
   const movesRef = useRef(0)
+  const scoreRef = useRef(0)
   const restoredRef = useRef(false)
 
   // Single authoritative save pipeline: serialized, coalescing, never overlapping.
@@ -164,7 +165,7 @@ export function useCrossMath(initialPuzzleId?: string) {
   // are coalesced into the latest one, so no request is ever aborted.
   const saveQueueRef = useRef<{
     inFlight: boolean
-    pending: { grid: Cell[][]; elapsed: number; hints: number; mists: number; diff: string } | null
+    pending: { grid: Cell[][]; elapsed: number; hints: number; mists: number; diff: string; score: number } | null
   }>({ inFlight: false, pending: null })
   const drainPromiseRef = useRef<Promise<void> | null>(null)
 
@@ -238,6 +239,7 @@ export function useCrossMath(initialPuzzleId?: string) {
                 hintsUsed: item.hints,
                 mistakes: item.mists,
                 moves: movesRef.current,
+                score: item.score,
               })
             } catch (err) {
               // Network/server failure: drop the snapshot, keep local state.
@@ -257,10 +259,10 @@ export function useCrossMath(initialPuzzleId?: string) {
     return drainPromiseRef.current
   }
 
-  function saveMoveNow(grid: Cell[][], elapsed: number, hints: number, mists: number, diff: string) {
+  function saveMoveNow(grid: Cell[][], elapsed: number, hints: number, mists: number, diff: string, score: number) {
     if (!sessionIdRef.current || completionCalledRef.current) return
     movesRef.current += 1
-    saveQueueRef.current.pending = { grid, elapsed, hints, mists, diff }
+    saveQueueRef.current.pending = { grid, elapsed, hints, mists, diff, score }
     void drainSaveQueue()
   }
 
@@ -349,7 +351,7 @@ export function useCrossMath(initialPuzzleId?: string) {
 
               setBoard(freshBoard)
               setMistakes(serverSession.mistakes || 0)
-              setScore(0)
+              setScore(serverSession.score || 0)
               // Local autosave runs every second — fresher than the server
               // elapsed (saved on moves / close-flush). Prefer it when it
               // matches the same puzzle so the countdown resumes exactly
@@ -516,6 +518,7 @@ export function useCrossMath(initialPuzzleId?: string) {
               if (restored) {
                 setBoard(restored)
                 setMistakes(sessionData.mistakes || 0)
+                setScore(sessionData.score || 0)
                 setTime(Math.max(0, getInitialTime(targetDiff) - (sessionData.elapsedTime || 0)))
                 const usedCount = new Map<number, number>()
                 restored.forEach(row => {
@@ -561,6 +564,7 @@ export function useCrossMath(initialPuzzleId?: string) {
       boardRef.current = board
       difficultyRef.current = difficulty
       mistakesRef.current = mistakes
+      scoreRef.current = score
       lastLocalSaveAtRef.current = Date.now()
     }
   }, [board, difficulty, mistakes, score, time, gameStatus, currentPuzzle])
@@ -584,6 +588,7 @@ export function useCrossMath(initialPuzzleId?: string) {
         hintsUsed: hintsUsedRef.current,
         mistakes: mistakesRef.current,
         moves: movesRef.current,
+        score: scoreRef.current,
       })).catch(() => { /* best-effort close flush */ })
     }
 
@@ -708,7 +713,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     }
 
     setBoard(newBoard)
-    saveMoveNow(newBoard, time, hintsUsedRef.current, isCorrect ? mistakes : mistakes + 1, difficulty)
+    saveMoveNow(newBoard, time, hintsUsedRef.current, isCorrect ? mistakes : mistakes + 1, difficulty, score)
 
     // Track number usage count
     const newUsedCount = new Map(usedNumbersCount)
@@ -793,7 +798,7 @@ export function useCrossMath(initialPuzzleId?: string) {
       }
       setBoard(newBoard)
       setIsTyping(false)
-      saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty)
+      saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty, score)
       return
     }
 
@@ -813,7 +818,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     }
 
     setBoard(newBoard)
-    saveMoveNow(newBoard, time, hintsUsedRef.current, isCorrect ? mistakes : mistakes + 1, difficulty)
+    saveMoveNow(newBoard, time, hintsUsedRef.current, isCorrect ? mistakes : mistakes + 1, difficulty, score)
 
     // Track number usage count
     const newUsedCount = new Map(usedNumbersCount)
@@ -914,7 +919,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     }
 
     setBoard(newBoard)
-    saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty)
+    saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty, score)
     setIsTyping(false)
   }, [selectedCell, board, gameStatus, usedNumbersCount, pushToHistory])
 
@@ -1108,7 +1113,7 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     setBoard(newBoard)
     hintsUsedRef.current += 1
-    saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty)
+    saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty, score)
 
     // Track number usage
     const newUsedCount = new Map(usedNumbersCount)
@@ -1219,7 +1224,7 @@ export function useCrossMath(initialPuzzleId?: string) {
           isError: undefined,
         }
         setBoard(newBoard)
-        saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty)
+        saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty, score)
         setIsTyping(false)
         return
       }
@@ -1235,7 +1240,7 @@ export function useCrossMath(initialPuzzleId?: string) {
         isError: !isCorrect,
       }
       setBoard(newBoard)
-      saveMoveNow(newBoard, time, hintsUsedRef.current, isCorrect ? mistakes : mistakes + 1, difficulty)
+      saveMoveNow(newBoard, time, hintsUsedRef.current, isCorrect ? mistakes : mistakes + 1, difficulty, score)
 
       // Track usage count - use newUsedCount as base to preserve overwriting decrement
       const updatedUsedCount = new Map(newUsedCount)

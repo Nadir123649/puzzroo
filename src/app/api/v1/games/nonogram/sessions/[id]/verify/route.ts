@@ -1,11 +1,16 @@
 import { NextRequest } from "next/server"
 import { withAuth } from "../../../route-helpers"
+import type { Actor } from "../../../route-helpers"
 import { verificationEngine } from "@/lib/server/puzzles/nonogram/services/VerificationEngine"
 import { verifyGridSchema } from "@/lib/server/puzzles/nonogram/validators"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { sessionService } from "@/lib/server/puzzles/nonogram/services/SessionService"
+import { rateLimit } from "@/lib/server/utils/http"
 
-export const POST = withAuth(async (req, user, params) => {
+export const POST = withAuth(async (req: NextRequest, actor: Actor, params: any) => {
+  if (!rateLimit(req, "nonogram-verify", 60)) {
+    return errorResponse(429, "rate_limited", "Too many requests")
+  }
   let body: any = {}
   try { body = await req.json() } catch {}
 
@@ -14,7 +19,7 @@ export const POST = withAuth(async (req, user, params) => {
     return errorResponse(400, "validation_error", val.error.issues[0].message)
   }
 
-  const session = await sessionService.getSession(params.id, user.id)
+  const session = await sessionService.getSession(params.id, actor)
   const result = await verificationEngine.verifyCompletion(session.puzzleId, val.data.grid)
 
   return successResponse({

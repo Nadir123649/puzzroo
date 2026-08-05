@@ -116,6 +116,7 @@ export interface SafeSessionResponse {
   lastSaveAt: string
   isReplay: boolean
   restartCount: number
+  score: number
   result?: SessionResult | null
   puzzle?: SafePuzzleResponse
 }
@@ -128,6 +129,7 @@ export interface SaveProgressResponse {
   mistakes: number
   hintsUsed: number
   elapsedTime: number
+  score: number
   progress: ProgressInfo
 }
 

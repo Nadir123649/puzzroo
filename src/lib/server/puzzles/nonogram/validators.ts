@@ -1,9 +1,14 @@
 import { z } from "zod"
 
-export const nonogramDifficultySchema = z.enum(["easy", "medium", "hard", "expert"])
+export const nonogramDifficultySchema = z.enum(["easy", "medium", "hard"])
 
 export const startSessionSchema = z.object({
   puzzleId: z.string().min(1, "puzzleId is required"),
+})
+
+export const startDailySessionSchema = z.object({
+  puzzleId: z.string().min(1, "puzzleId is required"),
+  dailyChallengeId: z.string().min(1, "dailyChallengeId is required"),
 })
 
 const timerFields = {
@@ -14,16 +19,16 @@ const timerFields = {
 }
 
 export const saveProgressSchema = z.object({
-  grid: z.array(z.array(z.enum(["empty", "filled", "marked", "crossed"]))),
+  grid: z.array(z.array(z.enum(["empty", "filled", "marked", "error"]))),
   ...timerFields,
 })
 
 export const verifyGridSchema = z.object({
-  grid: z.array(z.array(z.enum(["empty", "filled", "marked", "crossed"]))),
+  grid: z.array(z.array(z.enum(["empty", "filled", "marked", "error"]))),
 })
 
 export const completeSessionSchema = z.object({
-  grid: z.array(z.array(z.enum(["empty", "filled", "marked", "crossed"]))),
+  grid: z.array(z.array(z.enum(["empty", "filled", "marked", "error"]))),
   ...timerFields,
 })
 

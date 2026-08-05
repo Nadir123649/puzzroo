@@ -229,7 +229,7 @@ export function useSudoku() {
   const savePendingRef = useRef(false)
   const lastSaveTimestampRef = useRef(0)
 
-  function saveMoveNow(board: SudokuBoard, elapsed: number, hints: number, mists: number) {
+  function saveMoveNow(board: SudokuBoard, elapsed: number, hints: number, mists: number, score: number) {
     if (!sessionIdRef.current) return
     
     const now = Date.now()
@@ -257,6 +257,7 @@ export function useSudoku() {
       hintsUsed: Number(hints),
       mistakes: Number(currentMistakes),
       moves: Number(currentMoveCount),
+      score: Number(score),
     }, abortController.signal).then((res: any) => {
       if (res && res.error) {
         // Non-fatal: session may have ended or not yet be active — game state is preserved locally
@@ -303,6 +304,7 @@ export function useSudoku() {
         hintsUsed: Number(hintsUsedRef.current),
         mistakes: Number(gameState.mistakes),
         moves: Number(movesRef.current),
+        score: Number(gameState.score),
       })
     }
     
@@ -614,6 +616,7 @@ export function useSudoku() {
         hintsUsed: hintsUsedRef.current,
         mistakes: mistakesRef.current,
         moves: movesRef.current,
+        score: scoreRef.current,
       })).catch(() => { /* best-effort close flush */ })
     }
 
@@ -757,7 +760,7 @@ export function useSudoku() {
       if (notesMode) {
         const newBoard = updateCellNote(gameState.currentBoard, selectedCell, num)
         setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
-        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
+        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes, gameState.score)
         return
       }
 
@@ -804,7 +807,7 @@ export function useSudoku() {
         }
 
         const nextMistakes = isDuplicateMistake ? gameState.mistakes : gameState.mistakes + 1
-        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, nextMistakes)
+        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, nextMistakes, gameState.score)
 
         // Check game over
         if (nextMistakes >= INITIAL_GAME_STATE.maxMistakes) {
@@ -835,7 +838,7 @@ export function useSudoku() {
         if (scoreDelta > 0) {
           addScoreFeedback(scoreDelta)
         }
-        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
+        saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes, gameState.score)
 
         // Check for win - validate entire board using Sudoku rules
         if (isBoardComplete(newBoard) && isValidCompletedBoard(newBoard)) {
@@ -891,7 +894,7 @@ export function useSudoku() {
     newBoard[selectedCell.row][selectedCell.col].isError = false
 
     setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
-    saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
+    saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes, gameState.score)
   }, [selectedCell, gameState])
 
   /**
@@ -941,7 +944,7 @@ export function useSudoku() {
     hintsUsedRef.current += 1
     updateScore(-20) // -20 for hint
     setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
-    saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
+    saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes, gameState.score)
 
     // Check for win - validate entire board using Sudoku rules
     if (isBoardComplete(newBoard) && isValidCompletedBoard(newBoard)) {
@@ -1088,7 +1091,7 @@ export function useSudoku() {
       }
 
       if (e.key === 'Escape') {
-        saveMoveNow(gameState.currentBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
+        saveMoveNow(gameState.currentBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes, gameState.score)
         void abandonSession()
         return
       }

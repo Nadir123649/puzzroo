@@ -1,26 +1,46 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/server/middleware/auth";
 import { connectDB } from "@/lib/server/db";
-import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
+import { errorResponse } from "@/lib/server/utils/apiResponse";
 
-type Handler = (req: NextRequest, user: { id: string; role: string; jti?: string }, params?: any) => Promise<Response>;
+export type Actor =
+  | { type: "user"; id: string; role: string; jti?: string }
+  | { type: "guest"; id: string };
+
+type Handler = (
+  req: NextRequest,
+  actor: Actor,
+  params?: any
+) => Promise<Response>;
 
 export function withAuth(handler: Handler) {
   return async (req: NextRequest, context?: { params?: any }) => {
-    const authResult = await auth(req);
-    if (authResult.error) {
-      return authResult.error;
-    }
     await connectDB();
-    try {
+
+    const authResult = await auth(req);
+    if (!authResult.error) {
       const resolvedParams = context?.params ? await context.params : undefined;
-      return await handler(req, authResult.user!, resolvedParams);
-    } catch (error: any) {
-      const code = error.message || "internal_error";
-      const status = getErrorStatus(code);
-      return errorResponse(status, code, getErrorMessage(code));
+      return runHandler(handler, req, { type: "user", ...authResult.user! }, resolvedParams);
     }
+
+    const guestId = req.headers.get("x-guest-id");
+    if (guestId) {
+      const resolvedParams = context?.params ? await context.params : undefined;
+      return runHandler(handler, req, { type: "guest", id: guestId }, resolvedParams);
+    }
+
+    return authResult.error;
   };
+}
+
+async function runHandler(handler: Handler, req: NextRequest, actor: Actor, params: any) {
+  try {
+    return await handler(req, actor, params);
+  } catch (error: any) {
+    const code = error.message || "internal_error";
+    const status = getErrorStatus(code);
+    return errorResponse(status, code, getErrorMessage(code));
+  }
 }
 
 function getErrorStatus(code: string): number {

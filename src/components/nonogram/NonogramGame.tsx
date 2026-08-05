@@ -339,7 +339,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
   return (
     <>
       <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 ${(isResetting || loading || isCurrentlyLoading) ? 'pointer-events-none select-none' : ''}`}>
-        <div className="w-full px-[20px] pb-[40px] flex justify-center">
+        <div className="w-full px-[20px] pb-[50px] flex justify-center">
           <div className="w-full max-w-[717.5px] flex flex-col items-center gap-[20px]">
             {!isCurrentlyLoading && (
               <>
@@ -348,7 +348,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
             <div className="w-full flex flex-col gap-3">
               {/* Puzzle Metadata */}
               <div className="text-center space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[13px] font-urbanist font-bold bg-[#DCFCE7] dark:bg-[#166534]/30 border-[#BBF7D0] dark:border-[#166534] text-[#22C55E] transition-all duration-300">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[13px] font-urbanist font-bold bg-[#DCFCE7] dark:bg-[#166534]/30 border-[#BBF7D0] dark:border-[#166534] text-[#22C55E] transition-all duration-300 mb-2">
                   <Gamepad2 size={14} />
                   <span>{currentPuzzle.title}</span>
                 </div>

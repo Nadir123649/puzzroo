@@ -1,21 +1,24 @@
 import { NextRequest } from "next/server";
 import GameProgress from "@/lib/server/models/GameProgress";
+import UserStatistics from "@/lib/server/models/UserStatistics";
 import { connectDB } from "@/lib/server/db";
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
 import { auth } from "@/lib/server/middleware/auth";
 
-/** GET /api/v1/games/stats — per-user aggregate progress. Auth required. */
+/** GET /api/v1/games/stats — per-user aggregate progress & game breakdown. Auth required. */
 export async function GET(request: NextRequest) {
   await connectDB();
   const userResult = await auth(request);
   if ("error" in userResult) return userResult.error;
 
+  const userId = userResult.user.id;
+
   try {
-    const [totalPlayed, totalCompleted, agg, recentActivity] = await Promise.all([
-      GameProgress.countDocuments({ userId: userResult.user.id }),
-      GameProgress.countDocuments({ userId: userResult.user.id, completed: true }),
+    const [totalPlayed, totalCompleted, agg, perGameAgg, userStatsList, recentActivity] = await Promise.all([
+      GameProgress.countDocuments({ userId }),
+      GameProgress.countDocuments({ userId, completed: true }),
       GameProgress.aggregate([
-        { $match: { userId: userResult.user.id } },
+        { $match: { userId } },
         {
           $group: {
             _id: null,
@@ -25,22 +28,57 @@ export async function GET(request: NextRequest) {
           },
         },
       ]),
-      GameProgress.find({ userId: userResult.user.id })
+      GameProgress.aggregate([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: "$gameId",
+            played: { $sum: 1 },
+            completed: {
+              $sum: { $cond: [{ $eq: ["$completed", true] }, 1, 0] },
+            },
+            hintsUsed: { $sum: "$hintsUsed" },
+            mistakes: { $sum: "$mistakes" },
+          },
+        },
+      ]),
+      UserStatistics.find({ userId }).lean(),
+      GameProgress.find({ userId })
         .sort({ updatedAt: -1 })
-        .limit(5)
-        .select("gameId difficulty completed score time updatedAt"),
+        .limit(10)
+        .select("gameId puzzleId difficulty completed score time updatedAt"),
     ]);
 
     const completionRate = totalPlayed > 0 ? Math.round((totalCompleted / totalPlayed) * 100) : 0;
     const lastWeek = new Date();
     lastWeek.setDate(lastWeek.getDate() - 7);
     const streak = await GameProgress.countDocuments({
-      userId: userResult.user.id,
+      userId,
       completed: true,
       completedAt: { $gte: lastWeek },
     });
 
     const totals = agg[0] || { hintsUsed: 0, mistakes: 0, totalMoves: 0 };
+
+    const gameIds = ["sudoku", "crossmath", "nonogram", "tangram"];
+    const byGame: Record<string, any> = {};
+
+    for (const gid of gameIds) {
+      const gAgg = perGameAgg.find((g: any) => g._id === gid);
+      const uStat = userStatsList.find((u: any) => u.gameId === gid);
+
+      const played = Math.max(gAgg?.played || 0, uStat?.totalPlayed || 0);
+      const completed = Math.max(gAgg?.completed || 0, uStat?.totalCompleted || 0);
+      const rate = played > 0 ? Math.round((completed / played) * 100) : 0;
+
+      byGame[gid] = {
+        gamesPlayed: played,
+        completed,
+        completionRate: `${rate}%`,
+        hintsUsed: Math.max(gAgg?.hintsUsed || 0, uStat?.totalHintsUsed || 0),
+        mistakes: Math.max(gAgg?.mistakes || 0, uStat?.totalMistakes || 0),
+      };
+    }
 
     return successResponse({
       gamesPlayed: totalPlayed,
@@ -50,8 +88,10 @@ export async function GET(request: NextRequest) {
       totalHintsUsed: totals.hintsUsed,
       totalMistakes: totals.mistakes,
       totalMoves: totals.totalMoves,
+      byGame,
       recentActivity: recentActivity.map((a: any) => ({
         gameId: a.gameId,
+        puzzleId: a.puzzleId,
         difficulty: a.difficulty,
         completed: a.completed,
         score: a.score,

@@ -3,6 +3,8 @@ import { verificationEngine } from "./VerificationEngine"
 import { statisticsService } from "./StatisticsService"
 import CrossMathPuzzle from "@/lib/server/models/CrossMathPuzzle"
 import CrossMathPlaySession from "@/lib/server/models/CrossMathPlaySession"
+import GameProgress from "@/lib/server/models/GameProgress"
+import UserStatistics from "@/lib/server/models/UserStatistics"
 import type { Actor } from "@/app/api/v1/games/crossmath/route-helpers"
 import type { SafeSessionResponse, SafePuzzleResponse, SaveProgressResponse, ProgressInfo, CompleteSessionResponse, CompletionResult, VerificationSummary, EquationError } from "../types"
 
@@ -59,6 +61,7 @@ function toSafeSession(session: Record<string, any>): SafeSessionResponse {
       lastSaveAt: session.lastSaveAt?.toISOString?.() || session.lastSaveAt,
       isReplay: session.isReplay || false,
       restartCount: session.restartCount || 0,
+      score: session.score || 0,
       result: session.result || null,
     }
 }
@@ -167,6 +170,28 @@ export class SessionService {
         blanks: puzzleDoc.blanks || [],
         availableNumbers: puzzleDoc.availableNumbers || [],
       })
+
+      if (userId && !guestId) {
+        Promise.all([
+          GameProgress.findOneAndUpdate(
+            { userId, gameId: "crossmath", puzzleId },
+            {
+              $set: { difficulty: puzzleDoc.difficulty || "easy", updatedAt: new Date() },
+              $inc: { attempts: 1 },
+            },
+            { upsert: true }
+          ),
+          UserStatistics.findOneAndUpdate(
+            { userId, gameId: "crossmath" },
+            {
+              $set: { lastPlayedAt: new Date() },
+              $inc: { totalPlayed: 1, [`perDifficulty.${puzzleDoc.difficulty || "easy"}.played`]: 1 },
+            },
+            { upsert: true }
+          ),
+        ]).catch(() => {})
+      }
+
       return toSafeSession(session.toObject())
     } catch (error: any) {
       if (error?.code === 11000) {
@@ -221,12 +246,13 @@ export class SessionService {
     elapsedTime: number,
     hintsUsed: number,
     mistakes: number,
-    moves: number
+    moves: number,
+    score?: number
   ): Promise<SaveProgressResponse> {
     const userId = this.actorId(actor)
     const guestId = this.actorGuestId(actor)
     const updated = await playSessionRepository.saveProgress(
-      sessionId, grid, elapsedTime, hintsUsed, mistakes, moves, userId, guestId
+      sessionId, grid, elapsedTime, hintsUsed, mistakes, moves, score ?? 0, userId, guestId
     )
     if (!updated) {
       const exists = await playSessionRepository.findById(sessionId)
@@ -249,6 +275,7 @@ export class SessionService {
       mistakes: updated.mistakes,
       hintsUsed: updated.hintsUsed,
       elapsedTime: updated.elapsedTime,
+      score: updated.score || 0,
       progress: computeProgress(updated.grid, updated.blanks),
     }
   }

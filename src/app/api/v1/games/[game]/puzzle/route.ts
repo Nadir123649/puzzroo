@@ -4,7 +4,7 @@ import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
 import { validate } from "@/lib/server/middleware/validate";
 import { getPuzzleQuerySchema } from "@/lib/server/validators/puzzleValidator";
 import { getGameRegistry } from "@/lib/server/puzzles/registry";
-import { cacheHeaders, rateLimit } from "@/lib/server/utils/http";
+import { rateLimit } from "@/lib/server/utils/http";
 
 /**
  * GET /api/v1/games/[game]/puzzle — play.
@@ -43,7 +43,7 @@ export async function GET(
     if (!doc) return errorResponse(404, "no_puzzle", `No puzzle for difficulty ${diff}`);
 
     const res = successResponse(reg.toResponse(doc));
-    Object.entries(cacheHeaders(30)).forEach(([k, v]) => res.headers.set(k, v));
+    res.headers.set("Cache-Control", "no-store");
     return res;
   } catch (error: any) {
     console.error(error);

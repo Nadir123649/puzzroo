@@ -1,6 +1,8 @@
 import { connectDB } from "@/lib/server/db";
 import SudokuPuzzle from "@/lib/server/models/SudokuPuzzle";
 import PlaySession from "@/lib/server/models/sudoku/PlaySession";
+import GameProgress from "@/lib/server/models/GameProgress";
+import UserStatistics from "@/lib/server/models/UserStatistics";
 import type { Actor } from "@/app/api/v1/games/sudoku/route-helpers";
 import type {
   SessionStatus,
@@ -87,6 +89,28 @@ export async function createSession(actor: Actor, puzzleId: string, gameType?: "
       currentBoard: puzzle.puzzle,
       initialBoard: puzzle.puzzle,
     });
+
+    if (userId && !guestId) {
+      Promise.all([
+        GameProgress.findOneAndUpdate(
+          { userId, gameId: "sudoku", puzzleId },
+          {
+            $set: { difficulty: puzzle.difficulty || "easy", updatedAt: new Date() },
+            $inc: { attempts: 1 },
+          },
+          { upsert: true }
+        ),
+        UserStatistics.findOneAndUpdate(
+          { userId, gameId: "sudoku" },
+          {
+            $set: { lastPlayedAt: new Date() },
+            $inc: { totalPlayed: 1, [`perDifficulty.${puzzle.difficulty || "easy"}.played`]: 1 },
+          },
+          { upsert: true }
+        ),
+      ]).catch(() => {});
+    }
+
     return toSessionResponse(session.toObject());
   } catch (error: any) {
     if (error?.code === 11000) {

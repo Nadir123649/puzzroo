@@ -2,23 +2,26 @@ import mongoose from "mongoose";
 import CrossMathPlaySession from "@/lib/server/models/CrossMathPlaySession";
 import SudokuPlaySession from "@/lib/server/models/sudoku/PlaySession";
 import TangramPlaySession from "@/lib/server/models/TangramPlaySession";
+import NonogramPlaySession from "@/lib/server/models/NonogramPlaySession";
 
 /**
  * Hands a guest's game sessions over to their converted account. Guest
  * sessions are keyed by the browser uuid (x-guest-id) in the `guestId`
  * field; after conversion the account owns them under `userId`.
  *
- * crossmath, sudoku and tangram all persist guest sessions under `guestId`.
+ * crossmath, sudoku, tangram and nonogram all persist guest sessions
+ * under `guestId`.
  *
  * Safe against collisions: the converting account is brand-new, so no
  * existing sessions reference its userId.
  */
 export async function transferGuestSessions(guestId: string, userId: string) {
   const uid = new mongoose.Types.ObjectId(userId);
-  const [crossmath, sudoku, tangram] = await Promise.all([
+  const [crossmath, sudoku, tangram, nonogram] = await Promise.all([
     CrossMathPlaySession.updateMany({ guestId }, { $set: { userId: uid }, $unset: { guestId: "" } }),
     SudokuPlaySession.updateMany({ guestId }, { $set: { userId: uid }, $unset: { guestId: "" } }),
     TangramPlaySession.updateMany({ guestId }, { $set: { userId: uid }, $unset: { guestId: "" } }),
+    NonogramPlaySession.updateMany({ guestId }, { $set: { userId: uid }, $unset: { guestId: "" } }),
   ]);
-  return crossmath.modifiedCount + sudoku.modifiedCount + tangram.modifiedCount;
+  return crossmath.modifiedCount + sudoku.modifiedCount + tangram.modifiedCount + nonogram.modifiedCount;
 }

@@ -1,26 +1,31 @@
 {
   "game": "nonogram",
-  "generatorVersion": 2,
+  "generatorVersion": 4,
   "difficulties": [
     "easy",
     "medium",
     "hard"
   ],
+  "activeDatasets": {
+    "easy": "easy-gold.json",
+    "medium": "medium-gold.json",
+    "hard": "hard-gold.json"
+  },
   "counts": {
-    "easy": 1000,
-    "medium": 1000,
-    "hard": 1000
+    "easy": 50,
+    "medium": 50,
+    "hard": 50
   },
   "sizesByDifficulty": {
     "easy": [
-      5
-    ],
-    "medium": [
       10
     ],
-    "hard": [
+    "medium": [
       15
+    ],
+    "hard": [
+      20
     ]
   },
-  "encoding": "sol is a size*size string of '0'/'1' (row-major); rowClues/columnClues are number[][]; empty line is []; every puzzle has a unique solution (line-solver verified). All puzzles feature recognizable pixel-art shapes matching their title."
+  "encoding": "sol is a size*size string of '0'/'1' (row-major); rowClues/columnClues are number[][]; empty line is []; every puzzle has a unique solution (line-solver verified). All puzzles feature recognizable pixel-art shapes matching their title. Legacy easy.json/medium.json/hard.json archived under ./archive/ as reference data."
 }

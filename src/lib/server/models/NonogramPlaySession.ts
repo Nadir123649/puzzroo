@@ -6,13 +6,21 @@ const nonogramPlaySessionSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
       index: true,
     },
+    guestId: { type: String, default: null },
+    gameType: {
+      type: String,
+      enum: ["nonogram", "daily_challenge"],
+      default: "nonogram",
+      index: true,
+    },
+    dailyChallengeId: { type: String, default: null, index: true },
     puzzleId: { type: String, required: true },
     difficulty: {
       type: String,
-      enum: ["easy", "medium", "hard", "expert"],
+      enum: ["easy", "medium", "hard"],
       required: true,
     },
     status: {
@@ -33,6 +41,8 @@ const nonogramPlaySessionSchema = new mongoose.Schema(
     isReplay: { type: Boolean, default: false },
     restartCount: { type: Number, default: 0 },
     result: {
+      correct: { type: Number, default: 0 },
+      total: { type: Number, default: 0 },
       accuracy: { type: Number, default: 0 },
       completedAt: { type: Date, default: null },
       elapsedTime: { type: Number, default: 0 },
@@ -45,16 +55,42 @@ const nonogramPlaySessionSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-nonogramPlaySessionSchema.index({ userId: 1, puzzleId: 1 })
+// One active session per (owner, puzzle) — unique while playing/paused.
+// Partial filters require the owner field to be a real string/ObjectId so
+// user docs never collide on the guest index (null would be a shared key).
 nonogramPlaySessionSchema.index(
   { userId: 1, puzzleId: 1, status: 1 },
   {
     unique: true,
-    partialFilterExpression: { status: { $in: ["playing", "paused"] } },
+    partialFilterExpression: { status: { $in: ["playing", "paused"] }, userId: { $type: "objectId" } },
   }
 )
-nonogramPlaySessionSchema.index({ userId: 1, status: 1 })
+nonogramPlaySessionSchema.index(
+  { guestId: 1, puzzleId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["playing", "paused"] }, guestId: { $type: "string" } },
+  }
+)
+// One active session per (owner, daily challenge).
+nonogramPlaySessionSchema.index(
+  { userId: 1, dailyChallengeId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["playing", "paused"] }, userId: { $type: "objectId" } },
+  }
+)
+nonogramPlaySessionSchema.index(
+  { guestId: 1, dailyChallengeId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["playing", "paused"] }, guestId: { $type: "string" } },
+  }
+)
+
 nonogramPlaySessionSchema.index({ userId: 1, status: 1, lastSaveAt: -1 })
+nonogramPlaySessionSchema.index({ guestId: 1, status: 1, lastSaveAt: -1 })
+nonogramPlaySessionSchema.index({ guestId: 1 })
 nonogramPlaySessionSchema.index({ puzzleId: 1, status: 1 })
 nonogramPlaySessionSchema.index({ completedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
 

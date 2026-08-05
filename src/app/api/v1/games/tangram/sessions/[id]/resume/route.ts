@@ -2,9 +2,13 @@ import { NextRequest } from "next/server"
 import { withAuth } from "../../../route-helpers"
 import type { Actor } from "../../../route-helpers"
 import { sessionService } from "@/lib/server/puzzles/tangram/services/SessionService"
-import { successResponse } from "@/lib/server/utils/apiResponse"
+import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
+import { rateLimit } from "@/lib/server/utils/http"
 
-const handler = withAuth(async (_req: NextRequest, actor: Actor, params: any) => {
+const handler = withAuth(async (req: NextRequest, actor: Actor, params: any) => {
+  if (!rateLimit(req, "tangram-resume", 30)) {
+    return errorResponse(429, "rate_limited", "Too many requests")
+  }
   const session = await sessionService.resumeSession(params.id, actor)
   return successResponse(session)
 })

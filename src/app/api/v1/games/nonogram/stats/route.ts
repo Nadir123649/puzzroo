@@ -1,9 +1,12 @@
-import { NextRequest } from "next/server";
-import { withAuth } from "../route-helpers";
-import { statisticsService } from "@/lib/server/puzzles/nonogram/services/StatisticsService";
-import { successResponse } from "@/lib/server/utils/apiResponse";
+import { withAuth } from "../route-helpers"
+import type { Actor } from "../route-helpers"
+import { statisticsService } from "@/lib/server/puzzles/nonogram/services/StatisticsService"
+import { successResponse } from "@/lib/server/utils/apiResponse"
 
-export const GET = withAuth(async (req, user) => {
-  const stats = await statisticsService.getUserStats(user.id);
-  return successResponse(stats);
-});
+export const GET = withAuth(async (_req, actor: Actor) => {
+  if (actor.type === "guest") {
+    return successResponse(null)
+  }
+  const stats = await statisticsService.getUserStats(actor.id)
+  return successResponse(stats)
+})

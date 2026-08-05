@@ -78,7 +78,7 @@ export function CrossMathGame() {
   }
 
   const handlePlayAgain = () => {
-    handleNewGame(isFromPastPuzzles)
+    handleNewGame(true)
   }
 
   const handleBackToGames = () => {

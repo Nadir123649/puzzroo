@@ -156,6 +156,7 @@ export class PlaySessionRepository {
     hintsUsed: number,
     mistakes: number,
     moves: number,
+    score: number,
     userId?: string,
     guestId?: string
   ) {
@@ -170,6 +171,7 @@ export class PlaySessionRepository {
       {
         $set: {
           grid,
+          score,
           lastSaveAt: new Date(),
         },
         $max: { moves, mistakes, hintsUsed, elapsedTime },

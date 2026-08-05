@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
 import { validate } from "@/lib/server/middleware/validate";
 import { createSession } from "@/lib/server/services/sudoku/sessionService";
+import { rateLimit } from "@/lib/server/utils/http";
 import { withAuth } from "../../route-helpers";
 import { z } from "zod";
 
@@ -11,6 +12,9 @@ const startDailySessionSchema = z.object({
 });
 
 export const POST = withAuth(async (req: NextRequest, actor, _params) => {
+  if (!rateLimit(req, "sudoku-daily-sessions", 60)) {
+    return errorResponse(429, "rate_limited", "Too many requests");
+  }
   let body: any = {};
   try { body = await req.json(); } catch {}
 

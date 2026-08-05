@@ -1,0 +1,196 @@
+- generic [active] [ref=f3e1]:
+  - generic [ref=f3e295]:
+    - banner [ref=f3e296]:
+      - generic [ref=f3e298]:
+        - link "Puzzroo" [ref=f3e300] [cursor=pointer]:
+          - /url: /
+        - generic [ref=f3e306]:
+          - link "Sign up" [ref=f3e307] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=f3e308] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [ref=f3e309] [cursor=pointer]:
+            - generic [ref=f3e310]: Dark Mode
+            - img "Theme icon" [ref=f3e311]
+    - main [ref=f3e312]:
+      - main [ref=f3e313]:
+        - generic [ref=f3e315]:
+          - button "Back to games" [ref=f3e316] [cursor=pointer]
+          - generic [ref=f3e319]:
+            - img "Nonogram Dark" [ref=f3e321]
+            - heading "NONOGRAM" [level=1] [ref=f3e322]
+        - generic [ref=f3e325]:
+          - generic [ref=f3e326]:
+            - generic [ref=f3e327]:
+              - generic [ref=f3e328]: Stingray
+              - generic [ref=f3e332]:
+                - generic [ref=f3e333]: animals
+                - generic [ref=f3e335]: ~5 min
+            - generic [ref=f3e340]: 00:04:39
+            - generic [ref=f3e342]:
+              - generic [ref=f3e343]:
+                - generic [ref=f3e344]: Progress
+                - generic [ref=f3e345]: 3%
+              - generic [ref=f3e348]: 1 / 40 cells
+          - generic [ref=f3e350]:
+            - button "Zoom out" [ref=f3e351] [cursor=pointer]
+            - generic [ref=f3e355]: 100%
+            - button "Zoom in" [ref=f3e356] [cursor=pointer]
+            - button "Reset" [ref=f3e360] [cursor=pointer]
+            - generic [ref=f3e361]: "Mistakes: 0/5"
+          - generic [ref=f3e362]:
+            - button "Fill mode - mark cells that belong to the image" [pressed] [ref=f3e363] [cursor=pointer]:
+              - generic [ref=f3e368]: Fill
+            - button "Mark mode - mark cells that should not belong to the image" [ref=f3e369] [cursor=pointer]:
+              - generic [ref=f3e372]: Mark
+          - generic [ref=f3e374]:
+            - generic [ref=f3e377]:
+              - generic [ref=f3e378]: "0"
+              - generic [ref=f3e381]: "0"
+              - generic [ref=f3e384]: "0"
+              - generic [ref=f3e387]: "0"
+              - generic [ref=f3e390]: "0"
+              - generic [ref=f3e393]: "0"
+              - generic [ref=f3e396]: "0"
+              - generic [ref=f3e399]: "0"
+              - generic [ref=f3e402]: "0"
+              - generic [ref=f3e405]: "0"
+            - generic [ref=f3e408]:
+              - generic [ref=f3e409]:
+                - generic [ref=f3e410]: "0"
+                - generic [ref=f3e413]: "0"
+                - generic [ref=f3e416]: "0"
+                - generic [ref=f3e419]: "0"
+                - generic [ref=f3e422]: "0"
+                - generic [ref=f3e425]: "0"
+                - generic [ref=f3e428]: "0"
+                - generic [ref=f3e431]: "0"
+                - generic [ref=f3e434]: "0"
+                - generic [ref=f3e437]: "0"
+              - generic [ref=f3e440]:
+                - button "Cell row 1, column 1, empty" [ref=f3e441]
+                - button "Cell row 1, column 2, empty" [ref=f3e442]
+                - button "Cell row 1, column 3, empty" [ref=f3e443]
+                - button "Cell row 1, column 4, empty" [ref=f3e444]
+                - button "Cell row 1, column 5, empty" [ref=f3e445]
+                - button "Cell row 1, column 6, empty" [ref=f3e446]
+                - button "Cell row 1, column 7, empty" [ref=f3e447]
+                - button "Cell row 1, column 8, empty" [ref=f3e448]
+                - button "Cell row 1, column 9, empty" [ref=f3e449]
+                - button "Cell row 1, column 10, empty" [ref=f3e450]
+                - button "Cell row 2, column 1, empty" [ref=f3e451]
+                - button "Cell row 2, column 2, empty" [ref=f3e452]
+                - button "Cell row 2, column 3, empty" [ref=f3e453]
+                - button "Cell row 2, column 4, empty" [ref=f3e454]
+                - button "Cell row 2, column 5, empty" [ref=f3e455]
+                - button "Cell row 2, column 6, empty" [ref=f3e456]
+                - button "Cell row 2, column 7, empty" [ref=f3e457]
+                - button "Cell row 2, column 8, empty" [ref=f3e458]
+                - button "Cell row 2, column 9, empty" [ref=f3e459]
+                - button "Cell row 2, column 10, empty" [ref=f3e460]
+                - button "Cell row 3, column 1, empty" [ref=f3e461]
+                - button "Cell row 3, column 2, empty" [ref=f3e462]
+                - button "Cell row 3, column 3, empty" [ref=f3e463]
+                - button "Cell row 3, column 4, empty" [ref=f3e464]
+                - button "Cell row 3, column 5, empty" [ref=f3e465]
+                - button "Cell row 3, column 6, empty" [ref=f3e466]
+                - button "Cell row 3, column 7, empty" [ref=f3e467]
+                - button "Cell row 3, column 8, empty" [ref=f3e468]
+                - button "Cell row 3, column 9, empty" [ref=f3e469]
+                - button "Cell row 3, column 10, empty" [ref=f3e470]
+                - button "Cell row 4, column 1, empty" [ref=f3e471]
+                - button "Cell row 4, column 2, empty" [ref=f3e472]
+                - button "Cell row 4, column 3, empty" [ref=f3e473]
+                - button "Cell row 4, column 4, empty" [ref=f3e474]
+                - button "Cell row 4, column 5, empty" [ref=f3e475]
+                - button "Cell row 4, column 6, empty" [ref=f3e476]
+                - button "Cell row 4, column 7, empty" [ref=f3e477]
+                - button "Cell row 4, column 8, empty" [ref=f3e478]
+                - button "Cell row 4, column 9, empty" [ref=f3e479]
+                - button "Cell row 4, column 10, empty" [ref=f3e480]
+                - button "Cell row 5, column 1, filled" [ref=f3e481]
+                - button "Cell row 5, column 2, empty" [ref=f3e482]
+                - button "Cell row 5, column 3, empty" [ref=f3e483]
+                - button "Cell row 5, column 4, empty" [ref=f3e484]
+                - button "Cell row 5, column 5, empty" [ref=f3e485]
+                - button "Cell row 5, column 6, empty" [ref=f3e486]
+                - button "Cell row 5, column 7, empty" [ref=f3e487]
+                - button "Cell row 5, column 8, empty" [ref=f3e488]
+                - button "Cell row 5, column 9, empty" [ref=f3e489]
+                - button "Cell row 5, column 10, empty" [ref=f3e490]
+                - button "Cell row 6, column 1, empty" [ref=f3e491]
+                - button "Cell row 6, column 2, empty" [ref=f3e492]
+                - button "Cell row 6, column 3, empty" [ref=f3e493]
+                - button "Cell row 6, column 4, empty" [ref=f3e494]
+                - button "Cell row 6, column 5, empty" [ref=f3e495]
+                - button "Cell row 6, column 6, empty" [ref=f3e496]
+                - button "Cell row 6, column 7, empty" [ref=f3e497]
+                - button "Cell row 6, column 8, empty" [ref=f3e498]
+                - button "Cell row 6, column 9, empty" [ref=f3e499]
+                - button "Cell row 6, column 10, empty" [ref=f3e500]
+                - button "Cell row 7, column 1, empty" [ref=f3e501]
+                - button "Cell row 7, column 2, empty" [ref=f3e502]
+                - button "Cell row 7, column 3, empty" [ref=f3e503]
+                - button "Cell row 7, column 4, empty" [ref=f3e504]
+                - button "Cell row 7, column 5, empty" [ref=f3e505]
+                - button "Cell row 7, column 6, empty" [ref=f3e506]
+                - button "Cell row 7, column 7, empty" [ref=f3e507]
+                - button "Cell row 7, column 8, empty" [ref=f3e508]
+                - button "Cell row 7, column 9, empty" [ref=f3e509]
+                - button "Cell row 7, column 10, empty" [ref=f3e510]
+                - button "Cell row 8, column 1, empty" [ref=f3e511]
+                - button "Cell row 8, column 2, empty" [ref=f3e512]
+                - button "Cell row 8, column 3, empty" [ref=f3e513]
+                - button "Cell row 8, column 4, empty" [ref=f3e514]
+                - button "Cell row 8, column 5, empty" [ref=f3e515]
+                - button "Cell row 8, column 6, empty" [ref=f3e516]
+                - button "Cell row 8, column 7, empty" [ref=f3e517]
+                - button "Cell row 8, column 8, empty" [ref=f3e518]
+                - button "Cell row 8, column 9, empty" [ref=f3e519]
+                - button "Cell row 8, column 10, empty" [ref=f3e520]
+                - button "Cell row 9, column 1, empty" [ref=f3e521]
+                - button "Cell row 9, column 2, empty" [ref=f3e522]
+                - button "Cell row 9, column 3, empty" [ref=f3e523]
+                - button "Cell row 9, column 4, empty" [ref=f3e524]
+                - button "Cell row 9, column 5, empty" [ref=f3e525]
+                - button "Cell row 9, column 6, empty" [ref=f3e526]
+                - button "Cell row 9, column 7, empty" [ref=f3e527]
+                - button "Cell row 9, column 8, empty" [ref=f3e528]
+                - button "Cell row 9, column 9, empty" [ref=f3e529]
+                - button "Cell row 9, column 10, empty" [ref=f3e530]
+                - button "Cell row 10, column 1, empty" [ref=f3e531]
+                - button "Cell row 10, column 2, empty" [ref=f3e532]
+                - button "Cell row 10, column 3, empty" [ref=f3e533]
+                - button "Cell row 10, column 4, empty" [ref=f3e534]
+                - button "Cell row 10, column 5, empty" [ref=f3e535]
+                - button "Cell row 10, column 6, empty" [ref=f3e536]
+                - button "Cell row 10, column 7, empty" [ref=f3e537]
+                - button "Cell row 10, column 8, empty" [ref=f3e538]
+                - button "Cell row 10, column 9, empty" [ref=f3e539]
+                - button "Cell row 10, column 10, empty" [ref=f3e540]
+          - generic [ref=f3e541]:
+            - button "Use hint, 5 remaining" [ref=f3e542] [cursor=pointer]:
+              - generic [ref=f3e545]: "5"
+            - button "Replay" [ref=f3e546] [cursor=pointer]
+            - button "New Puzzle" [ref=f3e547] [cursor=pointer]
+          - paragraph [ref=f3e549]:
+            - strong [ref=f3e550]: F
+            - text: ": Fill Mode •"
+            - strong [ref=f3e551]: M
+            - text: ": Mark Mode • Click/Drag to interact • Arrow keys to navigate •"
+            - strong [ref=f3e552]: Enter
+            - text: ": Apply mode • Backspace to clear"
+    - contentinfo [ref=f3e553]:
+      - generic [ref=f3e555]:
+        - paragraph [ref=f3e557]: © 2026 Puzzroo
+        - generic [ref=f3e558]:
+          - link "FAQ" [ref=f3e559] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=f3e560] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=f3e561] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=f3e562] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=f3e101] [cursor=pointer]
+  - alert [ref=f3e283]
