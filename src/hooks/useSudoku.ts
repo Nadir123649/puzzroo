@@ -164,6 +164,8 @@ export function useSudoku() {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [isInitialized, setIsInitialized] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [boardHistory, setBoardHistory] = useState<SudokuBoard[]>([])
+  const [selectedCell, setSelectedCell] = useState<Position | null>(null)
 
   const [gameState, setGameState] = useState<{
     currentBoard: SudokuBoard
@@ -228,15 +230,61 @@ export function useSudoku() {
   // Add a ref to track pending saves and prevent race conditions
   const savePendingRef = useRef(false)
   const lastSaveTimestampRef = useRef(0)
+  const pendingSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+<<<<<<< HEAD
   function saveMoveNow(board: SudokuBoard, elapsed: number, hints: number, mists: number, score: number) {
     if (!sessionIdRef.current) return
+=======
+  function saveMoveNow(board: SudokuBoard, elapsed: number, hints: number, mists: number) {
+    const sessionId = sessionIdRef.current
+    if (!sessionId) return
+>>>>>>> c6e6823f40ae6a0f0ac65c85498f75c04d0d44c0
     
     const now = Date.now()
+    if (pendingSaveTimeoutRef.current) {
+      clearTimeout(pendingSaveTimeoutRef.current)
+      pendingSaveTimeoutRef.current = null
+    }
+
+    const performSave = () => {
+      const boardString = sudokuBoardToString(board)
+      const currentMoveCount = movesRef.current + 1
+      const currentMistakes = mists
+      
+      savePendingRef.current = true
+      lastSaveTimestampRef.current = Date.now()
+      
+      setTimeout(() => {
+        savePendingRef.current = false
+      }, 500)
+      
+      const abortController = new AbortController()
+      abortRef.current = abortController
+      
+      gameApi.saveMove('sudoku', sessionId, {
+        board: boardString,
+        elapsedTime: Number(elapsed),
+        hintsUsed: Number(hints),
+        mistakes: Number(currentMistakes),
+        moves: Number(currentMoveCount),
+      }, abortController.signal).then((res: any) => {
+        if (res && res.error) {
+          return
+        }
+        sessionDataRef.current = res
+        movesRef.current = currentMoveCount
+      }).catch(err => {
+        if (err?.name === 'AbortError') return
+      })
+    }
+
     if (savePendingRef.current || now - lastSaveTimestampRef.current < 300) {
+      pendingSaveTimeoutRef.current = setTimeout(performSave, 500)
       return
     }
     
+<<<<<<< HEAD
     const boardString = sudokuBoardToString(board)
     const currentMoveCount = movesRef.current + 1
     const currentMistakes = mists
@@ -269,9 +317,38 @@ export function useSudoku() {
       // Silently ignore AbortError (navigation) and known transient session states
       if (err?.name === 'AbortError') return
     })
+=======
+    performSave()
+>>>>>>> c6e6823f40ae6a0f0ac65c85498f75c04d0d44c0
   }
 
-  function sudokuRestoreFromSession(sessionData: any, puzzlePuzzle: number[][], puzzleSolution: number[][]): SudokuBoard | null {
+  /**
+   * True if an earlier cell (row-major order) in the same row, column, or
+   * 3x3 box already holds the same value. Restores match in-game error
+   * semantics (rule conflict, not solution mismatch): the first-entered
+   * cell of a conflicting pair stays correct, later ones are flagged.
+   */
+  function hasEarlierConflict(board: SudokuBoard, r: number, c: number, val: number): boolean {
+    for (let cc = 0; cc < c; cc++) {
+      if (board[r][cc].value === val) return true
+    }
+    for (let rr = 0; rr < r; rr++) {
+      if (board[rr][c].value === val) return true
+    }
+    const br = Math.floor(r / 3) * 3
+    const bc = Math.floor(c / 3) * 3
+    for (let rr = br; rr < br + 3; rr++) {
+      for (let cc = bc; cc < bc + 3; cc++) {
+        if (rr === r && cc === c) continue
+        if (rr < r || (rr === r && cc < c)) {
+          if (board[rr][cc].value === val) return true
+        }
+      }
+    }
+    return false
+  }
+
+  function sudokuRestoreFromSession(sessionData: any, puzzlePuzzle: number[][]): SudokuBoard | null {
     if (!sessionData.currentBoard || sessionData.currentBoard.length !== 81) return null
     const board81: string = sessionData.currentBoard
     const fresh = convertToSudokuBoard(puzzlePuzzle)
@@ -279,12 +356,18 @@ export function useSudoku() {
       for (let c = 0; c < 9; c++) {
         const val = Number(board81[r * 9 + c])
         const cell = fresh[r][c]
-        if (!cell.fixed) {
-          if (val !== 0) {
-            cell.value = val
-            cell.isCorrect = val === puzzleSolution[r][c]
-            cell.isError = val !== 0 && val !== puzzleSolution[r][c]
-          }
+        if (!cell.fixed && val !== 0) {
+          cell.value = val
+        }
+      }
+    }
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const cell = fresh[r][c]
+        if (!cell.fixed && cell.value) {
+          const conflicts = hasEarlierConflict(fresh, r, c, cell.value)
+          cell.isError = conflicts
+          cell.isCorrect = !conflicts
         }
       }
     }
@@ -373,32 +456,50 @@ export function useSudoku() {
               const solStr = serverSession.puzzle.solution as string
               const freshArr = parseBoardStr(puzzleStr)
               const solArr = parseBoardStr(solStr)
-              const restored = sudokuRestoreFromSession(serverSession, freshArr, solArr)
+              const restored = sudokuRestoreFromSession(serverSession, freshArr)
 
-              if (restored) {
-                const status = serverSession.status === 'completed' ? 'won'
-                  : serverSession.status === 'abandoned' ? 'lost' : 'playing'
-                // Local autosave runs every second — fresher than the server
-                // elapsed (saved on moves / close-flush). Prefer it when it
-                // matches the same puzzle so the timer resumes exactly where
-                // it paused, even if the close-flush was lost (crash, kill).
-                const local = loadGameState(undefined, currentDiff)
-                const localTime = local && local.puzzleId === serverSession.puzzleId ? local.time : undefined
-                setGameState({
-                  currentBoard: restored,
-                  initialBoard: convertToSudokuBoard(freshArr),
-                  solution: convertToSudokuBoard(solArr),
-                  puzzleId: serverSession.puzzleId,
-                  mistakes: serverSession.mistakes || 0,
-                  score: serverSession.score || 0,
-                  time: localTime ?? (serverSession.elapsedTime || 0),
-                  gameStatus: status as GameStatus,
-                })
-                puzzleIdRef.current = serverSession.puzzleId
+               if (restored) {
+                 const status = serverSession.status === 'completed' ? 'won'
+                   : serverSession.status === 'abandoned' ? 'lost' : 'playing'
+                 // Local autosave runs every second — fresher than the server
+                 // save (debounced/throttled). Prefer local board when available
+                 // so a move entered moments before refresh is not lost.
+                 const pId = serverSession.puzzleId || (serverSession.puzzle && (serverSession.puzzle.id || serverSession.puzzle._id)) || ''
+                 const local = loadGameState(undefined, currentDiff)
+                 const localBoard = (local && (local.puzzleId === pId || local.puzzleId === serverSession.puzzleId)) ? local.currentBoard : null
+                 const localTime = (local && (local.puzzleId === pId || local.puzzleId === serverSession.puzzleId)) ? local.time : undefined
+                 
+                 if (localBoard) {
+                   for (let r = 0; r < 9; r++) {
+                     for (let c = 0; c < 9; c++) {
+                       if (!restored[r][c].value && localBoard[r][c].notes) {
+                         restored[r][c].notes = [...(localBoard[r][c].notes || [])]
+                       }
+                       if (!restored[r][c].value && localBoard[r][c].value) {
+                         restored[r][c] = { ...localBoard[r][c] }
+                       }
+                     }
+                   }
+                 }
+
+                  setGameState({
+                    currentBoard: restored,
+                    initialBoard: convertToSudokuBoard(freshArr),
+                    solution: convertToSudokuBoard(solArr),
+                    puzzleId: serverSession.puzzleId || pId,
+                    mistakes: serverSession.mistakes || 0,
+                    score: serverSession.score || 0,
+                    time: localTime ?? (serverSession.elapsedTime || 0),
+                    gameStatus: status as GameStatus,
+                  })
+                  setBoardHistory(local?.history || [])
+                  if (local?.selectedCell) setSelectedCell(local.selectedCell)
+                  puzzleIdRef.current = serverSession.puzzleId || pId
                 sessionIdRef.current = serverSession.id
                 sessionCreatedRef.current = true
                 hintsUsedRef.current = serverSession.hintsUsed || 0
                 movesRef.current = serverSession.moves || 0
+                startTimeRef.current = Date.now() - ((serverSession.elapsedTime || 0) * 1000)
                 setIsInitialized(true)
                 setLoading(false)
                 return
@@ -417,26 +518,47 @@ export function useSudoku() {
               const solStr = dcSession.puzzle.solution as string
               const freshArr = parseBoardStr(puzzleStr)
               const solArr = parseBoardStr(solStr)
-              const restored = sudokuRestoreFromSession(dcSession, freshArr, solArr)
+              const restored = sudokuRestoreFromSession(dcSession, freshArr)
 
               if (restored) {
                 const status = dcSession.status === 'completed' ? 'won'
                   : dcSession.status === 'abandoned' ? 'lost' : 'playing'
-                setGameState({
-                  currentBoard: restored,
-                  initialBoard: convertToSudokuBoard(freshArr),
-                  solution: convertToSudokuBoard(solArr),
-                  puzzleId: dcSession.puzzleId,
-                  mistakes: dcSession.mistakes || 0,
-                  score: dcSession.score || 0,
-                  time: dcSession.elapsedTime || 0,
-                  gameStatus: status as GameStatus,
-                })
-                puzzleIdRef.current = dcSession.puzzleId
+                 const pId = dcSession.puzzleId || (dcSession.puzzle && (dcSession.puzzle.id || dcSession.puzzle._id)) || ''
+                 const local = loadGameState(undefined, currentDiff)
+                 const localBoard = (local && (local.puzzleId === pId || local.puzzleId === dcSession.puzzleId)) ? local.currentBoard : null
+                 const localTime = (local && (local.puzzleId === pId || local.puzzleId === dcSession.puzzleId)) ? local.time : undefined
+                 
+                 if (localBoard) {
+                   for (let r = 0; r < 9; r++) {
+                     for (let c = 0; c < 9; c++) {
+                       if (!restored[r][c].value && localBoard[r][c].notes) {
+                         restored[r][c].notes = [...(localBoard[r][c].notes || [])]
+                       }
+                       if (!restored[r][c].value && localBoard[r][c].value) {
+                         restored[r][c] = { ...localBoard[r][c] }
+                       }
+                     }
+                   }
+                 }
+
+                 setGameState({
+                   currentBoard: restored,
+                   initialBoard: convertToSudokuBoard(freshArr),
+                   solution: convertToSudokuBoard(solArr),
+                   puzzleId: dcSession.puzzleId || pId,
+                   mistakes: dcSession.mistakes || 0,
+                   score: dcSession.score || 0,
+                   time: localTime ?? (dcSession.elapsedTime || 0),
+                   gameStatus: status as GameStatus,
+                 })
+                 setBoardHistory(local?.history || [])
+                 if (local?.selectedCell) setSelectedCell(local.selectedCell)
+                puzzleIdRef.current = dcSession.puzzleId || pId
                 sessionIdRef.current = dcSession.id
                 sessionCreatedRef.current = true
                 hintsUsedRef.current = dcSession.hintsUsed || 0
                 movesRef.current = dcSession.moves || 0
+                startTimeRef.current = Date.now() - ((dcSession.elapsedTime || 0) * 1000)
                 setIsInitialized(true)
                 setLoading(false)
                 return
@@ -462,6 +584,8 @@ export function useSudoku() {
                   time: saved.time,
                   gameStatus: saved.gameStatus as GameStatus,
                 })
+                setBoardHistory(saved.history || [])
+                if (saved.selectedCell) setSelectedCell(saved.selectedCell)
                 puzzleIdRef.current = saved.puzzleId
                 setIsInitialized(true)
                 if (!getAccessToken()) ensureGuestId()
@@ -486,6 +610,29 @@ export function useSudoku() {
 
           const targetPuzzleId = isDailyChallenge && dateParam ? `daily-sudoku-${dateParam}` : puzzle.id
 
+          // Only resume saved game if it matches the target puzzle ID
+          const saved = loadGameState(undefined, currentDiff)
+          if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === currentDiff) {
+            setGameState({
+              currentBoard: saved.currentBoard,
+              initialBoard: saved.initialBoard,
+              solution: saved.solution,
+              puzzleId: saved.puzzleId,
+              mistakes: saved.mistakes,
+              score: saved.score,
+              time: saved.time,
+              gameStatus: saved.gameStatus as GameStatus,
+            })
+            setBoardHistory(saved.history || [])
+            if (saved.selectedCell) setSelectedCell(saved.selectedCell)
+            puzzleIdRef.current = saved.puzzleId
+            startTimeRef.current = Date.now() - ((saved.time || 0) * 1000)
+            setIsInitialized(true)
+            if (!getAccessToken()) ensureGuestId()
+            await initSession(puzzle.id)
+            return
+          }
+
           const next = transformPuzzle(puzzle, isDailyChallenge, dateParam)
           setGameState(next)
           puzzleIdRef.current = next.puzzleId
@@ -497,26 +644,45 @@ export function useSudoku() {
             const hasFilledCells = board81.split('').some(c => c !== '0')
             if (hasFilledCells) {
               const puzzleArr = Array.isArray(puzzle.puzzle) ? puzzle.puzzle : parseBoardStr(puzzle.puzzle as string)
-              const solArr = Array.isArray(puzzle.solution) ? puzzle.solution : parseBoardStr(puzzle.solution as string)
-              const restored = sudokuRestoreFromSession(sessionData, puzzleArr, solArr)
+              const restored = sudokuRestoreFromSession(sessionData, puzzleArr)
               if (restored) {
                 // The timer interval started when isInitialized flipped true
                 // (baseline set from time=0). Re-baseline so the restored
                 // elapsedTime survives the next tick instead of snapping back
                 // to ~0.
                 startTimeRef.current = Date.now() - (sessionData.elapsedTime || 0) * 1000
+                
+                const pId = sessionData.puzzleId || next.puzzleId
+                const local = loadGameState(undefined, currentDiff)
+                const localBoard = (local && (local.puzzleId === pId)) ? local.currentBoard : null
+                
+                if (localBoard) {
+                  for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                      if (!restored[r][c].value && localBoard[r][c].notes) {
+                        restored[r][c].notes = [...(localBoard[r][c].notes || [])]
+                      }
+                      if (!restored[r][c].value && localBoard[r][c].value) {
+                        restored[r][c] = { ...localBoard[r][c] }
+                      }
+                    }
+                  }
+                }
+
                 setGameState({
                   currentBoard: restored,
                   initialBoard: next.initialBoard,
                   solution: next.solution,
-                  puzzleId: sessionData.puzzleId || next.puzzleId,
+                  puzzleId: pId,
                   mistakes: sessionData.mistakes || 0,
                   score: sessionData.score || 0,
                   time: sessionData.elapsedTime || 0,
                   gameStatus: next.gameStatus,
                 })
+                if (local?.selectedCell) setSelectedCell(local.selectedCell)
                 hintsUsedRef.current = sessionData.hintsUsed || 0
                 movesRef.current = sessionData.moves || 0
+                startTimeRef.current = Date.now() - ((sessionData.elapsedTime || 0) * 1000)
               }
             }
           }
@@ -549,7 +715,6 @@ export function useSudoku() {
   }, [isInitialized, isDailyChallenge, dateParam])
 
   // UI state
-  const [selectedCell, setSelectedCell] = useState<Position | null>(null)
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null)
   const [notesMode, setNotesMode] = useState(false)
   const [isWinAnimating, setIsWinAnimating] = useState(false)
@@ -591,10 +756,12 @@ export function useSudoku() {
         score: gameState.score,
         time: gameState.time,
         gameStatus: gameState.gameStatus,
+        history: boardHistory,
+        selectedCell,
       }, undefined, difficulty)
       lastLocalSaveAtRef.current = Date.now()
     }
-  }, [gameState, difficulty, isInitialized])
+  }, [gameState, difficulty, isInitialized, boardHistory])
 
   /**
    * Flush the exact close-moment elapsed time to the server when the page is
@@ -666,20 +833,23 @@ export function useSudoku() {
       if (timerRef.current) {
         clearInterval(timerRef.current)
       }
+      if (pendingSaveTimeoutRef.current) {
+        clearTimeout(pendingSaveTimeoutRef.current)
+      }
     }
   }, [gameState.gameStatus, isInitialized])
 
   /**
    * Add score feedback animation
    */
-  const addScoreFeedback = useCallback((value: number) => {
-    const feedback: ScoreFeedback = {
-      id: `${Date.now()}-${Math.random()}`,
-      value,
-      timestamp: Date.now(),
-    }
-    setScoreFeedbacks((prev) => [...prev, feedback])
-  }, [])
+   const addScoreFeedback = useCallback((value: number) => {
+     const feedback: ScoreFeedback = {
+       id: `${Date.now()}-${Math.random()}`,
+       value,
+       timestamp: Date.now(),
+     }
+     setScoreFeedbacks((prev) => [feedback])
+   }, [])
 
   /**
    * Remove score feedback
@@ -756,6 +926,9 @@ export function useSudoku() {
       // No-op if the same value is already in the cell (avoid double-scoring).
       if (cell.value === num) return
 
+      // Push current board to history
+      setBoardHistory(prev => [...prev, cloneBoard(gameState.currentBoard)].slice(-30))
+
       // Notes mode - toggle note
       if (notesMode) {
         const newBoard = updateCellNote(gameState.currentBoard, selectedCell, num)
@@ -818,9 +991,11 @@ export function useSudoku() {
         // Valid move according to rules
         let scoreDelta = 0
         if (isCorrectValue) {
+          const prevCell = getCellAt(gameState.currentBoard, selectedCell)
+          const wasAlreadyCorrect = prevCell?.isCorrect === true
           newBoard[selectedCell.row][selectedCell.col].isError = false
           newBoard[selectedCell.row][selectedCell.col].isCorrect = true
-          scoreDelta = 10
+          scoreDelta = wasAlreadyCorrect ? 0 : 10
         } else {
           // Rule-abiding, but not the final solution value yet
           newBoard[selectedCell.row][selectedCell.col].isError = false
@@ -885,6 +1060,9 @@ export function useSudoku() {
     const cell = getCellAt(gameState.currentBoard, selectedCell)
     if (!cell || cell.fixed) return
 
+    // Push current board to history
+    setBoardHistory(prev => [...prev, cloneBoard(gameState.currentBoard)])
+
     const newBoard = clearCell(gameState.currentBoard, selectedCell)
     // Clear notes and reset state flags
     newBoard[selectedCell.row][selectedCell.col] = clearNotes(
@@ -932,6 +1110,9 @@ export function useSudoku() {
 
     const correctValue = getCorrectValue(gameState.solution, targetCell)
     if (!correctValue) return
+
+    // Push current board to history
+    setBoardHistory(prev => [...prev, cloneBoard(gameState.currentBoard)])
 
     let newBoard = updateCellValue(gameState.currentBoard, targetCell, correctValue)
     newBoard[targetCell.row][targetCell.col] = clearNotes(
@@ -982,6 +1163,8 @@ export function useSudoku() {
     setNotesMode(false)
     setIsWinAnimating(false)
     setScoreFeedbacks([])
+    setBoardHistory([])
+    cellMistakesRef.current.clear()
     // Explicit baseline: the timer keeps running (status stays 'playing'),
     // so point it at now instead of nulling it and waiting for the
     // (never re-running) effect.
@@ -1021,6 +1204,8 @@ export function useSudoku() {
     setNotesMode(false)
     setIsWinAnimating(false)
     setScoreFeedbacks([])
+    setBoardHistory([])
+    cellMistakesRef.current.clear()
     // Explicit baseline: the timer keeps running (status stays 'playing'),
     // so point it at now instead of nulling it and waiting for the
     // (never re-running) effect.
@@ -1115,6 +1300,22 @@ export function useSudoku() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedCell, enterNumber, eraseCell, gameState.gameStatus])
 
+  const undoMove = useCallback(() => {
+    setBoardHistory(prevHistory => {
+      if (prevHistory.length === 0) return prevHistory
+      const newHistory = [...prevHistory]
+      const lastBoard = newHistory.pop()
+      if (lastBoard) {
+        setGameState(prev => ({
+          ...prev,
+          currentBoard: lastBoard
+        }))
+        saveMoveNow(lastBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
+      }
+      return newHistory
+    })
+  }, [gameState.mistakes])
+
   return {
     // State
     board: gameState.currentBoard,
@@ -1131,6 +1332,7 @@ export function useSudoku() {
     difficulty,
     availableHints: calculateAvailableHints(gameState.score),
     scoreFeedbacks,
+    canUndo: boardHistory.length > 0,
 
     // Actions
     selectCell,
@@ -1144,5 +1346,6 @@ export function useSudoku() {
     changeDifficulty,
     removeScoreFeedback,
     abandonSession,
+    undoMove,
   }
 }

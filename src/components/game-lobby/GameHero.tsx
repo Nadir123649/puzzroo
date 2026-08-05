@@ -118,7 +118,13 @@ function GameHeroContent({ name, image, imageLight, difficulties, gameSlug }: Ga
 
   useEffect(() => {
     if (backParam) {
-      const timer = setTimeout(() => setInitialLoading(false), 200)
+      const timer = setTimeout(() => {
+        setInitialLoading(false)
+        // Clean URL so page refresh doesn't trigger loader again
+        const url = new URL(window.location.href)
+        url.searchParams.delete('back')
+        router.replace(url.pathname + (url.search || ''), { scroll: false })
+      }, 200)
       return () => clearTimeout(timer)
     }
   }, [backParam])
@@ -191,23 +197,26 @@ function GameHeroContent({ name, image, imageLight, difficulties, gameSlug }: Ga
                 <>
                   <Image
                     src={imageLight}
-                    alt={name}
+                    alt=""
+                    role="presentation"
                     width={101}
                     height={101}
-                    className="w-[101px] h-[101px] object-contain absolute transition-opacity duration-300 opacity-100 dark:opacity-0"
+                    className="w-[101px] h-[101px] object-contain absolute opacity-100 dark:opacity-0 transition-opacity duration-300"
                   />
                   <Image
                     src={image}
-                    alt={name}
+                    alt=""
+                    role="presentation"
                     width={101}
                     height={101}
-                    className="w-[101px] h-[101px] object-contain absolute transition-opacity duration-300 opacity-0 dark:opacity-100"
+                    className="w-[101px] h-[101px] object-contain absolute opacity-0 dark:opacity-100 transition-opacity duration-300"
                   />
                 </>
               ) : (
                 <Image
                   src={image}
-                  alt={name}
+                  alt=""
+                  role="presentation"
                   width={101}
                   height={101}
                   className="w-[101px] h-[101px] object-contain"

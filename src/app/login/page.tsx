@@ -367,6 +367,7 @@ export default function LoginPage() {
 
   return (
     <>
+      <title>Log In | Puzzroo Games</title>
       <GameLoader isOpen={initialLoading} text="Loading..." />
       <RedirectIfAuthenticated>
         <Suspense fallback={

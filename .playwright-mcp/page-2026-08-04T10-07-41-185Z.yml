@@ -1,0 +1,149 @@
+- generic [ref=e1]:
+  - generic [ref=e10]:
+    - banner [ref=e11]:
+      - generic [ref=e13]:
+        - link "Puzzroo" [ref=e15] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e21]:
+          - link "Sign up" [ref=e22] [cursor=pointer]:
+            - /url: /signup
+          - link "Login" [ref=e23] [cursor=pointer]:
+            - /url: /login
+          - button "Toggle theme" [active] [ref=e24] [cursor=pointer]:
+            - generic [ref=e25]: Dark Mode
+            - img "Theme icon" [ref=e26]
+    - main [ref=e27]:
+      - main [ref=e47]:
+        - generic [ref=e49]:
+          - button "Back to games" [ref=e50] [cursor=pointer]
+          - generic [ref=e53]:
+            - img "Sudoku" [ref=e55]
+            - heading "SUDOKU" [level=1] [ref=e56]
+        - generic [ref=e60]:
+          - grid "Sudoku board" [ref=e62]:
+            - button "Cell 1, 1, value 5, fixed" [ref=e63] [cursor=pointer]: "5"
+            - button "Cell 1, 2, value 2, fixed" [ref=e64] [cursor=pointer]: "2"
+            - button "Cell 1, 3, value 7, fixed" [ref=e65] [cursor=pointer]: "7"
+            - button "Cell 1, 4, value 9, fixed" [ref=e66] [cursor=pointer]: "9"
+            - button "Cell 1, 5, value 5" [ref=e188] [cursor=pointer]: "5"
+            - button "Cell 1, 6, value 1, fixed" [ref=e68] [cursor=pointer]: "1"
+            - button "Cell 1, 7, value 3, fixed" [ref=e69] [cursor=pointer]: "3"
+            - button "Cell 1, 8, value 8, fixed" [ref=e70] [cursor=pointer]: "8"
+            - button "Cell 1, 9, value 6, fixed" [ref=e71] [cursor=pointer]: "6"
+            - button "Cell 2, 1, empty" [ref=e72] [cursor=pointer]
+            - button "Cell 2, 2, empty" [ref=e73] [cursor=pointer]
+            - button "Cell 2, 3, value 1, fixed" [ref=e74] [cursor=pointer]: "1"
+            - button "Cell 2, 4, value 8, fixed" [ref=e75] [cursor=pointer]: "8"
+            - button "Cell 2, 5, value 4" [ref=e189] [cursor=pointer]: "4"
+            - button "Cell 2, 6, value 6, fixed" [ref=e77] [cursor=pointer]: "6"
+            - button "Cell 2, 7, empty" [ref=e78] [cursor=pointer]
+            - button "Cell 2, 8, value 9, fixed" [ref=e79] [cursor=pointer]: "9"
+            - button "Cell 2, 9, value 5, fixed" [ref=e80] [cursor=pointer]: "5"
+            - button "Cell 3, 1, value 9, fixed" [ref=e81] [cursor=pointer]: "9"
+            - button "Cell 3, 2, value 8, fixed" [ref=e82] [cursor=pointer]: "8"
+            - button "Cell 3, 3, value 6, fixed" [ref=e83] [cursor=pointer]: "6"
+            - button "Cell 3, 4, value 5, fixed" [ref=e84] [cursor=pointer]: "5"
+            - button "Cell 3, 5, value 2" [ref=e190] [cursor=pointer]: "2"
+            - button "Cell 3, 6, empty" [ref=e86] [cursor=pointer]
+            - button "Cell 3, 7, empty" [ref=e87] [cursor=pointer]
+            - button "Cell 3, 8, value 1, fixed" [ref=e88] [cursor=pointer]: "1"
+            - button "Cell 3, 9, value 7, fixed" [ref=e89] [cursor=pointer]: "7"
+            - button "Cell 4, 1, value 6, fixed" [ref=e90] [cursor=pointer]: "6"
+            - button "Cell 4, 2, empty" [ref=e91] [cursor=pointer]
+            - button "Cell 4, 3, empty" [ref=e92] [cursor=pointer]
+            - button "Cell 4, 4, empty" [ref=e93] [cursor=pointer]
+            - button "Cell 4, 5, empty" [ref=e94] [cursor=pointer]
+            - button "Cell 4, 6, empty" [ref=e95] [cursor=pointer]
+            - button "Cell 4, 7, value 7, fixed" [ref=e96] [cursor=pointer]: "7"
+            - button "Cell 4, 8, value 5, fixed" [ref=e97] [cursor=pointer]: "5"
+            - button "Cell 4, 9, value 2, fixed" [ref=e98] [cursor=pointer]: "2"
+            - button "Cell 5, 1, empty" [ref=e99] [cursor=pointer]
+            - button "Cell 5, 2, value 9, fixed" [ref=e100] [cursor=pointer]: "9"
+            - button "Cell 5, 3, empty" [ref=e101] [cursor=pointer]
+            - button "Cell 5, 4, value 1, fixed" [ref=e102] [cursor=pointer]: "1"
+            - button "Cell 5, 5, value 6, fixed" [ref=e103] [cursor=pointer]: "6"
+            - button "Cell 5, 6, empty" [ref=e104] [cursor=pointer]
+            - button "Cell 5, 7, value 8, fixed" [ref=e105] [cursor=pointer]: "8"
+            - button "Cell 5, 8, empty" [ref=e106] [cursor=pointer]
+            - button "Cell 5, 9, empty" [ref=e107] [cursor=pointer]
+            - button "Cell 6, 1, empty" [ref=e108] [cursor=pointer]
+            - button "Cell 6, 2, value 5, fixed" [ref=e109] [cursor=pointer]: "5"
+            - button "Cell 6, 3, value 8, fixed" [ref=e110] [cursor=pointer]: "8"
+            - button "Cell 6, 4, empty" [ref=e111] [cursor=pointer]
+            - button "Cell 6, 5, empty" [ref=e112] [cursor=pointer]
+            - button "Cell 6, 6, empty" [ref=e113] [cursor=pointer]
+            - button "Cell 6, 7, empty" [ref=e114] [cursor=pointer]
+            - button "Cell 6, 8, empty" [ref=e115] [cursor=pointer]
+            - button "Cell 6, 9, empty" [ref=e116] [cursor=pointer]
+            - button "Cell 7, 1, empty" [ref=e117] [cursor=pointer]
+            - button "Cell 7, 2, value 4, fixed" [ref=e118] [cursor=pointer]: "4"
+            - button "Cell 7, 3, empty" [ref=e119] [cursor=pointer]
+            - button "Cell 7, 4, empty" [ref=e120] [cursor=pointer]
+            - button "Cell 7, 5, empty" [ref=e121] [cursor=pointer]
+            - button "Cell 7, 6, empty" [ref=e122] [cursor=pointer]
+            - button "Cell 7, 7, value 9, fixed" [ref=e123] [cursor=pointer]: "9"
+            - button "Cell 7, 8, empty" [ref=e124] [cursor=pointer]
+            - button "Cell 7, 9, empty" [ref=e125] [cursor=pointer]
+            - button "Cell 8, 1, empty" [ref=e126] [cursor=pointer]
+            - button "Cell 8, 2, empty" [ref=e127] [cursor=pointer]
+            - button "Cell 8, 3, empty" [ref=e128] [cursor=pointer]
+            - button "Cell 8, 4, value 2, fixed" [ref=e129] [cursor=pointer]: "2"
+            - button "Cell 8, 5, value 8, fixed" [ref=e130] [cursor=pointer]: "8"
+            - button "Cell 8, 6, value 9, fixed" [ref=e131] [cursor=pointer]: "9"
+            - button "Cell 8, 7, value 6, fixed" [ref=e132] [cursor=pointer]: "6"
+            - button "Cell 8, 8, value 3, fixed" [ref=e133] [cursor=pointer]: "3"
+            - button "Cell 8, 9, empty" [ref=e134] [cursor=pointer]
+            - button "Cell 9, 1, empty" [ref=e135] [cursor=pointer]
+            - button "Cell 9, 2, value 6, fixed" [ref=e136] [cursor=pointer]: "6"
+            - button "Cell 9, 3, value 9, fixed" [ref=e137] [cursor=pointer]: "9"
+            - button "Cell 9, 4, empty" [ref=e138] [cursor=pointer]
+            - button "Cell 9, 5, empty" [ref=e139] [cursor=pointer]
+            - button "Cell 9, 6, empty" [ref=e140] [cursor=pointer]
+            - button "Cell 9, 7, empty" [ref=e141] [cursor=pointer]
+            - button "Cell 9, 8, empty" [ref=e142] [cursor=pointer]
+            - button "Cell 9, 9, empty" [ref=e143] [cursor=pointer]
+          - generic [ref=e144]:
+            - generic [ref=e146]:
+              - generic [ref=e148]:
+                - text: "Score:"
+                - generic [ref=e149]: "20"
+              - generic [ref=e150]:
+                - generic [ref=e151]:
+                  - text: "Mistakes:"
+                  - generic [ref=e152]: 1/3
+                - generic [ref=e153]:
+                  - text: "Time:"
+                  - generic [ref=e154]: 03:04
+            - generic [ref=e155]:
+              - button "Undo" [ref=e156] [cursor=pointer]
+              - button "Erase" [ref=e160] [cursor=pointer]
+              - button "Pencil mode" [ref=e164] [cursor=pointer]
+              - button "Hint" [ref=e168] [cursor=pointer]:
+                - generic [ref=e191]: "1"
+            - generic [ref=e172]:
+              - button "Number 1" [ref=e173] [cursor=pointer]: "1"
+              - button "Number 2" [pressed] [ref=e174] [cursor=pointer]: "2"
+              - button "Number 3" [ref=e175] [cursor=pointer]: "3"
+              - button "Number 4" [ref=e176] [cursor=pointer]: "4"
+              - button "Number 5" [ref=e177] [cursor=pointer]: "5"
+              - button "Number 6" [ref=e178] [cursor=pointer]: "6"
+              - button "Number 7" [ref=e179] [cursor=pointer]: "7"
+              - button "Number 8" [ref=e180] [cursor=pointer]: "8"
+              - button "Number 9" [ref=e181] [cursor=pointer]: "9"
+            - generic [ref=e182]:
+              - button "New Game" [ref=e183] [cursor=pointer]
+              - button "Replay Game" [ref=e185] [cursor=pointer]
+    - contentinfo [ref=e28]:
+      - generic [ref=e30]:
+        - paragraph [ref=e32]: © 2026 Puzzroo
+        - generic [ref=e33]:
+          - link "FAQ" [ref=e34] [cursor=pointer]:
+            - /url: /faq
+          - link "Contact Us" [ref=e35] [cursor=pointer]:
+            - /url: /contact-us
+          - link "Privacy Policy" [ref=e36] [cursor=pointer]:
+            - /url: /privacy-policy
+          - link "Terms and Conditions" [ref=e37] [cursor=pointer]:
+            - /url: /terms-and-conditions
+  - button "Open Next.js Dev Tools" [ref=e43] [cursor=pointer]
+  - alert [ref=e187]

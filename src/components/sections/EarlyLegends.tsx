@@ -14,6 +14,22 @@ const leaderboardData = [
   { name: 'Zara Ahmed', score: '4,020' },
   { name: 'Hassan Ali', score: '3,940' },
   { name: 'Aisha Khan', score: '3,810' },
+  { name: 'Bilal Ahmed', score: '3,750' },
+  { name: 'Maryam Sajid', score: '3,680' },
+  { name: 'Zayn Malik', score: '3,590' },
+  { name: 'Hania Amir', score: '3,510' },
+  { name: 'Hamza Ali', score: '3,420' },
+  { name: 'Sana Javed', score: '3,360' },
+  { name: 'Fahad Mustafa', score: '3,290' },
+  { name: 'Mahira Khan', score: '3,210' },
+  { name: 'Humayun Saeed', score: '3,150' },
+  { name: 'Kubra Khan', score: '3,080' },
+  { name: 'Sajal Aly', score: '2,990' },
+  { name: 'Ahad Raza', score: '2,910' },
+  { name: 'Yumna Zaidi', score: '2,850' },
+  { name: 'Wahaj Ali', score: '2,780' },
+  { name: 'Iqra Aziz', score: '2,710' },
+  { name: 'Yasir Hussain', score: '2,650' },
 ]
 
 export function EarlyLegends() {
@@ -57,8 +73,8 @@ export function EarlyLegends() {
     }
   }, [currentIndex])
 
-  // Triple the data for infinite loop effect
-  const extendedData = [...leaderboardData, ...leaderboardData, ...leaderboardData]
+  // Double the data for infinite loop effect
+  const extendedData = [...leaderboardData, ...leaderboardData]
 
   // Calculate the slide offset
   const getTranslateX = () => {

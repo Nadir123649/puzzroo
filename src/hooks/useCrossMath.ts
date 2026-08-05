@@ -132,19 +132,21 @@ export function useCrossMath(initialPuzzleId?: string) {
     previousValue: number | string | undefined,
     previousType: Cell['type'],
     previousIsCorrect: boolean | undefined,
-    previousIsError: boolean | undefined
+    previousIsError: boolean | undefined,
+    scoreChange: number = 0
   ) => {
-    setHistory(prev => [
-      ...prev,
-      {
-        position,
-        previousValue,
-        previousType,
-        previousIsCorrect,
-        previousIsError,
-      }
-    ])
-  }, [])
+      setHistory(prev => [
+        ...prev,
+        {
+          position,
+          previousValue,
+          previousType,
+          previousIsCorrect,
+          previousIsError,
+          scoreChange,
+        }
+      ].slice(-30))
+    }, [])
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const timeValueRef = useRef(getInitialTime(getInitialDifficulty()))
@@ -209,7 +211,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     return null
   }
 
-  function restoreFromSession(sessionData: any, freshBoard: Cell[][]) {
+  function restoreFromSession(sessionData: any, freshBoard: Cell[][], solution: Record<string, number | string>) {
     const g = sessionData.grid as Record<string, number>
     if (!g || Object.keys(g).length === 0) return null
     const restored = freshBoard.map(row => row.map(cell => ({ ...cell })))
@@ -219,6 +221,10 @@ export function useCrossMath(initialPuzzleId?: string) {
       if (target && target.isEditable) {
         target.value = val
         target.type = 'number'
+        const correctValue = getCorrectValue(solution as Record<string, number>, r, c)
+        const isCorrect = correctValue !== null && val === correctValue
+        target.isCorrect = isCorrect
+        target.isError = !isCorrect
       }
     }
     return restored
@@ -346,6 +352,10 @@ export function useCrossMath(initialPuzzleId?: string) {
                 if (target && target.isEditable) {
                   target.value = val as number
                   target.type = 'number'
+                  const correctValue = getCorrectValue(serverPuzzle.solution, r, c)
+                  const isCorrect = correctValue !== null && val === correctValue
+                  target.isCorrect = isCorrect
+                  target.isError = !isCorrect
                 }
               }
 
@@ -362,10 +372,10 @@ export function useCrossMath(initialPuzzleId?: string) {
               setTime(Math.max(0, getInitialTime((serverSession.difficulty || difficulty) as Difficulty) - (localElapsed ?? (serverSession.elapsedTime || 0))))
               setGameStatus((serverSession.sessionStatus === 'paused' ? 'playing' : serverSession.sessionStatus || 'playing') as 'playing' | 'won' | 'lost')
               if (serverSession.difficulty) setDifficulty(serverSession.difficulty as Difficulty)
-              setSelectedCell(null)
-              setIsTyping(false)
-              setHistory([])
-              clearGameState()
+             setSelectedCell(null)
+             setIsTyping(false)
+             setHistory(savedGame?.history || [])
+             clearGameState()
 
               sessionIdRef.current = serverSession.sessionId
               sessionCreatedRef.current = true
@@ -514,7 +524,7 @@ export function useCrossMath(initialPuzzleId?: string) {
             clearGameState(undefined, targetDiff)
             const sessionData = await initSession(puzzle.id, targetDiff, isDailyChallenge, dcId)
             if (sessionData && !savedGame) {
-              const restored = restoreFromSession(sessionData, puzzle.grid)
+              const restored = restoreFromSession(sessionData, puzzle.grid, puzzle.solution)
               if (restored) {
                 setBoard(restored)
                 setMistakes(sessionData.mistakes || 0)
@@ -551,15 +561,16 @@ export function useCrossMath(initialPuzzleId?: string) {
 
   useEffect(() => {
     if (gameStatus === 'playing' && board.length > 0 && currentPuzzle) {
-      saveGameState({
-        board,
-        puzzleId: currentPuzzle.id,
-        difficulty,
-        mistakes,
-        score,
-        time,
-        gameStatus,
-      }, undefined, difficulty)
+   saveGameState({
+         board,
+         puzzleId: currentPuzzle.id,
+         difficulty,
+         mistakes,
+         score,
+         time,
+         gameStatus,
+         history,
+       }, undefined, difficulty)
       timeValueRef.current = time
       boardRef.current = board
       difficultyRef.current = difficulty
@@ -567,7 +578,7 @@ export function useCrossMath(initialPuzzleId?: string) {
       scoreRef.current = score
       lastLocalSaveAtRef.current = Date.now()
     }
-  }, [board, difficulty, mistakes, score, time, gameStatus, currentPuzzle])
+  }, [board, difficulty, mistakes, score, time, gameStatus, currentPuzzle, history])
 
   /**
    * Flush the exact close-moment elapsed time to the server when the page is
@@ -688,13 +699,18 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     setIsTyping(false)
 
-    // Save move in history stack for undo
+    // Save move in history stack for undo (include score change for undo)
+    // We calculate what score change will happen: correct = +CORRECT_ANSWER, wrong = +WRONG_ANSWER (negative)
+    const correctValueForHistory = getCorrectValue(currentPuzzle.solution, row, col)
+    const willBeCorrect = correctValueForHistory !== null && num === correctValueForHistory
+    const scoreChangeForHistory = willBeCorrect ? SCORING.CORRECT_ANSWER : SCORING.WRONG_ANSWER
     pushToHistory(
       { row, col },
       typeof cell.value === 'number' ? cell.value : undefined,
       cell.type,
       cell.isCorrect,
-      cell.isError
+      cell.isError,
+      scoreChangeForHistory
     )
 
     const newBoard = board.map(r => r.map(c => ({ ...c })))
@@ -927,7 +943,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     if (history.length === 0 || gameStatus !== 'playing') return
 
     const lastMove = history[history.length - 1]
-    const { position, previousValue, previousType, previousIsCorrect, previousIsError } = lastMove
+    const { position, previousValue, previousType, previousIsCorrect, previousIsError, scoreChange } = lastMove
     const { row, col } = position
 
     const newBoard = board.map(r => r.map(c => ({ ...c })))
@@ -959,6 +975,11 @@ export function useCrossMath(initialPuzzleId?: string) {
       value: previousValue,
       isCorrect: previousIsCorrect,
       isError: previousIsError,
+    }
+
+    // Revert score: undo the score change that was applied when this move was made
+    if (scoreChange !== 0) {
+      setScore(prev => Math.max(0, prev - scoreChange))
     }
 
     setBoard(newBoard)

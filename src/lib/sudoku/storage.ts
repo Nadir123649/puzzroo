@@ -5,7 +5,7 @@
 
 'use client'
 
-import { SudokuBoard, GameStatus, Difficulty } from './types'
+import { SudokuBoard, GameStatus, Difficulty, Position } from './types'
 import { getCurrentUser } from '@/lib/auth/frontend-auth'
 
 const STORAGE_KEY = 'puzzroo_sudoku_game'
@@ -26,6 +26,8 @@ export interface SavedGameState {
   time: number
   gameStatus: GameStatus
   savedAt: number
+  selectedCell?: Position | null
+  history?: SudokuBoard[]
 }
 
 function getScopedKey(baseKey: string): string {

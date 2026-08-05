@@ -78,7 +78,7 @@ export function CrossMathGame() {
   }
 
   const handlePlayAgain = () => {
-    handleNewGame(true)
+    handleNewGame(true) // Always replay same puzzle on Try Again
   }
 
   const handleBackToGames = () => {

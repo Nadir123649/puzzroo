@@ -3,11 +3,16 @@
  * Entry point from homepage "Play Now" button
  */
 
+import { Metadata } from 'next'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { GameHero } from '@/components/game-lobby/GameHero'
 import { GameInfo } from '@/components/game-lobby/GameInfo'
 import { GamePromo } from '@/components/game-lobby/GamePromo'
 import { GameLobbyProvider } from '@/contexts/GameLobbyContext'
+
+export const metadata: Metadata = {
+  title: 'Tangram Lobby',
+}
 
 export default function TangramLobbyPage() {
   return (

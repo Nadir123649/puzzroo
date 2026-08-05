@@ -20,6 +20,7 @@ export function SudokuHero({ backTo }: SudokuHeroProps = {}) {
 
   const dateParam = searchParams?.get('date')
   const hasDate = !!dateParam
+  const difficulty = (searchParams?.get('difficulty') as 'easy' | 'medium' | 'hard' | 'expert' | null) || 'easy'
 
   const isDailyChallenge = pathname.includes('/daily-challenge/')
   const isPastPuzzle = hasDate
@@ -100,6 +101,15 @@ export function SudokuHero({ backTo }: SudokuHeroProps = {}) {
             <h1 className="font-urbanist font-bold text-[30px] md:text-[48px] leading-[120%] text-center text-[#212121] dark:text-[#FAFAFA] transition-colors duration-300">
               SUDOKU
             </h1>
+
+            {/* Difficulty Badge */}
+            {difficulty && (
+              <div className="flex justify-center mt-1">
+                <span className="font-urbanist text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-[#F0EDFF] dark:bg-[#35383F] text-[#6949FF] dark:text-[#A592FF]">
+                  {difficulty}
+                </span>
+              </div>
+            )}
 
             {/* Date Display */}
             {dateParam && (

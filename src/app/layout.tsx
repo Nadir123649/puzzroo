@@ -20,12 +20,10 @@ export const viewport: Viewport = {
   themeColor: '#6949FF',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://enhance-wrinkle-disjoin.ngrok-free.dev'),
+  metadataBase: new URL('https://puzzroo-beta.vercel.app'),
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -95,11 +93,26 @@ export default function RootLayout({
         <style dangerouslySetInnerHTML={{
           __html: `
             /* Critical CSS to prevent flash - loaded immediately */
-            html { background-color: #ffffff; transition: none !important; }
-            html.dark { background-color: #181A20 !important; color-scheme: dark; }
-            html.dark body { background-color: #181A20 !important; }
-            html.dark header { background-color: #181A20 !important; }
-            body { transition: none !important; }
+            html { 
+              background-color: #ffffff;
+            }
+            html.dark { 
+              background-color: #181A20 !important; 
+              color-scheme: dark;
+            }
+            html.dark body { 
+              background-color: #181A20 !important;
+            }
+            html.dark header { 
+              background-color: #181A20 !important;
+            }
+            /* Ensure all theme transitions are synchronized */
+            * {
+              transition-property: background-color, border-color, color, fill, stroke;
+              transition-duration: 200ms;
+              transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+              transition-delay: 0ms;
+            }
           `
         }} />
         <script id="theme-init" dangerouslySetInnerHTML={{

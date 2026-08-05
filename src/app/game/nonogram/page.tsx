@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { GameHero } from '@/components/game-lobby/GameHero';
 import { GameInfo } from '@/components/game-lobby/GameInfo';
@@ -5,6 +6,10 @@ import { GamePromo } from '@/components/game-lobby/GamePromo';
 import { NonogramPuzzleGrid } from '@/components/game-lobby/NonogramPuzzleGrid';
 import { GameLobbyProvider } from '@/contexts/GameLobbyContext';
 import { images } from '@/lib/utils';
+
+export const metadata: Metadata = {
+  title: 'Nonogram Lobby',
+};
 
 export default async function NonogramLobbyPage() {
   return (

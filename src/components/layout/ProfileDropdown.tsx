@@ -7,6 +7,7 @@ import { User, CreditCard, Bell, History, LogOut, Activity, Sun, Moon } from 'lu
 import { logout, getCurrentUser } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { useTheme } from '../../hooks/use-theme'
+import { images } from '@/lib/utils'
 
 interface ProfileDropdownProps {
   userName: string
@@ -175,11 +176,13 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
               }}
               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150 text-left"
             >
-              {theme === 'dark' ? (
-                <Sun size={18} className="text-[#6949FF]" strokeWidth={2} />
-              ) : (
-                <Moon size={18} className="text-[#6949FF]" strokeWidth={2} />
-              )}
+              <img
+                src={images.darkIcon}
+                alt="Theme icon"
+                width={18}
+                height={18}
+                className={`w-[18px] h-[18px] select-none transition-transform duration-200 mr-2 ${theme === 'light' ? 'scale-x-[-1]' : ''}`}
+              />
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white transition-colors duration-300">
                 {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
               </span>

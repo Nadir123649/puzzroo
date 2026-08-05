@@ -197,7 +197,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   return (
     <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}>
       <div className="w-full max-w-[1380px] mx-auto px-[20px] flex justify-center overflow-visible">
-        <div className="w-full flex flex-col gap-[20px] pb-[20px] max-w-full overflow-visible">
+        <div className="w-full flex flex-col gap-[20px] md:pb-[50px] pb-[20px] max-w-full overflow-visible">
 
           {/* Puzzle Metadata */}
           <div className="text-center space-y-1 w-full mt-4">
@@ -210,13 +210,13 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
-                <span>~{difficulty === 'hard' ? '1.5' : difficulty === 'medium' ? '3' : '5'} min</span>
+                <span>{difficulty === 'hard' ? '1.5' : difficulty === 'medium' ? '3' : '5'} min</span>
               </span>
             </div>
           </div>
 
           {/* Desktop Layout - arrow sits left of board, no extra row */}
-          <div className="hidden md:flex gap-[50px] justify-center items-start overflow-visible relative md:pt-6">
+          <div className="hidden md:flex gap-[50px] justify-center items-stretch overflow-visible relative md:pt-6">
 
             {/* LEFT SIDE - BOARD */}
             <div ref={desktopBoardRef} className="flex-1 max-w-[700px] min-w-[320px] overflow-visible">
@@ -252,7 +252,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
             {/* RIGHT SIDE - CONTROLS PANEL */}
             <div 
-              className="flex-shrink-0 w-[360px] flex flex-col gap-5 sticky top-[100px]"
+              className="flex-shrink-0 w-[360px] flex flex-col justify-between"
             >
               {/* Premium Controls Card */}
               <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-6 shadow-lg shadow-purple-500/5 flex flex-col gap-5">
@@ -361,7 +361,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               </div>
 
               {/* Bottom Actions Section */}
-              <div className="w-full flex flex-col gap-[12px]">
+              <div className="w-full flex flex-col gap-[12px] mt-auto">
                 {/* Replay Game / New Game / Replay Button */}
                 {isFromPastPuzzles ? (
                   <Button

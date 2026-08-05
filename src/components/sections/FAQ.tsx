@@ -64,7 +64,7 @@ function FAQItemComponent({ faq, isOpen, onToggle, onKeyDown }: FAQItemComponent
     <div
       className={cn(
         'w-full rounded-[20px] p-5 sm:p-6 min-h-[71px] transition-all duration-300 ease-in-out cursor-pointer',
-        'bg-[#FFFFFF] dark:bg-[#1F222A] hover:bg-[#f1f1f1] dark:hover:bg-[#1F222A]'
+        'bg-[#FFFFFF] dark:bg-[#1F222A] hover:bg-[#f1f1f1] dark:hover:bg-[#1F222A] focus:outline-none'
       )}
       style={{
         boxShadow: '0px 4px 60px 0px rgba(0, 0, 0, 0.05)',
