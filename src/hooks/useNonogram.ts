@@ -51,7 +51,7 @@ function getTodayDateParam(): string {
 }
 
 import { gameApi } from '@/lib/api/gameApi'
-import { getAccessToken, signInGuest } from '@/lib/auth/frontend-auth'
+import { getAccessToken, ensureGuestId } from '@/lib/auth/frontend-auth'
 
 // Module-level guard to cancel StrictMode double-mount in dev
 let _nonogramMountGuard = false
@@ -182,14 +182,14 @@ export function useNonogram(initialPuzzleId?: string) {
   const abortRef = useRef<AbortController | null>(null)
   const sessionCreatedRef = useRef(false)
   const completionCalledRef = useRef(false)
+  const lostAbandonedRef = useRef(false)
 
   async function initSession(puzzleId: string, diff: string): Promise<any> {
     if (sessionCreatedRef.current) return null
     completionCalledRef.current = false
     if (typeof window === 'undefined') return null
     if (!getAccessToken()) {
-      await signInGuest()
-      if (!getAccessToken()) return null
+      ensureGuestId()
     }
     try {
       const res = await gameApi.createSession('nonogram', puzzleId, diff)
@@ -229,6 +229,16 @@ export function useNonogram(initialPuzzleId?: string) {
         mistakes: mists,
         moves,
       })
+    } catch { /* ignore */ }
+  }
+
+  async function abandonSession() {
+    if (!sessionIdRef.current) return
+    const sid = sessionIdRef.current
+    sessionIdRef.current = null
+    sessionCreatedRef.current = false
+    try {
+      await gameApi.abandonSession('nonogram', sid)
     } catch { /* ignore */ }
   }
 
@@ -468,10 +478,12 @@ export function useNonogram(initialPuzzleId?: string) {
         updateChallengeStatus(puzzleId, 'completed')
       }
 
-      // Also report completion to the API when logged in (fire-and-forget)
+      // Report completion to the API (fire-and-forget). Works for both
+      // logged-in users and guests (api client sends x-guest-id fallback).
+      const initialTime = difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
+      const elapsed = Math.max(0, initialTime - elapsedSeconds)
+      void completePuzzle(grid, elapsed, hintsUsed, mistakeCount, moveCount)
       if (getAccessToken()) {
-        const initialTime = difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
-        const elapsed = Math.max(0, initialTime - elapsedSeconds)
         void gameApi.complete('nonogram', {
           puzzleId: currentPuzzle.id,
           difficulty: currentPuzzle.difficulty as 'easy' | 'medium' | 'hard' | 'expert',
@@ -482,7 +494,6 @@ export function useNonogram(initialPuzzleId?: string) {
         }).catch(() => {
           // best-effort; ignore failures
         })
-        void completePuzzle(grid, elapsed, hintsUsed, mistakeCount, moveCount)
       }
 
       clearGameState()
@@ -822,6 +833,11 @@ export function useNonogram(initialPuzzleId?: string) {
     // This ensures "New Puzzle" respects the mode you're currently playing
     const currentDiff = currentPuzzle?.difficulty || difficulty
 
+    if (!getAccessToken()) ensureGuestId()
+    sessionIdRef.current = null
+    sessionCreatedRef.current = false
+    completionCalledRef.current = false
+
     // Initialize puzzle with CURRENT difficulty
     initializePuzzle(currentDiff, false, puzzleId)
   }, [currentPuzzle, difficulty, initializePuzzle])
@@ -831,6 +847,12 @@ export function useNonogram(initialPuzzleId?: string) {
    */
   const changeDifficulty = useCallback((newDifficulty: Difficulty, puzzleId?: string) => {
     setDifficulty(newDifficulty)
+
+    if (!getAccessToken()) ensureGuestId()
+    sessionIdRef.current = null
+    sessionCreatedRef.current = false
+    completionCalledRef.current = false
+
     initializePuzzle(newDifficulty, false, puzzleId)
   }, [initializePuzzle])
 
@@ -901,6 +923,13 @@ export function useNonogram(initialPuzzleId?: string) {
       if (e.key === 'm' || e.key === 'M') {
         e.preventDefault()
         setInputMode('mark')
+        return
+      }
+
+      // Escape - abandon current session (works for guests too)
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        void abandonSession()
         return
       }
 
@@ -991,6 +1020,18 @@ export function useNonogram(initialPuzzleId?: string) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedCell, hoveredCell, gameStatus, currentPuzzle, handleCellClick, grid])
+
+  // Abandon the server session when the player loses (timer expired or mistake
+  // limit hit), so the next puzzle starts a fresh session. Guest-aware.
+  useEffect(() => {
+    if (gameStatus === 'lost' && !lostAbandonedRef.current && sessionIdRef.current) {
+      lostAbandonedRef.current = true
+      void abandonSession()
+    }
+    if (gameStatus === 'playing') {
+      lostAbandonedRef.current = false
+    }
+  }, [gameStatus])
 
   return {
     // State
