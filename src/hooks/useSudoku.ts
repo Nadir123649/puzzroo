@@ -432,7 +432,7 @@ export function useSudoku() {
                    for (let r = 0; r < 9; r++) {
                      for (let c = 0; c < 9; c++) {
                        if (!restored[r][c].value && localBoard[r][c].notes) {
-                         restored[r][c].notes = [...localBoard[r][c].notes]
+                         restored[r][c].notes = [...(localBoard[r][c].notes || [])]
                        }
                        if (!restored[r][c].value && localBoard[r][c].value) {
                          restored[r][c] = { ...localBoard[r][c] }
@@ -491,7 +491,7 @@ export function useSudoku() {
                    for (let r = 0; r < 9; r++) {
                      for (let c = 0; c < 9; c++) {
                        if (!restored[r][c].value && localBoard[r][c].notes) {
-                         restored[r][c].notes = [...localBoard[r][c].notes]
+                         restored[r][c].notes = [...(localBoard[r][c].notes || [])]
                        }
                        if (!restored[r][c].value && localBoard[r][c].value) {
                          restored[r][c] = { ...localBoard[r][c] }
