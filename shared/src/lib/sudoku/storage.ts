@@ -5,7 +5,7 @@
 
 'use client'
 
-import { SudokuBoard, GameStatus, Difficulty } from './types'
+import { SudokuBoard, GameStatus, Difficulty, Position } from './types'
 
 const STORAGE_KEY = 'puzzroo_sudoku_game'
 const STORAGE_VERSION = '1.0'
@@ -25,6 +25,7 @@ export interface SavedGameState {
   time: number
   gameStatus: GameStatus
   history?: SudokuBoard[]
+  selectedCell?: Position | null
   savedAt: number
 }
 
