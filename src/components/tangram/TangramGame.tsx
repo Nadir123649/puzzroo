@@ -216,7 +216,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
           </div>
 
           {/* Desktop Layout - arrow sits left of board, no extra row */}
-          <div className="hidden md:flex gap-[50px] justify-center items-start overflow-visible relative md:pt-6">
+          <div className="hidden md:flex gap-[50px] justify-center items-stretch overflow-visible relative md:pt-6">
 
             {/* LEFT SIDE - BOARD */}
             <div ref={desktopBoardRef} className="flex-1 max-w-[700px] min-w-[320px] overflow-visible">
@@ -252,7 +252,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
             {/* RIGHT SIDE - CONTROLS PANEL */}
             <div 
-              className="flex-shrink-0 w-[360px] flex flex-col gap-5 sticky top-[100px]"
+              className="flex-shrink-0 w-[360px] flex flex-col justify-between"
             >
               {/* Premium Controls Card */}
               <div className="w-full bg-[#F5F6FA] dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] rounded-2xl p-6 shadow-lg shadow-purple-500/5 flex flex-col gap-5">
@@ -361,7 +361,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               </div>
 
               {/* Bottom Actions Section */}
-              <div className="w-full flex flex-col gap-[12px]">
+              <div className="w-full flex flex-col gap-[12px] mt-auto">
                 {/* Replay Game / New Game / Replay Button */}
                 {isFromPastPuzzles ? (
                   <Button
