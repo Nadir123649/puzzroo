@@ -5,7 +5,7 @@
 
 'use client'
 
-import { SudokuBoard, GameStatus, Difficulty } from './types'
+import { SudokuBoard, GameStatus, Difficulty, Position } from './types'
 import { getCurrentUser } from '@/lib/auth/frontend-auth'
 
 const STORAGE_KEY = 'puzzroo_sudoku_game'
