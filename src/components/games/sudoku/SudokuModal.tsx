@@ -83,7 +83,7 @@ export function SudokuModal({
         className={`fixed inset-0 z-[100000] flex items-center justify-center p-4 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
-        onClick={onClose ?? onPlayAgain}
+        onClick={onClose}
       >
         <div
           className={`relative bg-[#F0EDFF] dark:bg-[#1F222A] rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8 transform transition-all duration-300 ${
