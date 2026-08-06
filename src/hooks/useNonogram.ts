@@ -921,7 +921,7 @@ export function useNonogram(initialPuzzleId?: string) {
           changedCount++
 
           // Validation logic for fill mode and mark mode
-          if (validationMode === 'assisted' && currentState !== 'error') {
+          if (validationMode === 'assisted') {
             let isMistake = false;
             if (action === 'fill') {
               isMistake = currentPuzzle.solution[row]?.[col] === 0;
