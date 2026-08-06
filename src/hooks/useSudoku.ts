@@ -47,9 +47,9 @@ import { getAccessToken, ensureGuestId } from '@/lib/auth/frontend-auth'
 
 function getTodayDateParam(): string {
   const d = new Date()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const y = String(d.getFullYear()).slice(-2)
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const y = String(d.getUTCFullYear()).slice(-2)
   return `${m}-${day}-${y}`
 }
 

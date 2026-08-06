@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   if ('error' in userResult) return userResult.error;
 
   try {
-    const history = await DailyChallenge.find({ userId: userResult.user.id })
+    const history = await DailyChallenge.find({ gameId: 'crossmath', userId: userResult.user.id })
       .sort({ date: -1 })
       .limit(30)
       .select('date puzzleId difficulty elapsedSeconds accuracy hintsUsed mistakes status')

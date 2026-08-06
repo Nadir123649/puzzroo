@@ -67,10 +67,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (val.data!.avatar !== undefined) updates.avatar = val.data!.avatar;
       if (val.data!.theme !== undefined) updates.theme = val.data!.theme;
       const user = await User.findByIdAndUpdate(userResult.userId, updates, {
-        new: true, runValidators: true,
+        returnDocument: 'after', runValidators: true,
       });
       if (!user) return errorResponse(404, "user_not_found", "User not found");
-      await trackServer({ userId: userResult.userId, event: "profile_updated", properties: { fields: Object.keys(updates) }, request });
+      void trackServer({ userId: userResult.userId, event: "profile_updated", properties: { fields: Object.keys(updates) }, request });
       return successResponse(formatUser(user));
     }
 
@@ -95,7 +95,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!action || action === "me") {
       const user = await User.findById(userResult.userId);
       if (!user) return errorResponse(404, "user_not_found", "User not found");
-      await trackServer({ userId: userResult.userId, event: "account_deleted", request });
+      void trackServer({ userId: userResult.userId, event: "account_deleted", request });
       await LoginSession.deleteMany({ userId: userResult.userId });
       invalidateSessionCache();
       await user.deleteOne();

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Eye, EyeOff, X, Lock } from 'lucide-react'
 import { notify } from '@/lib/toast'
 import { images } from '@/lib/utils'
-import { changePassword, forgotPassword, getCurrentUser } from '@/lib/auth/frontend-auth'
+import { changePassword, forgotPassword, getCurrentUser, logout } from '@/lib/auth/frontend-auth'
 import { Button } from '@/components/ui/button'
 
 interface ChangePasswordModalProps {
@@ -96,13 +96,9 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
       }
 
       setSuccess(true)
-      setTimeout(() => {
-        onClose()
-        setCurrentPassword('')
-        setNewPassword('')
-        setConfirmPassword('')
-        setSuccess(false)
-      }, 2000)
+      // Server logged out every device (this one included) after the change.
+      // Log out locally and send the user straight back to sign in.
+      void logout().then(() => window.location.replace('/login'))
     } catch (err) {
       setError('Failed to change password. Please try again.')
     } finally {

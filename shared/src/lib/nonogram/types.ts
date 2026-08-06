@@ -9,7 +9,7 @@ export type InputMode = 'fill' | 'mark'
 
 export type GridSize = 5 | 10 | 15 | 20
 
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
+export type Difficulty = 'easy' | 'medium' | 'hard'
 
 export type ValidationStatus = 'incomplete' | 'completed' | 'invalid'
 

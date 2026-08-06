@@ -57,11 +57,14 @@ export function useUser(enabled: boolean = true) {
     queryKey: ["user"],
     queryFn: fetchUser,
     enabled: enabled && typeof window !== "undefined" && hasStoredAuth(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
+    // Keep the profile fresh: changes made on other devices must surface on
+    // this one (name, avatar, role, plan). Refetch on mount and window focus,
+    // plus reconnect, with a short stale window instead of a login-time snapshot.
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: "always",
+    refetchOnMount: true,
+    refetchOnReconnect: true,
     retry: false,
   });
 }

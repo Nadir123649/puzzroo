@@ -7,7 +7,7 @@ import { ChangeNameModal } from '@/components/account/ChangeNameModal'
 import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
 import { SetEmailModal } from '@/components/account/SetEmailModal'
 import { AvatarUpload } from '@/components/account/AvatarUpload'
-import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider, setAuthUser, clearAuthState } from '@/lib/auth/frontend-auth'
+import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider, setAuthUser, clearAuthState, refreshUserProfile } from '@/lib/auth/frontend-auth'
 import { notify } from '@/lib/toast'
 import { Check, Activity, BarChart3, Monitor, Smartphone, Tablet, MapPin, Laptop, Trash2, Clock, Phone, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -107,6 +107,12 @@ export default function AccountInformationPage() {
   useEffect(() => {
     if (fetchedRef.current) return
     fetchedRef.current = true
+
+    // Pull the server profile (name, avatar) so changes made on other devices
+    // are reflected here; the localStorage snapshot can lag behind.
+    refreshUserProfile().then(profile => {
+      if (profile) setLocalUser(prev => (prev ? { ...prev, ...profile } : profile))
+    })
 
     fetchGameStats().then(setGameStats)
     fetchSessions().then(s => {

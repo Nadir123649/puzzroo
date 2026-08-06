@@ -45,6 +45,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     handleDragEnd,
     resetPuzzle,
     newPuzzle,
+    replayPuzzle,
     useHint,
     autoFill,
     revealSolution,
@@ -79,7 +80,10 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     setLoaderText('Replaying game...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
-    resetPuzzle()
+    // Replay = restart the SAME puzzle through the replay API: the server
+    // abandons the old (completed/lost) session and opens a fresh one so
+    // subsequent saves/completes never hit already_completed.
+    await replayPuzzle()
     setIsResetting(false)
   }
 
@@ -373,7 +377,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                       <circle cx="12" cy="12" r="10"/>
                       <polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    <span>~{Math.floor((currentPuzzle.difficulty === 'expert' ? 1200 : currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300) / 60)} min</span>
+                    <span>~{Math.floor((currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300) / 60)} min</span>
                   </span>
                 </div>
               </div>
@@ -859,7 +863,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
           isOpen={(gameStatus === 'won' || gameStatus === 'lost') && showCompletionModal}
           difficulty={currentPuzzle.difficulty}
           time={(() => {
-            const initialTime = currentPuzzle.difficulty === 'expert' ? 1200 : currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300
+            const initialTime = currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300
             return Math.max(0, initialTime - elapsedSeconds)
           })()}
           completionPercentage={progress.percentComplete}

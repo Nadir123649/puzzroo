@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
               currentPeriodStart: new Date(session.created * 1000),
               currentPeriodEnd: session.expires_at ? new Date(session.expires_at * 1000) : null,
             },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
           );
           await Transaction.create({
             userId, amount: session.amount_total / 100, currency: session.currency,

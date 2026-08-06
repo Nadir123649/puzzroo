@@ -75,8 +75,9 @@ export async function POST(request: NextRequest) {
 
       const today = new Date().toISOString().split('T')[0];
       await DailyChallenge.findOneAndUpdate(
-        { date: today, userId: actor.id },
+        { gameId: 'crossmath', date: today, userId: actor.id },
         {
+          gameId: 'crossmath',
           date: today,
           userId: actor.id,
           puzzleId: result.result.puzzleId,
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
           hintsUsed: result.result.hintsUsed,
           mistakes: result.result.mistakes,
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
     }
 

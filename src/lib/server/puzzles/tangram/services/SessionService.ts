@@ -16,7 +16,6 @@ import type {
   TangramVerificationResult,
 } from "../types"
 
-const EXPIRED_SESSION_RETENTION_MS = 90 * 24 * 60 * 60 * 1000
 
 function calculateTangramScore(
   accuracy: number,
@@ -58,7 +57,9 @@ function toSafeSession(session: Record<string, any>): SafeSessionResponse {
     lastSaveAt: session.lastSaveAt?.toISOString?.() || session.lastSaveAt,
     isReplay: session.isReplay || false,
     restartCount: session.restartCount || 0,
-    result: session.result || null,
+    // Only completed sessions carry a result; the schema's zero-default
+    // subdoc must never leak into playing/abandoned session responses.
+    result: session.status === 'completed' ? session.result || null : null,
   }
 }
 
@@ -80,14 +81,6 @@ export class SessionService {
 
   private actorGuestId(actor: Actor): string | undefined {
     return actor.type === "guest" ? actor.id : undefined
-  }
-
-  private async pruneExpiredSessions() {
-    try {
-      await playSessionRepository.deleteExpired(new Date(Date.now() - EXPIRED_SESSION_RETENTION_MS))
-    } catch (error) {
-      // cleanup failure is non-fatal
-    }
   }
 
   async startSession(actor: Actor, puzzleId: string, gameType?: "tangram" | "daily_challenge", dailyChallengeId?: string) {
@@ -341,7 +334,6 @@ export class SessionService {
   async getContinuePlaying(actor: Actor, gameType: "tangram" | "daily_challenge" = "tangram", difficulty?: string) {
     const userId = this.actorId(actor)
     const guestId = this.actorGuestId(actor)
-    await this.pruneExpiredSessions()
     const session = await playSessionRepository.findByUserAndStatus(["playing", "paused"], userId, guestId, gameType, difficulty)
     if (!session) {
       return { hasActiveSession: false }
@@ -391,7 +383,6 @@ export class SessionService {
   async getContinueDailyChallenge(actor: Actor, dailyChallengeId: string) {
     const userId = this.actorId(actor)
     const guestId = this.actorGuestId(actor)
-    await this.pruneExpiredSessions()
     const session = await playSessionRepository.findActiveDailyByChallenge(dailyChallengeId, userId, guestId)
     if (!session) {
       return { hasActiveSession: false }

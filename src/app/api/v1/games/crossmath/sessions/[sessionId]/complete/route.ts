@@ -64,8 +64,9 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params) => {
 
       const today = new Date().toISOString().split("T")[0]
       DailyChallenge.findOneAndUpdate(
-        { date: today, userId: actor.id },
+        { gameId: "crossmath", date: today, userId: actor.id },
         {
+          gameId: "crossmath",
           date: today,
           userId: actor.id,
           puzzleId: result.result.puzzleId,
@@ -78,7 +79,7 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params) => {
           hintsUsed: result.result.hintsUsed,
           mistakes: result.result.mistakes,
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       ).catch(() => {})
     }
   }
