@@ -9,7 +9,7 @@ export const faqData: FAQItem[] = [
     id: 'faq-1',
     question: 'What is Puzzroo?',
     answer:
-      'Puzzroo is a premium puzzle platform where you can play daily brain games like Sudoku, Nonograms, and logic challenges — all in one place and of course for free.',
+      'Puzzroo is a premium puzzle platform where you can play daily brain games like Sudoku, Nonograms, and logic challenges all in one place and of course for free.',
   },
   {
     id: 'faq-2',

@@ -563,7 +563,7 @@ export function useCrossMath(initialPuzzleId?: string) {
   }, [difficulty, usePatternMode, isDailyChallenge, dateParam, puzzleId])
 
   useEffect(() => {
-    if (gameStatus === 'playing' && board.length > 0 && currentPuzzle) {
+    if (gameStatus === 'playing' && board.length > 0 && currentPuzzle && history.length > 0) {
    saveGameState({
          board,
          puzzleId: currentPuzzle.id,
@@ -595,6 +595,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     const flushElapsed = () => {
       if (!sessionIdRef.current || completionCalledRef.current) return
       if (boardRef.current.length === 0) return
+      if (movesRef.current === 0) return
       const elapsed = elapsedFromCountdown(timeValueRef.current, difficultyRef.current) + savedGapSeconds(lastLocalSaveAtRef.current)
       Promise.resolve(gameApi.saveMove('crossmath', sessionIdRef.current, {
         grid: gridToRecord(boardRef.current),
@@ -763,7 +764,7 @@ export function useCrossMath(initialPuzzleId?: string) {
         cellMistakes.add(num)
         cellMistakesRef.current.set(cellKey, cellMistakes)
         
-        const newScore = Math.max(0, score + SCORING.WRONG_ANSWER)
+        const newScore = score + SCORING.WRONG_ANSWER
         setScore(newScore)
         triggerScoreFeedback(SCORING.WRONG_ANSWER)
 
@@ -868,7 +869,7 @@ export function useCrossMath(initialPuzzleId?: string) {
         cellMistakes.add(num)
         cellMistakesRef.current.set(cellKey, cellMistakes)
         
-        const newScore = Math.max(0, score + SCORING.WRONG_ANSWER)
+        const newScore = score + SCORING.WRONG_ANSWER
         setScore(newScore)
         triggerScoreFeedback(SCORING.WRONG_ANSWER)
 
@@ -961,7 +962,7 @@ export function useCrossMath(initialPuzzleId?: string) {
   }, [selectedCell, board, gameStatus, usedNumbersCount, pushToHistory])
 
   const undoLastMove = useCallback(() => {
-    if (history.length === 0 || gameStatus !== 'playing') return
+    if (history.length === 0) return
 
     const lastMove = history[history.length - 1]
     const { position, previousValue, previousType, previousIsCorrect, previousIsError, scoreChange } = lastMove
@@ -1000,7 +1001,7 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     // Revert score: undo the score change that was applied when this move was made
     if (scoreChange !== 0) {
-      setScore(prev => Math.max(0, prev - scoreChange))
+      setScore(prev => prev - scoreChange)
     }
 
     setBoard(newBoard)

@@ -831,6 +831,9 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
               <p className="font-urbanist text-[12px] text-[#616161] dark:text-[#A0A4B8]">
                 <strong>F</strong>: Fill Mode • <strong>M</strong>: Mark Mode • Click/Drag to interact • Arrow keys to navigate • <strong>Enter</strong>: Apply mode • Backspace to clear
               </p>
+              <p className="font-urbanist text-[12px] text-[#616161] dark:text-[#A0A4B8] mt-1">
+                Numbers on the <strong>X</strong> (top) and <strong>Y</strong> (left) axes show the lengths of consecutive filled cells.
+              </p>
             </div>
           </>
         )}

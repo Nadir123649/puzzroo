@@ -35,7 +35,7 @@ export function SudokuStats({
           Mistakes: <span className="text-[var(--color-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>{mistakes}/{maxMistakes}</span>
         </span>
         <span className="font-urbanist font-semibold text-[16px] leading-[140%] tracking-[0.2px] text-[#424242] dark:text-[#E0E0E0]">
-          Score: <span className="text-[var(--color-primary)] inline-block min-w-[2.5ch]" style={{ fontVariantNumeric: 'tabular-nums' }}>{score}</span>
+          Score: <span className={`inline-block min-w-[2.5ch] ${score < 0 ? 'text-[#EF4444] dark:text-[#FF6B6B]' : 'text-[var(--color-primary)]'}`} style={{ fontVariantNumeric: 'tabular-nums' }}>{score}</span>
         </span>
         <span className="font-urbanist font-semibold text-[16px] leading-[140%] tracking-[0.2px] text-[#424242] dark:text-[#E0E0E0]">
           Time: <span className="text-[var(--color-primary)] inline-block min-w-[5ch]" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatTime(time)}</span>
@@ -49,7 +49,7 @@ export function SudokuStats({
       {/* Score - centered with stable width */}
       <div className="text-center">
         <span className="font-urbanist font-semibold text-[24px] leading-[140%] tracking-[0.2px] text-[#424242] dark:text-[#E0E0E0]">
-          Score: <span className="text-[var(--color-primary)] inline-block min-w-[3ch]" style={{ fontVariantNumeric: 'tabular-nums' }}>{score}</span>
+          Score: <span className={`inline-block min-w-[3ch] ${score < 0 ? 'text-[#EF4444] dark:text-[#FF6B6B]' : 'text-[var(--color-primary)]'}`} style={{ fontVariantNumeric: 'tabular-nums' }}>{score}</span>
         </span>
       </div>
 

@@ -77,7 +77,7 @@ export function AccountSidebar() {
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed top-[74px] inset-x-0 bottom-0 bg-black/50 z-50 transition-opacity duration-300 animate-fadeIn"
+          className="lg:hidden fixed top-[64px] inset-x-0 bottom-0 bg-black/50 z-50 transition-opacity duration-300 animate-fadeIn"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -126,7 +126,7 @@ export function AccountSidebar() {
 
       {/* Mobile Drawer - SLIDE FROM LEFT with Glassmorphism */}
       <aside
-        className={`lg:hidden fixed top-[74px] left-0 h-[calc(100vh-74px)] w-[280px] bg-white dark:bg-[#1F222A] border-r border-[#E0E0E0] dark:border-[#35383F] z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-2xl flex flex-col justify-between ${
+        className={`lg:hidden fixed top-[64px] left-0 h-[calc(100vh-64px)] w-[280px] bg-white dark:bg-[#1F222A] border-r border-[#E0E0E0] dark:border-[#35383F] z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-2xl flex flex-col justify-between ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

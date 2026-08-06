@@ -112,7 +112,7 @@ export function NonogramModal({
                 id="modal-title"
                 className="font-urbanist text-xl font-extrabold text-white mb-0.5"
               >
-                {isWin ? 'Puzzle Complete!' : (mistakes >= maxMistakes ? 'Keep Going!' : "Time's up!")}
+                {isWin ? 'Puzzle Complete!' : (mistakes >= maxMistakes ? 'You Lost!' : "Time's up!")}
               </h2>
               <p className="font-urbanist text-white/90 text-xs">
                 {isWin ? 'Amazing work on the puzzle!' : (mistakes >= maxMistakes ? 'You reached the maximum mistakes limit.' : "You ran out of time.")}
@@ -223,7 +223,7 @@ export function NonogramModal({
               {onBackToGames && (
                 <button
                   onClick={onBackToGames}
-                  className="w-full h-[40px] rounded-full bg-white dark:bg-[#35383F] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] dark:text-white hover:text-white font-urbanist font-bold text-sm transition-all duration-300 active:scale-[0.98] focus:outline-none border border-[#E0E0E0] dark:border-[#424242] hover:border-[#6949FF]"
+                  className="w-full h-[40px] rounded-full border border-[#6949FF] text-[#6949FF] hover:bg-[#6949FF]/10 font-urbanist font-bold text-sm transition-all duration-300 active:scale-[0.98] focus:outline-none"
                 >
                   Back to Games
                 </button>

@@ -12,15 +12,14 @@ interface TangramModalProps {
   time: number
   mistakes: number
   hintsUsed: number
-  score: number | string
   difficulty?: string
   timeRemaining?: number
   isTimeUp?: boolean
   onPlayAgain: () => void
+  onRestart: () => void
   onNewPuzzle?: () => void
-  onRestart?: () => void
-  onBackToLobby?: () => void
-  onClose?: () => void
+  onBackToGames?: () => void
+  onClose: () => void
 }
 
 export function TangramModal({
@@ -28,14 +27,13 @@ export function TangramModal({
   time,
   mistakes,
   hintsUsed,
-  score,
   difficulty = 'easy',
   timeRemaining = 0,
   isTimeUp = false,
   onPlayAgain,
-  onNewPuzzle,
   onRestart,
-  onBackToLobby,
+  onNewPuzzle,
+  onBackToGames,
   onClose,
 }: TangramModalProps) {
   // Handle ESC key
@@ -150,14 +148,6 @@ export function TangramModal({
                   {hintsUsed}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="font-urbanist text-[#424242] dark:text-[#E0E0E0] font-medium text-xs sm:text-base">
-                  Final Score
-                </span>
-                <span className="font-urbanist text-[var(--color-primary)] font-bold text-base sm:text-lg">
-                  {score}
-                </span>
-              </div>
             </div>
           )}
 
@@ -186,7 +176,7 @@ export function TangramModal({
                   onClick={onPlayAgain}
                   className="w-full h-[42px] sm:h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                 >
-                  Play Again
+                  Replay
                 </button>
                 
                 {/* New Game button only */}
@@ -199,15 +189,16 @@ export function TangramModal({
                   </button>
                 )}
                 
-                {onBackToLobby && (
-                  <button
-                    onClick={onBackToLobby}
-                    className="w-full h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                  >
-                    Back to Lobby
-                  </button>
-                )}
               </>
+            )}
+            
+            {onBackToGames && (
+              <button
+                onClick={onBackToGames}
+                className="w-full h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+              >
+                Back to Games
+              </button>
             )}
           </div>
         </div>

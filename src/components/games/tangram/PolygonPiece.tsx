@@ -217,7 +217,7 @@ export function PolygonPiece({
         className="absolute inset-0 overflow-visible"
         style={{
           pointerEvents: 'none',
-          zIndex: isSelected ? 50 : 10,
+          zIndex: isSelected ? 50 : piece.isSnapped ? 5 : 10,
           touchAction: 'none',
         }}
       >
@@ -276,7 +276,7 @@ export function PolygonPiece({
             top: `${topPercent}%`,
             transform: 'translate(-50%, -50%)',
             transition: positionTransition,
-            zIndex: 99999,
+            zIndex: 500,
             pointerEvents: 'none',
           }}
         >

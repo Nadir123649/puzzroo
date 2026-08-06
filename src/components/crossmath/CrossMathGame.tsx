@@ -134,11 +134,6 @@ export function CrossMathGame() {
                 onCellClick={selectCell}
                 minCellWidth={minCellWidth}
               />
-              {/* Floating Score Feedback */}
-              <FloatingScoreFeedback
-                feedbacks={scoreFeedbacks}
-                onComplete={handleFeedbackComplete}
-              />
             </div>
 
             {/* Right Control Panel - 230px width */}

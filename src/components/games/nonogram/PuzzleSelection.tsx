@@ -20,9 +20,13 @@ export function PuzzleSelection({ onSelectPuzzle }: { onSelectPuzzle: (puzzleId:
   const searchParams = useSearchParams()
 
   const urlDifficulty = searchParams.get('difficulty') as typeof DIFFICULTIES[number] | null
-  const [selectedDifficulty, setSelectedDifficulty] = useState<typeof DIFFICULTIES[number]>(
-    urlDifficulty && DIFFICULTIES.includes(urlDifficulty) ? urlDifficulty : 'easy'
-  )
+  const [selectedDifficulty, setSelectedDifficulty] = useState<typeof DIFFICULTIES[number]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedDiff = sessionStorage.getItem('nonogram_selected_difficulty') as typeof DIFFICULTIES[number] | null
+      if (savedDiff && DIFFICULTIES.includes(savedDiff)) return savedDiff
+    }
+    return urlDifficulty && DIFFICULTIES.includes(urlDifficulty) ? urlDifficulty : 'easy'
+  })
   const [puzzles, setPuzzles] = useState<PuzzleSummary[]>([])
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
@@ -68,11 +72,26 @@ export function PuzzleSelection({ onSelectPuzzle }: { onSelectPuzzle: (puzzleId:
   }, [])
 
   useEffect(() => {
+    sessionStorage.setItem('nonogram_selected_difficulty', selectedDifficulty)
+    const cachedStr = sessionStorage.getItem(`nonogram_puzzles_${selectedDifficulty}`)
+    const cachedCursor = sessionStorage.getItem(`nonogram_cursor_${selectedDifficulty}`)
+    
+    if (cachedStr) {
+      try {
+        setPuzzles(JSON.parse(cachedStr))
+        setNextCursor(cachedCursor === 'null' ? null : cachedCursor)
+        setLoading(false)
+        return
+      } catch (e) {}
+    }
+
     setLoading(true)
     setNextCursor(null)
     fetchPuzzles(selectedDifficulty).then((data) => {
       setPuzzles(data?.items ?? [])
       setNextCursor(data?.nextCursor ?? null)
+      sessionStorage.setItem(`nonogram_puzzles_${selectedDifficulty}`, JSON.stringify(data?.items ?? []))
+      sessionStorage.setItem(`nonogram_cursor_${selectedDifficulty}`, data?.nextCursor ?? 'null')
       // NOTE: backend does not return counts; we rely on localStorage counts
       setLoading(false)
     }).catch(() => {
@@ -85,8 +104,14 @@ export function PuzzleSelection({ onSelectPuzzle }: { onSelectPuzzle: (puzzleId:
     if (!nextCursor || loadingMore) return
     setLoadingMore(true)
     fetchPuzzles(selectedDifficulty, nextCursor).then((data) => {
-      setPuzzles((prev) => [...prev, ...(data?.items ?? [])])
-      setNextCursor(data?.nextCursor ?? null)
+      setPuzzles((prev) => {
+        const newPuzzles = [...prev, ...(data?.items ?? [])]
+        sessionStorage.setItem(`nonogram_puzzles_${selectedDifficulty}`, JSON.stringify(newPuzzles))
+        return newPuzzles
+      })
+      const nextCur = data?.nextCursor ?? null
+      setNextCursor(nextCur)
+      sessionStorage.setItem(`nonogram_cursor_${selectedDifficulty}`, nextCur ?? 'null')
       setLoadingMore(false)
     }).catch(() => {
       setLoadingMore(false)
@@ -206,7 +231,7 @@ export function PuzzleSelection({ onSelectPuzzle }: { onSelectPuzzle: (puzzleId:
                           Est. Time
                         </span>
                         <span className="font-urbanist font-semibold text-[#424242] dark:text-[#E0E0E0]">
-                          ~{Math.floor((puzzle.estimatedTime === 660 ? 600 : (puzzle.estimatedTime ?? 180)) / 60)} min
+                          ~{puzzle.difficulty === 'hard' ? 5 : puzzle.difficulty === 'medium' ? 7 : 10} min
                         </span>
                       </div>
                     </div>

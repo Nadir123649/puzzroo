@@ -17,7 +17,17 @@ export function NonogramPuzzleGrid() {
   const { selectedDifficulty } = useGameLobby()
   const { theme } = useTheme()
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set())
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(`nonogram_page_${selectedDifficulty}`)
+      if (saved) return parseInt(saved, 10) || 1
+    }
+    return 1
+  })
+
+  useEffect(() => {
+    sessionStorage.setItem(`nonogram_page_${selectedDifficulty}`, currentPage.toString())
+  }, [currentPage, selectedDifficulty])
 
   const nonogramImage = theme === 'light' ? images.gameCards.nonogramWhite : images.gameCards.nonogram
 
@@ -46,14 +56,17 @@ export function NonogramPuzzleGrid() {
 
   // Clamp currentPage when total pages shrinks
   useEffect(() => {
-    if (currentPage > totalPages) {
+    if (allPuzzles.length > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages)
     }
   }, [allPuzzles.length, totalPages, currentPage])
 
-  // Reset to page 1 when difficulty changes
+  // Reset to page 1 or restore when difficulty changes
   useEffect(() => {
-    setCurrentPage(1)
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(`nonogram_page_${selectedDifficulty}`)
+      setCurrentPage(saved ? parseInt(saved, 10) || 1 : 1)
+    }
   }, [selectedDifficulty])
 
   const handlePlay = (puzzleId: string) => {
