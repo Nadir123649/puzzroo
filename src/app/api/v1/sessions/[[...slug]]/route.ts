@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/server/db";
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse";
 import { auth, invalidateSessionCache } from "@/lib/server/middleware/auth";
 import { geoLocate } from "@/lib/server/utils/geoLocate";
+import { publishLogout } from "@/lib/server/auth/sessionBroker";
 
 async function getUserId(request: NextRequest) {
   const result = await auth(request);
@@ -97,6 +98,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!sessionId) {
       await LoginSession.updateMany({ userId: userResult.userId }, { status: "revoked", isCurrent: false });
       invalidateSessionCache();
+      publishLogout(userResult.userId);
       return successResponse({ message: "All sessions revoked successfully" });
     }
 
@@ -105,6 +107,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!session) return errorResponse(404, "not_found", "Session not found");
     await session.updateOne({ status: "revoked", isCurrent: false });
     invalidateSessionCache(sessionId);
+    publishLogout(userResult.userId);
     return successResponse({ message: "Session revoked successfully" });
   } catch (error: any) {
     console.error(error);
