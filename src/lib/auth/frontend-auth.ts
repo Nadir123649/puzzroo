@@ -391,10 +391,10 @@ export async function changePassword(oldPassword: string, newPassword: string): 
     if (!res.success) {
       return { success: false, error: (res.payload as any)?.error?.message || "Failed to change password" };
     }
-    const payload = res.payload as any;
-    if (payload.token?.accessToken) {
-      setAccessToken(payload.token.accessToken);
-    }
+    // Server revoked every session (all devices, this one included). Clear
+    // local auth state — the user must sign in again with the new password.
+    clearAuthState();
+    window.dispatchEvent(new Event("auth-change"));
     return { success: true };
   } catch {
     return { success: false, error: "Network error" };
@@ -561,7 +561,10 @@ export async function resetPassword(token: string, password: string): Promise<{ 
       return { success: false, error: (res.payload as any)?.error?.message || "Failed to reset password" };
     }
     // Deliberately no session is started here: the user must log in with the
-    // new password themselves.
+    // new password themselves. Also clear any stale local auth state: every
+    // device (including this one) was logged out server-side.
+    clearAuthState();
+    window.dispatchEvent(new Event("auth-change"));
     return { success: true };
   } catch {
     return { success: false, error: "Network error" };

@@ -2,10 +2,12 @@ import { NextRequest } from "next/server";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import User from "@/lib/server/models/User";
+import LoginSession from "@/lib/server/models/LoginSession";
 import { connectDB } from "@/lib/server/db";
 import { successResponse, errorResponse, getOrigin } from "@/lib/server/utils/apiResponse";
 import { sendResetPasswordEmail } from "@/lib/server/services/emailService";
 import { validate } from "@/lib/server/middleware/validate";
+import { invalidateSessionCache } from "@/lib/server/middleware/auth";
 import { forgotPasswordSchema, resetPasswordSchema } from "@/lib/server/validators/authValidator";
 import { trackServer } from "@/lib/server/utils/trackEvent";
 import { checkRateLimit } from "@/lib/server/utils/http";
@@ -108,6 +110,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }
       );
       if (consumed.modifiedCount === 0) return errorResponse(400, "token_invalid", "Invalid or expired reset token");
+      // Password reset → revoke EVERY session (all devices). Old access and
+      // refresh tokens die with the session status flip, so every device must
+      // sign in again with the new password.
+      await LoginSession.updateMany({ userId: user._id, status: "active" }, { status: "logged_out", isCurrent: false });
+      invalidateSessionCache();
       void trackServer({ userId: user._id.toString(), event: "password_reset_completed", request });
       return successResponse({ message: "Password changed. Please log in with your new password." });
     }

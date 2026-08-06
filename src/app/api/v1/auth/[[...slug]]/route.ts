@@ -259,13 +259,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.resetPasswordToken = undefined;
       user.resetPasswordTokenExpire = undefined;
       await user.save();
+      // Password changed → revoke EVERY session (this device included). All
+      // devices must sign in again with the new password; a stolen session
+      // must not outlive the credential change.
+      await LoginSession.updateMany({ userId: user._id, status: "active" }, { status: "logged_out", isCurrent: false });
+      invalidateSessionCache();
       void trackServer({ userId: user._id.toString(), event: "password_changed", request });
       auditLog({ eventType: "auth:password_changed", userId: user._id.toString(), sessionId: jti, ip: getClientIp(request) }).catch(() => {});
-      const tokenVersion = jti ? await getSessionTokenVersion(jti) : undefined;
-      const remember = jti ? await getSessionRemember(jti) : true;
-      const newTokens = buildTokenPayload(user, jti, tokenVersion);
-      const res = NextResponse.json({ success: true, payload: { message: "Password changed successfully", token: newTokens }, timestamp: Date.now() }, { status: 200 });
-      res.cookies.set("refreshToken", newTokens.refreshToken, getRefreshCookieOptions(remember));
+      const res = NextResponse.json({ success: true, payload: { message: "Password changed successfully. Please sign in again." }, timestamp: Date.now() }, { status: 200 });
+      res.cookies.delete("refreshToken");
       return res;
     }
 
