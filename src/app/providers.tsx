@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { ensureSession, updateUser, isLoggedIn } from '@/lib/auth/frontend-auth'
+import { ensureSession, updateUser, isLoggedIn, clearAuthState } from '@/lib/auth/frontend-auth'
 import { api } from '@/lib/api/client'
 
 type Theme = 'light' | 'dark'
@@ -83,6 +83,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (document.visibilityState === "visible") probeSession()
     }
     document.addEventListener("visibilitychange", onVisibility)
+
+    // Instant SSE push: when the server revokes this user's sessions (password
+    // change / logout-all), it publishes a `logout` event to all connected
+    // SSE streams. This lets idle tabs on OTHER devices log out in <1s with no
+    // request from the victim tab — the server pushes it. The 30s probe above
+    // is the offline safety net for tabs that missed the push (offline, crashed,
+    // or connected to a different server instance).
+    if (isLoggedIn()) {
+      const es = new EventSource("/api/v1/auth/stream", { withCredentials: true })
+      es.addEventListener("logout", () => {
+        clearAuthState()
+        window.dispatchEvent(new Event("auth-change"))
+        es.close()
+        window.location.href = "/login"
+      })
+      es.onerror = () => {
+        // transient / server restart → the 30s probe reconciles. Just close so
+        // we don't thrash a broken connection; a real reload will reconnect.
+        es.close()
+      }
+    }
 
     return () => {
       clearInterval(healthInterval)
