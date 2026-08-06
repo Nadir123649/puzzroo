@@ -74,7 +74,7 @@ export function TangramModal({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/50 dark:bg-black/70 z-[99999] transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[99999] transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}

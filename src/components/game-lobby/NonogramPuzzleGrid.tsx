@@ -113,8 +113,8 @@ export function NonogramPuzzleGrid() {
                   <h3 className="font-urbanist text-[18px] font-bold text-[#2B2F3A] dark:text-white mb-1">
                     {puzzle.title}
                   </h3>
-                  <span className="inline-block px-3 py-1 rounded-full bg-[#F0EDFF] dark:bg-[#35383F] font-urbanist text-[11px] font-semibold text-[#6949FF] dark:text-[#A592FF]">
-                    {puzzle.category}
+                  <span className="inline-block px-3 py-1 rounded-full bg-[#F0EDFF] dark:bg-[#35383F] font-urbanist text-[11px] font-semibold text-[#6949FF] dark:text-[#A592FF] capitalize">
+                    {puzzle.difficulty}
                   </span>
                 </div>
 
@@ -131,7 +131,7 @@ export function NonogramPuzzleGrid() {
                       Est. Time
                     </span>
                     <span className="font-urbanist font-semibold text-[#424242] dark:text-[#E0E0E0]">
-                      ~{Math.floor(puzzle.estimatedTime / 60)} min
+                      ~{Math.floor((puzzle.estimatedTime === 660 ? 600 : puzzle.estimatedTime) / 60)} min
                     </span>
                   </div>
                 </div>

@@ -151,6 +151,18 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
 
   // Track global coordinates during drag
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && hoveredCell && gameStatus === 'playing') {
+        e.preventDefault()
+        handleCellClick(hoveredCell)
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [hoveredCell, handleCellClick, gameStatus])
+
+  useEffect(() => {
     const handleGlobalDragMove = (e: PointerEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY })
       
@@ -358,7 +370,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                 </div>
                 <div className="flex items-center justify-center gap-3 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] font-urbanist text-[12px] font-semibold text-[#6949FF] dark:text-[#A592FF]">
-                    <span className="capitalize">{currentPuzzle.category}</span>
+                    <span className="capitalize">{currentPuzzle.difficulty}</span>
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5F6FA] dark:bg-[#35383F] font-urbanist text-[12px] font-semibold text-[#616161] dark:text-[#A0A4B8]">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

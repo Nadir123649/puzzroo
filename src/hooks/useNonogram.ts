@@ -913,21 +913,27 @@ export function useNonogram(initialPuzzleId?: string) {
           cellNewState = 'empty'
         }
 
-        if (cellNewState === currentState) continue
-        changedCount++
+          if (cellNewState === currentState) continue
+          changedCount++
 
-        // Validation logic for fill mode
-        if (action === 'fill' && validationMode === 'assisted' && currentState !== 'error') {
-          const isMistake = currentPuzzle.solution[row]?.[col] === 0
-          if (isMistake) {
-            cellNewState = 'error'
-            newMistakes += 1
-            const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
-            if (newMistakes >= limit) {
-              lost = true
+          // Validation logic for fill mode and mark mode
+          if (validationMode === 'assisted' && currentState !== 'error') {
+            let isMistake = false;
+            if (action === 'fill') {
+              isMistake = currentPuzzle.solution[row]?.[col] === 0;
+            } else if (action === 'mark') {
+              isMistake = currentPuzzle.solution[row]?.[col] === 1;
+            }
+            
+            if (isMistake) {
+              cellNewState = 'error'
+              newMistakes += 1
+              const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+              if (newMistakes >= limit) {
+                lost = true
+              }
             }
           }
-        }
 
         newGrid[row][col] = cellNewState
       }
@@ -1156,16 +1162,6 @@ export function useNonogram(initialPuzzleId?: string) {
         setHoveredCell({ row: newRow, col: newCol })
       }
 
-      // Enter - Move to next cell in row-major order
-      if (selectedCell && e.key === 'Enter') {
-        e.preventDefault()
-        const size = currentPuzzle.size
-        const nextCol = (selectedCell.col + 1) % size
-        const nextRow = nextCol === 0 ? (selectedCell.row + 1) % size : selectedCell.row
-
-        setSelectedCell({ row: nextRow, col: nextCol })
-        setHoveredCell({ row: nextRow, col: nextCol })
-      }
 
       // Space should NOT trigger cell action or navigation
       if (e.key === ' ') {

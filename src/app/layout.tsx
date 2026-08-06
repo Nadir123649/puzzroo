@@ -103,9 +103,6 @@ export default function RootLayout({
             html.dark body { 
               background-color: #181A20 !important;
             }
-            html.dark header { 
-              background-color: #181A20 !important;
-            }
             /* Ensure all theme transitions are synchronized */
             * {
               transition-property: background-color, border-color, color, fill, stroke;

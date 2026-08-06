@@ -161,6 +161,7 @@ export function useCrossMath(initialPuzzleId?: string) {
   const movesRef = useRef(0)
   const scoreRef = useRef(0)
   const restoredRef = useRef(false)
+  const cellMistakesRef = useRef<Map<string, Set<number>>>(new Map())
 
   // Single authoritative save pipeline: serialized, coalescing, never overlapping.
   // A save is only sent when the previous one completed; intermediate snapshots
@@ -373,9 +374,10 @@ export function useCrossMath(initialPuzzleId?: string) {
               setGameStatus((serverSession.sessionStatus === 'paused' ? 'playing' : serverSession.sessionStatus || 'playing') as 'playing' | 'won' | 'lost')
               if (serverSession.difficulty) setDifficulty(serverSession.difficulty as Difficulty)
              setSelectedCell(null)
-             setIsTyping(false)
-             setHistory(savedGame?.history || [])
-             clearGameState()
+              setIsTyping(false)
+              setHistory(savedGame?.history || [])
+              clearGameState()
+              cellMistakesRef.current.clear()
 
               sessionIdRef.current = serverSession.sessionId
               sessionCreatedRef.current = true
@@ -522,6 +524,7 @@ export function useCrossMath(initialPuzzleId?: string) {
             setIsTyping(false)
             setHistory([])
             clearGameState(undefined, targetDiff)
+            cellMistakesRef.current.clear()
             const sessionData = await initSession(puzzle.id, targetDiff, isDailyChallenge, dcId)
             if (sessionData && !savedGame) {
               const restored = restoreFromSession(sessionData, puzzle.grid, puzzle.solution)
@@ -752,20 +755,29 @@ export function useCrossMath(initialPuzzleId?: string) {
       setScore(newScore)
       triggerScoreFeedback(SCORING.CORRECT_ANSWER)
     } else {
-      const newScore = Math.max(0, score + SCORING.WRONG_ANSWER)
-      setScore(newScore)
-      triggerScoreFeedback(SCORING.WRONG_ANSWER)
+      const cellKey = `${row}-${col}`
+      const cellMistakes = cellMistakesRef.current.get(cellKey) || new Set<number>()
+      const isDuplicateMistake = cellMistakes.has(num)
+      
+      if (!isDuplicateMistake) {
+        cellMistakes.add(num)
+        cellMistakesRef.current.set(cellKey, cellMistakes)
+        
+        const newScore = Math.max(0, score + SCORING.WRONG_ANSWER)
+        setScore(newScore)
+        triggerScoreFeedback(SCORING.WRONG_ANSWER)
 
-      const newMistakes = mistakes + 1
-      setMistakes(newMistakes)
+        const newMistakes = mistakes + 1
+        setMistakes(newMistakes)
 
-      // Check game over
-      if (newMistakes >= maxMistakes) {
-        setGameStatus('lost')
-        setSelectedCell(null)
-        clearGameState()
-        void failSession()
-        return
+        // Check game over
+        if (newMistakes >= maxMistakes) {
+          setGameStatus('lost')
+          setSelectedCell(null)
+          clearGameState()
+          void failSession()
+          return
+        }
       }
     }
 
@@ -848,19 +860,28 @@ export function useCrossMath(initialPuzzleId?: string) {
       setScore(newScore)
       triggerScoreFeedback(SCORING.CORRECT_ANSWER)
     } else {
-      const newScore = Math.max(0, score + SCORING.WRONG_ANSWER)
-      setScore(newScore)
-      triggerScoreFeedback(SCORING.WRONG_ANSWER)
+      const cellKey = `${row}-${col}`
+      const cellMistakes = cellMistakesRef.current.get(cellKey) || new Set<number>()
+      const isDuplicateMistake = cellMistakes.has(num)
+      
+      if (!isDuplicateMistake) {
+        cellMistakes.add(num)
+        cellMistakesRef.current.set(cellKey, cellMistakes)
+        
+        const newScore = Math.max(0, score + SCORING.WRONG_ANSWER)
+        setScore(newScore)
+        triggerScoreFeedback(SCORING.WRONG_ANSWER)
 
-      const newMistakes = mistakes + 1
-      setMistakes(newMistakes)
+        const newMistakes = mistakes + 1
+        setMistakes(newMistakes)
 
-      if (newMistakes >= maxMistakes) {
-        setGameStatus('lost')
-        setSelectedCell(null)
-        clearGameState()
-        void failSession()
-        return
+        if (newMistakes >= maxMistakes) {
+          setGameStatus('lost')
+          setSelectedCell(null)
+          clearGameState()
+          void failSession()
+          return
+        }
       }
     }
 

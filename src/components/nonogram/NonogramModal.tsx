@@ -69,7 +69,7 @@ export function NonogramModal({
         className={`fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[99999] transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
-        onClick={onPlayAgain}
+        onClick={onClose}
       />
 
       {/* Modal */}
@@ -112,10 +112,10 @@ export function NonogramModal({
                 id="modal-title"
                 className="font-urbanist text-xl font-extrabold text-white mb-0.5"
               >
-                {isWin ? 'Puzzle Complete!' : 'Keep Going!'}
+                {isWin ? 'Puzzle Complete!' : (mistakes >= maxMistakes ? 'Keep Going!' : "Time's up!")}
               </h2>
               <p className="font-urbanist text-white/90 text-xs">
-                {isWin ? 'Amazing work on the puzzle!' : 'You reached the maximum mistakes limit.'}
+                {isWin ? 'Amazing work on the puzzle!' : (mistakes >= maxMistakes ? 'You reached the maximum mistakes limit.' : "You ran out of time.")}
               </p>
             </div>
           </div>

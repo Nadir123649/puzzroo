@@ -54,17 +54,32 @@ async function fetchEmailPreferences(): Promise<EmailPreference[]> {
     const res = await api("/api/v1/preferences");
     if (!res.success) return defaultPreferences;
     const data = res.payload as any;
-    return data?.preferences || defaultPreferences;
+    return defaultPreferences.map(pref => {
+      const key = pref.id === 'daily-challenge' ? 'dailyChallenge' : pref.id;
+      return {
+        ...pref,
+        enabled: data[key] ?? pref.enabled
+      };
+    });
   } catch {
     return defaultPreferences;
   }
 }
 
 async function updateEmailPreferences(prefs: Record<string, boolean>): Promise<boolean> {
+  const mappedPrefs: Record<string, boolean> = {};
+  for (const key in prefs) {
+    if (key === 'daily-challenge') {
+      mappedPrefs.dailyChallenge = prefs[key];
+    } else {
+      mappedPrefs[key] = prefs[key];
+    }
+  }
+
   try {
     const res = await api("/api/v1/preferences", {
       method: "PATCH",
-      body: JSON.stringify(prefs),
+      body: JSON.stringify(mappedPrefs),
     });
     return res.success;
   } catch {

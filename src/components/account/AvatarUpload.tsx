@@ -23,6 +23,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
   const [isUploading, setIsUploading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [pendingUpload, setPendingUpload] = useState<File | null>(null)
   const [error, setError] = useState('')
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
@@ -132,8 +133,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
     const reader = new FileReader()
     reader.onload = () => setPreview(reader.result as string)
     reader.readAsDataURL(selected)
-    // No manual "Save Avatar" step — the photo updates the header instantly.
-    handleUpload(selected)
+    setPendingUpload(selected)
   }
 
   const handleGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,12 +177,13 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
 
       onAvatarChanged(imageUrl)
       closeViewer()
-      notify.success('Avatar updated successfully')
+      notify.success('Profile picture uploaded successfully')
     } catch (err: any) {
       setError(err.message || 'Upload failed. Please try again.')
       notify.error(err.message || 'Upload failed')
     } finally {
       setIsUploading(false)
+      if (!isViewerOpen) setPendingUpload(null)
     }
   }
 
@@ -217,6 +218,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
     setPreview(null)
     setError('')
     setConfirmDelete(false)
+    setPendingUpload(null)
   }
 
   const initials = userName
@@ -388,6 +390,26 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
                 >
                   <X size={18} strokeWidth={2.5} />
                   Cancel Camera
+                </button>
+              </div>
+            ) : pendingUpload ? (
+              <div className="flex items-center gap-3 w-full animate-fade-in">
+                <button
+                  type="button"
+                  onClick={closeViewer}
+                  disabled={isUploading}
+                  className="flex-1 h-[48px] rounded-full font-urbanist font-semibold text-[15px] bg-white text-[#212121] dark:bg-[#2A2D35] dark:text-white border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] hover:bg-gray-50 dark:hover:bg-[#35383F] transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleUpload(pendingUpload)}
+                  disabled={isUploading}
+                  className="flex-1 h-[48px] rounded-full font-urbanist font-semibold text-[15px] bg-[#6949FF] hover:bg-[#5536E6] text-white transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  {isUploading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  Confirm
                 </button>
               </div>
             ) : isUploading ? (
