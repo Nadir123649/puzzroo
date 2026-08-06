@@ -421,14 +421,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.emailVerificationToken = crypto.createHash("sha256").update(verificationToken).digest("hex");
       user.emailVerificationTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000);
       const confirmUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
-      try {
-        await sendVerificationEmail(normalizedEmail, confirmUrl);
-      } catch (e) {
+      // Fire-and-forget: SMTP send takes seconds — never block the response.
+      // A delivery failure is logged; the pending email stays set so the user
+      // can re-trigger a confirmation from the UI.
+      void sendVerificationEmail(normalizedEmail, confirmUrl).catch((e) => {
         console.error("Confirmation email failed to send:", e);
-        if (process.env.NODE_ENV === "production") {
-          return errorResponse(500, "email_failed", "Failed to send confirmation email. Try again later.");
-        }
-      }
+      });
       if (process.env.NODE_ENV !== "production") {
         console.log(`[dev] Email change confirmation for ${user.email} -> ${normalizedEmail}: ${confirmUrl}`);
       }

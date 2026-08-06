@@ -1,15 +1,16 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { notify } from '@/lib/toast'
 import { images } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { resetPassword } from '@/lib/auth/frontend-auth'
+import { api } from '@/lib/api/client'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -24,6 +25,28 @@ export default function ResetPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [tokenError, setTokenError] = useState(false)
+  const [checkingToken, setCheckingToken] = useState(true)
+
+  // Validate the token on load so an expired/unknown link shows the "Link
+  // Expired" state immediately instead of letting the user fill the form.
+  useEffect(() => {
+    let cancelled = false
+    api(`/api/v1/passwords/reset?token=${encodeURIComponent(token)}`)
+      .then((res) => {
+        if (cancelled) return
+        const valid = res.success && (res.payload as any)?.valid === true
+        setTokenError(!valid)
+      })
+      .catch(() => {
+        if (!cancelled) setTokenError(true)
+      })
+      .finally(() => {
+        if (!cancelled) setCheckingToken(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   const validate = () => {
     const newErrors: typeof errors = {}
@@ -94,7 +117,7 @@ export default function ResetPasswordPage() {
                 Puzzroo
               </span>
             </Link>
-            {!isSuccess && !tokenError && (
+            {!isSuccess && !tokenError && !checkingToken && (
               <>
                 <h2 className="font-urbanist font-bold text-[20px] text-[#212121] dark:text-white">
                   Set new password
@@ -157,6 +180,13 @@ export default function ResetPasswordPage() {
               <Link href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline">
                 Back to Log In
               </Link>
+            </div>
+          ) : checkingToken ? (
+            <div className="text-center py-6 flex flex-col items-center gap-4">
+              <Loader2 size={32} className="animate-spin text-[#6949FF]" />
+              <p className="font-urbanist font-medium text-[14px] text-[#757575] dark:text-[#BDBDBD]">
+                Checking your link…
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} autoComplete="off" className="space-y-5">
