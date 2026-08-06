@@ -13,6 +13,35 @@ import { checkRateLimit } from "@/lib/server/utils/http";
 // Reset links are short-lived for security.
 const RESET_TOKEN_MINUTES = 15;
 
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+// ──── GET /api/v1/passwords/reset?token=... ────
+// Lets the reset-password page check link validity BEFORE showing the form.
+// An expired/unknown token must surface the "Link Expired" state immediately
+// instead of letting the user type a new password and only then failing.
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
+  const slug = (await params).slug;
+  const action = slug?.[0];
+  if (action !== "reset") return errorResponse(404, "not_found", "Route not found");
+
+  const token = request.nextUrl.searchParams.get("token");
+  if (!token) return errorResponse(400, "validation_error", "Token is required");
+
+  try {
+    const hashedToken = hashToken(token);
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordTokenExpire: { $gt: Date.now() },
+    });
+    return successResponse({ valid: !!user });
+  } catch (error: any) {
+    console.error(error);
+    return errorResponse(500, "internal_error", "Internal Server Error");
+  }
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   const slug = (await params).slug;
   const action = slug?.[0];
@@ -59,7 +88,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const val = validate(resetPasswordSchema, body);
       if (val.error) return val.error;
       const { password } = val.data!;
-      const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+      const hashedToken = hashToken(token);
       const user = await User.findOne({
         resetPasswordToken: hashedToken,
         resetPasswordTokenExpire: { $gt: Date.now() },

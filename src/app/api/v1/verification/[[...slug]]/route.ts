@@ -51,9 +51,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         user.email = user.pendingEmail;
         user.pendingEmail = undefined;
         if (oldEmail) {
-          try {
-            await sendEmailChangedEmail(oldEmail, user.name || user.username, user.email);
-          } catch (e) { console.error("Email-changed notification failed to send:", e); }
+          // Fire-and-forget: never block the verification response on SMTP.
+          void sendEmailChangedEmail(oldEmail, user.name || user.username, user.email).catch((e) =>
+            console.error("Email-changed notification failed to send:", e)
+          );
         }
       }
       user.isVerified = true;
@@ -81,15 +82,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.emailVerificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000;
       await user.save({ validateBeforeSave: false });
       const verifyUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
-      try {
-        await sendVerificationEmail(user.email, verifyUrl);
-      } catch {
-        // Don't revert the token on a transient email failure — let the user
-        // retry the resend. In dev, SMTP may be unavailable; ignore the error.
-        if (process.env.NODE_ENV === "production") {
-          return errorResponse(500, "email_failed", "Failed to send verification email. Try again later.");
-        }
-      }
+      // Fire-and-forget: SMTP send takes seconds — never block the response.
+      // Failure is logged; the token stays valid so the user can retry resend.
+      void sendVerificationEmail(user.email, verifyUrl).catch((e) => {
+        console.error("Verification email failed to send:", e);
+      });
       return successResponse({ message: "Verification email sent. Check your inbox." });
     }
 
@@ -172,9 +169,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         user.email = user.pendingEmail;
         user.pendingEmail = undefined;
         if (oldEmail) {
-          try {
-            await sendEmailChangedEmail(oldEmail, user.name || user.username, user.email);
-          } catch (e) { console.error("Email-changed notification failed to send:", e); }
+          // Fire-and-forget: never block the email-verify redirect on SMTP.
+          void sendEmailChangedEmail(oldEmail, user.name || user.username, user.email).catch((e) =>
+            console.error("Email-changed notification failed to send:", e)
+          );
         }
       }
       user.isVerified = true;
