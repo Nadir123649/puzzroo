@@ -63,7 +63,7 @@ function FAQItemComponent({ faq, isOpen, onToggle, onKeyDown }: FAQItemComponent
   return (
     <div
       className={cn(
-        'w-full rounded-[20px] p-5 sm:p-6 min-h-[71px] transition-all duration-300 ease-in-out cursor-pointer',
+        'w-full rounded-[20px] p-5 sm:p-6 transition-all duration-300 ease-in-out cursor-pointer flex flex-col justify-center',
         'bg-[#FFFFFF] dark:bg-[#1F222A] hover:bg-[#f1f1f1] dark:hover:bg-[#1F222A] focus:outline-none'
       )}
       style={{

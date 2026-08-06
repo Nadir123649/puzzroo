@@ -158,7 +158,7 @@ export default function AccountInformationPage() {
           Account Details
         </h2>
 
-        <div className="space-y-3">
+        <div className="flex flex-col">
           {/* Name */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-[#E0E0E0] dark:border-[#35383F]">
             <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-2 sm:mb-0">
@@ -275,7 +275,7 @@ export default function AccountInformationPage() {
             <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD]">
               Password
             </span>
-            <div className="flex items-center gap-3 -translate-y-1">
+            <div className="flex items-center gap-3">
               {canChangePassword ? (
                 <Button
                   size="xs"

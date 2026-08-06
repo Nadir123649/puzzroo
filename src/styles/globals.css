@@ -75,10 +75,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-slate-200 dark:border-slate-800 transition-colors duration-300 ease-in-out;
-  }
-  
   html {
     scroll-behavior: smooth;
   }
