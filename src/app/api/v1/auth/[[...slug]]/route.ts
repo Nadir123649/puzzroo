@@ -10,6 +10,7 @@ import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
 import { cookieOptions, getRefreshCookieOptions } from "@/lib/server/utils/cookieOptions";
 import { sendVerificationEmail } from "@/lib/server/services/emailService";
 import { auth, invalidateSessionCache } from "@/lib/server/middleware/auth";
+import { publishLogout } from "@/lib/server/auth/sessionBroker";
 import { validate } from "@/lib/server/middleware/validate";
 import { registerSchema, loginSchema, changePasswordSchema, chooseUsernameSchema, unlinkProviderSchema, manageEmailSchema } from "@/lib/server/validators/authValidator";
 import { formatUser } from "@/lib/server/utils/formatUser";
@@ -147,6 +148,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if ("error" in userResult) return userResult.error;
       await LoginSession.updateMany({ userId: userResult.user.id, status: "active" }, { status: "logged_out", isCurrent: false });
       invalidateSessionCache();
+      // Push instant `logout` to every connected tab of this user (SSE).
+      publishLogout(userResult.user.id);
       const res = NextResponse.json({ success: true, payload: { message: "Logged out from all devices" }, timestamp: Date.now() }, { status: 200 });
       res.cookies.delete("refreshToken");
       return res;
@@ -266,6 +269,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // session, and the cache clear makes that effective immediately.
       await LoginSession.updateMany({ userId: user._id, status: "active" }, { status: "revoked", isCurrent: false });
       invalidateSessionCache();
+      // Push instant `logout` to every connected tab of this user (SSE).
+      publishLogout(user._id.toString());
       void trackServer({ userId: user._id.toString(), event: "password_changed", request });
       auditLog({ eventType: "auth:password_changed", userId: user._id.toString(), sessionId: jti, ip: getClientIp(request) }).catch(() => {});
       const res = NextResponse.json({ success: true, payload: { message: "Password changed successfully. Please sign in again." }, timestamp: Date.now() }, { status: 200 });
