@@ -53,7 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         const result = await handleOAuth(firebaseProvider, firebaseToken, currentUserId, request, rememberMe);
         if (!result) return errorResponse(500, "firebase_not_configured", "Firebase is not configured");
         if (result.converted) {
-          await trackServer({ userId: result.payload.user.id, event: "guest_converted", properties: { method: provider }, request });
+          void trackServer({ userId: result.payload.user.id, event: "guest_converted", properties: { method: provider }, request });
         }
         // Transfer the browser's guest sessions to the account whenever that
         // account is the owner of the guest key — covers first conversion AND
@@ -63,11 +63,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           if (owner && owner._id.toString() === result.payload.user.id) {
             const transferred = await transferGuestSessions(guestId, result.payload.user.id);
             if (transferred > 0) {
-              await trackServer({ userId: result.payload.user.id, event: "guest_sessions_transferred", properties: { count: transferred }, request });
+              void trackServer({ userId: result.payload.user.id, event: "guest_sessions_transferred", properties: { count: transferred }, request });
             }
           }
         }
-        await trackServer({ userId: result.payload.user.id, event: "login", properties: { method: provider }, request });
+        void trackServer({ userId: result.payload.user.id, event: "login", properties: { method: provider }, request });
         const res = NextResponse.json({ success: true, payload: result.payload, timestamp: Date.now() }, { status: 200 });
         res.cookies.set("refreshToken", result.refreshToken, getRefreshCookieOptions(rememberMe));
         return res;

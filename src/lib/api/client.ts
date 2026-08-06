@@ -9,6 +9,29 @@ let refreshPromise: Promise<string | null> | null = null;
 // Track pending API requests to prevent duplicate calls
 const pendingRequests = new Map<string, Promise<any>>();
 
+// Short-TTL result cache for read endpoints. In-flight dedupe (above) only
+// coalesces OVERLAPPING calls; StrictMode remounts and multi-component pages
+// fire the same GETs sequentially, each paying full latency. This cache serves
+// those from memory for a few seconds.
+const GET_CACHE_TTL_MS = 15_000;
+const getCache = new Map<string, { value: Promise<any>; expiresAt: number }>();
+const CACHEABLE_GET_PATTERNS = [
+  "/daily/completion",
+  "/daily/history",
+  "/stats",
+  "/history",
+  "/recent",
+  "/completed",
+  "/leaderboard",
+  "/games/progress",
+  "/users/me/activity",
+  "/games/nonogram/daily",
+  "/games/crossmath/daily",
+  "/games/sudoku/daily",
+  "/games/tangram/daily",
+  "/preferences",
+];
+
 export function setOnRefresh(cb: RefreshCallback) {
   onRefresh = cb;
 }
@@ -80,7 +103,20 @@ export async function api<T = any>(
   // Create a unique key for this request (GET requests only, for deduplication)
   const method = (fetchOptions.method || 'GET').toUpperCase();
   const requestKey = `${method}:${url}`;
-  
+
+  // Writes can change what the read endpoints return — drop the result cache.
+  if (method !== 'GET' && getCache.size > 0) {
+    getCache.clear();
+  }
+
+  const cacheable = method === 'GET' && CACHEABLE_GET_PATTERNS.some((p) => url.includes(p));
+
+  // Serve from the short-TTL result cache first
+  if (cacheable) {
+    const hit = getCache.get(requestKey);
+    if (hit && hit.expiresAt > Date.now()) return hit.value;
+  }
+
   // For GET requests, check if there's already a pending request
   if (method === 'GET' && pendingRequests.has(requestKey)) {
     return pendingRequests.get(requestKey)!;
@@ -188,6 +224,16 @@ export async function api<T = any>(
   // Store the promise for GET requests to prevent duplicates
   if (method === 'GET') {
     pendingRequests.set(requestKey, requestPromise);
+    if (cacheable) {
+      const cached = requestPromise.then((r) => {
+        if (!r || r.success === false) throw r;
+        return r;
+      }).catch((err) => {
+        getCache.delete(requestKey);
+        throw err;
+      });
+      getCache.set(requestKey, { value: cached, expiresAt: Date.now() + GET_CACHE_TTL_MS });
+    }
   }
 
   return requestPromise;

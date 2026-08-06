@@ -1,7 +1,0 @@
-- generic [active]:
-  - generic [ref=f13e2]:
-    - generic [ref=f13e3]:
-      - img "Puzzroo Logo" [ref=f13e4]
-      - generic [ref=f13e5]: Puzzroo
-    - paragraph [ref=f13e8]: Loading puzzle...
-  - button "Open Next.js Dev Tools" [ref=f13e14] [cursor=pointer]

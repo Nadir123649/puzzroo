@@ -42,16 +42,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.resetPasswordTokenExpire = Date.now() + RESET_TOKEN_MINUTES * 60 * 1000;
       await user.save({ validateBeforeSave: false });
       const resetUrl = `${getOrigin(request)}/reset-password/${resetToken}`;
-      try {
-        await sendResetPasswordEmail(user.email, resetUrl, RESET_TOKEN_MINUTES);
-      } catch {
-        // Don't revert the token on a transient email failure — let the user
-        // retry forgot-password. In dev, SMTP may be unavailable; ignore it.
-        if (process.env.NODE_ENV === "production") {
-          return errorResponse(500, "email_failed", "Failed to send reset email. Try again later.");
-        }
-      }
-      await trackServer({ userId: user._id.toString(), event: "password_reset_requested", request });
+      // Email is fire-and-forget: never block the response on SMTP latency.
+      // A delivery failure is logged by the service; the token stays valid so
+      // the user can retry forgot-password.
+      void sendResetPasswordEmail(user.email, resetUrl, RESET_TOKEN_MINUTES);
+      void trackServer({ userId: user._id.toString(), event: "password_reset_requested", request });
       return successResponse({ message: "If an account with that email exists, a reset link has been sent." });
     }
 
@@ -84,7 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }
       );
       if (consumed.modifiedCount === 0) return errorResponse(400, "token_invalid", "Invalid or expired reset token");
-      await trackServer({ userId: user._id.toString(), event: "password_reset_completed", request });
+      void trackServer({ userId: user._id.toString(), event: "password_reset_completed", request });
       return successResponse({ message: "Password changed. Please log in with your new password." });
     }
 

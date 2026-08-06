@@ -20,6 +20,7 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params: any)
   }
 
   const session = await sessionService.getSession(params.id, actor)
+  if (session.sessionStatus !== "playing") throw new Error("session_not_active")
   const result = await verificationEngine.verifyCompletion(session.puzzleId, val.data.grid)
 
   return successResponse({

@@ -7,12 +7,11 @@ import { gameApi } from '@/lib/api/gameApi'
 import { images } from '@/lib/utils'
 import type { PuzzleSummary } from '@/lib/server/puzzles/types'
 
-const DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'] as const
+const DIFFICULTIES = ['easy', 'medium', 'hard'] as const
 const DIFFICULTY_LABELS: Record<string, string> = {
   easy: 'Easy',
   medium: 'Medium',
   hard: 'Hard',
-  expert: 'Expert',
 }
 const PAGE_SIZE = 50
 

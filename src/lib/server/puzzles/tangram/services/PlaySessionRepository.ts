@@ -249,12 +249,6 @@ export class PlaySessionRepository {
     )
   }
 
-  async deleteExpired(before: Date) {
-    return TangramPlaySession.deleteMany({
-      status: { $in: ["completed", "abandoned"] },
-      lastSaveAt: { $lt: before },
-    })
-  }
 }
 
 export const playSessionRepository = new PlaySessionRepository()

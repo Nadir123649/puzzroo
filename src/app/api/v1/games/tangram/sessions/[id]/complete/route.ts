@@ -71,9 +71,10 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params: any)
     ) {
       const today = new Date().toISOString().split("T")[0]
       DailyChallenge.findOneAndUpdate(
-        { date: today, userId: actor.id },
+        { gameId: "tangram", date: today, userId: actor.id },
         {
           $set: {
+            gameId: "tangram",
             date: today,
             userId: actor.id,
             puzzleId: sessionResult.result.puzzleId,
@@ -88,7 +89,7 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params: any)
           },
           $setOnInsert: { createdAt: new Date() },
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       ).catch(() => {})
     }
   }

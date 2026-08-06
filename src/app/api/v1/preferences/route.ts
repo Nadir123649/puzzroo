@@ -62,7 +62,7 @@ export async function PATCH(request: NextRequest) {
     const prefs = await EmailPreference.findOneAndUpdate(
       { userId: userResult.userId },
       { $set: updates },
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     );
     return successResponse(sanitizePrefs(prefs));
   } catch (error: any) {

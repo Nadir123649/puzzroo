@@ -230,12 +230,6 @@ export class PlaySessionRepository {
     )
   }
 
-  async deleteExpired(before: Date) {
-    return NonogramPlaySession.deleteMany({
-      status: { $in: ["completed", "abandoned"] },
-      lastSaveAt: { $lt: before },
-    })
-  }
 }
 
 export const playSessionRepository = new PlaySessionRepository()

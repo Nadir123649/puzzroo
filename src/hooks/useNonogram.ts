@@ -17,6 +17,7 @@ import {
   GameProgress,
   InputMode,
   ValidationMode,
+  Clue,
 } from '@shared/lib/nonogram/types'
 
 // Drag state types
@@ -44,9 +45,9 @@ import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChal
 
 function getTodayDateParam(): string {
   const d = new Date()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const y = String(d.getFullYear()).slice(-2)
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const y = String(d.getUTCFullYear()).slice(-2)
   return `${m}-${day}-${y}`
 }
 
@@ -82,20 +83,29 @@ function writeCache(id: string, puzzle: PuzzleData): void {
   }
 }
 
+function toClueObjects(raw: any): Clue[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((c: any) =>
+    Array.isArray(c)
+      ? { values: c }
+      : { values: Array.isArray(c?.values) ? c.values : [] }
+  )
+}
+
 function getDailyDate(dateParam?: string | null): Date {
   if (dateParam) {
     const [month, day, year] = dateParam.split('-')
     const fullYear = 2000 + parseInt(year)
-    return new Date(fullYear, parseInt(month) - 1, parseInt(day))
+    return new Date(Date.UTC(fullYear, parseInt(month) - 1, parseInt(day)))
   }
   return new Date()
 }
 
 function getDailyDateString(dateParam?: string | null): string {
   const d = getDailyDate(dateParam)
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${m}-${day}`
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  return `${d.getUTCFullYear()}-${m}-${day}`
 }
 
 
@@ -105,7 +115,7 @@ export function useNonogram(initialPuzzleId?: string) {
   const savedDifficulty = loadDifficultyPreference() as Difficulty
 
   const getInitialDifficulty = (): Difficulty => {
-    if (urlDifficulty && ['easy', 'medium', 'hard', 'expert'].includes(urlDifficulty)) return urlDifficulty as Difficulty
+    if (urlDifficulty && ['easy', 'medium', 'hard'].includes(urlDifficulty)) return urlDifficulty as Difficulty
     return (savedDifficulty || 'easy') as Difficulty
   }
 
@@ -179,10 +189,36 @@ export function useNonogram(initialPuzzleId?: string) {
   const processedDragCellsRef = useRef<Set<string>>(new Set())
 
   const sessionIdRef = useRef<string | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
   const sessionCreatedRef = useRef(false)
   const completionCalledRef = useRef(false)
   const lostAbandonedRef = useRef(false)
+
+  // Single authoritative save pipeline: serialized, coalescing, never overlapping.
+  // A save is only sent when the previous one completed; intermediate snapshots
+  // are coalesced into the latest one, so no request is ever aborted.
+  const saveQueueRef = useRef<{
+    inFlight: boolean
+    pending: { grid: CellState[][]; elapsed: number; hints: number; mists: number; moves: number } | null
+  }>({ inFlight: false, pending: null })
+  const drainPromiseRef = useRef<Promise<void> | null>(null)
+
+  // Mirrors for close-time flush (pagehide / visibilitychange)
+  const gridRef = useRef<CellState[][]>([])
+  const elapsedSecondsRef = useRef(0)
+  const hintsUsedRef = useRef(0)
+  const mistakeCountRef = useRef(0)
+  const moveCountRef = useRef(0)
+  const difficultyRef = useRef<Difficulty>(difficulty)
+  const lastSaveQueuedAtRef = useRef(Date.now())
+
+  useEffect(() => {
+    gridRef.current = grid
+    elapsedSecondsRef.current = elapsedSeconds
+    hintsUsedRef.current = hintsUsed
+    mistakeCountRef.current = mistakeCount
+    moveCountRef.current = moveCount
+    difficultyRef.current = difficulty
+  }, [grid, elapsedSeconds, hintsUsed, mistakeCount, moveCount, difficulty])
 
   async function initSession(puzzleId: string, diff: string): Promise<any> {
     if (sessionCreatedRef.current) return null
@@ -192,7 +228,10 @@ export function useNonogram(initialPuzzleId?: string) {
       ensureGuestId()
     }
     try {
-      const res = await gameApi.createSession('nonogram', puzzleId, diff)
+      const challengeId = isDailyChallenge ? `daily-nonogram-${dateParam || getTodayDateParam()}` : null
+      const res = challengeId
+        ? await gameApi.createDailySession('nonogram', puzzleId, challengeId)
+        : await gameApi.createSession('nonogram', puzzleId, diff)
       if (res && (res.sessionId || res._id || res.id)) {
         sessionIdRef.current = res.sessionId || res._id || res.id
         sessionCreatedRef.current = true
@@ -202,26 +241,53 @@ export function useNonogram(initialPuzzleId?: string) {
     return null
   }
 
+  function drainSaveQueue(): Promise<void> {
+    if (!sessionIdRef.current) return Promise.resolve()
+    if (!drainPromiseRef.current) {
+      drainPromiseRef.current = (async () => {
+        try {
+          while (saveQueueRef.current.pending) {
+            const item = saveQueueRef.current.pending
+            saveQueueRef.current.pending = null
+            try {
+              await gameApi.saveMove('nonogram', sessionIdRef.current!, {
+                grid: item.grid,
+                elapsedTime: item.elapsed,
+                hintsUsed: item.hints,
+                mistakes: item.mists,
+                moves: item.moves,
+              })
+            } catch (err) {
+              // Network/server failure: drop the snapshot, keep local state.
+              // The next save carries the full grid and self-heals the server.
+              console.error('[nonogram] save move failed', err)
+              break
+            }
+          }
+        } finally {
+          drainPromiseRef.current = null
+          // A save may have been enqueued between the last loop check and
+          // this finally — never orphan it.
+          if (saveQueueRef.current.pending) void drainSaveQueue()
+        }
+      })()
+    }
+    return drainPromiseRef.current
+  }
+
   function saveMoveNow(g: CellState[][], elapsed: number, hints: number, mists: number, moves: number) {
-    if (!sessionIdRef.current) return
-    abortRef.current?.abort()
-    const ac = new AbortController()
-    abortRef.current = ac
-    gameApi.saveMove('nonogram', sessionIdRef.current, {
-      grid: g,
-      elapsedTime: elapsed,
-      hintsUsed: hints,
-      mistakes: mists,
-      moves,
-    }, ac.signal).catch(err => {
-      if (err?.name !== 'AbortError') console.error('[nonogram] save move failed', err)
-    })
+    if (!sessionIdRef.current || completionCalledRef.current) return
+    lastSaveQueuedAtRef.current = Date.now()
+    saveQueueRef.current.pending = { grid: g, elapsed, hints, mists, moves }
+    void drainSaveQueue()
   }
 
   async function completePuzzle(g: CellState[][], elapsed: number, hints: number, mists: number, moves: number) {
     if (!sessionIdRef.current || completionCalledRef.current) return
     completionCalledRef.current = true
     try {
+      // All pending saves must land before the terminal transition
+      await drainSaveQueue()
       await gameApi.completeSession('nonogram', sessionIdRef.current, {
         grid: g,
         elapsedTime: elapsed,
@@ -235,9 +301,11 @@ export function useNonogram(initialPuzzleId?: string) {
   async function abandonSession() {
     if (!sessionIdRef.current) return
     const sid = sessionIdRef.current
-    sessionIdRef.current = null
-    sessionCreatedRef.current = false
     try {
+      // All pending saves must land before the terminal transition
+      await drainSaveQueue()
+      sessionIdRef.current = null
+      sessionCreatedRef.current = false
       await gameApi.abandonSession('nonogram', sid)
     } catch { /* ignore */ }
   }
@@ -249,7 +317,7 @@ export function useNonogram(initialPuzzleId?: string) {
     const key = JSON.stringify({ g: grid, h: hintsUsed, m: mistakeCount })
     if (key === lastMoveKeyRef.current) return
     lastMoveKeyRef.current = key
-    const initialTime = difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
+    const initialTime = difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
     const elapsed = Math.max(0, initialTime - elapsedSeconds)
     saveMoveNow(grid, elapsed, hintsUsed, mistakeCount, moveCount)
   }, [grid, hintsUsed, mistakeCount, elapsedSeconds, gameStatus])
@@ -257,7 +325,7 @@ export function useNonogram(initialPuzzleId?: string) {
   /**
    * Initialize a new puzzle
    */
-  const initializePuzzle = useCallback(async (diff: Difficulty, loadSaved = true, puzzleId?: string) => {
+  const initializePuzzle = useCallback(async (diff: Difficulty, loadSaved = true, puzzleId?: string, refresh = false) => {
     // Load new puzzle (async fetch from API with static fallback + cache)
     const token = ++initTokenRef.current
     let cancelled = false
@@ -270,8 +338,8 @@ export function useNonogram(initialPuzzleId?: string) {
       setMoveCount(0)
       setSelectionHistory([])
 
-      // Set initial countdown time based on difficulty: easy=5m (300), medium=10m (600), hard=15m (900), expert=20m (1200)
-      setElapsedSeconds(diff === 'expert' ? 1200 : diff === 'hard' ? 900 : diff === 'medium' ? 600 : 300)
+      // Set initial countdown time based on difficulty: easy=5m (300), medium=10m (600), hard=15m (900)
+      setElapsedSeconds(diff === 'hard' ? 900 : diff === 'medium' ? 600 : 300)
 
       setHintsUsed(0)
       setMaxHints(getHintLimits(diff))
@@ -291,9 +359,77 @@ export function useNonogram(initialPuzzleId?: string) {
 
     setLoading(true)
     let puzzle: PuzzleData | null = null
+
+    // Server-backed resume first (the server session is authoritative).
+    // Falls back to the normal fresh/localStorage path below when there is
+    // no active server session. Any restore failure is non-fatal: a fresh
+    // puzzle is loaded instead of breaking the mount.
+    if (loadSaved && !puzzleId && typeof window !== 'undefined') {
+      try {
+        if (!getAccessToken()) ensureGuestId()
+        const challengeId = `daily-nonogram-${dateParam || getTodayDateParam()}`
+        const continueResult = isDailyChallenge
+          ? await gameApi.getContinueDaily('nonogram', challengeId)
+          : await gameApi.getContinue('nonogram', diff)
+        const serverSession = continueResult?.hasActiveSession
+          ? (continueResult as any).session
+          : null
+
+        if (serverSession && serverSession.sessionId && serverSession.puzzle && serverSession.puzzle.id) {
+          if (token !== initTokenRef.current) return
+          const sp = serverSession.puzzle
+          const restoredPuzzle: PuzzleData = {
+            id: sp.id,
+            title: sp.title || '',
+            difficulty: (sp.difficulty || diff) as Difficulty,
+            size: sp.size as PuzzleData['size'],
+            category: sp.category || '',
+            estimatedTime: sp.estimatedTime || 0,
+            solution: Array.isArray(sp.solution) ? sp.solution : [],
+            rowClues: toClueObjects(sp.rowClues),
+            columnClues: toClueObjects(sp.columnClues),
+          }
+
+          const serverGrid: CellState[][] = Array.isArray(serverSession.grid)
+            ? serverSession.grid.map((row: any[]) => Array.isArray(row) ? [...row] : [])
+            : []
+          if (serverGrid.length === restoredPuzzle.size && serverGrid.every((r: CellState[]) => r.length === restoredPuzzle.size)) {
+            setCurrentPuzzle(restoredPuzzle)
+            writeCache(restoredPuzzle.id, restoredPuzzle)
+            setGrid(serverGrid)
+            setMistakeCount(serverSession.mistakes || 0)
+            setMoveCount(serverSession.moves || 0)
+            setHintsUsed(serverSession.hintsUsed || 0)
+
+            const restoredDiff = (serverSession.difficulty || diff) as Difficulty
+            setDifficulty(restoredDiff)
+            setMaxHints(getHintLimits(restoredDiff))
+            setElapsedSeconds(Math.max(0, (restoredDiff === 'hard' ? 900 : restoredDiff === 'medium' ? 600 : 300) - (serverSession.elapsedTime || 0)))
+            setGameStatus('playing')
+            setRowValidation(validateAllRows(serverGrid, restoredPuzzle.rowClues))
+            setColumnValidation(validateAllColumns(serverGrid, restoredPuzzle.columnClues))
+            setProgress(calculateProgress(serverGrid, restoredPuzzle.solution))
+            setInputMode('fill')
+            setSelectedCell(null)
+            setSelectionHistory([])
+            startTimeRef.current = null
+
+            sessionIdRef.current = serverSession.sessionId
+            sessionCreatedRef.current = true
+            completionCalledRef.current = false
+
+            setLoading(false)
+            return
+          }
+        }
+      } catch {
+        // restore failed: fall through to the fresh/localStorage path below
+      }
+    }
+
     try {
       if (puzzleId) {
-        const cached = readCache(puzzleId)
+        const cached = refresh ? null : readCache(puzzleId)
         if (cached) {
           puzzle = cached
         } else {
@@ -369,7 +505,7 @@ export function useNonogram(initialPuzzleId?: string) {
     }
 
     if (typeof window !== 'undefined' && !isInitialized) {
-      const valid = ['easy', 'medium', 'hard', 'expert']
+      const valid = ['easy', 'medium', 'hard']
       const currentDiff = valid.includes(urlDifficulty) ? urlDifficulty : 'easy'
 
       setDifficulty(currentDiff)
@@ -429,6 +565,7 @@ export function useNonogram(initialPuzzleId?: string) {
    */
   useEffect(() => {
     if (isInitialized && gameStatus === 'playing' && currentPuzzle) {
+      lastSaveQueuedAtRef.current = Date.now()
       saveGameState({
         grid,
         puzzleId: currentPuzzle.id,
@@ -441,6 +578,35 @@ export function useNonogram(initialPuzzleId?: string) {
       })
     }
   }, [grid, currentPuzzle, difficulty, elapsedSeconds, hintsUsed, mistakeCount, gameStatus, isInitialized])
+
+  /**
+   * Flush the exact close-moment elapsed time to the server when the page is
+   * closed or hidden (tab close, navigation, back button). Server saves only
+   * run on moves, so without this the restored countdown would rewind to the
+   * last move. Restores use the stored elapsed as-is (timer pauses while away).
+   */
+  useEffect(() => {
+    if (gameStatus !== 'playing' || grid.length === 0) return
+
+    const flushElapsed = () => {
+      if (!sessionIdRef.current || completionCalledRef.current) return
+      if (gridRef.current.length === 0) return
+      const gapSec = Math.max(0, Math.round((Date.now() - lastSaveQueuedAtRef.current) / 1000))
+      const remaining = Math.max(0, elapsedSecondsRef.current - gapSec)
+      const initialTime = difficultyRef.current === 'hard' ? 900 : difficultyRef.current === 'medium' ? 600 : 300
+      saveMoveNow(gridRef.current, Math.max(0, initialTime - remaining), hintsUsedRef.current, mistakeCountRef.current, moveCountRef.current)
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flushElapsed()
+    }
+    window.addEventListener('pagehide', flushElapsed)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('pagehide', flushElapsed)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [gameStatus, grid.length])
 
   /**
    * Validation and progress tracking on grid change
@@ -478,23 +644,11 @@ export function useNonogram(initialPuzzleId?: string) {
         updateChallengeStatus(puzzleId, 'completed')
       }
 
-      // Report completion to the API (fire-and-forget). Works for both
-      // logged-in users and guests (api client sends x-guest-id fallback).
-      const initialTime = difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
+      // Report completion to the API (fire-and-forget). The session complete
+      // endpoint owns all server side effects (stats, daily, leaderboard).
+      const initialTime = difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
       const elapsed = Math.max(0, initialTime - elapsedSeconds)
       void completePuzzle(grid, elapsed, hintsUsed, mistakeCount, moveCount)
-      if (getAccessToken()) {
-        void gameApi.complete('nonogram', {
-          puzzleId: currentPuzzle.id,
-          difficulty: currentPuzzle.difficulty as 'easy' | 'medium' | 'hard' | 'expert',
-          time: elapsed,
-          hintsUsed: hintsUsed,
-          mistakes: mistakeCount,
-          moves: moveCount,
-        }).catch(() => {
-          // best-effort; ignore failures
-        })
-      }
 
       clearGameState()
     }
@@ -730,67 +884,64 @@ export function useNonogram(initialPuzzleId?: string) {
     const previewCells = Array.from(dragPreviewCells)
 
     if (previewCells.length > 0) {
+      const newGrid = grid.map((row) => [...row])
       let changedCount = 0
-      setGrid((prevGrid) => {
-        const newGrid = prevGrid.map((row) => [...row])
-        let newMistakes = mistakeCount
-        let lost = false
+      let newMistakes = mistakeCount
+      let lost = false
 
-        for (const cellKey of previewCells) {
-          const [row, col] = cellKey.split('-').map(Number)
-          const currentState = prevGrid[row]?.[col]
-          
-          // Double check locked status
-          const isLocked = currentState === 'filled' && currentPuzzle.solution[row]?.[col] === 1
-          if (isLocked) continue
+      for (const cellKey of previewCells) {
+        const [row, col] = cellKey.split('-').map(Number)
+        const currentState = grid[row]?.[col]
 
-          // Double check completed row/column status
-          const isRowCompleted = rowValidation[row] === 'completed'
-          const isColCompleted = columnValidation[col] === 'completed'
-          if (isRowCompleted || isColCompleted) continue
+        // Double check locked status
+        const isLocked = currentState === 'filled' && currentPuzzle.solution[row]?.[col] === 1
+        if (isLocked) continue
 
-          let cellNewState: CellState = currentState
-          if (action === 'fill') {
-            cellNewState = 'filled'
-          } else if (action === 'erase') {
-            cellNewState = 'empty'
-          } else if (action === 'mark') {
-            cellNewState = 'marked'
-          } else if (action === 'unmark') {
-            cellNewState = 'empty'
-          }
+        // Double check completed row/column status
+        const isRowCompleted = rowValidation[row] === 'completed'
+        const isColCompleted = columnValidation[col] === 'completed'
+        if (isRowCompleted || isColCompleted) continue
 
-          if (cellNewState === currentState) continue
-          changedCount++
+        let cellNewState: CellState = currentState
+        if (action === 'fill') {
+          cellNewState = 'filled'
+        } else if (action === 'erase') {
+          cellNewState = 'empty'
+        } else if (action === 'mark') {
+          cellNewState = 'marked'
+        } else if (action === 'unmark') {
+          cellNewState = 'empty'
+        }
 
-          // Validation logic for fill mode
-          if (action === 'fill' && validationMode === 'assisted' && currentState !== 'error') {
-            const isMistake = currentPuzzle.solution[row]?.[col] === 0
-            if (isMistake) {
-              cellNewState = 'error'
-              newMistakes += 1
-              const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
-              if (newMistakes >= limit) {
-                lost = true
-              }
+        if (cellNewState === currentState) continue
+        changedCount++
+
+        // Validation logic for fill mode
+        if (action === 'fill' && validationMode === 'assisted' && currentState !== 'error') {
+          const isMistake = currentPuzzle.solution[row]?.[col] === 0
+          if (isMistake) {
+            cellNewState = 'error'
+            newMistakes += 1
+            const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+            if (newMistakes >= limit) {
+              lost = true
             }
           }
-
-          newGrid[row][col] = cellNewState
         }
 
-        if (newMistakes !== mistakeCount) {
-          setMistakeCount(newMistakes)
-        }
-        if (lost) {
-          setGameStatus('lost')
-          clearGameState()
-        }
+        newGrid[row][col] = cellNewState
+      }
 
-        return newGrid
-      })
+      setGrid(newGrid)
       if (changedCount > 0) {
         setMoveCount((prev) => prev + changedCount)
+      }
+      if (newMistakes !== mistakeCount) {
+        setMistakeCount(newMistakes)
+      }
+      if (lost) {
+        setGameStatus('lost')
+        clearGameState()
       }
     }
 
@@ -799,7 +950,7 @@ export function useNonogram(initialPuzzleId?: string) {
     setDragPreviewCells(new Set())
     setDragAction(null)
     dragActionRef.current = null
-  }, [isDragging, dragPreviewCells, currentPuzzle, validationMode, mistakeCount, difficulty, rowValidation, columnValidation])
+  }, [isDragging, dragPreviewCells, grid, currentPuzzle, validationMode, mistakeCount, difficulty, rowValidation, columnValidation])
 
   /**
    * Reset the current puzzle
@@ -810,7 +961,7 @@ export function useNonogram(initialPuzzleId?: string) {
       setGrid(emptyGrid)
       setSelectedCell(null)
       setSelectionHistory([])
-      const initialSeconds = currentPuzzle.estimatedTime || (difficulty === 'expert' ? 1200 : difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300)
+      const initialSeconds = currentPuzzle.estimatedTime || (difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300)
       setElapsedSeconds(initialSeconds)
       setHintsUsed(0)
       setMistakeCount(0)
@@ -828,19 +979,27 @@ export function useNonogram(initialPuzzleId?: string) {
   /**
    * Start a new puzzle
    */
-  const newPuzzle = useCallback((puzzleId?: string) => {
+  const newPuzzle = useCallback(async (puzzleId?: string, refresh = false) => {
     // Use current puzzle's difficulty, not URL or state
     // This ensures "New Puzzle" respects the mode you're currently playing
     const currentDiff = currentPuzzle?.difficulty || difficulty
 
     if (!getAccessToken()) ensureGuestId()
-    sessionIdRef.current = null
-    sessionCreatedRef.current = false
-    completionCalledRef.current = false
+
+    // Replay/reset: the previous session must be closed server-side so the
+    // fresh session is a NEW one — otherwise createSession dedupes onto the
+    // old active session and the replay inherits its grid/mistakes/moves.
+    if (sessionIdRef.current) {
+      await abandonSession()
+    } else {
+      sessionIdRef.current = null
+      sessionCreatedRef.current = false
+      completionCalledRef.current = false
+    }
 
     // Initialize puzzle with CURRENT difficulty
-    initializePuzzle(currentDiff, false, puzzleId)
-  }, [currentPuzzle, difficulty, initializePuzzle])
+    initializePuzzle(currentDiff, false, puzzleId, refresh)
+  }, [currentPuzzle, difficulty, initializePuzzle, abandonSession])
 
   /**
    * Change difficulty

@@ -33,6 +33,7 @@ const playSessionSchema = new mongoose.Schema(
     lastSavedAt: { type: Date, default: Date.now },
     pausedAt: { type: Date, default: null },
     completedAt: { type: Date, default: null },
+    abandonedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
@@ -65,6 +66,7 @@ playSessionSchema.index({ guestId: 1, completedAt: -1 });
 playSessionSchema.index({ userId: 1, lastSavedAt: -1 });
 playSessionSchema.index({ guestId: 1, lastSavedAt: -1 });
 playSessionSchema.index({ completedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+playSessionSchema.index({ abandonedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 playSessionSchema.index({ dailyChallengeId: 1, status: 1 });
 playSessionSchema.index({ gameType: 1, status: 1 });
 playSessionSchema.index({ dailyChallengeId: 1, userId: 1, status: 1 });
