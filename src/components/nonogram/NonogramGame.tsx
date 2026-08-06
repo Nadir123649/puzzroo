@@ -45,6 +45,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     handleDragEnd,
     resetPuzzle,
     newPuzzle,
+    replayPuzzle,
     useHint,
     autoFill,
     revealSolution,
@@ -79,10 +80,10 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     setLoaderText('Replaying game...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
-    // Start a fresh server session: the completed/lost one is burned and must
-    // not be reused, otherwise subsequent saves/completes hit already_completed.
-    // Refresh=true re-fetches the same puzzle from the API instead of the cache.
-    newPuzzle(currentPuzzle?.id, true)
+    // Replay = restart the SAME puzzle through the replay API: the server
+    // abandons the old (completed/lost) session and opens a fresh one so
+    // subsequent saves/completes never hit already_completed.
+    await replayPuzzle()
     setIsResetting(false)
   }
 

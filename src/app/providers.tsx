@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { ensureSession, updateUser, isLoggedIn } from '@/lib/auth/frontend-auth'
+import { api } from '@/lib/api/client'
 
 type Theme = 'light' | 'dark'
 
@@ -62,15 +63,30 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Periodic auth health check — refreshes the access token every 10 min,
-    // which also validates that the session is still active on the server.
-    const healthInterval = setInterval(() => {
-      fetch("/api/v1/auth/refresh", { method: "POST", credentials: "include" })
-        .catch(() => {});
-    }, 10 * 60 * 1000);
+    // Periodic auth health check — probe an authenticated endpoint through the
+    // api() wrapper so a REVOKED session (e.g. password changed on another
+    // device, "logout all devices") triggers the wrapper's 401 flow: refresh
+    // fails → full auth wipe → redirect to /login. A raw refresh fetch would
+    // silently swallow the 401 and the user would stay "logged in" until the
+    // next page load. 30s keeps cross-device revocation near-instant without
+    // hammering the API. Skipped while logged out.
+    const probeSession = () => {
+      if (!isLoggedIn()) return
+      api("/api/v1/users/me", { suppressToast: true }).catch(() => {})
+    }
+
+    const healthInterval = setInterval(probeSession, 30 * 1000)
+
+    // Probe immediately when the tab regains focus — the user may have just
+    // changed their password on another device, so don't wait up to 30s.
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") probeSession()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       clearInterval(healthInterval)
+      document.removeEventListener("visibilitychange", onVisibility)
       window.removeEventListener('theme-change', syncTheme)
     }
   }, [])

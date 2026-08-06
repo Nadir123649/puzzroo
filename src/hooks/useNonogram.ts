@@ -1002,6 +1002,36 @@ export function useNonogram(initialPuzzleId?: string) {
   }, [currentPuzzle, difficulty, initializePuzzle, abandonSession])
 
   /**
+   * Replay the SAME puzzle: the server closes the previous session and opens a
+   * fresh one so replay inherits no grid/mistakes/moves. Falls back to a plain
+   * newPuzzle() on the same puzzle id if the fresh session can't be created.
+   */
+  const replayPuzzle = useCallback(async () => {
+    if (!currentPuzzle) return
+    const id = currentPuzzle.id
+
+    const prevSessionId = sessionIdRef.current
+    let replaySessionCreated = false
+    if (prevSessionId) {
+      try {
+        const result = await gameApi.replayNonogramSession(prevSessionId)
+        if (result && (result.sessionId || result._id || result.id)) {
+          sessionIdRef.current = result.sessionId || result._id || result.id
+          sessionCreatedRef.current = true
+          replaySessionCreated = true
+        }
+      } catch { /* session replay failed → fall back below */ }
+    }
+
+    // Reset the board to the same puzzle dataset (identical clues/solution).
+    resetPuzzle()
+
+    if (!replaySessionCreated) {
+      await newPuzzle(id, true)
+    }
+  }, [currentPuzzle, resetPuzzle, newPuzzle])
+
+  /**
    * Change difficulty
    */
   const changeDifficulty = useCallback((newDifficulty: Difficulty, puzzleId?: string) => {
@@ -1227,6 +1257,7 @@ export function useNonogram(initialPuzzleId?: string) {
     handlePointerMove,
     resetPuzzle,
     newPuzzle,
+    replayPuzzle,
     changeDifficulty,
     useHint,
     autoFill,
