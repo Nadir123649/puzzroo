@@ -1,9 +1,12 @@
 import { playSessionRepository } from "./PlaySessionRepository"
 import { verificationEngine } from "./VerificationEngine"
+import { statisticsService } from "./StatisticsService"
 import NonogramPuzzle from "@/lib/server/models/NonogramPuzzle"
 import NonogramPlaySession from "@/lib/server/models/NonogramPlaySession"
 import GameProgress from "@/lib/server/models/GameProgress"
-import UserStatistics from "@/lib/server/models/UserStatistics"
+import DailyChallenge from "@/lib/server/models/DailyChallenge"
+import { completionBus } from "@/lib/server/games/completion"
+import { ensureGameSubscriptions } from "@/lib/server/games/subscriptions"
 import type { Actor } from "@/app/api/v1/games/nonogram/route-helpers"
 import type {
   SafeSessionResponse,
@@ -13,16 +16,29 @@ import type {
   CompleteSessionResponse,
 } from "../types"
 
-const EXPIRED_SESSION_RETENTION_MS = 90 * 24 * 60 * 60 * 1000
 
-function computeProgress(grid: string[][], blanks: string[]): ProgressInfo {
+// Blank cells (cells that must be filled) are a property of the puzzle's
+// solution, not the grid dimensions. The session grid is size x size but only
+// a subset of cells is part of the picture, so progress must be computed
+// against the solution. Cache per puzzleId: puzzles are immutable.
+const blankCountCache = new Map<string, number>()
+
+async function getBlankCellCount(puzzleId: string): Promise<number> {
+  const cached = blankCountCache.get(puzzleId)
+  if (cached !== undefined) return cached
+  const puzzle = await NonogramPuzzle.findOne({ puzzleId }).select("solution").lean()
+  const solution: number[][] = puzzle?.solution || []
+  const count = solution.flat().filter((v) => v === 1).length
+  blankCountCache.set(puzzleId, count)
+  return count
+}
+
+function computeProgress(grid: string[][], totalBlanks: number): ProgressInfo {
   let filled = 0
-  let total = 0
   if (Array.isArray(grid)) {
     for (const row of grid) {
       if (Array.isArray(row)) {
         for (const cell of row) {
-          total++
           if (cell === 'filled') {
             filled++
           }
@@ -32,8 +48,8 @@ function computeProgress(grid: string[][], blanks: string[]): ProgressInfo {
   }
   return {
     filledCells: filled,
-    totalBlanks: total,
-    percentage: total > 0 ? Math.round((filled / total) * 100) : 100,
+    totalBlanks,
+    percentage: totalBlanks > 0 ? Math.round((filled / totalBlanks) * 100) : 100,
   }
 }
 
@@ -60,7 +76,9 @@ function toSafeSession(session: Record<string, any>): SafeSessionResponse {
     lastSaveAt: session.lastSaveAt?.toISOString?.() || session.lastSaveAt,
     isReplay: session.isReplay || false,
     restartCount: session.restartCount || 0,
-    result: session.result || null,
+    // Only completed sessions carry a result; the schema's zero-default
+    // subdoc must never leak into playing/abandoned session responses.
+    result: session.status === 'completed' ? session.result || null : null,
   }
 }
 
@@ -90,14 +108,6 @@ export class SessionService {
 
   private actorGuestId(actor: Actor): string | undefined {
     return actor.type === "guest" ? actor.id : undefined
-  }
-
-  private async pruneExpiredSessions() {
-    try {
-      await playSessionRepository.deleteExpired(new Date(Date.now() - EXPIRED_SESSION_RETENTION_MS))
-    } catch (error) {
-      // cleanup failure is non-fatal
-    }
   }
 
   async startSession(actor: Actor, puzzleId: string, gameType?: "nonogram" | "daily_challenge", dailyChallengeId?: string) {
@@ -131,24 +141,14 @@ export class SessionService {
       })
 
       if (userId && !guestId) {
-        Promise.all([
-          GameProgress.findOneAndUpdate(
-            { userId, gameId: "nonogram", puzzleId },
-            {
-              $set: { difficulty: puzzleDoc.difficulty || "easy", updatedAt: new Date() },
-              $inc: { attempts: 1 },
-            },
-            { upsert: true }
-          ),
-          UserStatistics.findOneAndUpdate(
-            { userId, gameId: "nonogram" },
-            {
-              $set: { lastPlayedAt: new Date() },
-              $inc: { totalPlayed: 1, [`perDifficulty.${puzzleDoc.difficulty || "easy"}.played`]: 1 },
-            },
-            { upsert: true }
-          ),
-        ]).catch(() => {})
+        GameProgress.findOneAndUpdate(
+          { userId, gameId: "nonogram", puzzleId },
+          {
+            $set: { difficulty: puzzleDoc.difficulty || "easy", updatedAt: new Date() },
+            $inc: { attempts: 1 },
+          },
+          { upsert: true }
+        ).catch(() => {})
       }
 
       return toSafeSession(session.toObject())
@@ -231,7 +231,7 @@ export class SessionService {
       mistakes: updated.mistakes,
       hintsUsed: updated.hintsUsed,
       elapsedTime: updated.elapsedTime,
-      progress: computeProgress(updated.grid || [], []),
+      progress: computeProgress(updated.grid || [], await getBlankCellCount(updated.puzzleId)),
     }
   }
 
@@ -290,6 +290,16 @@ export class SessionService {
 
     if (!updated) throw new Error("already_completed")
 
+    this.emitCompletionSideEffects(actor, session, {
+      puzzleId: session.puzzleId,
+      difficulty: session.difficulty,
+      elapsedTime,
+      hintsUsed: finalHintsUsed,
+      mistakes: finalMistakes,
+      accuracy: verification.accuracy,
+      score,
+    })
+
     return {
       isCompleted: true,
       result: {
@@ -314,6 +324,73 @@ export class SessionService {
     }
   }
 
+  private emitCompletionSideEffects(
+    actor: Actor,
+    session: SafeSessionResponse,
+    result: {
+      puzzleId: string
+      difficulty: string
+      elapsedTime: number
+      hintsUsed: number
+      mistakes: number
+      accuracy: number
+      score: number
+    }
+  ) {
+    ensureGameSubscriptions()
+    completionBus.emit({
+      playerId: actor.id,
+      sessionId: session.sessionId,
+      gameType: "nonogram",
+      puzzleId: result.puzzleId,
+      difficulty: result.difficulty,
+      score: result.score,
+      elapsedTime: result.elapsedTime,
+      mistakes: result.mistakes,
+      hintsUsed: result.hintsUsed,
+      completedAt: new Date(),
+      isReplay: session.isReplay || false,
+      isGuest: actor.type === "guest",
+    })
+
+    if (actor.type !== "user") return
+
+    statisticsService.updateOnSessionComplete(
+      actor.id,
+      result.puzzleId,
+      result.difficulty,
+      result.elapsedTime,
+      result.hintsUsed,
+      result.mistakes,
+      result.accuracy
+    ).catch(() => {})
+
+    if (session.gameType === "daily_challenge" && session.dailyChallengeId) {
+      const today = new Date().toISOString().split("T")[0]
+      DailyChallenge.findOneAndUpdate(
+        { gameId: "nonogram", date: today, userId: actor.id },
+        {
+          $set: {
+            gameId: "nonogram",
+            date: today,
+            userId: actor.id,
+            puzzleId: result.puzzleId,
+            difficulty: result.difficulty,
+            sessionId: session.sessionId,
+            status: "completed",
+            completedAt: new Date(),
+            elapsedSeconds: result.elapsedTime,
+            accuracy: result.accuracy,
+            hintsUsed: result.hintsUsed,
+            mistakes: result.mistakes,
+          },
+          $setOnInsert: { createdAt: new Date() },
+        },
+        { upsert: true, returnDocument: 'after' }
+      ).catch(() => {})
+    }
+  }
+
   async abandonSession(sessionId: string, actor: Actor) {
     const session = await this.getSession(sessionId, actor)
     if (session.sessionStatus === "completed") throw new Error("already_completed")
@@ -327,11 +404,6 @@ export class SessionService {
       await GameProgress.findOneAndUpdate(
         { userId, gameId: "nonogram", puzzleId: session.puzzleId },
         { $set: { abandonedAt: new Date(), updatedAt: new Date() } }
-      )
-      await UserStatistics.findOneAndUpdate(
-        { userId, gameId: "nonogram" },
-        { $inc: { totalAbandoned: 1 }, $set: { lastAbandonedAt: new Date() } },
-        { upsert: true }
       )
     }
 
@@ -370,7 +442,6 @@ export class SessionService {
   async getContinuePlaying(actor: Actor, gameType: "nonogram" | "daily_challenge" = "nonogram", difficulty?: string) {
     const userId = this.actorId(actor)
     const guestId = this.actorGuestId(actor)
-    await this.pruneExpiredSessions()
     const session = await playSessionRepository.findByUserAndStatus(["playing", "paused"], userId, guestId, gameType, difficulty)
     if (!session) {
       return { hasActiveSession: false }
@@ -400,6 +471,16 @@ export class SessionService {
             score,
           }, grid, userId, guestId)
 
+          this.emitCompletionSideEffects(actor, toSafeSession(session.toObject()), {
+            puzzleId: session.puzzleId,
+            difficulty: session.difficulty,
+            elapsedTime,
+            hintsUsed: storedHintsUsed,
+            mistakes: storedMistakes,
+            accuracy: verifyResult.accuracy,
+            score,
+          })
+
           return { hasActiveSession: false }
         }
       } catch (e) {
@@ -421,7 +502,6 @@ export class SessionService {
   async getContinueDailyChallenge(actor: Actor, dailyChallengeId: string) {
     const userId = this.actorId(actor)
     const guestId = this.actorGuestId(actor)
-    await this.pruneExpiredSessions()
     const session = await playSessionRepository.findActiveDailyByChallenge(dailyChallengeId, userId, guestId)
     if (!session) {
       return { hasActiveSession: false }
@@ -448,6 +528,17 @@ export class SessionService {
             hintsUsed: storedHintsUsed,
             score,
           }, grid, userId, guestId)
+
+          this.emitCompletionSideEffects(actor, toSafeSession(session.toObject()), {
+            puzzleId: session.puzzleId,
+            difficulty: session.difficulty,
+            elapsedTime: session.elapsedTime || 0,
+            hintsUsed: storedHintsUsed,
+            mistakes: storedMistakes,
+            accuracy: verifyResult.accuracy,
+            score,
+          })
+
           return { hasActiveSession: false }
         }
       } catch (e) {

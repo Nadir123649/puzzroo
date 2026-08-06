@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
     const progress = await GameProgress.findOneAndUpdate(
       { userId: userResult.user.id, gameId, puzzleId },
       update,
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
 
-    await trackServer({
+    void trackServer({
       userId: userResult.user.id,
       event: completed ? "game_completed" : "game_progress",
       properties: { gameId, puzzleId, difficulty, time: time || 0 },

@@ -82,6 +82,7 @@ crossMathPlaySessionSchema.index({ guestId: 1, status: 1, completedAt: -1 })
 crossMathPlaySessionSchema.index({ guestId: 1, status: 1, lastSaveAt: -1 })
 crossMathPlaySessionSchema.index({ puzzleId: 1, status: 1 })
 crossMathPlaySessionSchema.index({ completedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
+crossMathPlaySessionSchema.index({ abandonedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
 
 export default mongoose.models.CrossMathPlaySession ||
   mongoose.model("CrossMathPlaySession", crossMathPlaySessionSchema)

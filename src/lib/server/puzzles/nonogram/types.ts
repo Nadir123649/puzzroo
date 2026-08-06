@@ -1,4 +1,4 @@
-export type NonogramDifficulty = 'easy' | 'medium' | 'hard' | 'expert'
+export type NonogramDifficulty = 'easy' | 'medium' | 'hard'
 export type SessionStatus = 'playing' | 'paused' | 'completed' | 'abandoned'
 export type CellState = 'empty' | 'filled' | 'marked' | 'error'
 

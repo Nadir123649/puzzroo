@@ -59,10 +59,10 @@ export async function POST(
         attempts: (existing?.attempts || 0) + 1,
         completedAt: new Date(),
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
 
-    await trackServer({
+    void trackServer({
       userId: userResult.user.id,
       event: "game_completed",
       properties: { gameId: game, puzzleId, difficulty, time: time || 0, hintsUsed, mistakes },

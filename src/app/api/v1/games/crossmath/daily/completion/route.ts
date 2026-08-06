@@ -6,10 +6,15 @@ import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { rateLimit } from "@/lib/server/utils/http"
 
 function dailyChallengeIdFromDate(dateStr: string): string {
+  const parts = dateStr.split("-")
+  if (parts.length === 3) {
+    const [y, m, d] = parts
+    return `daily-cross-math-${m.padStart(2, "0")}-${d.padStart(2, "0")}-${y.slice(-2)}`
+  }
   const d = new Date(dateStr)
-  const m = String(d.getMonth() + 1).padStart(2, "0")
-  const day = String(d.getDate()).padStart(2, "0")
-  const y = String(d.getFullYear()).slice(-2)
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0")
+  const day = String(d.getUTCDate()).padStart(2, "0")
+  const y = String(d.getUTCFullYear()).slice(-2)
   return `daily-cross-math-${m}-${day}-${y}`
 }
 

@@ -1,8 +1,10 @@
-import { beforeAll, afterAll, beforeEach, describe, it, expect } from 'vitest'
+import { beforeAll, afterAll, beforeEach, describe, it, expect, vi } from 'vitest'
 import mongoose from 'mongoose'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import NonogramPuzzle from '@/lib/server/models/NonogramPuzzle'
 import NonogramPlaySession from '@/lib/server/models/NonogramPlaySession'
+import DailyChallenge from '@/lib/server/models/DailyChallenge'
+import UserStatistics from '@/lib/server/models/UserStatistics'
 import { sessionService } from './SessionService'
 import type { Actor } from '@/app/api/v1/games/nonogram/route-helpers'
 import { easyPuzzles } from '@shared/data/nonogram'
@@ -44,6 +46,8 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await NonogramPlaySession.deleteMany({})
+  await DailyChallenge.deleteMany({})
+  await UserStatistics.deleteMany({})
 })
 
 describe('SessionService (nonogram, unified actor model)', () => {
@@ -98,6 +102,39 @@ describe('SessionService (nonogram, unified actor model)', () => {
     const g = await sessionService.startSession(guestActor, puzzleId)
     await expect(sessionService.getSession(g.sessionId, guestActor2)).rejects.toThrow('not_owner')
     await expect(sessionService.getSession(g.sessionId, userActor)).rejects.toThrow('not_owner')
+  })
+
+  it('saveProgress reports totalBlanks as puzzle cells-to-fill (not full grid size)', async () => {
+    const s = await sessionService.startSession(userActor, puzzleId)
+    const empty = solvedGrid.map((row) => row.map(() => 'empty' as string))
+    const expectedBlanks = solvedGrid.flat().filter((v) => v === 'filled').length
+    const res = await sessionService.saveProgress(s.sessionId, userActor, empty, 5, 0, 0, 0)
+    expect(res.progress.totalBlanks).toBe(expectedBlanks)
+    expect(res.progress.percentage).toBe(0)
+
+    // Fill one correct cell -> percentage reflects blanks-to-fill, not grid area
+    const oneFilled = empty.map((row) => [...row])
+    outer: for (let r = 0; r < oneFilled.length; r++) {
+      for (let c = 0; c < oneFilled[r].length; c++) {
+        if (solvedGrid[r][c] === 'filled') {
+          oneFilled[r][c] = 'filled'
+          break outer
+        }
+      }
+    }
+    const res2 = await sessionService.saveProgress(s.sessionId, userActor, oneFilled, 55, 1, 0, 3)
+    expect(res2.progress.filledCells).toBe(1)
+    expect(res2.progress.percentage).toBe(Math.round((1 / expectedBlanks) * 100))
+  })
+
+  it('playing/abandoned sessions must not expose the zero-default result subdoc', async () => {
+    const s = await sessionService.startSession(userActor, puzzleId)
+    const playing = await sessionService.getSession(s.sessionId, userActor)
+    expect(playing.result).toBeNull()
+
+    const abandoned = await sessionService.abandonSession(s.sessionId, userActor)
+    expect(abandoned.result).toBeNull()
+    expect(abandoned.sessionStatus).toBe('abandoned')
   })
 
   it('saveProgress persists grid and max-elapsed; progress computed from filled cells', async () => {
@@ -229,5 +266,81 @@ describe('SessionService (nonogram, unified actor model)', () => {
     const guestCompleted = await sessionService.getCompletedPuzzles(guestActor)
     expect(guestCompleted.total).toBe(1)
     expect(guestCompleted.sessions[0].sessionId).toBe(g.sessionId)
+  })
+
+  it('startSession does not bump UserStatistics (stats on commit only)', async () => {
+    await sessionService.startSession(userActor, puzzleId)
+    expect(await UserStatistics.countDocuments({ userId: userActor.id })).toBe(0)
+  })
+
+  it('completeSession writes stats exactly once (no start/complete double count)', async () => {
+    const s = await sessionService.startSession(userActor, puzzleId)
+    await sessionService.completeSession(s.sessionId, userActor, solvedGrid, 60, 1, 0, 5)
+
+    await vi.waitFor(async () => {
+      const stats = await UserStatistics.findOne({ userId: userActor.id }).lean()
+      expect(stats?.totalPlayed).toBe(1)
+      expect(stats?.totalCompleted).toBe(1)
+      expect(stats?.totalAbandoned).toBe(0)
+    })
+  })
+
+  it('completeSession upserts DailyChallenge row with gameId + string sessionId for daily sessions', async () => {
+    const dcId = 'daily-nonogram-08-04-26'
+    const s = await sessionService.startDailyChallenge(userActor, puzzleId, dcId)
+    await sessionService.completeSession(s.sessionId, userActor, solvedGrid, 45, 1, 0, 5)
+
+    await vi.waitFor(async () => {
+      const row = await DailyChallenge.findOne({ gameId: 'nonogram', userId: userActor.id }).lean()
+      expect(row).not.toBeNull()
+      expect(row?.status).toBe('completed')
+      expect(row?.sessionId).toBe(s.sessionId)
+      expect(row?.difficulty).toBe(s.difficulty)
+    })
+  })
+
+  it('abandonSession via service alone does not touch UserStatistics (route is the single stats path)', async () => {
+    const s = await sessionService.startSession(userActor, puzzleId)
+    await sessionService.abandonSession(s.sessionId, userActor)
+    expect(await UserStatistics.countDocuments({ userId: userActor.id })).toBe(0)
+  })
+
+  it('getContinueDailyChallenge auto-complete emits stats + daily row side effects', async () => {
+    const dcId = 'daily-nonogram-08-04-26'
+    const s = await sessionService.startDailyChallenge(userActor, puzzleId, dcId)
+    await sessionService.saveProgress(s.sessionId, userActor, solvedGrid, 20, 0, 0, 5)
+
+    const result = await sessionService.getContinueDailyChallenge(userActor, dcId)
+    expect(result.hasActiveSession).toBe(false)
+
+    const doc = await NonogramPlaySession.findOne({ sessionId: s.sessionId }).lean()
+    expect(doc?.status).toBe('completed')
+
+    await vi.waitFor(async () => {
+      const stats = await UserStatistics.findOne({ userId: userActor.id }).lean()
+      expect(stats?.totalPlayed).toBe(1)
+      expect(stats?.totalCompleted).toBe(1)
+    })
+
+    await vi.waitFor(async () => {
+      const row = await DailyChallenge.findOne({ gameId: 'nonogram', userId: userActor.id }).lean()
+      expect(row).not.toBeNull()
+      expect(row?.status).toBe('completed')
+      expect(row?.sessionId).toBe(s.sessionId)
+    })
+  })
+
+  it('getContinuePlaying auto-complete emits stats for regular sessions', async () => {
+    const s = await sessionService.startSession(userActor, puzzleId)
+    await sessionService.saveProgress(s.sessionId, userActor, solvedGrid, 20, 0, 0, 5)
+
+    const result = await sessionService.getContinuePlaying(userActor)
+    expect(result.hasActiveSession).toBe(false)
+
+    await vi.waitFor(async () => {
+      const stats = await UserStatistics.findOne({ userId: userActor.id }).lean()
+      expect(stats?.totalPlayed).toBe(1)
+      expect(stats?.totalCompleted).toBe(1)
+    })
   })
 })

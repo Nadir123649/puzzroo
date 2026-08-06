@@ -1,5 +1,0 @@
-[    3287ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
-[    3311ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
-[    4145ms] [WARNING] Image with src "http://localhost:3000/feature-right.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
-[    8035ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477
-[    8036ms] [LOG] [Fast Refresh] done in 106ms @ http://localhost:3000/_next/static/chunks/1fqg_next_dist_1i28a4t._.js:2477

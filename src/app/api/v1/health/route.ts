@@ -14,6 +14,20 @@ export async function GET() {
     database = "disconnected";
   }
 
+  // Fire-and-forget Firebase admin warm-up so the first OAuth sign-in in a
+  // cold lambda doesn't pay the ~1.2s Google JWKS cert fetch.
+  if (database === "connected") {
+    void (async () => {
+      try {
+        const { isFirebaseReady } = await import("@/lib/server/utils/authHelpers");
+        if (isFirebaseReady()) {
+          const { getFirebaseAuth } = await import("@/lib/server/config/firebase");
+          await getFirebaseAuth();
+        }
+      } catch {}
+    })();
+  }
+
   const healthy = database === "connected";
 
   return NextResponse.json(

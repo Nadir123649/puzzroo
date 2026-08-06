@@ -247,12 +247,6 @@ export class PlaySessionRepository {
     )
   }
 
-  async deleteExpired(before: Date) {
-    return CrossMathPlaySession.deleteMany({
-      status: { $in: ["completed", "abandoned"] },
-      lastSaveAt: { $lt: before },
-    })
-  }
 }
 
 export const playSessionRepository = new PlaySessionRepository()

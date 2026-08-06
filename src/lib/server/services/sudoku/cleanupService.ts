@@ -15,6 +15,7 @@ export async function cleanupStaleSessions(): Promise<number> {
         status: "abandoned",
         result: "gave_up",
         lastSavedAt: new Date(),
+        abandonedAt: new Date(),
       },
     }
   );

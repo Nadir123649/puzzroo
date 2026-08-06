@@ -101,9 +101,14 @@ export async function getRandomPuzzle(
 }
 
 async function getDailyPuzzleId(date: string): Promise<string | null> {
+  if (dailyPuzzleIdCache.date === date) return dailyPuzzleIdCache.id;
   const dc = await DailyChallenge.findOne({ date }).lean();
-  return dc ? String(dc.puzzleId) : null;
+  const id = dc ? String(dc.puzzleId) : null;
+  dailyPuzzleIdCache = { date, id };
+  return id;
 }
+
+let dailyPuzzleIdCache: { date: string; id: string | null } = { date: "", id: null };
 
 export async function getDailyPuzzle(date?: string) {
   await connectDB();

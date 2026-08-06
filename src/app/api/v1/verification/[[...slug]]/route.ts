@@ -108,7 +108,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!("error" in userResult)) {
         const existingUser = await User.findOne({ phone: phoneNumber, _id: { $ne: userResult.user.id } });
         if (existingUser) return errorResponse(409, "phone_taken", "Phone number already linked to another account");
-        const user = await User.findByIdAndUpdate(userResult.user.id, { phone: phoneNumber }, { new: true }).select("-password");
+        const user = await User.findByIdAndUpdate(userResult.user.id, { phone: phoneNumber }, { returnDocument: 'after' }).select("-password");
         return successResponse({ message: "Phone number verified and linked", user: formatUser(user) });
       }
       let user = await User.findOne({ phone: phoneNumber });
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.lastLoginAt = new Date();
       await user.save({ validateBeforeSave: false });
       const { payload } = await issueSession(request, user, "phone");
-      await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "phone" }, request });
+      void trackServer({ userId: user._id.toString(), event: "login", properties: { method: "phone" }, request });
       const res = NextResponse.json({ success: true, payload, timestamp: Date.now() }, { status: 200 });
       res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
       return res;
@@ -189,8 +189,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       user.lastLoginAt = new Date();
       await user.save();
       const { payload } = await issueSession(request, user);
-      await trackServer({ userId: user._id.toString(), event: "email_verified", request });
-      await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "email_verify_autologin" }, request });
+      void trackServer({ userId: user._id.toString(), event: "email_verified", request });
+      void trackServer({ userId: user._id.toString(), event: "login", properties: { method: "email_verify_autologin" }, request });
       const res = NextResponse.redirect(new URL("/auth/complete", baseUrl));
       res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
       return res;

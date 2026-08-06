@@ -79,7 +79,10 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     setLoaderText('Replaying game...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
-    resetPuzzle()
+    // Start a fresh server session: the completed/lost one is burned and must
+    // not be reused, otherwise subsequent saves/completes hit already_completed.
+    // Refresh=true re-fetches the same puzzle from the API instead of the cache.
+    newPuzzle(currentPuzzle?.id, true)
     setIsResetting(false)
   }
 
@@ -361,7 +364,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                       <circle cx="12" cy="12" r="10"/>
                       <polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    <span>~{Math.floor((currentPuzzle.difficulty === 'expert' ? 1200 : currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300) / 60)} min</span>
+                    <span>~{Math.floor((currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300) / 60)} min</span>
                   </span>
                 </div>
               </div>
@@ -847,7 +850,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
           isOpen={(gameStatus === 'won' || gameStatus === 'lost') && showCompletionModal}
           difficulty={currentPuzzle.difficulty}
           time={(() => {
-            const initialTime = currentPuzzle.difficulty === 'expert' ? 1200 : currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300
+            const initialTime = currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300
             return Math.max(0, initialTime - elapsedSeconds)
           })()}
           completionPercentage={progress.percentComplete}

@@ -63,9 +63,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         emailVerificationTokenExpire: Date.now() + 24 * 60 * 60 * 1000,
       });
       const verifyUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
-      try { await sendVerificationEmail(user.email, verifyUrl); }
-      catch (e) { console.error("Verification email failed to send:", e); }
-      await trackServer({ userId: user._id.toString(), event: "signup_completed", properties: { method: "email" }, request });
+      // Email is fire-and-forget: never block registration on SMTP latency.
+      // A failed send (e.g. dev SMTP absent) leaves the account usable (isVerified
+      // is dev-true / prod-false; the user can still verify via resend).
+      void sendVerificationEmail(user.email, verifyUrl).catch((e) => {
+        console.error("Verification email failed to send:", e);
+      });
+      void trackServer({ userId: user._id.toString(), event: "signup_completed", properties: { method: "email" }, request });
       return successResponse({ message: "Registration successful. Please check your email to verify your account." }, 201);
     }
 
@@ -106,7 +110,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // Undelivered verification emails would otherwise permanently lock users
       // out ("can't log back in"). Instead we let them in and surface a
       // verification prompt client-side via `requiresVerification`.
-      await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "password" }, request });
+      void trackServer({ userId: user._id.toString(), event: "login", properties: { method: "password" }, request });
       auditLog({ eventType: "auth:login", userId: user._id.toString(), ip: getClientIp(request), userAgent: request.headers.get("user-agent") || undefined }).catch(() => {});
       const { payload } = await issueSession(request, user, "email", rememberMe);
       const res = NextResponse.json(
@@ -123,7 +127,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!rl.allowed) return errorResponse(429, "rate_limit_exceeded", "Too many requests.");
       const who = await auth(request);
       if (!("error" in who)) {
-        await trackServer({ userId: who.user.id, event: "logout", request });
+        void trackServer({ userId: who.user.id, event: "logout", request });
         auditLog({ eventType: "auth:logout", userId: who.user.id, sessionId: who.user.jti }).catch(() => {});
         if (who.user.jti) {
           await LoginSession.findByIdAndUpdate(who.user.jti, { status: "logged_out", isCurrent: false });
@@ -255,7 +259,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.resetPasswordToken = undefined;
       user.resetPasswordTokenExpire = undefined;
       await user.save();
-      await trackServer({ userId: user._id.toString(), event: "password_changed", request });
+      void trackServer({ userId: user._id.toString(), event: "password_changed", request });
       auditLog({ eventType: "auth:password_changed", userId: user._id.toString(), sessionId: jti, ip: getClientIp(request) }).catch(() => {});
       const tokenVersion = jti ? await getSessionTokenVersion(jti) : undefined;
       const remember = jti ? await getSessionRemember(jti) : true;
@@ -297,7 +301,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         user.pendingEmail = undefined;
       }
       await user.save();
-      await trackServer({ userId: user._id.toString(), event: "username_set", request });
+      void trackServer({ userId: user._id.toString(), event: "username_set", request });
       const tokenVersion = jti ? await getSessionTokenVersion(jti) : undefined;
       const payload = authPayload(user, jti, tokenVersion);
       const res = NextResponse.json({ success: true, payload, timestamp: Date.now() }, { status: 200 });
@@ -344,7 +348,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (user.name && !target.name) target.name = user.name;
       if (user.isVerified) target.isVerified = true;
       await target.save({ validateBeforeSave: false });
-      await trackServer({ userId: target._id.toString(), event: "accounts_merged", properties: { deletedUserId: user._id.toString() }, request });
+      void trackServer({ userId: target._id.toString(), event: "accounts_merged", properties: { deletedUserId: user._id.toString() }, request });
       const { payload } = await issueSession(request, target);
       const res = NextResponse.json({ success: true, payload, merged: true, timestamp: Date.now() }, { status: 200 });
       res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
@@ -379,7 +383,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
       user.linkedProviders = user.linkedProviders.filter((p: string) => p !== provider);
       await user.save({ validateBeforeSave: false });
-      await trackServer({ userId: user._id.toString(), event: "provider_unlinked", properties: { provider }, request });
+      void trackServer({ userId: user._id.toString(), event: "provider_unlinked", properties: { provider }, request });
       return successResponse({ user: formatUser(user), message: `${provider} has been unlinked from your account` });
     }
 
