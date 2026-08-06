@@ -934,7 +934,6 @@ export function useNonogram(initialPuzzleId?: string) {
               }
             }
           }
-        }
 
         newGrid[row][col] = cellNewState
       }
