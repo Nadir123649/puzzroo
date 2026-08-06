@@ -210,7 +210,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const [puzzle, setPuzzle] = useState<PolygonPuzzle | null>(null)
   const getInitialTime = (diff: TangramDifficulty) => {
     switch (diff) {
-      case 'hard': return 90    // 1.5 minutes
+      case 'hard': return 120    // 2 minutes
       case 'medium': return 180  // 3 minutes
       default: return 300        // 5 minutes (easy)
     }

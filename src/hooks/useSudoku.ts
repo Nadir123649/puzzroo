@@ -844,7 +844,7 @@ export function useSudoku() {
    */
   const updateScore = useCallback((delta: number) => {
     setGameState((prev) => {
-      const newScore = Math.max(0, prev.score + delta)
+      const newScore = prev.score + delta
       return { ...prev, score: newScore }
     })
     if (delta !== 0) {
@@ -945,7 +945,7 @@ export function useSudoku() {
         }
 
         setGameState((prev) => {
-          const newScore = isDuplicateMistake ? prev.score : Math.max(0, prev.score - 5)
+          const newScore = isDuplicateMistake ? prev.score : prev.score - 5
           const newMistakes = isDuplicateMistake ? prev.mistakes : prev.mistakes + 1
           return {
             ...prev,
@@ -984,7 +984,7 @@ export function useSudoku() {
         }
 
         setGameState((prev) => {
-          const newScore = scoreDelta > 0 ? Math.max(0, prev.score + scoreDelta) : prev.score
+          const newScore = scoreDelta > 0 ? prev.score + scoreDelta : prev.score
           return {
             ...prev,
             currentBoard: newBoard,

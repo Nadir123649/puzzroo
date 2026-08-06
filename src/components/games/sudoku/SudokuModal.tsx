@@ -154,7 +154,7 @@ export function SudokuModal({
                   onClick={onPlayAgain}
                   className="w-full h-[42px] sm:h-[46px] rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                 >
-                  Play Again
+                  Replay
                 </button>
                 {onNewGame && (
                   <button
@@ -184,9 +184,10 @@ export function SudokuModal({
                   className="font-urbanist text-2xl sm:text-3xl font-bold text-[#212121] dark:text-white mb-1 sm:mb-2"
                 >
                   You Lost!
+                  {time !== undefined && time <= 0 && " Time Ran Out"}
                 </h2>
                 <p className="font-urbanist text-[#424242] dark:text-[#E0E0E0] text-sm sm:text-lg">
-                  You reached the maximum mistakes limit.
+                  {time !== undefined && time <= 0 ? "You ran out of time." : "You reached the maximum mistakes limit."}
                 </p>
               </div>
 
@@ -232,6 +233,14 @@ export function SudokuModal({
                     className="w-full h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                   >
                     New Game
+                  </button>
+                )}
+                {onBackToGames && (
+                  <button
+                    onClick={onBackToGames}
+                    className="w-full h-[42px] sm:h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[14px] sm:text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+                  >
+                    Back To Games
                   </button>
                 )}
               </div>

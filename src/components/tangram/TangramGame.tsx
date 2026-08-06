@@ -542,7 +542,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
         time={(() => {
           const getInitialTime = (diff: string) => {
             switch (diff) {
-              case 'hard': return 90
+              case 'hard': return 120
               case 'medium': return 180
               default: return 300
             }
@@ -551,14 +551,13 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
         })()}
         mistakes={0}
         hintsUsed={hintsUsed}
-        score={score}
         difficulty={puzzle?.difficulty || 'easy'}
         timeRemaining={timeRemaining}
         isTimeUp={gameStatus === 'lost'}
         onPlayAgain={gameStatus === 'lost' && mode === 'normal' && !isFromPastPuzzles ? handleNewGame : handleRetry}
         onRestart={handleRestart}
         onNewPuzzle={mode === 'normal' && !isFromPastPuzzles ? handleNewGame : undefined}
-        onBackToLobby={handleBackToLobby}
+        onBackToGames={handleBackToLobby}
         onClose={() => setIsModalVisible(false)}
       />
     </section>

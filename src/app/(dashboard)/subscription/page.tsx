@@ -9,7 +9,7 @@ import { notify } from '@/lib/toast'
 const features = [
   'Unlimited access to all games and difficulty levels',
   'Full archive of past Daily Challenges',
-  'Ad-free experience — pure focus',
+  'Ad-free experience pure focus',
   'Advanced stats and performance tracking',
   'Early access to new games and features',
   'Compete on leaderboards without limits',
@@ -280,6 +280,9 @@ export default function SubscriptionPage() {
         <div className="mt-6 pt-4 border-t border-[#E0E0E0] dark:border-[#35383F]">
           <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] text-center">
             Secure payment powered by Stripe. Cancel anytime.
+          </p>
+          <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] text-center mt-2">
+            Need help? If you have questions about your billing or need to update your payment method, please contact our <a href="mailto:support@puzzroo.com" className="text-[#6949FF] hover:underline">support team</a>.
           </p>
         </div>
       </div>

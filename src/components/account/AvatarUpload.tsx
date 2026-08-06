@@ -239,12 +239,12 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
           onClick={() => setIsViewerOpen(true)}
           disabled={isUploading}
           className="block cursor-pointer select-none"
-          title="View profile photo"
-          aria-label="View profile photo"
+          title="View profile picture"
+          aria-label="View profile picture"
         >
           <div className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-[#6949FF] flex items-center justify-center text-white text-5xl font-bold font-urbanist overflow-hidden ring-4 ring-purple-100 dark:ring-[#6949FF]/20 transition-transform duration-200 hover:scale-[1.03] active:scale-95">
             {avatarImage ? (
-              <img src={avatarImage} alt="Avatar" className="w-full h-full object-cover" />
+              <img src={avatarImage} alt="profile picture" className="w-full h-full object-cover" />
             ) : (
               initials
             )}
@@ -256,8 +256,8 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
           type="button"
           onClick={() => setShowQuickMenu(prev => !prev)}
           className="absolute -bottom-1 -right-1 w-9 h-9 bg-white dark:bg-[#1F222A] border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] text-[#6949FF] hover:bg-[#6949FF] hover:text-white rounded-full flex items-center justify-center shadow-md transition-all duration-200 active:scale-90"
-          title="Edit profile photo"
-          aria-label="Edit profile photo"
+          title="Edit profile picture"
+          aria-label="Edit profile picture"
         >
           <Pencil size={15} strokeWidth={2.5} />
         </button>
@@ -335,7 +335,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
               <div className="relative animate-fade-in" style={{ animationDelay: '80ms' }}>
                 <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-full overflow-hidden ring-4 ring-gray-200 dark:ring-white/25 shadow-2xl bg-[#6949FF] flex items-center justify-center text-white text-6xl font-bold font-urbanist">
                   {avatarImage ? (
-                    <img src={avatarImage} alt="Profile photo" className="w-full h-full object-cover" />
+                    <img src={avatarImage} alt="Profile picture" className="w-full h-full object-cover" />
                   ) : (
                     initials
                   )}
