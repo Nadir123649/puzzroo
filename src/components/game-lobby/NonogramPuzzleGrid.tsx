@@ -56,7 +56,7 @@ export function NonogramPuzzleGrid() {
 
   // Clamp currentPage when total pages shrinks
   useEffect(() => {
-    if (currentPage > totalPages) {
+    if (allPuzzles.length > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages)
     }
   }, [allPuzzles.length, totalPages, currentPage])
