@@ -412,10 +412,8 @@ export function useSudoku() {
                 const val = board[r]?.[c]?.value
                 const solVal = solution[r]?.[c]?.value
                 if (val && solVal && val !== solVal) {
-                  const boxRow = Math.floor(r / 3)
-                  const boxCol = Math.floor(c / 3)
-                  const boxKey = `box-${boxRow}-${boxCol}-num-${val}`
-                  cellMistakesRef.current.set(boxKey, new Set([val]))
+                  const cellKey = `${r}-${c}`
+                  cellMistakesRef.current.set(cellKey, new Set([val]))
                 }
               }
             }
@@ -928,49 +926,23 @@ export function useSudoku() {
         newBoard[selectedCell.row][selectedCell.col]
       )
 
-      // A move is correct if it matches the solution
-      const correctVal = getCorrectValue(gameState.solution, selectedCell)
-      const isCorrectValue = num === correctVal
-      const violatesRules = !isCorrectValue
+      // A move violates rules if it conflicts with an existing number in the same row, column, or 3x3 box
+      const violatesRules = !isValidMove(gameState.currentBoard, selectedCell, num)
+      const isCorrectValue = !violatesRules
 
       if (violatesRules) {
-        // Track mistakes per 3x3 box:
-        // 1. Same number in same 3x3 box already registered = duplicate mistake
-        // 2. UNLESS the number conflicts with a row or column outside this 3x3 subgrid
-        const boxRow = Math.floor(selectedCell.row / 3)
-        const boxCol = Math.floor(selectedCell.col / 3)
-        const boxKey = `box-${boxRow}-${boxCol}-num-${num}`
-        
-        const hasSubgridMistake = cellMistakesRef.current.has(boxKey)
-
-        // Check external row conflict (outside this 3x3 subgrid)
-        let hasExternalRowConflict = false
-        for (let c = 0; c < 9; c++) {
-          if (Math.floor(c / 3) !== boxCol && gameState.currentBoard[selectedCell.row][c].value === num) {
-            hasExternalRowConflict = true
-            break
-          }
-        }
-
-        // Check external column conflict (outside this 3x3 subgrid)
-        let hasExternalColConflict = false
-        for (let r = 0; r < 9; r++) {
-          if (Math.floor(r / 3) !== boxRow && gameState.currentBoard[r][selectedCell.col].value === num) {
-            hasExternalColConflict = true
-            break
-          }
-        }
-
-        const isDuplicateMistake = hasSubgridMistake && !hasExternalRowConflict && !hasExternalColConflict
-        
-        if (!hasSubgridMistake) {
-          cellMistakesRef.current.set(boxKey, new Set([num]))
-        }
-
         // Wrong value according to Sudoku rules.
-        // If it's a duplicate mistake in the same subgrid without external conflict, do not show red penalty
-        newBoard[selectedCell.row][selectedCell.col].isError = !isDuplicateMistake
+        newBoard[selectedCell.row][selectedCell.col].isError = true
         newBoard[selectedCell.row][selectedCell.col].isCorrect = false
+
+        const cellKey = `${selectedCell.row}-${selectedCell.col}`
+        const cellMistakes = cellMistakesRef.current.get(cellKey) || new Set<number>()
+        const isDuplicateMistake = cellMistakes.has(num)
+        
+        if (!isDuplicateMistake) {
+          cellMistakes.add(num)
+          cellMistakesRef.current.set(cellKey, cellMistakes)
+        }
 
         setGameState((prev) => {
           const newScore = isDuplicateMistake ? prev.score : Math.max(0, prev.score - 5)
