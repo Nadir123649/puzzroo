@@ -1,4 +1,4 @@
-import { api, refreshAccessToken } from "@/lib/api/client";
+import { api, refreshAccessToken, resetSessionExpiryNotified } from "@/lib/api/client";
 
 const TOKEN_KEY = "puzzroo_access_token";
 const FLAG_KEY = "puzzroo_auth";
@@ -83,6 +83,7 @@ function readStoredUser(): User | null {
 // toggle can never leave a "logged in" ghost in localStorage.
 export function storeAuth(remember: boolean, token: string, userJson: string): void {
   currentAccessToken = token;
+  resetSessionExpiryNotified();
   if (!canUseStorage()) return;
   const target = remember ? localStorage : sessionStorage;
   const other = remember ? sessionStorage : localStorage;
@@ -391,10 +392,10 @@ export async function changePassword(oldPassword: string, newPassword: string): 
     if (!res.success) {
       return { success: false, error: (res.payload as any)?.error?.message || "Failed to change password" };
     }
-    const payload = res.payload as any;
-    if (payload.token?.accessToken) {
-      setAccessToken(payload.token.accessToken);
-    }
+    // Server revoked every session (all devices, this one included). Clear
+    // local auth state — the user must sign in again with the new password.
+    clearAuthState();
+    window.dispatchEvent(new Event("auth-change"));
     return { success: true };
   } catch {
     return { success: false, error: "Network error" };
@@ -561,7 +562,10 @@ export async function resetPassword(token: string, password: string): Promise<{ 
       return { success: false, error: (res.payload as any)?.error?.message || "Failed to reset password" };
     }
     // Deliberately no session is started here: the user must log in with the
-    // new password themselves.
+    // new password themselves. Also clear any stale local auth state: every
+    // device (including this one) was logged out server-side.
+    clearAuthState();
+    window.dispatchEvent(new Event("auth-change"));
     return { success: true };
   } catch {
     return { success: false, error: "Network error" };
@@ -635,6 +639,23 @@ export async function fetchUserProfile(): Promise<any> {
   const res = await api("/api/v1/users/me");
   if (!res.success) return null;
   return res.payload;
+}
+
+/**
+ * Fetch the profile from the server, merge it into the stored snapshot, and
+ * notify the rest of the app (navbar etc. via 'auth-change'). Used to pick up
+ * changes made on OTHER devices (name, avatar, role, plan, theme) without a
+ * reload or re-login.
+ */
+export async function refreshUserProfile(): Promise<User | null> {
+  const res = await api("/api/v1/users/me");
+  if (!res.success) return null;
+  const current = getStoredUser();
+  const updated = mapUser(res.payload as any);
+  setAuthUser(JSON.stringify({ ...current, ...updated }));
+  applyUserTheme(updated.theme);
+  window.dispatchEvent(new Event("auth-change"));
+  return updated;
 }
 
 export async function fetchBillingHistory(): Promise<any> {

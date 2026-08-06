@@ -93,6 +93,7 @@ nonogramPlaySessionSchema.index({ guestId: 1, status: 1, lastSaveAt: -1 })
 nonogramPlaySessionSchema.index({ guestId: 1 })
 nonogramPlaySessionSchema.index({ puzzleId: 1, status: 1 })
 nonogramPlaySessionSchema.index({ completedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
+nonogramPlaySessionSchema.index({ abandonedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
 
 export default mongoose.models.NonogramPlaySession ||
   mongoose.model("NonogramPlaySession", nonogramPlaySessionSchema)

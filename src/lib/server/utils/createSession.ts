@@ -28,12 +28,19 @@ export async function createSession(request: NextRequest, userId: string, provid
   const parsed = parseUserAgent(ua);
   const deviceFingerprint = getDeviceFingerprint(request);
 
-  const [location] = await Promise.all([
-    geoLocate(ip),
-    markOthersInactive
-      ? LoginSession.updateMany({ userId, isCurrent: true }, { isCurrent: false })
-      : Promise.resolve(),
-  ]);
+  // Geo lookup is an external network call (~0.5s, up to 5s worst case) and
+  // MUST NOT delay login. The session is created immediately; the location is
+  // filled in by a fire-and-forget background update.
+  void geoLocate(ip).then((location) => {
+    LoginSession.updateOne(
+      { userId, deviceFingerprint, status: "active" },
+      { $set: { location } }
+    ).catch(() => {});
+  });
+
+  if (markOthersInactive) {
+    LoginSession.updateMany({ userId, isCurrent: true }, { isCurrent: false }).catch(() => {});
+  }
 
   const sessionData = {
     userId,
@@ -42,7 +49,7 @@ export async function createSession(request: NextRequest, userId: string, provid
     browser: parsed.browser,
     os: parsed.os,
     deviceType: parsed.deviceType,
-    location,
+    location: null,
     isCurrent: true,
     provider: provider || null,
     remember,
@@ -59,7 +66,7 @@ export async function createSession(request: NextRequest, userId: string, provid
     const existing = await LoginSession.findOneAndUpdate(
       { userId, deviceFingerprint, status: "active" },
       { $set: sessionData },
-      { new: true },
+      { returnDocument: 'after' },
     );
     if (existing) return existing;
   }

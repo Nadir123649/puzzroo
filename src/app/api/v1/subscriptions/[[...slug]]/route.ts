@@ -80,13 +80,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         await Subscription.findOneAndUpdate(
           { userId: user._id },
           { userId: user._id, plan: "lifetime", status: "active", currentPeriodStart: new Date(), currentPeriodEnd: null },
-          { upsert: true, new: true }
+          { upsert: true, returnDocument: 'after' }
         );
         await Transaction.create({
           userId: user._id, amount: plan.price, currency: plan.currency,
           status: "completed", description: "Lifetime subscription",
         });
-        await trackServer({ userId: user._id.toString(), event: "subscription_started", properties: { plan: "lifetime", price: plan.price }, request });
+        void trackServer({ userId: user._id.toString(), event: "subscription_started", properties: { plan: "lifetime", price: plan.price }, request });
         return successResponse({ message: "Lifetime subscription activated", role: "premium" });
       }
 
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           cancel_url: `${baseUrl}/subscription?checkout=cancelled`,
           metadata: { userId: String(user._id), planId: plan.id },
         });
-        await trackServer({ userId: user._id.toString(), event: "subscription_checkout_started", properties: { plan: plan.id, price: plan.price }, request });
+        void trackServer({ userId: user._id.toString(), event: "subscription_checkout_started", properties: { plan: plan.id, price: plan.price }, request });
         return successResponse({ url: session.url, sessionId: session.id });
       } catch {
         return errorResponse(500, "stripe_not_configured", "Stripe is not configured");
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       sub.status = "cancelled";
       sub.cancelledAt = new Date();
       await sub.save();
-      await trackServer({ userId: userResult.user.id, event: "subscription_cancelled", properties: { plan: sub.plan }, request });
+      void trackServer({ userId: userResult.user.id, event: "subscription_cancelled", properties: { plan: sub.plan }, request });
       return successResponse({ message: "Subscription cancelled. Access continues until period end." });
     }
 

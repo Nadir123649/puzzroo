@@ -25,6 +25,7 @@ const sudokuPuzzleSchema = new mongoose.Schema(
 );
 
 sudokuPuzzleSchema.index({ game: 1, difficulty: 1, dailyIndex: 1 });
+sudokuPuzzleSchema.index({ difficulty: 1 });
 
 export default mongoose.models.SudokuPuzzle ||
   mongoose.model("SudokuPuzzle", sudokuPuzzleSchema);

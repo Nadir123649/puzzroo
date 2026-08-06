@@ -32,13 +32,14 @@ export const GET = withAuth(async (_req: NextRequest, actor: Actor) => {
   }
 
   const [totalChallenges, completedChallenges, currentStreak, longestStreak] = await Promise.all([
-    DailyChallenge.countDocuments({ userId: actor.id }),
-    DailyChallenge.countDocuments({ userId: actor.id, status: "completed" }),
+    DailyChallenge.countDocuments({ gameId: "tangram", userId: actor.id }),
+    DailyChallenge.countDocuments({ gameId: "tangram", userId: actor.id, status: "completed" }),
     calculateDailyStreak(actor.id, false),
     calculateDailyStreak(actor.id, true),
   ])
 
   const bestResult = await DailyChallenge.findOne({
+    gameId: "tangram",
     userId: actor.id,
     status: "completed",
   })
@@ -100,6 +101,7 @@ function calculateSessionStreak(sessions: any[], longest: boolean): number {
 
 async function calculateDailyStreak(userId: string, longest: boolean): Promise<number> {
   const challenges = await DailyChallenge.find({
+    gameId: "tangram",
     userId,
     status: "completed",
   })

@@ -20,16 +20,16 @@ function seededRandom(seed: number): number {
  * Convert date to seed number
  */
 function dateToSeed(date: Date): number {
-  return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
+  return date.getUTCFullYear() * 10000 + (date.getUTCMonth() + 1) * 100 + date.getUTCDate()
 }
 
 /**
  * Format date as MM-DD-YY
  */
 function formatDateString(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const year = String(date.getFullYear()).slice(-2)
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const year = String(date.getUTCFullYear()).slice(-2)
   return `${month}-${day}-${year}`
 }
 
@@ -38,7 +38,7 @@ function formatDateString(date: Date): string {
  */
 function getDayName(date: Date): string {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-  return days[date.getDay()]
+  return days[date.getUTCDay()]
 }
 
 /**
@@ -89,13 +89,12 @@ export function generatePastPuzzles(
   accountCreatedAt?: Date
 ): DailyChallenge[] {
   const puzzles: DailyChallenge[] = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const now = new Date()
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
 
   // Generate challenges for the last N days, starting from yesterday
   for (let i = 1; i <= days; i++) {
-    const date = new Date(today)
-    date.setDate(date.getDate() - i)
+    const date = new Date(today.getTime() - i * 86400000)
     puzzles.push(generateDailyChallenge(date, gameId))
   }
 

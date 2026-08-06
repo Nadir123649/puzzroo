@@ -51,9 +51,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         user.email = user.pendingEmail;
         user.pendingEmail = undefined;
         if (oldEmail) {
-          try {
-            await sendEmailChangedEmail(oldEmail, user.name || user.username, user.email);
-          } catch (e) { console.error("Email-changed notification failed to send:", e); }
+          // Fire-and-forget: never block the verification response on SMTP.
+          void sendEmailChangedEmail(oldEmail, user.name || user.username, user.email).catch((e) =>
+            console.error("Email-changed notification failed to send:", e)
+          );
         }
       }
       user.isVerified = true;
@@ -81,15 +82,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.emailVerificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000;
       await user.save({ validateBeforeSave: false });
       const verifyUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
-      try {
-        await sendVerificationEmail(user.email, verifyUrl);
-      } catch {
-        // Don't revert the token on a transient email failure — let the user
-        // retry the resend. In dev, SMTP may be unavailable; ignore the error.
-        if (process.env.NODE_ENV === "production") {
-          return errorResponse(500, "email_failed", "Failed to send verification email. Try again later.");
-        }
-      }
+      // Fire-and-forget: SMTP send takes seconds — never block the response.
+      // Failure is logged; the token stays valid so the user can retry resend.
+      void sendVerificationEmail(user.email, verifyUrl).catch((e) => {
+        console.error("Verification email failed to send:", e);
+      });
       return successResponse({ message: "Verification email sent. Check your inbox." });
     }
 
@@ -108,7 +105,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!("error" in userResult)) {
         const existingUser = await User.findOne({ phone: phoneNumber, _id: { $ne: userResult.user.id } });
         if (existingUser) return errorResponse(409, "phone_taken", "Phone number already linked to another account");
-        const user = await User.findByIdAndUpdate(userResult.user.id, { phone: phoneNumber }, { new: true }).select("-password");
+        const user = await User.findByIdAndUpdate(userResult.user.id, { phone: phoneNumber }, { returnDocument: 'after' }).select("-password");
         return successResponse({ message: "Phone number verified and linked", user: formatUser(user) });
       }
       let user = await User.findOne({ phone: phoneNumber });
@@ -129,7 +126,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.lastLoginAt = new Date();
       await user.save({ validateBeforeSave: false });
       const { payload } = await issueSession(request, user, "phone");
-      await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "phone" }, request });
+      void trackServer({ userId: user._id.toString(), event: "login", properties: { method: "phone" }, request });
       const res = NextResponse.json({ success: true, payload, timestamp: Date.now() }, { status: 200 });
       res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
       return res;
@@ -172,9 +169,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         user.email = user.pendingEmail;
         user.pendingEmail = undefined;
         if (oldEmail) {
-          try {
-            await sendEmailChangedEmail(oldEmail, user.name || user.username, user.email);
-          } catch (e) { console.error("Email-changed notification failed to send:", e); }
+          // Fire-and-forget: never block the email-verify redirect on SMTP.
+          void sendEmailChangedEmail(oldEmail, user.name || user.username, user.email).catch((e) =>
+            console.error("Email-changed notification failed to send:", e)
+          );
         }
       }
       user.isVerified = true;
@@ -189,8 +187,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       user.lastLoginAt = new Date();
       await user.save();
       const { payload } = await issueSession(request, user);
-      await trackServer({ userId: user._id.toString(), event: "email_verified", request });
-      await trackServer({ userId: user._id.toString(), event: "login", properties: { method: "email_verify_autologin" }, request });
+      void trackServer({ userId: user._id.toString(), event: "email_verified", request });
+      void trackServer({ userId: user._id.toString(), event: "login", properties: { method: "email_verify_autologin" }, request });
       const res = NextResponse.redirect(new URL("/auth/complete", baseUrl));
       res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
       return res;

@@ -165,7 +165,7 @@ export class SudokuPlaySessionRepository {
     return PlaySession.findOneAndUpdate(
       { _id: sessionId, ...owner, status: { $in: ["playing", "paused"] } },
       { $set, $max },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -198,7 +198,7 @@ export class SudokuPlaySessionRepository {
           lastSavedAt: now,
         },
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -206,7 +206,7 @@ export class SudokuPlaySessionRepository {
     return PlaySession.findOneAndUpdate(
       { _id: sessionId, ...owner },
       { status: "paused", pausedAt: new Date(), lastSavedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -218,7 +218,7 @@ export class SudokuPlaySessionRepository {
         pausedAt: null,
         lastSavedAt: new Date(),
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -230,9 +230,10 @@ export class SudokuPlaySessionRepository {
           status: "abandoned",
           result: "gave_up",
           lastSavedAt: new Date(),
+          abandonedAt: new Date(),
         },
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -254,7 +255,7 @@ export class SudokuPlaySessionRepository {
         },
         $inc: { restartCount: 1 },
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
   }
 
@@ -272,18 +273,12 @@ export class SudokuPlaySessionRepository {
     if (existing) {
       await PlaySession.findOneAndUpdate(
         { _id: existing._id },
-        { $set: { status: "abandoned", result: "gave_up" } }
+        { $set: { status: "abandoned", result: "gave_up", abandonedAt: new Date() } }
       );
     }
     return existing;
   }
 
-  async deleteExpired(before: Date) {
-    return PlaySession.deleteMany({
-      status: { $in: ["completed", "abandoned"] },
-      lastSavedAt: { $lt: before },
-    });
-  }
 }
 
 export const sudokuPlaySessionRepository = new SudokuPlaySessionRepository();

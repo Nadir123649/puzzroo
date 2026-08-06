@@ -37,12 +37,12 @@ export const GET = withAuth(async (req: NextRequest, actor: Actor) => {
   }
 
   const [challenges, total] = await Promise.all([
-    DailyChallenge.find({ userId: actor.id })
+    DailyChallenge.find({ gameId: "nonogram", userId: actor.id })
       .sort({ date: -1 })
       .skip(skip)
       .limit(limit)
       .lean(),
-    DailyChallenge.countDocuments({ userId: actor.id }),
+    DailyChallenge.countDocuments({ gameId: "nonogram", userId: actor.id }),
   ])
 
   const results = challenges.map((c: any) => ({

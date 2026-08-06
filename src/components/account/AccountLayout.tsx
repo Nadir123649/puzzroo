@@ -16,10 +16,22 @@ export function AccountLayout({ children }: AccountLayoutProps) {
   const [authChecked, setAuthChecked] = useState(false)
 
   useEffect(() => {
-    if (!isLoggedIn()) {
-      router.replace('/login')
-    } else {
-      setAuthChecked(true)
+    // Re-check on mount AND whenever auth state changes (logout, session
+    // revoke after password change/reset, another tab logging out) so a
+    // revoked session is thrown out immediately — no stale logged-in UI.
+    const check = () => {
+      if (!isLoggedIn()) {
+        router.replace('/login')
+      } else {
+        setAuthChecked(true)
+      }
+    }
+    check()
+    window.addEventListener('auth-change', check)
+    window.addEventListener('storage', check)
+    return () => {
+      window.removeEventListener('auth-change', check)
+      window.removeEventListener('storage', check)
     }
   }, [router])
 

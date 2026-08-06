@@ -35,9 +35,9 @@ function savedGapSeconds(savedAt: unknown): number {
 
 function getTodayDateParam(): string {
   const d = new Date()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const y = String(d.getFullYear()).slice(-2)
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const y = String(d.getUTCFullYear()).slice(-2)
   return `${m}-${day}-${y}`
 }
 
@@ -48,16 +48,16 @@ function getDailyDate(dateParam?: string | null): Date {
   if (dateParam) {
     const [month, day, year] = dateParam.split('-')
     const fullYear = 2000 + parseInt(year)
-    return new Date(fullYear, parseInt(month) - 1, parseInt(day))
+    return new Date(Date.UTC(fullYear, parseInt(month) - 1, parseInt(day)))
   }
   return new Date()
 }
 
 function getDailyDateString(dateParam?: string | null): string {
   const d = getDailyDate(dateParam)
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${m}-${day}`
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  return `${d.getUTCFullYear()}-${m}-${day}`
 }
 
 function readPuzzleCache(id: string): CrossMathPuzzle | null {

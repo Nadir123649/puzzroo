@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const dateStr = date || new Date().toISOString().split('T')[0];
 
     if (userId) {
-      const existingCompleted = await DailyChallenge.findOne({ date: dateStr, userId, status: 'completed' }).lean();
+      const existingCompleted = await DailyChallenge.findOne({ gameId: 'crossmath', date: dateStr, userId, status: 'completed' }).lean();
       if (existingCompleted) {
         return successResponse({
           completed: true,

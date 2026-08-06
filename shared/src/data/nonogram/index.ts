@@ -143,7 +143,6 @@ export const puzzleRegistry: Record<Difficulty, PuzzleData[]> = {
   easy: easyPuzzles,
   medium: mediumPuzzles,
   hard: hardPuzzles,
-  expert: [],
 }
 
 // All puzzles flattened

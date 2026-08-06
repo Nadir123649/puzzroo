@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from '../../hooks/use-theme'
 import { images } from '@/lib/utils'
 import { isLoggedIn, getCurrentUser, logout, hasStoredAuth } from '@/lib/auth/frontend-auth'
+import { useUser } from '@/hooks/useUser'
 import { notify } from '@/lib/toast'
 import { ProfileDropdown } from './ProfileDropdown'
 
@@ -40,6 +41,15 @@ export function Navbar() {
   const [navbarMounted, setNavbarMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+
+  // Live profile: refetches on mount + window focus so name/avatar changed on
+  // another device surface here. Keeps the UI in sync with the server.
+  const { data: freshUser } = useUser()
+  useEffect(() => {
+    if (freshUser) {
+      setUser({ name: freshUser.name, email: freshUser.email, avatar: freshUser.avatar })
+    }
+  }, [freshUser])
 
   const isAccountSection = pathname.startsWith('/account-information') || 
                            pathname.startsWith('/email-preferences') || 

@@ -9,12 +9,18 @@ import { GameLoader } from '@/components/ui/GameLoader'
 import { markGameAsPlayed } from '@/components/sections/FreeGames'
 
 function NonogramContent() {
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
+    setMounted(true)
+
+    // Mark Nonogram as played
     markGameAsPlayed('nonogram')
   }, [])
+
+  if (!mounted) return null
 
   const puzzleId = searchParams.get('puzzleId')
   const diffParam = searchParams.get('difficulty')

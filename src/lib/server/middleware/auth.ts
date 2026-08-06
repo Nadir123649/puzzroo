@@ -75,7 +75,7 @@ export async function auth(request: NextRequest) {
     }
 
     return { user: decoded };
-  } catch {
+  } catch (e: any) {
     return { error: errorResponse(401, "token_invalid", "Invalid or expired token.") };
   }
 }
