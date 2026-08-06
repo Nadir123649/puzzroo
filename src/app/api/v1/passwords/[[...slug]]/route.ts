@@ -12,8 +12,9 @@ import { forgotPasswordSchema, resetPasswordSchema } from "@/lib/server/validato
 import { trackServer } from "@/lib/server/utils/trackEvent";
 import { checkRateLimit } from "@/lib/server/utils/http";
 
-// Reset links are short-lived for security.
-const RESET_TOKEN_MINUTES = 15;
+// Reset links live long enough to survive slow email delivery; they are
+// single-use and die instantly on first consumption.
+const RESET_TOKEN_MINUTES = 60;
 
 function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!token) return errorResponse(400, "validation_error", "Token is required");
 
   try {
+    await connectDB();
     const hashedToken = hashToken(token);
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
@@ -112,8 +114,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (consumed.modifiedCount === 0) return errorResponse(400, "token_invalid", "Invalid or expired reset token");
       // Password reset → revoke EVERY session (all devices). Old access and
       // refresh tokens die with the session status flip, so every device must
-      // sign in again with the new password.
-      await LoginSession.updateMany({ userId: user._id, status: "active" }, { status: "logged_out", isCurrent: false });
+      // sign in again with the new password. `revoked` = security revocation.
+      await LoginSession.updateMany({ userId: user._id, status: "active" }, { status: "revoked", isCurrent: false });
       invalidateSessionCache();
       void trackServer({ userId: user._id.toString(), event: "password_reset_completed", request });
       return successResponse({ message: "Password changed. Please log in with your new password." });

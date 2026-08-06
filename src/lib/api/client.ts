@@ -36,6 +36,12 @@ export function setOnRefresh(cb: RefreshCallback) {
   onRefresh = cb;
 }
 
+// A fresh session must clear the session-expired latch, otherwise the next
+// genuine expiry silently skips the logout path (the flag is never reset).
+export function resetSessionExpiryNotified() {
+  sessionExpiredNotified = false;
+}
+
 const isClient = typeof window !== "undefined";
 const isLocalhost = isClient && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
@@ -186,8 +192,12 @@ export async function api<T = any>(
           } else if (!sessionExpiredNotified) {
             sessionExpiredNotified = true;
             notify.errorKey("SYSTEM_SESSION_EXPIRED");
-            localStorage.removeItem("puzzroo_auth");
-            sessionStorage.removeItem("puzzroo_auth");
+            // Full wipe — the access token must die too or `isLoggedIn()`
+            // (!!getAccessToken()) keeps the UI believing the session is
+            // alive and the user never sees the logged-out state. Mirrors
+            // logout() and fires auth-change so the whole app reacts.
+            import("@/lib/auth/frontend-auth").then(({ clearAuthState }) => clearAuthState());
+            window.dispatchEvent(new Event("auth-change"));
             setTimeout(() => { window.location.href = "/login"; }, 1500);
           }
         }

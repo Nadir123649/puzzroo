@@ -1,4 +1,4 @@
-import { api, refreshAccessToken } from "@/lib/api/client";
+import { api, refreshAccessToken, resetSessionExpiryNotified } from "@/lib/api/client";
 
 const TOKEN_KEY = "puzzroo_access_token";
 const FLAG_KEY = "puzzroo_auth";
@@ -83,6 +83,7 @@ function readStoredUser(): User | null {
 // toggle can never leave a "logged in" ghost in localStorage.
 export function storeAuth(remember: boolean, token: string, userJson: string): void {
   currentAccessToken = token;
+  resetSessionExpiryNotified();
   if (!canUseStorage()) return;
   const target = remember ? localStorage : sessionStorage;
   const other = remember ? sessionStorage : localStorage;

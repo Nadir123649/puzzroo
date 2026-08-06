@@ -182,7 +182,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         let sessionRemember: boolean | undefined;
         if (decoded.jti) {
           const updated = await LoginSession.collection.findOneAndUpdate(
-            { _id: new mongoose.Types.ObjectId(decoded.jti), tokenVersion: decoded.ver ?? 0 },
+            { _id: new mongoose.Types.ObjectId(decoded.jti), tokenVersion: decoded.ver ?? 0, status: "active" },
             { $inc: { tokenVersion: 1 }, $set: { rotatedAt: new Date() } },
             { returnDocument: "after", projection: { tokenVersion: 1, status: 1, userId: 1, rotatedAt: 1, remember: 1 } }
           );
@@ -261,8 +261,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await user.save();
       // Password changed → revoke EVERY session (this device included). All
       // devices must sign in again with the new password; a stolen session
-      // must not outlive the credential change.
-      await LoginSession.updateMany({ userId: user._id, status: "active" }, { status: "logged_out", isCurrent: false });
+      // must not outlive the credential change. `revoked` (not `logged_out`)
+      // marks a security revocation — middleware rejects any non-active
+      // session, and the cache clear makes that effective immediately.
+      await LoginSession.updateMany({ userId: user._id, status: "active" }, { status: "revoked", isCurrent: false });
       invalidateSessionCache();
       void trackServer({ userId: user._id.toString(), event: "password_changed", request });
       auditLog({ eventType: "auth:password_changed", userId: user._id.toString(), sessionId: jti, ip: getClientIp(request) }).catch(() => {});

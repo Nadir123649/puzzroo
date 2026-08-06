@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
@@ -25,20 +25,28 @@ export default function ResetPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [tokenError, setTokenError] = useState(false)
+  const [checkError, setCheckError] = useState(false)
   const [checkingToken, setCheckingToken] = useState(true)
 
   // Validate the token on load so an expired/unknown link shows the "Link
   // Expired" state immediately instead of letting the user fill the form.
-  useEffect(() => {
+  // A server/network failure is shown separately (retryable) — it is NOT the
+  // same as an expired link.
+  const checkToken = useCallback(() => {
     let cancelled = false
+    setCheckingToken(true)
+    setCheckError(false)
     api(`/api/v1/passwords/reset?token=${encodeURIComponent(token)}`)
       .then((res) => {
         if (cancelled) return
-        const valid = res.success && (res.payload as any)?.valid === true
-        setTokenError(!valid)
+        if (res.success) {
+          setTokenError((res.payload as any)?.valid !== true)
+        } else {
+          setCheckError(true)
+        }
       })
       .catch(() => {
-        if (!cancelled) setTokenError(true)
+        if (!cancelled) setCheckError(true)
       })
       .finally(() => {
         if (!cancelled) setCheckingToken(false)
@@ -47,6 +55,8 @@ export default function ResetPasswordPage() {
       cancelled = true
     }
   }, [token])
+
+  useEffect(() => checkToken(), [checkToken])
 
   const validate = () => {
     const newErrors: typeof errors = {}
@@ -117,7 +127,7 @@ export default function ResetPasswordPage() {
                 Puzzroo
               </span>
             </Link>
-            {!isSuccess && !tokenError && !checkingToken && (
+            {!isSuccess && !tokenError && !checkError && !checkingToken && (
               <>
                 <h2 className="font-urbanist font-bold text-[20px] text-[#212121] dark:text-white">
                   Set new password
@@ -134,6 +144,16 @@ export default function ResetPasswordPage() {
                 </h2>
                 <p className="font-urbanist font-medium text-[14px] text-[#757575] dark:text-[#BDBDBD] text-center mt-2">
                   This reset link is invalid or has expired.
+                </p>
+              </>
+            )}
+            {checkError && (
+              <>
+                <h2 className="font-urbanist font-bold text-[20px] text-[#212121] dark:text-white">
+                  Unable to check link
+                </h2>
+                <p className="font-urbanist font-medium text-[14px] text-[#757575] dark:text-[#BDBDBD] text-center mt-2">
+                  We couldn&apos;t reach the server to verify your link.
                 </p>
               </>
             )}
@@ -176,6 +196,32 @@ export default function ResetPasswordPage() {
                 <Button className="w-full h-[48px] rounded-full text-base font-urbanist font-semibold bg-[#6949FF] hover:bg-[#5536E6]">
                   Request New Link
                 </Button>
+              </Link>
+              <Link href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline">
+                Back to Log In
+              </Link>
+            </div>
+          ) : checkError ? (
+            <div className="text-center py-6 flex flex-col items-center gap-4">
+              <div className="w-12 h-12 bg-[#F59E0B] rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                !
+              </div>
+              <div>
+                <h3 className="font-urbanist font-bold text-[18px] text-[#212121] dark:text-white mb-1">
+                  Something went wrong
+                </h3>
+                <p className="font-urbanist font-medium text-[14px] text-[#757575] dark:text-[#BDBDBD]">
+                  We couldn&apos;t verify this link. Check your connection and try again.
+                </p>
+              </div>
+              <Button
+                onClick={checkToken}
+                className="w-full h-[48px] rounded-full text-base font-urbanist font-semibold bg-[#6949FF] hover:bg-[#5536E6]"
+              >
+                Retry
+              </Button>
+              <Link href="/forgot-password" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline">
+                Request a New Link
               </Link>
               <Link href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline">
                 Back to Log In

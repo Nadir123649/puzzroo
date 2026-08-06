@@ -96,16 +96,9 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
       }
 
       setSuccess(true)
-      setTimeout(() => {
-        onClose()
-        setCurrentPassword('')
-        setNewPassword('')
-        setConfirmPassword('')
-        setSuccess(false)
-        // Server logged out every device (this one included) after the change.
-        // Finish the client-side logout and send the user back to sign in.
-        void logout().then(() => window.location.replace('/login'))
-      }, 2000)
+      // Server logged out every device (this one included) after the change.
+      // Log out locally and send the user straight back to sign in.
+      void logout().then(() => window.location.replace('/login'))
     } catch (err) {
       setError('Failed to change password. Please try again.')
     } finally {

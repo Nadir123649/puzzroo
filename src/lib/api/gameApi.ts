@@ -216,6 +216,16 @@ export const gameApi = {
     return res.payload;
   },
 
+  // Restart the SAME puzzle (replay): the server abandons any active session
+  // for that puzzle/owner and creates a fresh one. Returns the new session.
+  async replayNonogramSession(sessionId: string) {
+    const res = await api(`/api/v1/games/nonogram/sessions/${sessionId}/replay`, {
+      method: 'POST',
+      suppressToast: true,
+    });
+    return res.payload;
+  },
+
   async restartSession(game: GameId, sessionId: string) {
     const res = await api(`/api/v1/games/${game}/sessions/${sessionId}/restart`, { method: 'POST' });
     return res.payload;
