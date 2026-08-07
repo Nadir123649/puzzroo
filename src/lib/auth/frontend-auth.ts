@@ -249,27 +249,17 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
-function clearClientSession() {
-  clearAuthState();
-  window.dispatchEvent(new Event("auth-change"));
-  api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
-}
-
-/**
- * Validates (and repairs) the client session on app load.
- * - No token at all → nothing to do (user is logged out).
- * - Token present → attempt to refresh via the httpOnly refresh cookie.
- *   On success we store the fresh access token; on failure the session is
- *   stale/expired, so we clear localStorage and let the UI reflect logged-out.
- * This prevents a dead/expired accessToken from permanently bouncing users
- * away from /login (the RedirectIfAuthenticated guard keys off isLoggedIn()).
- */
-
 // Prevent parallel refresh calls (race condition protection)
 let refreshPromise: Promise<void> | null = null;
 let lastRefreshTime = 0;
 const REFRESH_COOLDOWN = 2000; // 2 seconds cooldown between refreshes
 
+// Validates (and repairs) the client session on app load. Fires NO background
+// network calls in the steady state:
+// - No token → nothing to do (user is logged out).
+// - Token expired → try a single refresh via the httpOnly cookie.
+// - Token valid → nothing (profile refreshes once via navbar useUser when the
+//   home page opens; stale/revoked tokens are reconciled by the api() 401 flow).
 export async function ensureSession(): Promise<void> {
   if (typeof window === "undefined") return;
   
@@ -288,51 +278,10 @@ export async function ensureSession(): Promise<void> {
   const hasFlag = hasStoredAuth();
   if (!token && !hasFlag) return;
 
-  // A persistent-refresh session is the ONLY authority a page reload can trust.
-  // The access token (and cached profile) live in localStorage and outlive the
-  // server session: if "Remember me" was unchecked the refresh cookie is a
-  // session cookie, so closing the browser kills it while localStorage
-  // survives. Without this probe a stale token would masquerade as a live
-  // login for up to its expiry. A definitive `valid:false` logs us out; a
-  // network blip is inconclusive and leaves the state intact (the normal
-  // api() 401 flow handles genuinely expired sessions).
-  try {
-    const probe = await api<{ valid: boolean }>("/api/v1/auth/session-exists");
-    if (!probe.success) throw new Error("probe_failed");
-    if (probe.payload?.valid === false) {
-      clearClientSession();
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
-      return;
-    }
-  } catch {
-    // Inconclusive — keep cached state, the 401 path will reconcile.
-  }
-
   if (token && !isTokenExpired(token)) {
-    refreshPromise = (async () => {
-      try {
-        lastRefreshTime = Date.now();
-        const meRes = await api("/api/v1/users/me");
-        if (meRes.success) {
-          const current = getStoredUser();
-          const updated = mapUser(meRes.payload as any);
-          setAuthUser(JSON.stringify({ ...current, ...updated }));
-          applyUserTheme(updated.theme);
-          window.dispatchEvent(new Event("auth-change"));
-        }
-        // A failed /users/me is TRANSIENT, not proof the session died: during
-        // rapid page refreshes the per-IP rate limit (429) or a network blip
-        // makes this fail while the refresh cookie is perfectly alive. The
-        // session-exists probe above is the authoritative liveness check and
-        // the api() 401 flow handles genuinely revoked sessions — never log
-        // out from a profile fetch failure.
-      } finally {
-        refreshPromise = null;
-      }
-    })();
-    return refreshPromise;
+    // Access token is live. Do not touch the network; the profile is served
+    // from the cached snapshot and refreshed once when the home page opens.
+    return;
   }
 
   // Token is expired, try to refresh
@@ -342,22 +291,12 @@ export async function ensureSession(): Promise<void> {
       const newToken = await refreshAccessToken();
       if (!newToken) throw new Error("refresh_failed");
       setAccessToken(newToken);
-      // Re-read the profile so server-side changes (e.g. being promoted to
-      // admin, subscription upgrades) take effect without a full re-login.
-      try {
-        const meRes = await api("/api/v1/users/me");
-        if (meRes.success) {
-          const current = getStoredUser();
-          const updated = mapUser(meRes.payload as any);
-          setAuthUser(JSON.stringify({ ...current, ...updated }));
-          applyUserTheme(updated.theme);
-        }
-      } catch {}
       window.dispatchEvent(new Event("auth-change"));
     } catch {
-      // Refresh failed — likely stale cookie from rapid page refresh, not actual
-      // session expiry. Leave client state intact; the next API call or page
-      // refresh will retry. The api() 401 handler handles truly-expired sessions.
+      // Refresh failed — likely stale cookie from rapid page refresh, not
+      // actual session expiry. Leave client state intact; the next API call or
+      // page refresh will retry. The api() 401 handler deals with truly-expired
+      // sessions.
     } finally {
       refreshPromise = null;
     }

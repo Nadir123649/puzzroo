@@ -45,31 +45,54 @@ const meResponse = (name: string) => ({
   },
 })
 
+function setPathname(path: string) {
+  Object.defineProperty(window, 'location', {
+    value: { ...window.location, pathname: path },
+    writable: true,
+  })
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   localStorage.clear()
   sessionStorage.clear()
+  setPathname('/')
 })
 
-describe('useUser profile sync across devices', () => {
-  it('refetches profile on window focus so changes made on another device appear', async () => {
+describe('useUser network policy', () => {
+  it('fetches profile once when the home page opens', async () => {
     apiMock.mockResolvedValue(meResponse('OldName'))
     renderProbe()
 
     await waitFor(() => expect(screen.getByTestId('profile-name').textContent).toBe('OldName'))
+    expect(apiMock).toHaveBeenCalledTimes(1)
+    expect(apiMock).toHaveBeenCalledWith('/api/v1/users/me')
+  })
 
-    // Simulate: another device changed the name on the server while this tab
-    // stayed open. jsdom starts focused and stays focused, so drive the real
-    // blur→focus transition through react-query's focus manager (this is what
-    // fires when a browser tab regains focus).
+  it('never refetches on window focus (no background API calls)', async () => {
+    apiMock.mockResolvedValue(meResponse('OldName'))
+    renderProbe()
+    await waitFor(() => expect(screen.getByTestId('profile-name').textContent).toBe('OldName'))
+
     apiMock.mockResolvedValue(meResponse('NewName'))
     act(() => {
       focusManager.setFocused(false)
       focusManager.setFocused(true)
     })
 
-    await waitFor(() => expect(screen.getByTestId('profile-name').textContent).toBe('NewName'), {
-      timeout: 3000,
-    })
+    // Give a potential (undesired) refetch time to fire.
+    await new Promise((r) => setTimeout(r, 300))
+    expect(screen.getByTestId('profile-name').textContent).toBe('OldName')
+    expect(apiMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not fetch on non-home pages', async () => {
+    setPathname('/sudoku')
+    apiMock.mockResolvedValue(meResponse('AnyName'))
+    renderProbe()
+
+    await new Promise((r) => setTimeout(r, 300))
+    expect(screen.getByTestId('profile-name').textContent).toBe('null')
+    expect(apiMock).not.toHaveBeenCalled()
   })
 })

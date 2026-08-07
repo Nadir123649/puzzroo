@@ -94,7 +94,7 @@ export function AccountSidebar() {
                 return (
                   <Link
                     key={item.href}
-                    href={item.href}
+                    href={item.href} prefetch={false}
                     className={`flex items-center gap-3 px-5 py-4 transition-all duration-200 border-l-4 ${
                       active
                         ? 'bg-gradient-to-r from-purple-100/70 via-purple-50/50 to-transparent dark:from-[#6949FF]/15 dark:via-[#6949FF]/8 dark:to-transparent border-l-[#6949FF] text-[#6949FF] font-semibold'
@@ -140,7 +140,7 @@ export function AccountSidebar() {
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={item.href} prefetch={false}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-5 py-4 transition-all duration-200 border-l-4 ${
                     active

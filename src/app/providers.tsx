@@ -1,8 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { ensureSession, updateUser, isLoggedIn, clearAuthState } from '@/lib/auth/frontend-auth'
-import { api } from '@/lib/api/client'
+import { ensureSession, updateUser, isLoggedIn } from '@/lib/auth/frontend-auth'
 
 type Theme = 'light' | 'dark'
 
@@ -63,51 +62,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Periodic auth health check — probe an authenticated endpoint through the
-    // api() wrapper so a REVOKED session (e.g. password changed on another
-    // device, "logout all devices") triggers the wrapper's 401 flow: refresh
-    // fails → full auth wipe → redirect to /login. A raw refresh fetch would
-    // silently swallow the 401 and the user would stay "logged in" until the
-    // next page load. 30s keeps cross-device revocation near-instant without
-    // hammering the API. Skipped while logged out.
-    const probeSession = () => {
-      if (!isLoggedIn()) return
-      api("/api/v1/users/me", { suppressToast: true }).catch(() => {})
-    }
-
-    const healthInterval = setInterval(probeSession, 30 * 1000)
-
-    // Probe immediately when the tab regains focus — the user may have just
-    // changed their password on another device, so don't wait up to 30s.
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") probeSession()
-    }
-    document.addEventListener("visibilitychange", onVisibility)
-
-    // Instant SSE push: when the server revokes this user's sessions (password
-    // change / logout-all), it publishes a `logout` event to all connected
-    // SSE streams. This lets idle tabs on OTHER devices log out in <1s with no
-    // request from the victim tab — the server pushes it. The 30s probe above
-    // is the offline safety net for tabs that missed the push (offline, crashed,
-    // or connected to a different server instance).
-    if (isLoggedIn()) {
-      const es = new EventSource("/api/v1/auth/stream", { withCredentials: true })
-      es.addEventListener("logout", () => {
-        clearAuthState()
-        window.dispatchEvent(new Event("auth-change"))
-        es.close()
-        window.location.href = "/login"
-      })
-      es.onerror = () => {
-        // transient / server restart → the 30s probe reconciles. Just close so
-        // we don't thrash a broken connection; a real reload will reconnect.
-        es.close()
-      }
-    }
+    // Periodic auth health check is intentionally removed. No background
+    // polls, no focus probes, no SSE stream. Session revocation (password
+    // change / logout-all) reconciles on the next home-page /users/me call or
+    // the first 401 from any authenticated API.
 
     return () => {
-      clearInterval(healthInterval)
-      document.removeEventListener("visibilitychange", onVisibility)
       window.removeEventListener('theme-change', syncTheme)
     }
   }, [])

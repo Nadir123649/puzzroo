@@ -376,13 +376,22 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         mistakes: 0,
         moves: 0,
       })
+      sessionIdRef.current = null
     } catch { /* ignore */ }
   }
 
   function failSession() {
     if (!sessionIdRef.current) return
-    gameApi.abandonSession('tangram', sessionIdRef.current).catch(() => {})
+    const id = sessionIdRef.current
+    sessionIdRef.current = null
+    gameApi.abandonSession('tangram', id).catch(() => {})
   }
+
+  // Abandon exactly once per loss — moved out of the timer updater
+  useEffect(() => {
+    if (gameStatus === 'lost') failSession()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameStatus])
 
   // Helper: Create standard polygon has been removed as standardPolygon is now initialized dynamically from target geometry.
 
@@ -407,7 +416,6 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       setTimeRemaining(t => {
         if (t <= 1) {
           setGameStatus('lost')
-          failSession()
           return 0
         }
         return t - 1
@@ -1165,13 +1173,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         }
       })()
     return () => { cancelled = true }
-  }, [difficulty, puzzle])
+  }, [difficulty, puzzle, isDailyChallenge, dateParam])
 
   const replayPuzzle = useCallback(() => {
     isReplayingRef.current = true
-    if (sessionIdRef.current) {
-      gameApi.abandonSession('tangram', sessionIdRef.current).catch(() => {})
-    }
     if (typeof window !== 'undefined') {
       try {
         Object.keys(localStorage).forEach(k => {
@@ -1197,13 +1202,29 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
 
     completionCalledRef.current = false
     sessionCreatedRef.current = false
-    sessionIdRef.current = null
     setHistoryIndex(0)
 
     const current = puzzle
     if (current) {
       setPuzzle({ ...current, _t: Date.now() } as any)
-      initSession(current.id, difficulty, isDailyChallenge, isDailyChallenge ? `daily-tangram-${dateParam || getTodayDateParam()}` : undefined)
+      const existingSessionId = sessionIdRef.current
+      const challengeId = isDailyChallenge
+        ? `daily-tangram-${dateParam || getTodayDateParam()}`
+        : undefined
+      void (async () => {
+        try {
+          if (!isDailyChallenge && existingSessionId) {
+            const res = await gameApi.replayTangramSession(existingSessionId, current.id)
+            if (res && (res.sessionId || res._id || res.id)) {
+              sessionIdRef.current = res.sessionId || res._id || res.id
+              sessionCreatedRef.current = true
+              return
+            }
+          }
+        } catch { /* fall back to a fresh session */ }
+        sessionIdRef.current = null
+        initSession(current.id, difficulty, isDailyChallenge, challengeId)
+      })()
     }
   }, [difficulty, puzzle, isDailyChallenge, dateParam])
 
