@@ -307,7 +307,12 @@ export function Navbar() {
         <div className="flex flex-col gap-3 pt-4">
           {navbarMounted && loggedIn && user ? (
             <>
-              <div className="py-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
+              <Link 
+                prefetch={false} 
+                href="/account-information" 
+                onClick={() => setIsMenuOpen(false)}
+                className="py-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3 w-full"
+              >
                 <div className="w-10 h-10 rounded-full bg-[#6949FF] flex items-center justify-center text-white overflow-hidden shrink-0">
                   {user.avatar ? (
                     <img src={user.avatar} alt="" className="w-full h-full object-cover" />
@@ -315,7 +320,7 @@ export function Navbar() {
                     <span className="font-urbanist font-bold text-[15px]">{user.name?.charAt(0).toUpperCase() || 'U'}</span>
                   )}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1 text-left">
                   <p className="font-urbanist font-bold text-[16px] text-[#212121] dark:text-white truncate">
                     {user.name}
                   </p>
@@ -323,7 +328,7 @@ export function Navbar() {
                     {user.email}
                   </p>
                 </div>
-              </div>
+              </Link>
               <Link prefetch={false} href="/account-information" onClick={() => setIsMenuOpen(false)} className="font-urbanist font-semibold text-[15px] py-1 text-[#212121] dark:text-white">
                 Account
               </Link>

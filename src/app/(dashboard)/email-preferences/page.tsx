@@ -9,9 +9,7 @@ import { useEmailPreferences, type EmailPreference } from '@/hooks/useEmailPrefe
 const getIcon = (iconName: string) => {
   switch (iconName) {
     case 'mail':
-      return function GmailIconComp(props: any) { 
-        return <Image src={images.gmailIcon} width={props.size || 18} height={props.size || 18} alt="Email" className={props.className} /> 
-      }
+      return Mail
     case 'bell':
       return Bell
     case 'shield':
