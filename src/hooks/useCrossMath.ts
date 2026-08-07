@@ -1188,15 +1188,20 @@ export function useCrossMath(initialPuzzleId?: string) {
     setBoard(newBoard)
     hintsUsedRef.current += 1
     
+    let finalScore = score
     const cellKey = `${row}-${col}`
     if (!cellScoreAwardedRef.current.has(cellKey)) {
       cellScoreAwardedRef.current.add(cellKey)
-      const newScore = score + SCORING.HINT_CORRECT
-      setScore(newScore)
-      triggerScoreFeedback(SCORING.HINT_CORRECT)
+      finalScore += SCORING.CORRECT_ANSWER
+      triggerScoreFeedback(SCORING.CORRECT_ANSWER)
     }
     
-    saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty, score + SCORING.HINT_CORRECT)
+    // Deduct hint cost
+    finalScore = Math.max(0, finalScore + SCORING.HINT_COST)
+    setScore(finalScore)
+    triggerScoreFeedback(SCORING.HINT_COST)
+    
+    saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty, finalScore)
 
     // Track number usage
     const newUsedCount = new Map(usedNumbersCount)
@@ -1211,11 +1216,6 @@ export function useCrossMath(initialPuzzleId?: string) {
     newUsedCount.set(correctValue, currentCount + 1)
     setUsedNumbersCount(newUsedCount)
 
-    // Deduct hint cost
-    const newScore = Math.max(0, score + SCORING.HINT_COST)
-    setScore(newScore)
-    triggerScoreFeedback(SCORING.HINT_COST)
-
     // Select the hinted cell
     setSelectedCell({ row, col })
 
@@ -1225,7 +1225,7 @@ export function useCrossMath(initialPuzzleId?: string) {
       const puzzleId = dateParam ? `daily-cross-math-${dateParam}` : currentPuzzle.id
       markPuzzleCompleted('crossmath', puzzleId, {
         time: time,
-        score: newScore,
+        score: finalScore,
         difficulty: difficulty,
       })
       completePuzzle(newBoard, time, difficulty)
