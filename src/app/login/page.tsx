@@ -91,6 +91,10 @@ function LoginPageContent() {
     if (result.success) {
       notify.successKey('AUTH_WELCOME_BACK')
       router.push('/')
+    } else if (result.code === 'email_not_verified') {
+      setEmailNotVerified(true)
+      setErrors({ general: result.error || ToastMessages.AUTH_EMAIL_NOT_VERIFIED })
+      notify.errorKey('AUTH_EMAIL_NOT_VERIFIED', undefined, { duration: 6000 })
     } else {
       notify.errorFromResult(result, 'AUTH_INVALID_CREDENTIALS')
       setErrors({ general: notify.fromResult(result, 'AUTH_INVALID_CREDENTIALS') })

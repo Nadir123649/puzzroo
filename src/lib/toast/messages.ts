@@ -22,6 +22,7 @@ export const ToastMessages = {
   AUTH_WELCOME_BACK: 'Welcome back!',
   AUTH_WELCOME_OAUTH: 'Welcome!',
   AUTH_INVALID_CREDENTIALS: 'Invalid email or password.',
+  AUTH_EMAIL_NOT_VERIFIED: 'Please verify your email before logging in. Check your inbox for the verification link.',
   AUTH_OAUTH_FAILED: 'Social login failed. Please try again.',
   AUTH_UNAVAILABLE: 'Sign-in is temporarily unavailable. Please try again.',
   AUTH_POPUP_BLOCKED: 'The sign-in popup was blocked by your browser. Allow popups for this site and try again.',
