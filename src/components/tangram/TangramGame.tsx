@@ -215,7 +215,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
-                <span>{difficulty === 'hard' ? '1.5' : difficulty === 'medium' ? '3' : '5'} min</span>
+                <span>{difficulty === 'hard' ? '2' : difficulty === 'medium' ? '3' : '5'} min</span>
               </span>
             </div>
           </div>
