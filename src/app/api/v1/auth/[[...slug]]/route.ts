@@ -102,20 +102,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         auditLog({ eventType: "auth:login_failed", ip: getClientIp(request), metadata: { identifier: lookup } }).catch(() => {});
         return errorResponse(401, "invalid_credentials", "Invalid email or password");
       }
+      if (!user.isVerified) {
+        // Hard-block unverified accounts: correct credentials don't get a
+        // session until the email is verified. Do NOT count this as a
+        // brute-force failure (the password was right). The client surfaces
+        // the verification banner with a resend link.
+        return errorResponse(401, "email_not_verified", "Please verify your email before logging in. Check your inbox for the verification link.");
+      }
       resetBruteForce(request, `login:${lookup}`);
       user.lastLoginAt = new Date();
       if (!user.linkedProviders) user.linkedProviders = [];
       if (!user.linkedProviders.includes("email")) user.linkedProviders.push("email");
       await user.save({ validateBeforeSave: false });
-      // NOTE: we no longer hard-block login for unverified emails in production.
-      // Undelivered verification emails would otherwise permanently lock users
-      // out ("can't log back in"). Instead we let them in and surface a
-      // verification prompt client-side via `requiresVerification`.
+      // Unverified accounts never reach this point: login hard-blocks them
+      // earlier with `email_not_verified`.
       void trackServer({ userId: user._id.toString(), event: "login", properties: { method: "password" }, request });
       auditLog({ eventType: "auth:login", userId: user._id.toString(), ip: getClientIp(request), userAgent: request.headers.get("user-agent") || undefined }).catch(() => {});
       const { payload } = await issueSession(request, user, "email", rememberMe);
       const res = NextResponse.json(
-        { success: true, payload, requiresVerification: !user.isVerified, timestamp: Date.now() },
+        { success: true, payload, timestamp: Date.now() },
         { status: 200 }
       );
       res.cookies.set("refreshToken", payload.token.refreshToken, getRefreshCookieOptions(rememberMe));
