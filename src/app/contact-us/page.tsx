@@ -189,6 +189,7 @@ export default function ContactUsPage() {
                   type="text"
                   id="name"
                   value={name}
+                  maxLength={20}
                   onChange={(e) => {
                     setName(e.target.value)
                     if (errors.name) setErrors(prev => ({ ...prev, name: undefined }))

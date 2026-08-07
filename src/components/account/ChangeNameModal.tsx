@@ -128,6 +128,7 @@ export function ChangeNameModal({ isOpen, onClose, currentName, onNameChanged }:
                 <input
                   type="text"
                   value={name}
+                  maxLength={20}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your full name"
                   required
