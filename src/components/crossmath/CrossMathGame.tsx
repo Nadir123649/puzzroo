@@ -319,6 +319,7 @@ export function CrossMathGame() {
          mistakes={mistakes}
          maxMistakes={maxMistakes}
          score={score}
+         lossReason={mistakes >= maxMistakes ? 'mistakes' : 'timeout'}
          onPlayAgain={handlePlayAgain}
          onNewGame={!isFromPastPuzzles ? () => handleNewGame(false) : undefined}
          onBackToGames={handleBackToGames}

@@ -591,6 +591,8 @@ export function useNonogram(initialPuzzleId?: string) {
     const flushElapsed = () => {
       if (!sessionIdRef.current || completionCalledRef.current) return
       if (gridRef.current.length === 0) return
+      if (moveCountRef.current === 0) return
+
       const gapSec = Math.max(0, Math.round((Date.now() - lastSaveQueuedAtRef.current) / 1000))
       const remaining = Math.max(0, elapsedSecondsRef.current - gapSec)
       const initialTime = difficultyRef.current === 'hard' ? 300 : difficultyRef.current === 'medium' ? 420 : 600
@@ -773,7 +775,7 @@ export function useNonogram(initialPuzzleId?: string) {
   // Helper: Update the drag preview path
   const updateDragPreview = useCallback((currentPos: CellPosition) => {
     if (!dragStartPos.current || !currentPuzzle) return
-    
+
     const key = `${currentPos.row}-${currentPos.col}`
     const path = dragPathRef.current
 
@@ -916,28 +918,28 @@ export function useNonogram(initialPuzzleId?: string) {
           cellNewState = 'empty'
         }
 
-          if (currentState === 'error') continue
-          if (cellNewState === currentState) continue
-          changedCount++
+        if (currentState === 'error') continue
+        if (cellNewState === currentState) continue
+        changedCount++
 
-          // Validation logic for fill mode and mark mode
-          if (validationMode === 'assisted') {
-            let isMistake = false;
-            if (action === 'fill') {
-              isMistake = currentPuzzle.solution[row]?.[col] === 0;
-            } else if (action === 'mark') {
-              isMistake = currentPuzzle.solution[row]?.[col] === 1;
-            }
-            
-            if (isMistake) {
-              cellNewState = 'error'
-              newMistakes += 1
-              const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
-              if (newMistakes >= limit) {
-                lost = true
-              }
+        // Validation logic for fill mode and mark mode
+        if (validationMode === 'assisted') {
+          let isMistake = false;
+          if (action === 'fill') {
+            isMistake = currentPuzzle.solution[row]?.[col] === 0;
+          } else if (action === 'mark') {
+            isMistake = currentPuzzle.solution[row]?.[col] === 1;
+          }
+
+          if (isMistake) {
+            cellNewState = 'error'
+            newMistakes += 1
+            const limit = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+            if (newMistakes >= limit) {
+              lost = true
             }
           }
+        }
 
         newGrid[row][col] = cellNewState
       }
@@ -1008,7 +1010,7 @@ export function useNonogram(initialPuzzleId?: string) {
     }
 
     // Initialize puzzle with CURRENT difficulty
-    initializePuzzle(currentDiff, false, puzzleId, refresh)
+    await initializePuzzle(currentDiff, false, puzzleId, refresh)
   }, [currentPuzzle, difficulty, initializePuzzle, abandonSession])
 
   /**

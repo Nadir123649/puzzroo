@@ -34,6 +34,7 @@ interface PolygonPieceProps {
   allPieces?: PieceState[]
   disabled?: boolean
   onDragEnd?: () => void
+  zOrderIndex?: number
 }
 
 export function PolygonPiece({
@@ -46,6 +47,7 @@ export function PolygonPiece({
   boardContainerWidth,
   disabled = false,
   onDragEnd,
+  zOrderIndex = -1,
 }: PolygonPieceProps) {
   const dragStartPos = useRef<{ x: number; y: number } | null>(null)
   const pieceStartPos = useRef<{ x: number; y: number } | null>(null)
@@ -217,7 +219,7 @@ export function PolygonPiece({
         className="absolute inset-0 overflow-visible"
         style={{
           pointerEvents: 'none',
-          zIndex: isSelected ? 50 : piece.isSnapped ? 5 : 10,
+          zIndex: isSelected ? 50 : piece.isSnapped ? 5 : 10 + Math.max(0, zOrderIndex),
           touchAction: 'none',
         }}
       >
