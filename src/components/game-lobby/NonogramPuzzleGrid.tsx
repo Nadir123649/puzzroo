@@ -170,9 +170,8 @@ export function NonogramPuzzleGrid() {
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-6 mt-6 md:mt-8">
             <button
-              onClick={() => updatePage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1F222A] disabled:border-[#BDBDBD] dark:disabled:border-[#616161] disabled:text-[#757575] dark:disabled:text-[#9E9E9E]"
+              onClick={() => updatePage(prev => prev === 1 ? totalPages : prev - 1)}
+              className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95"
               aria-label="Previous Page"
             >
               <ChevronLeft size={24} strokeWidth={2.5} />
@@ -183,9 +182,8 @@ export function NonogramPuzzleGrid() {
             </span>
 
             <button
-              onClick={() => updatePage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1F222A] disabled:border-[#BDBDBD] dark:disabled:border-[#616161] disabled:text-[#757575] dark:disabled:text-[#9E9E9E]"
+              onClick={() => updatePage(prev => prev === totalPages ? 1 : prev + 1)}
+              className="w-11 h-11 rounded-full border-2 border-[#6949FF] dark:border-[#6949FF] bg-white dark:bg-[#1F222A] flex items-center justify-center text-[#6949FF] hover:bg-[#F0EDFF] dark:hover:bg-[#2D2640] transition-all duration-200 active:scale-95"
               aria-label="Next Page"
             >
               <ChevronRight size={24} strokeWidth={2.5} />

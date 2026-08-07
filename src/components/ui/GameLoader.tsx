@@ -14,24 +14,28 @@ export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
   const [mounted, setMounted] = useState(isOpen)
   const [visible, setVisible] = useState(isOpen)
 
+  // Instantly mount when isOpen becomes true to prevent any visual delay/flicker
+  if (isOpen && !mounted) {
+    setMounted(true)
+    setVisible(true)
+  }
+
   useEffect(() => {
-    if (isOpen) {
-      setMounted(true)
-      setVisible(true)
-    } else {
+    if (!isOpen && visible) {
       setVisible(false)
       const timer = setTimeout(() => {
         setMounted(false)
       }, 300)
       return () => clearTimeout(timer)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
   if (!mounted) return null
 
   return (
     <div
-      className={`fixed inset-0 bg-white dark:bg-[#181A20] z-[99999] flex items-center justify-center ${
+      className={`fixed inset-0 bg-white dark:bg-[#181A20] z-[100001] flex items-center justify-center ${
         isOpen ? '' : 'transition-opacity duration-300'
       } ${
         visible ? 'opacity-100' : 'opacity-0'
