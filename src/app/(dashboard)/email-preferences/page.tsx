@@ -24,7 +24,7 @@ const getIcon = (iconName: string) => {
 }
 
 export default function EmailPreferencesPage() {
-  const { preferences, updatePreferences, isUpdating } = useEmailPreferences()
+  const { preferences, isLoading, updatePreferences, isUpdating } = useEmailPreferences()
 
   const togglePreference = async (id: string) => {
     const updated = preferences.map((pref: EmailPreference) =>
@@ -53,7 +53,26 @@ export default function EmailPreferencesPage() {
 
       {/* Preferences List */}
       <div className="bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] overflow-hidden">
-        {preferences.map((pref: EmailPreference, index: number) => {
+        {isLoading ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={`skeleton-${index}`}
+              className={`flex items-center justify-between p-4 md:p-5 ${
+                index !== 4 ? 'border-b border-[#E0E0E0] dark:border-[#35383F]' : ''
+              }`}
+            >
+              <div className="flex items-start gap-3 flex-1 mr-4">
+                <div className="flex-shrink-0 w-10 h-10 bg-gray-200 dark:bg-[#35383F] rounded-xl animate-pulse" />
+                <div className="flex-1 min-w-0 flex flex-col gap-2 justify-center py-1">
+                  <div className="h-4 bg-gray-200 dark:bg-[#35383F] rounded animate-pulse w-1/3" />
+                  <div className="h-3 bg-gray-200 dark:bg-[#35383F] rounded animate-pulse w-2/3" />
+                </div>
+              </div>
+              <div className="h-6 w-11 flex-shrink-0 rounded-full bg-gray-200 dark:bg-[#35383F] animate-pulse" />
+            </div>
+          ))
+        ) : (
+          preferences.map((pref: EmailPreference, index: number) => {
           const Icon = getIcon(pref.iconName)
           return (
             <div
@@ -96,7 +115,8 @@ export default function EmailPreferencesPage() {
               </button>
             </div>
           )
-        })}
+        })
+        )}
       </div>
 
       {/* Info Box */}

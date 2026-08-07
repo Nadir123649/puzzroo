@@ -141,6 +141,22 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
         }
       }
     }).catch(() => { })
+
+    // Fetch history for past puzzles to ensure accurate in-progress/completed states
+    api(`/api/v1/games/${apiGameId}/daily/history?limit=30`).then(res => {
+      if (res.success && res.payload && Array.isArray((res.payload as any).challenges)) {
+        const challenges = (res.payload as any).challenges
+        challenges.forEach((c: any) => {
+          if (c.date && c.status) {
+            const cId = `daily-${gameId}-${c.date}`
+            updateChallengeStatus(cId, c.status)
+            if (c.status === 'completed') {
+              setCompletedPuzzles(prev => new Set([...prev, cId]))
+            }
+          }
+        })
+      }
+    }).catch(() => {})
   }, [gameId])
 
   useEffect(() => {
@@ -522,6 +538,12 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
     router.push(`/daily-challenge/${puzzle.gameId}?date=${puzzle.dateString}&difficulty=${puzzle.difficulty}`)
   }
 
+  const handleCardReplay = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    router.push(`/daily-challenge/${puzzle.gameId}?date=${puzzle.dateString}&difficulty=${puzzle.difficulty}&replay=true`)
+  }
+
   return (
     <div
       onClick={handleCardClick}
@@ -584,7 +606,7 @@ function PuzzleCard({ puzzle, gameIcon, isLocked, isCompleted, onLockedClick, on
       {/* Play Button - CTA Style like Signup */}
       {isCompleted ? (
         <button
-          onClick={handleCardClick}
+          onClick={handleCardReplay}
           className="w-full h-[37px] md:h-[46px] rounded-full border-2 border-[#22C55E] text-[#22C55E] hover:bg-[#E8F5E9] dark:hover:bg-[#1B5E20]/20 font-urbanist font-bold text-[14px] md:text-[16px] flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 cursor-pointer"
         >
           <span>Replay</span>

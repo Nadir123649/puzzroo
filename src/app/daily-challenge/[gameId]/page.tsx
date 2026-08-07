@@ -36,6 +36,7 @@ function DailyChallengeContent() {
   const [completionStats, setCompletionStats] = useState<any>(null)
 
   const gameIdForApi = gameId === 'cross-math' ? 'crossmath' : gameId
+  const replayParam = searchParams.get('replay')
   const backPath = `/past-puzzles/${gameId}`
 
   useEffect(() => {
@@ -52,6 +53,12 @@ function DailyChallengeContent() {
         const specificChallenge = generateDailyChallenge(date, gameId as 'sudoku' | 'cross-math' | 'nonogram' | 'tangram')
         if (!cancelled) setChallenge(specificChallenge)
       }
+
+      if (replayParam === 'true') {
+        setCompletionCheck('not-completed')
+        return
+      }
+
 
       try {
         const params: Record<string, string> = {}

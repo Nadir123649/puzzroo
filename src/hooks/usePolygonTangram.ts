@@ -209,7 +209,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
 
   const [puzzle, setPuzzle] = useState<PolygonPuzzle | null>(null)
   const getInitialTime = (diff: TangramDifficulty) => {
-    switch (diff) {
+    const normalizedDiff = String(diff || 'easy').toLowerCase()
+    switch (normalizedDiff) {
       case 'hard': return 120    // 2 minutes
       case 'medium': return 180  // 3 minutes
       default: return 300        // 5 minutes (easy)
@@ -324,7 +325,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   }
 
   function elapsedFromCountdown(countdownTime: number, diff: TangramDifficulty): number {
-    return Math.max(0, getInitialTime(diff) - countdownTime)
+    const activeDiff = (puzzleRef.current?.difficulty as TangramDifficulty) || diff
+    return Math.max(0, getInitialTime(activeDiff) - countdownTime)
   }
 
   async function initSession(puzzleId: string, diff: string, dailyChallenge = false, challengeId?: string): Promise<any> {
@@ -447,10 +449,12 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             : undefined
 
           let restored = false
+          const isReplayMode = searchParams?.get('replay') === 'true'
+          
           try {
-            const contRes = isDailyChallenge
+            const contRes = (!isReplayMode && isDailyChallenge)
               ? await gameApi.getContinueDaily('tangram', challengeId as string).catch(() => null)
-              : await gameApi.getContinue('tangram', difficulty).catch(() => null)
+              : (!isReplayMode) ? await gameApi.getContinue('tangram', difficulty).catch(() => null) : null
             if (
               !cancelled &&
               contRes?.hasActiveSession &&
@@ -486,7 +490,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             let p: PolygonPuzzle | null = null
             try {
               if (isDailyChallenge) {
-                const res = await gameApi.getDailyPuzzle('tangram', getDailyDateString(dateParam))
+                const res = await gameApi.getDailyPuzzle('tangram', getDailyDateString(dateParam), difficulty)
                 if (!res || !(res as any).id) throw new Error('invalid_puzzle')
                 p = res as unknown as PolygonPuzzle
               } else {
@@ -501,7 +505,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
               if (p && Array.isArray(p.fullPolygon) && Array.isArray(p.pieceShapeIds)) {
                 writeCache(p)
                 setPuzzle(p)
-                initSession(p.id, difficulty, isDailyChallenge, challengeId)
+                setTimeRemaining(getInitialTime(p.difficulty as TangramDifficulty || difficulty))
+                initSession(p.id, p.difficulty || difficulty, isDailyChallenge, challengeId)
               }
             }
           }
@@ -648,7 +653,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       setHistoryIndex(0)
       lastCommittedStateRef.current = restoredPieces
 
-      const remaining = Math.max(0, getInitialTime(difficulty) - (serverRestore.elapsedSeconds || 0))
+      const activeDiff = (puzzle.difficulty as TangramDifficulty) || difficulty
+      const remaining = Math.max(0, getInitialTime(activeDiff) - (serverRestore.elapsedSeconds || 0))
       setTimeRemaining(remaining)
       setHintsUsed(serverRestore.hintsUsed || 0)
       return // Skip standard tray layout initialization
@@ -703,7 +709,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             setHistoryIndex(0)
             lastCommittedStateRef.current = restoredPieces
 
-              const remaining = getInitialTime(difficulty) - saved.elapsedSeconds
+              const activeDiff = (puzzle.difficulty as TangramDifficulty) || difficulty
+              const remaining = getInitialTime(activeDiff) - saved.elapsedSeconds
               setTimeRemaining(Math.max(0, remaining))
               setHintsUsed(saved.hintsUsed)
               return // Skip standard tray layout initialization
@@ -726,7 +733,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   useEffect(() => {
     if (gameStatus !== 'playing') return
     if (pieces.length === 0 || !puzzle) return
-    const elapsed = getInitialTime(difficulty) - timeRemaining
+    const activeDiff = (puzzle.difficulty as TangramDifficulty) || difficulty
+    const elapsed = getInitialTime(activeDiff) - timeRemaining
     const key = JSON.stringify(pieces.map(p => ({ id: p.id, x: p.transform.x, y: p.transform.y, r: p.transform.rotation, placed: p.isPlaced, snapped: p.isSnapped })))
     if (key === lastMoveKeyRef.current) return
     lastMoveKeyRef.current = key
@@ -1094,9 +1102,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           if (!cancelled) {
             writeCache(p)
             setPuzzle(p)
+            setTimeRemaining(getInitialTime(p.difficulty as TangramDifficulty || difficulty))
             sessionCreatedRef.current = false
             sessionIdRef.current = null
-            initSession(p.id, difficulty)
+            initSession(p.id, p.difficulty || difficulty)
           }
         } finally {
           if (!cancelled) setLoading(false)
@@ -1146,9 +1155,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           if (!cancelled) {
             writeCache(p)
             setPuzzle(p)
+            setTimeRemaining(getInitialTime(p.difficulty as TangramDifficulty || difficulty))
             sessionCreatedRef.current = false
             sessionIdRef.current = null
-            initSession(p.id, difficulty)
+            initSession(p.id, p.difficulty || difficulty)
           }
         } finally {
           if (!cancelled) setLoading(false)
