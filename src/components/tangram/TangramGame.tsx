@@ -42,6 +42,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   const mobileBoardRef = useRef<HTMLDivElement>(null)
   const desktopBoardRef = useRef<HTMLDivElement>(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [zOrder, setZOrder] = useState<string[]>([])
 
   const {
     puzzle,
@@ -165,6 +166,10 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
   const handlePieceSelect = (pieceId: TangramPieceId) => {
     selectPiece(pieceId)
+    setZOrder(prev => {
+      const without = prev.filter(id => id !== pieceId)
+      return [...without, pieceId]
+    })
   }
 
   const handlePieceMove = (pieceId: TangramPieceId, x: number, y: number, onSnapSuccess?: () => void) => {
@@ -202,15 +207,12 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
           {/* Puzzle Metadata */}
           <div className="text-center space-y-1 w-full mt-4">
             <div className="flex items-center justify-center gap-3 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] font-urbanist text-[12px] font-semibold text-[#6949FF] dark:text-[#A592FF]">
-                <span className="capitalize">{puzzle?.difficulty || 'easy'}</span>
-              </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5F6FA] dark:bg-[#35383F] font-urbanist text-[12px] font-semibold text-[#616161] dark:text-[#A0A4B8]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
-                <span>{difficulty === 'hard' ? '1.5' : difficulty === 'medium' ? '3' : '5'} min</span>
+                <span>{(puzzle?.difficulty || difficulty) === 'hard' ? '2' : (puzzle?.difficulty || difficulty) === 'medium' ? '3' : '5'} min</span>
               </span>
             </div>
           </div>
@@ -237,6 +239,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     key={piece.id}
                     piece={piece}
                     isSelected={selectedPiece === piece.id}
+                    zOrderIndex={zOrder.indexOf(piece.id)}
                     onSelect={() => handlePieceSelect(piece.id)}
                     onMove={(x, y, onSnapSuccess) => handlePieceMove(piece.id, x, y, onSnapSuccess)}
                     onRotateLeft={handlePieceRotateLeft}
@@ -292,7 +295,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     </div>
                     <div className="w-full h-2.5 bg-[#F0EDFF] dark:bg-[#35383F] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-[#6949FF] to-[#8B6EFF] rounded-full transition-all duration-500 ease-out"
+                        className={`h-full bg-gradient-to-r from-[#6949FF] to-[#8B6EFF] rounded-full ${progressPercent > 0 ? 'transition-all duration-500 ease-out' : ''}`}
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
@@ -410,7 +413,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                 </div>
                 <div className="w-full h-2.5 bg-white dark:bg-[#35383F] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-[#6949FF] to-[#8B6EFF] rounded-full transition-all duration-500 ease-out"
+                    className={`h-full bg-gradient-to-r from-[#6949FF] to-[#8B6EFF] rounded-full ${progressPercent > 0 ? 'transition-all duration-500 ease-out' : ''}`}
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
@@ -436,6 +439,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     key={piece.id}
                     piece={piece}
                     isSelected={selectedPiece === piece.id}
+                    zOrderIndex={zOrder.indexOf(piece.id)}
                     onSelect={() => handlePieceSelect(piece.id)}
                     onMove={(x, y, onSnapSuccess) => handlePieceMove(piece.id, x, y, onSnapSuccess)}
                     onRotateLeft={handlePieceRotateLeft}

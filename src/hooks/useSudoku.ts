@@ -32,6 +32,7 @@ import {
   convertToSudokuBoard,
   isValidCompletedBoard,
   isValidMove,
+  validateBoardAgainstSolution,
 } from '@shared/lib/sudoku/helpers'
 import { KEYBOARD_KEYS, INITIAL_GAME_STATE } from '@shared/lib/sudoku/constants'
 import {
@@ -121,7 +122,8 @@ async function loadSudokuPuzzle(source: PuzzleSource): Promise<SudokuPuzzleData>
     if (cached) return cached
     raw = await gameApi.getPuzzleById('sudoku', source.id)
   } else {
-    raw = await gameApi.getDailyPuzzle('sudoku', source.date)
+    const targetDiff = source.difficulty || 'easy'
+    raw = await gameApi.getDailyPuzzle('sudoku', source.date, targetDiff)
   }
   if (!raw || !(raw as any).id) throw new Error('invalid_puzzle')
   const puzzle = raw as unknown as SudokuPuzzleData
@@ -407,13 +409,19 @@ export function useSudoku() {
           // Helper: rebuild mistake tracking from board and solution
           function rebuildMistakeTracking(board: SudokuBoard, solution: SudokuBoard) {
             cellMistakesRef.current.clear()
+            cellScoreAwardedRef.current.clear()
             for (let r = 0; r < 9; r++) {
               for (let c = 0; c < 9; c++) {
-                const val = board[r]?.[c]?.value
+                const cell = board[r]?.[c]
                 const solVal = solution[r]?.[c]?.value
-                if (val && solVal && val !== solVal) {
+                if (cell && cell.value && solVal) {
                   const cellKey = `${r}-${c}`
-                  cellMistakesRef.current.set(cellKey, new Set([val]))
+                  if (cell.value !== solVal) {
+                    cellMistakesRef.current.set(cellKey, new Set([cell.value]))
+                  } else if (!cell.fixed) {
+                    // This was a correctly user-filled cell
+                    cellScoreAwardedRef.current.add(cellKey)
+                  }
                 }
               }
             }
@@ -716,6 +724,9 @@ setGameState({
   // Track mistakes per cell to avoid duplicate penalties
   const cellMistakesRef = useRef<Map<string, Set<number>>>(new Map())
 
+  // Track scored cells to prevent infinite score farming
+  const cellScoreAwardedRef = useRef<Set<string>>(new Set())
+
   // Current refs for latest values
   const currentBoardRef = useRef(gameState.currentBoard)
   const scoreRef = useRef(gameState.score)
@@ -737,6 +748,7 @@ setGameState({
    */
   useEffect(() => {
     if (isInitialized && gameState.gameStatus === 'playing') {
+      const exactTime = startTimeRef.current !== null ? Math.floor((Date.now() - startTimeRef.current) / 1000) : gameState.time
       saveGameState({
         currentBoard: gameState.currentBoard,
         initialBoard: gameState.initialBoard,
@@ -745,7 +757,7 @@ setGameState({
         puzzleId: gameState.puzzleId,
         mistakes: gameState.mistakes,
         score: gameState.score,
-        time: gameState.time,
+        time: exactTime,
         gameStatus: gameState.gameStatus,
         history: boardHistory,
         selectedCell,
@@ -767,10 +779,26 @@ setGameState({
       if (!sessionIdRef.current || completionCalledRef.current) return
       const boardStr = sudokuBoardToString(currentBoardRef.current)
       if (!boardStr || boardStr.length !== 81) return
-      const elapsed = (timeRef.current || 0) + savedGapSeconds(lastLocalSaveAtRef.current)
+      const exactTime = startTimeRef.current !== null ? Math.floor((Date.now() - startTimeRef.current) / 1000) : timeRef.current
+      
+      // Update local storage synchronously so it survives quick navigation
+      saveGameState({
+        currentBoard: currentBoardRef.current,
+        initialBoard: gameState.initialBoard,
+        solution: gameState.solution,
+        difficulty,
+        puzzleId: gameState.puzzleId,
+        mistakes: mistakesRef.current,
+        score: scoreRef.current,
+        time: exactTime,
+        gameStatus: gameState.gameStatus,
+        history: boardHistory,
+        selectedCell,
+      }, undefined, difficulty)
+
       Promise.resolve(gameApi.saveMove('sudoku', sessionIdRef.current, {
         board: boardStr,
-        elapsedTime: elapsed,
+        elapsedTime: exactTime,
         hintsUsed: hintsUsedRef.current,
         mistakes: mistakesRef.current,
         moves: movesRef.current,
@@ -784,6 +812,7 @@ setGameState({
     window.addEventListener('pagehide', flushElapsed)
     document.addEventListener('visibilitychange', onVisibility)
     return () => {
+      flushElapsed()
       window.removeEventListener('pagehide', flushElapsed)
       document.removeEventListener('visibilitychange', onVisibility)
     }
@@ -1004,13 +1033,19 @@ setGameState({
         }
       } else {
         // Valid move according to rules
+        const cellKey = `${selectedCell.row}-${selectedCell.col}`
+        cellMistakesRef.current.delete(cellKey)
+        
         let scoreDelta = 0
         if (isCorrectValue) {
-          const prevCell = getCellAt(gameState.currentBoard, selectedCell)
-          const wasAlreadyCorrect = prevCell?.isCorrect === true
+          const wasAlreadyScored = cellScoreAwardedRef.current.has(cellKey)
           newBoard[selectedCell.row][selectedCell.col].isError = false
           newBoard[selectedCell.row][selectedCell.col].isCorrect = true
-          scoreDelta = wasAlreadyCorrect ? 0 : 10
+          
+          if (!wasAlreadyScored) {
+            scoreDelta = 10
+            cellScoreAwardedRef.current.add(cellKey)
+          }
         } else {
           // Rule-abiding, but not the final solution value yet
           newBoard[selectedCell.row][selectedCell.col].isError = false
@@ -1030,8 +1065,8 @@ setGameState({
         }
         saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
 
-        // Check for win - validate entire board using Sudoku rules
-        if (isBoardComplete(newBoard) && isValidCompletedBoard(newBoard)) {
+        // Check for win - validate entire board against exact solution
+        if (isBoardComplete(newBoard) && validateBoardAgainstSolution(newBoard, gameState.solution)) {
           setIsWinAnimating(true)
 
           // Mark puzzle as completed in universal completion system
@@ -1086,6 +1121,9 @@ setGameState({
     newBoard[selectedCell.row][selectedCell.col].isCorrect = false
     newBoard[selectedCell.row][selectedCell.col].isError = false
 
+    const cellKey = `${selectedCell.row}-${selectedCell.col}`
+    cellMistakesRef.current.delete(cellKey)
+
     setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
     saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
   }, [selectedCell, gameState])
@@ -1136,14 +1174,18 @@ setGameState({
     // Mark as correct and clear any error
     newBoard[targetCell.row][targetCell.col].isCorrect = true
     newBoard[targetCell.row][targetCell.col].isError = false
+    
+    const cellKey = `${targetCell.row}-${targetCell.col}`
+    cellMistakesRef.current.delete(cellKey)
+    cellScoreAwardedRef.current.add(cellKey)
 
     hintsUsedRef.current += 1
     updateScore(-20) // -20 for hint
     setGameState((prev) => ({ ...prev, currentBoard: newBoard }))
     saveMoveNow(newBoard, timeRef.current, hintsUsedRef.current, gameState.mistakes)
 
-    // Check for win - validate entire board using Sudoku rules
-    if (isBoardComplete(newBoard) && isValidCompletedBoard(newBoard)) {
+    // Check for win - validate entire board against exact solution
+    if (isBoardComplete(newBoard) && validateBoardAgainstSolution(newBoard, gameState.solution)) {
       setIsWinAnimating(true)
 
       // Mark puzzle as completed in universal completion system
@@ -1180,6 +1222,7 @@ setGameState({
     setScoreFeedbacks([])
     setBoardHistory([])
     cellMistakesRef.current.clear()
+    cellScoreAwardedRef.current.clear()
     // Explicit baseline: the timer keeps running (status stays 'playing'),
     // so point it at now instead of nulling it and waiting for the
     // (never re-running) effect.
@@ -1221,6 +1264,7 @@ setGameState({
     setScoreFeedbacks([])
     setBoardHistory([])
     cellMistakesRef.current.clear()
+    cellScoreAwardedRef.current.clear()
     // Explicit baseline: the timer keeps running (status stays 'playing'),
     // so point it at now instead of nulling it and waiting for the
     // (never re-running) effect.

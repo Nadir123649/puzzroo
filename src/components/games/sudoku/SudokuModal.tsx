@@ -9,7 +9,9 @@ interface SudokuModalProps {
   time?: number
   mistakes?: number
   maxMistakes?: number
+  hintsUsed?: number
   score?: number
+  lossReason?: 'mistakes' | 'timeout'
   onPlayAgain: () => void
   onNewGame?: () => void
   onBackToGames?: () => void
@@ -23,7 +25,9 @@ export function SudokuModal({
   time,
   mistakes,
   maxMistakes,
+  hintsUsed,
   score,
+  lossReason,
   onPlayAgain,
   onNewGame,
   onBackToGames,
@@ -138,6 +142,16 @@ export function SudokuModal({
                     {mistakes ?? 0}/{maxMistakes ?? 3}
                   </span>
                 </div>
+                {hintsUsed !== undefined && (
+                  <div className="flex justify-between items-center">
+                    <span className="font-urbanist text-[#424242] dark:text-[#E0E0E0] font-medium text-xs sm:text-base">
+                      Hints Used
+                    </span>
+                    <span className="font-urbanist text-[var(--color-primary)] font-bold text-base sm:text-lg">
+                      {hintsUsed}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="font-urbanist text-[#424242] dark:text-[#E0E0E0] font-medium text-xs sm:text-base">
                     Score
@@ -178,16 +192,23 @@ export function SudokuModal({
             // Game Over Modal Content
             <>
               <div className="text-center mb-4 sm:mb-6">
-                <div className="text-5xl sm:text-6xl mb-2 sm:mb-4">💔</div>
+                <div className="text-5xl sm:text-6xl mb-2 sm:mb-4">
+                  {lossReason === 'timeout' || (lossReason === undefined && time !== undefined && time <= 0)
+                    ? '⏳'
+                    : '💔'}
+                </div>
                 <h2
                   id="modal-title"
                   className="font-urbanist text-2xl sm:text-3xl font-bold text-[#212121] dark:text-white mb-1 sm:mb-2"
                 >
-                  You Lost!
-                  {time !== undefined && time <= 0 && " Time Ran Out"}
+                  {lossReason === 'timeout' || (lossReason === undefined && time !== undefined && time <= 0) 
+                    ? "Time's Up!" 
+                    : "You Lost!"}
                 </h2>
                 <p className="font-urbanist text-[#424242] dark:text-[#E0E0E0] text-sm sm:text-lg">
-                  {time !== undefined && time <= 0 ? "You ran out of time." : "You reached the maximum mistakes limit."}
+                  {lossReason === 'timeout' || (lossReason === undefined && time !== undefined && time <= 0)
+                    ? "You lost because the time limit expired." 
+                    : "You reached the maximum mistakes limit."}
                 </p>
               </div>
 

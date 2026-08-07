@@ -104,7 +104,7 @@ export function SudokuHero({ backTo }: SudokuHeroProps = {}) {
 
             {/* Difficulty Badge */}
             {difficulty && (
-              <div className="flex justify-center mt-1">
+              <div className="flex justify-center -mt-2 mb-4">
                 <span className="font-urbanist text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-[#F0EDFF] dark:bg-[#35383F] text-[#6949FF] dark:text-[#A592FF]">
                   {difficulty}
                 </span>

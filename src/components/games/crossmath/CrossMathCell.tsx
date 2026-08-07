@@ -94,20 +94,22 @@ export const CrossMathCell = React.memo(function CrossMathCellComponent({ cell, 
 
   // Cursor
   let cursorClass = 'cursor-default'
-  if (isEditable && isEmpty || (isEditable && isNumber)) {
-    cursorClass = 'cursor-pointer'
+  if ((isEditable && isEmpty) || (isEditable && isNumber)) {
+    cursorClass = cell.isCorrect ? 'cursor-default' : 'cursor-pointer'
   }
 
   // Hover
   let hoverClass = ''
-  if (isEditable) {
+  if (isEditable && !cell.isCorrect) {
     hoverClass = 'hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] transition-colors duration-150'
   }
 
+  const isLocked = isEditable && cell.isCorrect
+
   return (
     <button
-      onClick={isEditable ? onClick : undefined}
-      disabled={!isEditable}
+      onClick={isEditable && !isLocked ? onClick : undefined}
+      disabled={!isEditable || isLocked}
       type="button"
       className={`
         aspect-square w-full

@@ -54,6 +54,32 @@ export function SudokuBoard({
     return board[row][col].value === selectedNumber
   }
 
+  /**
+   * Determines if a cell is a source of conflict for a currently incorrect cell
+   */
+  const isConflictSource = (row: number, col: number): boolean => {
+    const cell = board[row][col]
+    if (!cell.value) return false
+    
+    for (let er = 0; er < 9; er++) {
+      for (let ec = 0; ec < 9; ec++) {
+        const other = board[er][ec]
+        if (other.isError && other.value === cell.value) {
+          if (er === row && ec === col) continue
+          
+          if (
+            er === row || 
+            ec === col || 
+            (Math.floor(er / 3) === Math.floor(row / 3) && Math.floor(ec / 3) === Math.floor(col / 3))
+          ) {
+            return true
+          }
+        }
+      }
+    }
+    return false
+  }
+
   return (
     <div
       className={`grid grid-cols-9 ${
@@ -71,7 +97,10 @@ export function SudokuBoard({
           const isSelected =
             selectedCell?.row === rowIndex && selectedCell?.col === colIndex
           const isHighlighted = isCellHighlighted(rowIndex, colIndex)
-          const hasNumberHighlight = hasSelectedNumberHighlight(rowIndex, colIndex)
+          
+          // Use purple highlight for either the matching selected number or a conflict source
+          const isConflict = isConflictSource(rowIndex, colIndex)
+          const hasNumberHighlight = hasSelectedNumberHighlight(rowIndex, colIndex) || isConflict
 
           return (
             <SudokuCell

@@ -93,6 +93,7 @@ export function useCrossMath(initialPuzzleId?: string) {
 
   const dateParam = searchParams.get('date')
   const isDailyChallenge = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
+  const isReplayMode = searchParams?.get('replay') === 'true'
 
   const getInitialTime = (diff: Difficulty) => {
     switch (diff) {
@@ -162,6 +163,7 @@ export function useCrossMath(initialPuzzleId?: string) {
   const scoreRef = useRef(0)
   const restoredRef = useRef(false)
   const cellMistakesRef = useRef<Map<string, Set<number>>>(new Map())
+  const cellScoreAwardedRef = useRef<Set<string>>(new Set())
 
   // Single authoritative save pipeline: serialized, coalescing, never overlapping.
   // A save is only sent when the previous one completed; intermediate snapshots
@@ -338,7 +340,25 @@ export function useCrossMath(initialPuzzleId?: string) {
           const continueResult = isDailyChallenge && dcId
             ? await gameApi.getContinueDailyCrossMath(dcId).catch(() => null)
             : await gameApi.getContinueCrossMath(difficultyParam).catch(() => null)
-          const serverSession = continueResult?.hasActiveSession ? continueResult.session : null
+          let serverSession = continueResult?.hasActiveSession ? continueResult.session : null
+          if (isReplayMode && serverSession && serverSession.sessionId) {
+            try {
+              const result = await gameApi.replayCrossMathSession(serverSession.sessionId, serverSession.puzzleId)
+              if (result && result.sessionId) {
+                serverSession = {
+                  ...serverSession,
+                  sessionId: result.sessionId,
+                  sessionStatus: 'playing',
+                  grid: {},
+                  mistakes: 0,
+                  score: 0,
+                  elapsedTime: 0
+                }
+              }
+            } catch {
+              // fallback to regular session
+            }
+          }
           if (serverSession && serverSession.sessionId && (serverSession as any).puzzle) {
             const serverPuzzle = (serverSession as any).puzzle
             if (serverPuzzle && isValidPuzzle(serverPuzzle)) {
@@ -378,6 +398,7 @@ export function useCrossMath(initialPuzzleId?: string) {
               setHistory(savedGame?.history || [])
               clearGameState()
               cellMistakesRef.current.clear()
+              cellScoreAwardedRef.current.clear()
 
               sessionIdRef.current = serverSession.sessionId
               sessionCreatedRef.current = true
@@ -525,6 +546,7 @@ export function useCrossMath(initialPuzzleId?: string) {
             setHistory([])
             clearGameState(undefined, targetDiff)
             cellMistakesRef.current.clear()
+            cellScoreAwardedRef.current.clear()
             const sessionData = await initSession(puzzle.id, targetDiff, isDailyChallenge, dcId)
             if (sessionData && !savedGame) {
               const restored = restoreFromSession(sessionData, puzzle.grid, puzzle.solution)
@@ -755,9 +777,13 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     // Update score with feedback
     if (isCorrect) {
-      const newScore = score + SCORING.CORRECT_ANSWER
-      setScore(newScore)
-      triggerScoreFeedback(SCORING.CORRECT_ANSWER)
+      const cellKey = `${row}-${col}`
+      if (!cellScoreAwardedRef.current.has(cellKey)) {
+        cellScoreAwardedRef.current.add(cellKey)
+        const newScore = score + SCORING.CORRECT_ANSWER
+        setScore(newScore)
+        triggerScoreFeedback(SCORING.CORRECT_ANSWER)
+      }
     } else {
       const cellKey = `${row}-${col}`
       const cellMistakes = cellMistakesRef.current.get(cellKey) || new Set<number>()
@@ -1057,6 +1083,8 @@ export function useCrossMath(initialPuzzleId?: string) {
     completionCalledRef.current = false
     movesRef.current = 0
     hintsUsedRef.current = 0
+    cellMistakesRef.current.clear()
+    cellScoreAwardedRef.current.clear()
 
     if (!replaySessionCreated) {
       sessionCreatedRef.current = false
@@ -1099,6 +1127,8 @@ export function useCrossMath(initialPuzzleId?: string) {
     completionCalledRef.current = false
     movesRef.current = 0
     hintsUsedRef.current = 0
+    cellMistakesRef.current.clear()
+    cellScoreAwardedRef.current.clear()
     sessionCreatedRef.current = false
     sessionIdRef.current = null
     if (!getAccessToken()) ensureGuestId()
@@ -1159,7 +1189,21 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     setBoard(newBoard)
     hintsUsedRef.current += 1
-    saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty, score)
+    
+    let finalScore = score
+    const cellKey = `${row}-${col}`
+    if (!cellScoreAwardedRef.current.has(cellKey)) {
+      cellScoreAwardedRef.current.add(cellKey)
+      finalScore += SCORING.CORRECT_ANSWER
+      triggerScoreFeedback(SCORING.CORRECT_ANSWER)
+    }
+    
+    // Deduct hint cost
+    finalScore = Math.max(0, finalScore + SCORING.HINT_COST)
+    setScore(finalScore)
+    triggerScoreFeedback(SCORING.HINT_COST)
+    
+    saveMoveNow(newBoard, time, hintsUsedRef.current, mistakes, difficulty, finalScore)
 
     // Track number usage
     const newUsedCount = new Map(usedNumbersCount)
@@ -1174,11 +1218,6 @@ export function useCrossMath(initialPuzzleId?: string) {
     newUsedCount.set(correctValue, currentCount + 1)
     setUsedNumbersCount(newUsedCount)
 
-    // Deduct hint cost
-    const newScore = Math.max(0, score + SCORING.HINT_COST)
-    setScore(newScore)
-    triggerScoreFeedback(SCORING.HINT_COST)
-
     // Select the hinted cell
     setSelectedCell({ row, col })
 
@@ -1188,7 +1227,7 @@ export function useCrossMath(initialPuzzleId?: string) {
       const puzzleId = dateParam ? `daily-cross-math-${dateParam}` : currentPuzzle.id
       markPuzzleCompleted('crossmath', puzzleId, {
         time: time,
-        score: newScore,
+        score: finalScore,
         difficulty: difficulty,
       })
       completePuzzle(newBoard, time, difficulty)
@@ -1468,6 +1507,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     resetBoard,
     replayBoard,
     requestHint,
+    hintsUsed: hintsUsedRef.current,
     availableHints: calculateAvailableHints(score),
     handleFeedbackComplete,
     canUndo: history.length > 0,
