@@ -3,7 +3,7 @@
 import { getCurrentUser, fetchBillingHistory } from '@/lib/auth/frontend-auth'
 import { Receipt, Calendar, CreditCard } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-
+import Link from 'next/link'
 export default function BillingHistoryPage() {
   const user = getCurrentUser()
   const [billingData, setBillingData] = useState<any>(null)
@@ -97,10 +97,13 @@ export default function BillingHistoryPage() {
 
       {/* Info Box */}
       <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
-        <p className="font-urbanist text-[13px] text-purple-900 dark:text-purple-300">
+        <p className="font-urbanist text-[13px] text-purple-900 dark:text-purple-300 mb-2">
           <strong>Need help?</strong> If you have questions about your billing or need to update your payment method, 
           please contact our support team.
         </p>
+        <Link href="/contact-us" className="font-urbanist text-[13px] font-bold text-[#6949FF] hover:underline">
+          Contact support team
+        </Link>
       </div>
     </div>
   )
