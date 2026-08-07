@@ -14,7 +14,6 @@ import { CalendarModal } from './CalendarModal'
 import { images } from '@/lib/utils'
 import { useTheme } from '@/hooks/use-theme'
 import { getCompletedPuzzleIds } from '@shared/lib/completion/universal'
-import { api } from '@/lib/api/client'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { GameLoader } from '@/components/ui/GameLoader'
 import { isLoggedIn, getCurrentUser } from '@/lib/auth/frontend-auth'
@@ -120,27 +119,10 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
     }
   }, [gameId])
 
-  // Load completed puzzles from universal completion system + server API
+  // Load completed puzzles from universal completion system (no server calls)
   useEffect(() => {
     const gameType = gameId === 'cross-math' ? 'crossmath' : gameId === 'sudoku' ? 'sudoku' : gameId === 'nonogram' ? 'nonogram' : 'tangram'
-    const localIds = getCompletedPuzzleIds(gameType)
-    setCompletedPuzzles(localIds)
-
-    // Verify today's challenge with server
-    const apiGameId = gameId === 'cross-math' ? 'crossmath' : gameId === 'sudoku' ? 'sudoku' : gameId
-    api(`/api/v1/games/${apiGameId}/daily/completion`).then(res => {
-      if (res.success) {
-        const payload = res.payload as any
-        if (payload?.completed) {
-          const today = new Date()
-          const m = String(today.getMonth() + 1).padStart(2, '0')
-          const d = String(today.getDate()).padStart(2, '0')
-          const y = String(today.getFullYear()).slice(-2)
-          const todayId = `${gameId}-${m}-${d}-${y}`
-          setCompletedPuzzles(prev => new Set([...prev, todayId]))
-        }
-      }
-    }).catch(() => { })
+    setCompletedPuzzles(getCompletedPuzzleIds(gameType))
   }, [gameId])
 
   useEffect(() => {
@@ -315,7 +297,7 @@ export function PastPuzzlesContent({ gameId }: PastPuzzlesContentProps) {
                       )}
                     </div>
 
-                    <Link href={!authed ? "/signup" : "/subscription"}>
+                    <Link href={!authed ? "/signup" : "/subscription"} prefetch={false}>
                       <Button
                         size="md"
                         className="whitespace-nowrap"

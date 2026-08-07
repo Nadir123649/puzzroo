@@ -322,6 +322,15 @@ export const gameApi = {
     return res.payload;
   },
 
+  async replayTangramSession(sessionId: string, puzzleId: string) {
+    const res = await api(`/api/v1/games/tangram/sessions/${sessionId}/replay`, {
+      method: 'POST',
+      body: JSON.stringify({ puzzleId }),
+      suppressToast: true,
+    });
+    return res.payload;
+  },
+
   async abandonCrossMathSession(sessionId: string) {
     const res = await api(`/api/v1/games/crossmath/sessions/${sessionId}/abandon`, { method: 'POST' });
     return res.payload;

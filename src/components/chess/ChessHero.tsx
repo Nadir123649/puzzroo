@@ -43,6 +43,7 @@ export function ChessHero({ selectedDifficulty }: ChessHeroProps) {
 
           <Link
             href="/chess/setup"
+            prefetch={false}
             className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-xs font-urbanist font-bold transition-all duration-200 active:scale-95 shadow-sm"
           >
             <Settings size={13} />

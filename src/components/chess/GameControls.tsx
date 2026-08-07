@@ -122,6 +122,7 @@ export function GameControls({
         {/* New Game Setup Button */}
         <Link
           href="/chess/setup"
+          prefetch={false}
           className="col-span-2 h-11 px-3 flex items-center justify-center gap-2 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-xs sm:text-sm transition-all duration-200 active:scale-95 shadow-md shadow-[#6949FF]/20 mt-1 whitespace-nowrap"
         >
           <Settings size={16} className="flex-shrink-0" />

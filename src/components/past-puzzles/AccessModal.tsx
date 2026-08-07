@@ -107,7 +107,7 @@ export function AccessModal({ isOpen, onClose, gameIcon, authed }: AccessModalPr
             </div>
 
             {/* Redirect Button */}
-            <Link href={authed ? "/subscription" : "/signup"} className="w-full">
+            <Link href={authed ? "/subscription" : "/signup"} className="w-full" prefetch={false}>
               <button 
                 onClick={onClose}
                 className="w-full min-w-[280px] h-[46px] px-8 rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2"
