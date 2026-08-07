@@ -51,20 +51,26 @@ async function fetchUser(): Promise<User | null> {
 /**
  * React Query hook for fetching and caching user data.
  * This replaces multiple duplicate API calls with a single cached request.
+ *
+ * Network policy:
+ * - Fires ONLY when the home page ("/") opens, and only once per open.
+ * - Never refetches on window focus, reconnect, or remount within a session.
+ * - Non-home pages serve the cached snapshot instead (users/me never fires there).
  */
 export function useUser(enabled: boolean = true) {
   return useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
-    enabled: enabled && typeof window !== "undefined" && hasStoredAuth(),
-    // Keep the profile fresh: changes made on other devices must surface on
-    // this one (name, avatar, role, plan). Refetch on mount and window focus,
-    // plus reconnect, with a short stale window instead of a login-time snapshot.
-    staleTime: 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: "always",
-    refetchOnMount: true,
-    refetchOnReconnect: true,
+    enabled:
+      enabled &&
+      typeof window !== "undefined" &&
+      hasStoredAuth() &&
+      window.location.pathname === "/",
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
     retry: false,
   });
 }

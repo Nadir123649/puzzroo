@@ -109,6 +109,12 @@ function scheduleFlush() {
 
 async function flush(useKeepalive = false) {
   if (typeof window === "undefined" || queue.length === 0) return;
+  // Belt-and-braces: never send analytics while logged out. track() is already
+  // gated, but ensure queued events can't leak to the network on pagehide.
+  if (!isLoggedIn()) {
+    queue.length = 0;
+    return;
+  }
   const events = queue.splice(0, queue.length);
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   try {

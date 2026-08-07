@@ -115,7 +115,7 @@ export default function ResetPasswordPage() {
 
           {/* Logo & Header */}
           <div className="flex flex-col items-center mb-8">
-            <Link href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none">
+            <Link href="/" className="flex items-center gap-[clamp(8px,1vw,12px)] mb-3 select-none" prefetch={false}>
               <Image
                 src={images.logo}
                 alt="Puzzroo Logo"
@@ -173,7 +173,7 @@ export default function ResetPasswordPage() {
                   Please log in with your new password.
                 </p>
               </div>
-               <Link href="/login" className="w-full">
+               <Link href="/login" className="w-full" prefetch={false}>
                  <Button className="w-full h-[48px] rounded-full text-base font-urbanist font-semibold bg-[#6949FF] hover:bg-[#5536E6]">
                    Go to Log In
                  </Button>
@@ -192,12 +192,12 @@ export default function ResetPasswordPage() {
                   Please request a new password reset link.
                 </p>
               </div>
-              <Link href="/forgot-password" className="w-full">
+              <Link href="/forgot-password" className="w-full" prefetch={false}>
                 <Button className="w-full h-[48px] rounded-full text-base font-urbanist font-semibold bg-[#6949FF] hover:bg-[#5536E6]">
                   Request New Link
                 </Button>
               </Link>
-              <Link href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline">
+              <Link href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline" prefetch={false}>
                 Back to Log In
               </Link>
             </div>
@@ -220,10 +220,10 @@ export default function ResetPasswordPage() {
               >
                 Retry
               </Button>
-              <Link href="/forgot-password" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline">
+              <Link href="/forgot-password" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline" prefetch={false}>
                 Request a New Link
               </Link>
-              <Link href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline">
+              <Link href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline" prefetch={false}>
                 Back to Log In
               </Link>
             </div>
@@ -330,7 +330,7 @@ export default function ResetPasswordPage() {
 
               {/* Back to Login */}
               <div className="text-center pt-2">
-                <Link href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline">
+                <Link href="/login" className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline" prefetch={false}>
                   Back to Log In
                 </Link>
               </div>
