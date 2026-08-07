@@ -100,10 +100,7 @@ export default function PrivacyPolicyPage() {
             Changes to This Policy
           </h2>
           <p className="font-urbanist font-normal text-[14px] md:text-[16px] leading-[170%] text-[#757575] dark:text-[#BDBDBD]">
-            We may update our privacy policy from time to time. We will notify you of any changes by posting the new privacy policy on this page and updating the "Last Updated" date below.
-          </p>
-          <p className="font-urbanist font-normal text-[14px] md:text-[16px] leading-[170%] text-[#757575] dark:text-[#BDBDBD] mt-[10px]">
-            <strong>Last Updated:</strong> June 7, 2026
+            We may update our privacy policy from time to time. We will notify you of any changes by posting the new privacy policy on this page.
           </p>
         </section>
       </div>

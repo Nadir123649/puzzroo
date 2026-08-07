@@ -112,11 +112,7 @@ export default function TermsAndConditionsPage() {
           </p>
         </section>
 
-        <section>
-          <p className="font-urbanist font-normal text-[14px] md:text-[16px] leading-[170%] text-[#757575] dark:text-[#BDBDBD]">
-            <strong>Last Updated:</strong> June 7, 2026
-          </p>
-        </section>
+
       </div>
     </InfoPageLayout>
   )
