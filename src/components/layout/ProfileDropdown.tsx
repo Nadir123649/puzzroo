@@ -114,6 +114,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
           <div className="py-2">
             <Link
               href="/account-information"
+              prefetch={false}
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
             >
@@ -125,6 +126,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
 
             <Link
               href="/subscription"
+              prefetch={false}
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
             >
@@ -136,6 +138,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
 
             <Link
               href="/email-preferences"
+              prefetch={false}
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
             >
@@ -147,6 +150,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
 
             <Link
               href="/billing-history"
+              prefetch={false}
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
             >
@@ -159,6 +163,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
             {isAdmin && (
               <Link
                 href="/admin/tracking"
+                prefetch={false}
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#181A20] transition-colors duration-150"
               >

@@ -12,7 +12,7 @@ export default function NotFound() {
         <p className="text-[#424242] dark:text-[#E0E0E0] mb-8">
           The page you're looking for doesn't exist or has been moved.
         </p>
-        <Link href="/">
+        <Link href="/" prefetch={false}>
           <Button size="md">Go Home</Button>
         </Link>
       </div>
