@@ -205,6 +205,56 @@ NEXT_PUBLIC_SITE_URL=https://puzzroo.com
 NEXT_PUBLIC_GA_TRACKING_ID=your-ga-tracking-id
 ```
 
+```env
+# Add your environment variables here
+NEXT_PUBLIC_SITE_URL=https://puzzroo.com
+NEXT_PUBLIC_GA_TRACKING_ID=your-ga-tracking-id
+# Location API: confirm your app to Nominatim's fair-use policy (optional)
+# NOMINATIM_EMAIL=you@example.com
+# NOMINATIM_URL=https://nominatim.openstreetmap.org/reverse
+```
+
+#### Location API
+The app reports the caller's realtime client fingerprint — proxy-aware public IP,
+estimated location, and device/browser info — without ever prompting for browser
+permissions. GPS fixes (reverse-geocoded to city/region/country) are reported when
+the user shares them and are preferred; otherwise a best-effort IP approximation is
+used.
+
+- `POST /api/v1/location` — send `{ latitude, longitude, accuracy? }` from the
+  browser (`navigator.geolocation`). Server reverse-geocodes via Nominatim and stores
+  one row per identity in `UserLocation`.
+- `GET /api/v1/location` — real public client IP (extracted from
+  `CF-Connecting-IP` → `X-Forwarded-For` (every entry) → `X-Real-IP` → RFC 7239
+  `Forwarded` → socket, normalized and never trusting private/ranges), estimated
+  location (`ipwho.is` → `ip-api.com`, including `timezone`/`isp`/`asn`), and parsed
+  device/browser/OS. Latest stored GPS fix wins when present; otherwise the IP estimate
+  is returned (`source: "ip"`, never persisted).
+- IP handling: the address is primarily derived server-side from request headers — clients
+  cannot submit their own IP on proxied traffic. `getClientIp` (`src/lib/server/utils/http.ts`)
+  honors Cloudflare and reverse-proxy headers and rejects loopback/private/link-local values;
+  returns `null` when nothing usable arrives (e.g. no proxy headers). Set
+  `LOCATION_DEBUG=1` to echo received IP headers back in the `x-puzzroo-debug` response
+  header for diagnosis.
+- Localhost / headerless connections: when no proxy header carries a public IP, the endpoint
+  accepts a browser-attested address via `x-client-ip` (`getClientIpAttested`) and marks it
+  with `clientAttested: true`. The client lib (`src/lib/client/browserIp.ts`) resolves the
+  browser's own public IP (ipify → ipwho.is) and OS platform version (Chromium
+  `getHighEntropyValues`) and sends them — display-only fingerprint, never authoritative,
+  and never honored once a real proxy header exists.
+- OS accuracy: Windows 10 vs 11 cannot be told apart from the User-Agent alone. The route
+  opts into Client Hints (`Accept-CH`) and uses `Sec-CH-UA-Platform-Version` (major ≥ 13 ⇒
+  Windows 11) once the browser starts sending it, falling back to the JS-attested platform
+  version. The payload echoes `clientHints` so resolution is debuggable.
+- Device parsing: hand-rolled `parseUserAgent` (`src/lib/server/utils/deviceInfo.ts`)
+  returns `browser`, `version`, `os`, `deviceType` and a readable `device` label
+  (e.g. `Mobile Chrome 151 - Android`).
+- Frontend: `useUserLocation()` (`src/hooks/useUserLocation.ts`) requests high-accuracy
+  GPS, posts it, and marks the result `source: "gps"`; denied/unsupported cases hit the
+  IP fallback (`source: "ip"`). Never auto-fires on mount — call `findLocation()`.
+- Security: both routes require an auth token or `x-guest-id`, rate-limited per IP, and
+  return only the caller's own location.
+
 ### Customization
 
 #### Update Branding

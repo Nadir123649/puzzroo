@@ -36,6 +36,10 @@ const nextConfig = {
           // and Firebase's popup flow works silently.
           { key: 'X-Content-Type-Options', value: 'nosniff' },
 
+          // Advertise platform Client Hints on every response so browsers send
+          // sec-ch-ua-platform(-version) — used for Windows 10 vs 11 detection.
+          { key: 'Accept-CH', value: 'sec-ch-ua-platform-version, sec-ch-ua-platform' },
+
           // ── production-only security headers ──
           ...(production
             ? [
@@ -64,7 +68,7 @@ const nextConfig = {
                   value: [
                     "default-src 'self'",
                     "base-uri 'self'",
-                    "connect-src 'self' https://res.cloudinary.com https://*.cloudinary.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://api.stripe.com",
+                    "connect-src 'self' https://res.cloudinary.com https://*.cloudinary.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://api.stripe.com https://api64.ipify.org https://ipwho.is",
                     "font-src 'self' data:",
                     "form-action 'self'",
                     "frame-ancestors 'none'",

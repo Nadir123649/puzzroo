@@ -42,3 +42,17 @@ export const GRID_CONFIG = {
 
 // Supported grid sizes
 export const VALID_GRID_SIZES = [10, 15, 20, 25, 30] as const
+
+// Time limit (seconds) per difficulty — the countdown a puzzle starts with.
+// easy: 10 min, medium: 7 min, hard: 5 min.
+export const DIFFICULTY_TIME_LIMITS = {
+  easy: 600,
+  medium: 420,
+  hard: 300,
+} as const
+
+export type NonogramDifficulty = keyof typeof DIFFICULTY_TIME_LIMITS
+
+export function getTimeLimitSeconds(difficulty: string): number {
+  return DIFFICULTY_TIME_LIMITS[difficulty as NonogramDifficulty] ?? 600
+}

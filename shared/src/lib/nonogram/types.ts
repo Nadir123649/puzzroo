@@ -88,5 +88,9 @@ export interface SavedGameState {
   hintsUsed: number
   mistakeCount: number
   moveCount?: number
+  /** Present on completed snapshots so the win/loss review survives
+   *  navigation (e.g. FAQ → back). Absent for in-progress games. */
+  gameStatus?: 'playing' | 'won' | 'lost'
+  completedAt?: number
   timestamp: number
 }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Clock, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getCompletedPuzzleIds } from '@shared/lib/nonogram/completion'
+import { getTimeLimitSeconds } from '@shared/lib/nonogram/constants'
 import { useGameLobby } from '@/contexts/GameLobbyContext'
 import { images } from '@/lib/utils'
 import { useTheme } from '@/hooks/use-theme'
@@ -150,7 +151,7 @@ export function NonogramPuzzleGrid() {
                       Est. Time
                     </span>
                     <span className="font-urbanist font-semibold text-[#424242] dark:text-[#E0E0E0]">
-                      ~{Math.floor((puzzle.estimatedTime === 660 ? 600 : puzzle.estimatedTime) / 60)} min
+                      ~{Math.floor(getTimeLimitSeconds(puzzle.difficulty) / 60)} min
                     </span>
                   </div>
                 </div>

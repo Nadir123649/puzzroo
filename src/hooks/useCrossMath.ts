@@ -616,12 +616,10 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     const flushElapsed = () => {
       if (!sessionIdRef.current || completionCalledRef.current) return
-      if (boardRef.current.length === 0) return
-      if (movesRef.current === 0) return
-
+      if (board.length === 0) return
       const elapsed = elapsedFromCountdown(timeValueRef.current, difficultyRef.current) + savedGapSeconds(lastLocalSaveAtRef.current)
       Promise.resolve(gameApi.saveMove('crossmath', sessionIdRef.current, {
-        grid: gridToRecord(boardRef.current),
+        grid: gridToRecord(board),
         elapsedTime: elapsed,
         hintsUsed: hintsUsedRef.current,
         mistakes: mistakesRef.current,
@@ -640,6 +638,10 @@ export function useCrossMath(initialPuzzleId?: string) {
       document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [gameStatus, board.length])
+
+  useEffect(() => {
+    if (gameStatus === 'playing') timeValueRef.current = time
+  }, [time, gameStatus])
 
   // Update challenge status to in-progress when game is loaded
   useEffect(() => {

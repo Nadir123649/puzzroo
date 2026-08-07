@@ -78,7 +78,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // Email is fire-and-forget: never block the response on SMTP latency.
       // A delivery failure is logged by the service; the token stays valid so
       // the user can retry forgot-password.
-      void sendResetPasswordEmail(user.email, resetUrl, RESET_TOKEN_MINUTES);
+      void sendResetPasswordEmail(user.email, resetUrl, RESET_TOKEN_MINUTES).catch((e) => {
+        console.error("Reset password email failed to send:", e);
+      });
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[dev] Password reset link for ${user.email}: ${resetUrl}`);
+      }
       void trackServer({ userId: user._id.toString(), event: "password_reset_requested", request });
       return successResponse({ message: "If an account with that email exists, a reset link has been sent." });
     }

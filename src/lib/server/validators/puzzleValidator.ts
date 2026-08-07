@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const GAME_IDS = ["sudoku", "nonogram", "crossmath", "tangram"] as const;
 export const DIFFICULTIES = ["easy", "medium", "hard", "expert"] as const;
-export const PROGRESS_DIFFICULTIES = ["easy", "medium", "hard"] as const;
+export const PROGRESS_DIFFICULTIES = ["easy", "medium", "hard", "expert"] as const;
 
 export const gameIdSchema = z.enum(GAME_IDS);
 export const difficultySchema = z.enum(DIFFICULTIES);

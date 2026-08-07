@@ -17,10 +17,19 @@ describe("puzzle validators", () => {
     expect(r.success).toBe(false);
   });
 
-  it("complete schema rejects expert difficulty", () => {
+  it("complete schema accepts expert difficulty", () => {
     const r = completeSchema.safeParse({
       puzzleId: "x",
       difficulty: "expert",
+      score: 10,
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("complete schema rejects unknown difficulty", () => {
+    const r = completeSchema.safeParse({
+      puzzleId: "x",
+      difficulty: "insane",
       score: 10,
     });
     expect(r.success).toBe(false);

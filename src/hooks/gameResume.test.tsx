@@ -274,6 +274,7 @@ describe('crossmath resume time', () => {
     await sleep(2000)
 
     window.dispatchEvent(new Event('pagehide'))
+    await sleep(100)
 
     expect(gameApiMock.saveMove).toHaveBeenCalled()
     const [game, sessionId, payload] = gameApiMock.saveMove.mock.calls.at(-1)
