@@ -25,7 +25,7 @@ export interface AuditEntry {
   eventType: AuditEventType
   userId?: string
   sessionId?: string
-  ip?: string
+  ip?: string | null
   userAgent?: string
   metadata?: Record<string, unknown>
 }

@@ -8,6 +8,8 @@ import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
 import { SetEmailModal } from '@/components/account/SetEmailModal'
 import { AvatarUpload } from '@/components/account/AvatarUpload'
 import { getCurrentUser, deleteAccount, fetchGameStats, fetchSessions, revokeSession, fetchUserProfile, unlinkProvider, setAuthUser, clearAuthState, refreshUserProfile } from '@/lib/auth/frontend-auth'
+import { api } from '@/lib/api/client'
+import { getLocationAttestation } from '@/lib/client/browserIp'
 import { notify } from '@/lib/toast'
 import { Check, Activity, BarChart3, Monitor, Smartphone, Tablet, MapPin, Laptop, Trash2, Clock, Phone, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -57,6 +59,7 @@ export default function AccountInformationPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [sessions, setSessions] = useState<SessionDevice[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
+  const [currentLocation, setCurrentLocation] = useState<string | null>(null)
   const [provider, setProvider] = useState<string | null>(localUser?.provider || null)
   const [linkedProviders, setLinkedProviders] = useState<string[]>(localUser?.linkedProviders || [])
   const canChangePassword = !!localUser?.hasPassword
@@ -118,6 +121,20 @@ export default function AccountInformationPage() {
     fetchSessions().then(s => {
       setSessions(s)
       setSessionsLoading(false)
+    })
+
+    // Show the user's current location (stored GPS, else IP approximation).
+    // Silent one-shot GET — no permission prompt, never auto-fires GPS.
+    getLocationAttestation().then(attest =>
+      api<{ [k: string]: any }>('/api/v1/location', { suppressToast: true, headers: { ...attest } })
+    ).then(res => {
+      if (res.success) {
+        const p = res.payload
+        if (p && typeof p.latitude === 'number' && typeof p.longitude === 'number') {
+          const label = [p.city, p.country].filter(Boolean).join(', ') || p.region || null
+          setCurrentLocation(label)
+        }
+      }
     })
   }, [])
 
@@ -502,7 +519,7 @@ export default function AccountInformationPage() {
                 </span>
               </div>
               <p className="font-urbanist font-bold text-[15px] md:text-[17px] text-[#181A20] dark:text-white">
-                {sessions[0].location || 'Local Network'}
+                {currentLocation || sessions[0].location || 'Local Network'}
               </p>
             </div>
           </div>
