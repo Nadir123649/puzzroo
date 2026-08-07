@@ -6,6 +6,7 @@ import NonogramPlaySession from "@/lib/server/models/NonogramPlaySession"
 import GameProgress from "@/lib/server/models/GameProgress"
 import DailyChallenge from "@/lib/server/models/DailyChallenge"
 import { completionBus } from "@/lib/server/games/completion"
+import { recordGameCompletion } from "@/lib/server/games/recordCompletion"
 import { ensureGameSubscriptions } from "@/lib/server/games/subscriptions"
 import type { Actor } from "@/app/api/v1/games/nonogram/route-helpers"
 import type {
@@ -364,6 +365,19 @@ export class SessionService {
       result.mistakes,
       result.accuracy
     ).catch(() => {})
+
+    recordGameCompletion({
+      userId: actor.id,
+      gameId: "nonogram",
+      puzzleId: result.puzzleId,
+      difficulty: result.difficulty,
+      time: result.elapsedTime,
+      hintsUsed: result.hintsUsed,
+      mistakes: result.mistakes,
+      score: result.score,
+    }).catch((err) => {
+      console.error("[nonogram] recordGameCompletion failed:", err)
+    })
 
     if (session.gameType === "daily_challenge" && session.dailyChallengeId) {
       const today = new Date().toISOString().split("T")[0]

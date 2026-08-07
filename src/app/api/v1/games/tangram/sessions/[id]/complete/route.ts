@@ -7,6 +7,7 @@ import { completeSessionSchema } from "@/lib/server/puzzles/tangram/validators"
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { rateLimit } from "@/lib/server/utils/http"
 import { completionBus } from "@/lib/server/games/completion"
+import { recordGameCompletion } from "@/lib/server/games/recordCompletion"
 import { ensureGameSubscriptions } from "@/lib/server/games/subscriptions"
 import DailyChallenge from "@/lib/server/models/DailyChallenge"
 import TangramPlaySession from "@/lib/server/models/TangramPlaySession"
@@ -43,6 +44,22 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params: any)
         sessionResult.result.mistakes,
         sessionResult.result.accuracy
       ).catch(() => {})
+
+      try {
+        await recordGameCompletion({
+          userId: actor.id,
+          gameId: "tangram",
+          puzzleId: sessionResult.result.puzzleId,
+          difficulty: sessionResult.result.difficulty,
+          time: sessionResult.result.elapsedTime,
+          hintsUsed: sessionResult.result.hintsUsed,
+          mistakes: sessionResult.result.mistakes,
+          moves: moves || 0,
+          score: sessionResult.result.score,
+        })
+      } catch (err) {
+        console.error("[tangram] recordGameCompletion failed:", err)
+      }
     }
 
     ensureGameSubscriptions()

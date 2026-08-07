@@ -3,7 +3,7 @@ import { z } from "zod";
 export const saveProgressSchema = z.object({
   gameId: z.enum(["sudoku", "crossmath", "nonogram", "tangram"]),
   puzzleId: z.string().min(1),
-  difficulty: z.enum(["easy", "medium", "hard"]),
+  difficulty: z.enum(["easy", "medium", "hard", "expert"]),
   profileId: z.string().optional(),
   status: z.enum(["not-started", "in-progress", "completed"]).optional(),
   completed: z.boolean().optional(),

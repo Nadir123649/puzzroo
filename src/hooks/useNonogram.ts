@@ -40,6 +40,7 @@ import {
   saveDifficultyPreference,
   loadDifficultyPreference,
 } from '@shared/lib/nonogram/storage'
+import { getTimeLimitSeconds } from '@shared/lib/nonogram/constants'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
 
@@ -209,7 +210,14 @@ export function useNonogram(initialPuzzleId?: string) {
   const mistakeCountRef = useRef(0)
   const moveCountRef = useRef(0)
   const difficultyRef = useRef<Difficulty>(difficulty)
+  const puzzleIdRef = useRef('')
   const lastSaveQueuedAtRef = useRef(Date.now())
+  // Wall-clock moment the timer last ticked. The countdown state is driven by
+  // a 1s setInterval, so between the last tick and an unload moment the true
+  // remaining time is "countdown − since-tick gap". Basing the gap on the last
+  // TICK (not the last save) avoids double- subtracting seconds the countdown
+  // already counted.
+  const lastTickAtRef = useRef(Date.now())
 
   useEffect(() => {
     gridRef.current = grid
@@ -218,7 +226,8 @@ export function useNonogram(initialPuzzleId?: string) {
     mistakeCountRef.current = mistakeCount
     moveCountRef.current = moveCount
     difficultyRef.current = difficulty
-  }, [grid, elapsedSeconds, hintsUsed, mistakeCount, moveCount, difficulty])
+    puzzleIdRef.current = currentPuzzle?.id ?? ''
+  }, [grid, elapsedSeconds, hintsUsed, mistakeCount, moveCount, difficulty, currentPuzzle])
 
   async function initSession(puzzleId: string, diff: string): Promise<any> {
     if (sessionCreatedRef.current) return null
@@ -282,6 +291,37 @@ export function useNonogram(initialPuzzleId?: string) {
     void drainSaveQueue()
   }
 
+  /**
+   * Persist the close-moment elapsed time (unload, tab hide, or the final
+   * countdown tick). Computed from the countdown state minus only the time
+   * since the last tick — never from the last save, which would double-subtract
+   * seconds the countdown already counted.
+   */
+  const flushElapsedNow = useCallback(() => {
+    if (!sessionIdRef.current || completionCalledRef.current) return
+    if (gameStatusRef.current !== 'playing') return
+    if (gridRef.current.length === 0) return
+    const gapSec = Math.max(0, Math.round((Date.now() - lastTickAtRef.current) / 1000))
+    const remaining = Math.max(0, elapsedSecondsRef.current - gapSec)
+    const initialTime = getTimeLimitSeconds(difficultyRef.current)
+    saveMoveNow(gridRef.current, Math.max(0, initialTime - remaining), hintsUsedRef.current, mistakeCountRef.current, moveCountRef.current)
+    // Persist the exact close-moment remaining locally too, so a restore that
+    // prefers the local snapshot sees the true countdown instead of a rewound
+    // one (the server save above is async and can be lost on navigation).
+    if (puzzleIdRef.current) {
+      saveGameState({
+        grid: gridRef.current,
+        puzzleId: puzzleIdRef.current,
+        difficulty: difficultyRef.current,
+        elapsedSeconds: remaining,
+        hintsUsed: hintsUsedRef.current,
+        mistakeCount: mistakeCountRef.current,
+        moveCount: moveCountRef.current,
+        timestamp: Date.now(),
+      })
+    }
+  }, [])
+
   async function completePuzzle(g: CellState[][], elapsed: number, hints: number, mists: number, moves: number) {
     if (!sessionIdRef.current || completionCalledRef.current) return
     completionCalledRef.current = true
@@ -317,7 +357,7 @@ export function useNonogram(initialPuzzleId?: string) {
     const key = JSON.stringify({ g: grid, h: hintsUsed, m: mistakeCount })
     if (key === lastMoveKeyRef.current) return
     lastMoveKeyRef.current = key
-    const initialTime = difficulty === 'hard' ? 300 : difficulty === 'medium' ? 420 : 600
+    const initialTime = getTimeLimitSeconds(difficulty)
     const elapsed = Math.max(0, initialTime - elapsedSeconds)
     saveMoveNow(grid, elapsed, hintsUsed, mistakeCount, moveCount)
   }, [grid, hintsUsed, mistakeCount, elapsedSeconds, gameStatus])
@@ -339,7 +379,7 @@ export function useNonogram(initialPuzzleId?: string) {
       setSelectionHistory([])
 
       // Set initial countdown time based on difficulty: easy=10m (600), medium=7m (420), hard=5m (300)
-      setElapsedSeconds(diff === 'hard' ? 300 : diff === 'medium' ? 420 : 600)
+      setElapsedSeconds(getTimeLimitSeconds(diff))
 
       setHintsUsed(0)
       setMaxHints(getHintLimits(diff))
@@ -404,7 +444,21 @@ export function useNonogram(initialPuzzleId?: string) {
             const restoredDiff = (serverSession.difficulty || diff) as Difficulty
             setDifficulty(restoredDiff)
             setMaxHints(getHintLimits(restoredDiff))
-            setElapsedSeconds(Math.max(0, (restoredDiff === 'hard' ? 300 : restoredDiff === 'medium' ? 420 : 600) - (serverSession.elapsedTime || 0)))
+            // Prefer the exact close-moment local snapshot: unmount/pagehide
+            // flush writes it synchronously, while the server save is async and
+            // may not have landed (or may reflect a throttled tick). Fall back
+            // to the server elapsed (timeLimit − elapsed) when no matching
+            // snapshot exists.
+            const local = loadGameState()
+            const freshLocal =
+              local &&
+              local.puzzleId === restoredPuzzle.id &&
+              local.difficulty === restoredDiff &&
+              (local.gameStatus === undefined || local.gameStatus === 'playing')
+            const restoredElapsed = freshLocal
+              ? Math.max(0, local.elapsedSeconds)
+              : Math.max(0, getTimeLimitSeconds(restoredDiff) - (serverSession.elapsedTime || 0))
+            setElapsedSeconds(restoredElapsed)
             setGameStatus('playing')
             setRowValidation(validateAllRows(serverGrid, restoredPuzzle.rowClues))
             setColumnValidation(validateAllColumns(serverGrid, restoredPuzzle.columnClues))
@@ -469,7 +523,12 @@ export function useNonogram(initialPuzzleId?: string) {
         setMistakeCount(saved.mistakeCount)
         setMoveCount(saved.moveCount || 0)
         setElapsedSeconds(saved.elapsedSeconds)
-        setGameStatus('playing') // always resume as playing
+        // Completed snapshots restore the win/loss review (survives FAQ/back
+        // navigation); in-progress games always resume as playing.
+        const restoredStatus = saved.gameStatus === 'won' || saved.gameStatus === 'lost'
+          ? saved.gameStatus
+          : 'playing'
+        setGameStatus(restoredStatus)
         setHintsUsed(saved.hintsUsed)
 
         const maxH = getHintLimits(diff)
@@ -483,7 +542,9 @@ export function useNonogram(initialPuzzleId?: string) {
         const prog = calculateProgress(saved.grid, puzzle.solution)
         setProgress(prog)
         setDifficulty(diff)
-        initSession(puzzle.id, diff)
+        // Only an in-progress game gets a fresh server session — a restored
+        // completion's session is already closed server-side.
+        if (restoredStatus === 'playing') initSession(puzzle.id, diff)
         if (!cancelled) setLoading(false)
         return
       }
@@ -534,31 +595,55 @@ export function useNonogram(initialPuzzleId?: string) {
    * Timer management
    */
   useEffect(() => {
-    if (gameStatus === 'playing') {
-      timerRef.current = setInterval(() => {
-        setElapsedSeconds((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current!)
-            setGameStatus('lost')
-            clearGameState()
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
-    } else {
+    if (gameStatus !== 'playing') {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
+      return
+    }
+
+    lastTickAtRef.current = Date.now()
+    timerRef.current = setInterval(() => {
+      lastTickAtRef.current = Date.now()
+      if (elapsedSecondsRef.current <= 1) {
+        // Final tick: persist the exact elapsed moment BEFORE flipping to
+        // lost, then stop the timer and end the game (previously the last
+        // tick was dropped and the transition ran inside the state updater).
+        if (timerRef.current) {
+          clearInterval(timerRef.current)
+          timerRef.current = null
+        }
+        flushElapsedNow()
+        setElapsedSeconds(0)
+        clearGameState()
+        if (puzzleIdRef.current) {
+          saveGameState({
+            grid: gridRef.current,
+            puzzleId: puzzleIdRef.current,
+            difficulty: difficultyRef.current,
+            elapsedSeconds: 0,
+            hintsUsed: hintsUsedRef.current,
+            mistakeCount: mistakeCountRef.current,
+            moveCount: moveCountRef.current,
+            gameStatus: 'lost',
+            completedAt: Date.now(),
+            timestamp: Date.now(),
+          })
+        }
+        setGameStatus('lost')
+        return
+      }
+      setElapsedSeconds((prev) => prev - 1)
+    }, 1000)
+
+    return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current)
         timerRef.current = null
       }
     }
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-      }
-    }
-  }, [gameStatus])
+  }, [gameStatus, flushElapsedNow])
 
   /**
    * Auto-save game state
@@ -588,25 +673,27 @@ export function useNonogram(initialPuzzleId?: string) {
   useEffect(() => {
     if (gameStatus !== 'playing' || grid.length === 0) return
 
-    const flushElapsed = () => {
-      if (!sessionIdRef.current || completionCalledRef.current) return
-      if (gridRef.current.length === 0) return
-      const gapSec = Math.max(0, Math.round((Date.now() - lastSaveQueuedAtRef.current) / 1000))
-      const remaining = Math.max(0, elapsedSecondsRef.current - gapSec)
-      const initialTime = difficultyRef.current === 'hard' ? 300 : difficultyRef.current === 'medium' ? 420 : 600
-      saveMoveNow(gridRef.current, Math.max(0, initialTime - remaining), hintsUsedRef.current, mistakeCountRef.current, moveCountRef.current)
-    }
-
     const onVisibility = () => {
-      if (document.visibilityState === 'hidden') flushElapsed()
+      if (document.visibilityState === 'hidden') flushElapsedNow()
     }
-    window.addEventListener('pagehide', flushElapsed)
+    window.addEventListener('pagehide', flushElapsedNow)
     document.addEventListener('visibilitychange', onVisibility)
     return () => {
-      window.removeEventListener('pagehide', flushElapsed)
+      window.removeEventListener('pagehide', flushElapsedNow)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [gameStatus, grid.length])
+  }, [gameStatus, grid.length, flushElapsedNow])
+
+  /**
+   * Flush on component unmount. SPA navigation (e.g. to account details) does
+   * not fire pagehide or visibilitychange, so without this the close-moment
+   * time would never reach the server and the next restore would rewind.
+   */
+  useEffect(() => {
+    return () => {
+      flushElapsedNow()
+    }
+  }, [flushElapsedNow])
 
   /**
    * Validation and progress tracking on grid change
@@ -646,11 +733,26 @@ export function useNonogram(initialPuzzleId?: string) {
 
       // Report completion to the API (fire-and-forget). The session complete
       // endpoint owns all server side effects (stats, daily, leaderboard).
-      const initialTime = difficulty === 'hard' ? 300 : difficulty === 'medium' ? 420 : 600
+      const initialTime = getTimeLimitSeconds(difficulty)
       const elapsed = Math.max(0, initialTime - elapsedSeconds)
       void completePuzzle(grid, elapsed, hintsUsed, mistakeCount, moveCount)
 
-      clearGameState()
+      // Persist a COMPLETED snapshot instead of clearing. The review survives
+      // navigation (FAQ, back button) — on remount the hook restores the won
+      // state so the completion modal is still shown. The snapshot is
+      // overwritten by the next game start and discarded when stale.
+      saveGameState({
+        grid,
+        puzzleId: currentPuzzle.id,
+        difficulty: currentPuzzle.difficulty,
+        elapsedSeconds,
+        hintsUsed,
+        mistakeCount,
+        moveCount,
+        gameStatus: 'won',
+        completedAt: Date.now(),
+        timestamp: Date.now(),
+      })
     }
   }, [grid, currentPuzzle, gameStatus, elapsedSeconds])
 
@@ -971,7 +1073,7 @@ export function useNonogram(initialPuzzleId?: string) {
       setGrid(emptyGrid)
       setSelectedCell(null)
       setSelectionHistory([])
-      const initialSeconds = currentPuzzle.estimatedTime || (difficulty === 'hard' ? 300 : difficulty === 'medium' ? 420 : 600)
+      const initialSeconds = currentPuzzle.estimatedTime || getTimeLimitSeconds(difficulty)
       setElapsedSeconds(initialSeconds)
       setHintsUsed(0)
       setMistakeCount(0)

@@ -8,6 +8,7 @@ import { NonogramModal } from './NonogramModal'
 import { GameLoader } from '@/components/ui/GameLoader'
 import { InputModeToolbar } from '@/components/games/nonogram/InputModeToolbar'
 import { formatTime } from '@shared/lib/nonogram/helpers'
+import { getTimeLimitSeconds } from '@shared/lib/nonogram/constants'
 import type { CellPosition } from '@shared/lib/nonogram/types'
 import { notify } from '@/lib/toast'
 
@@ -377,7 +378,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                       <circle cx="12" cy="12" r="10"/>
                       <polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    <span>~{Math.floor((currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300) / 60)} min</span>
+                    <span>~{Math.floor(getTimeLimitSeconds(currentPuzzle.difficulty) / 60)} min</span>
                   </span>
                 </div>
               </div>
@@ -866,7 +867,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
           isOpen={(gameStatus === 'won' || gameStatus === 'lost') && showCompletionModal}
           difficulty={currentPuzzle.difficulty}
           time={(() => {
-            const initialTime = currentPuzzle.difficulty === 'hard' ? 900 : currentPuzzle.difficulty === 'medium' ? 600 : 300
+            const initialTime = getTimeLimitSeconds(currentPuzzle.difficulty)
             return Math.max(0, initialTime - elapsedSeconds)
           })()}
           completionPercentage={progress.percentComplete}

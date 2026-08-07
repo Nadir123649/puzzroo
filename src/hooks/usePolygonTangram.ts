@@ -263,6 +263,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   useEffect(() => {
     piecesRef.current = pieces
   }, [pieces])
+  const gameStatusRef = useRef(gameStatus)
+  useEffect(() => {
+    gameStatusRef.current = gameStatus
+  }, [gameStatus])
 
   const sessionIdRef = useRef<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -326,6 +330,43 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   function elapsedFromCountdown(countdownTime: number, diff: TangramDifficulty): number {
     return Math.max(0, getInitialTime(diff) - countdownTime)
   }
+
+  /**
+   * Persist the close-moment state: server session (authoritative restore
+   * source) AND the localStorage fallback. Called on pagehide, tab-hide and
+   * — crucially — component unmount, because Next SPA navigation (e.g. FAQ)
+   * never fires pagehide, so without the unmount flush the server would keep
+   * the elapsed of the LAST PIECE MOVE and the restored timer would rewind.
+   */
+  const flushElapsedNow = useCallback(() => {
+    if (gameStatusRef.current !== 'playing') return
+    if (!sessionIdRef.current || completionCalledRef.current) return
+    const elapsed = elapsedFromCountdown(timeRemainingRef.current, difficulty)
+    const pieceStates = piecesToRecord(piecesRef.current)
+
+    gameApi.saveMove('tangram', sessionIdRef.current, {
+      pieceStates,
+      elapsedSeconds: elapsed,
+      hintsUsed: hintsUsedRef.current,
+      mistakes: 0,
+      moves: 0,
+    }).catch(() => { /* best-effort close flush */ })
+
+    // Keep the local fallback fresh too (only used when no server session).
+    if (typeof window !== 'undefined') {
+      try {
+        const userStr = getCurrentUser()
+        const userId = userStr ? userStr.id : 'guest'
+        localStorage.setItem(`puzzroo_tangram_game_${userId}`, JSON.stringify({
+          puzzleId: puzzleRef.current?.id,
+          difficulty,
+          elapsedSeconds: elapsed,
+          hintsUsed: hintsUsedRef.current,
+          pieceStates,
+        }))
+      } catch {}
+    }
+  }, [difficulty])
 
   async function initSession(puzzleId: string, diff: string, dailyChallenge = false, challengeId?: string): Promise<any> {
     if (sessionCreatedRef.current) return null
@@ -764,29 +805,27 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   useEffect(() => {
     if (gameStatus !== 'playing' || pieces.length === 0) return
 
-    const flushElapsed = () => {
-      if (!sessionIdRef.current || completionCalledRef.current) return
-      const elapsed = elapsedFromCountdown(timeRemainingRef.current, difficulty)
-      const pieceStates = piecesToRecord(piecesRef.current)
-      Promise.resolve(gameApi.saveMove('tangram', sessionIdRef.current, {
-        pieceStates,
-        elapsedSeconds: elapsed,
-        hintsUsed: hintsUsedRef.current,
-        mistakes: 0,
-        moves: 0,
-      })).catch(() => { /* best-effort close flush */ })
-    }
-
     const onVisibility = () => {
-      if (document.visibilityState === 'hidden') flushElapsed()
+      if (document.visibilityState === 'hidden') flushElapsedNow()
     }
-    window.addEventListener('pagehide', flushElapsed)
+    window.addEventListener('pagehide', flushElapsedNow)
     document.addEventListener('visibilitychange', onVisibility)
     return () => {
-      window.removeEventListener('pagehide', flushElapsed)
+      window.removeEventListener('pagehide', flushElapsedNow)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [gameStatus, pieces.length])
+  }, [gameStatus, pieces.length, flushElapsedNow])
+
+  // SPA navigation (FAQ, back, project links) unmounts this component without
+  // firing pagehide — flush on unmount so the server always has the close
+  // moment's elapsed and the timer never rewinds on return. flushedNow is
+  // stable for the lifetime of the mount (only `difficulty` dep), so this
+  // cleanup runs exactly on unmount (plus StrictMode's dev double-mount).
+  useEffect(() => {
+    return () => {
+      flushElapsedNow()
+    }
+  }, [flushElapsedNow])
 
   useEffect(() => {
     // Don't validate if pieces haven't been initialized yet or if the game is lost

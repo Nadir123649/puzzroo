@@ -26,6 +26,8 @@ function getResend(): Resend | null {
 
 function getTransporter(): nodemailer.Transporter {
   if (!transporter) {
+    const missing = validateSmtpEnv();
+    if (missing) throw new Error(`SMTP email is configured but incomplete: ${missing}`);
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),
@@ -47,8 +49,21 @@ async function deliver(to: string, subject: string, html: string) {
   const resend = getResend();
   if (resend) {
     const { error } = await resend.emails.send({ from: FROM, to, subject, html });
-    if (error) throw new Error(`Resend send failed: ${error.message}`);
+    if (error) {
+      // Most common cause: RESEND_FROM unset → sandbox sender
+      // `onboarding@resend.dev`, which only delivers to the Resend account
+      // owner's own email. Surface that hint so the failure is actionable.
+      const senderHint = FROM.includes("onboarding@resend.dev")
+        ? " (RESEND_FROM is not set — onboarding@resend.dev only sends to the Resend account owner's verified email)"
+        : "";
+      throw new Error(`Resend send failed: ${error.message}${senderHint}`);
+    }
     return;
+  }
+  if (!process.env.RESEND_API_KEY && !process.env.SMTP_HOST) {
+    throw new Error(
+      "Email is not configured: set RESEND_API_KEY (preferred) or SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS"
+    );
   }
   await getTransporter().sendMail({ from: FROM, to, subject, html });
 }

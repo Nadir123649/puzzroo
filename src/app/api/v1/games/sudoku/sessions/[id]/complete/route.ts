@@ -9,6 +9,7 @@ import { connectDB } from "@/lib/server/db";
 import { rateLimit } from "@/lib/server/utils/http";
 import { withAuth } from "../../../route-helpers";
 import { completionBus } from "@/lib/server/games/completion";
+import { recordGameCompletion } from "@/lib/server/games/recordCompletion";
 import { ensureGameSubscriptions } from "@/lib/server/games/subscriptions";
 
 export const POST = withAuth(async (req: NextRequest, actor, params) => {
@@ -58,6 +59,26 @@ export const POST = withAuth(async (req: NextRequest, actor, params) => {
     isReplay: session.isReplay || false,
     isGuest: actor.type === "guest",
   });
+
+  // Dashboard "completed" count reads GameProgress — write it server-side too
+  // (previously only sudoku did this via the client, and only when logged in).
+  if (actor.type === "user") {
+    try {
+      await recordGameCompletion({
+        userId: actor.id,
+        gameId: "sudoku",
+        puzzleId: session.puzzleId,
+        difficulty: puzzle.difficulty,
+        time: updated.elapsedTime,
+        hintsUsed,
+        mistakes,
+        moves,
+        score: updated.score,
+      });
+    } catch (err) {
+      console.error("[sudoku] recordGameCompletion failed:", err);
+    }
+  }
 
   return successResponse({
     ...updated,

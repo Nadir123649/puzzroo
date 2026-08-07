@@ -7,6 +7,7 @@ import { completeSessionSchema } from "@/lib/server/puzzles/crossmath/validators
 import { successResponse, errorResponse } from "@/lib/server/utils/apiResponse"
 import { rateLimit } from "@/lib/server/utils/http"
 import { completionBus } from "@/lib/server/games/completion"
+import { recordGameCompletion } from "@/lib/server/games/recordCompletion"
 import { ensureGameSubscriptions } from "@/lib/server/games/subscriptions"
 import DailyChallenge from "@/lib/server/models/DailyChallenge"
 
@@ -45,6 +46,21 @@ export const POST = withAuth(async (req: NextRequest, actor: Actor, params) => {
         result.result.mistakes,
         result.result.accuracy
       ).catch(() => {})
+
+      try {
+        await recordGameCompletion({
+          userId: actor.id,
+          gameId: "crossmath",
+          puzzleId: result.result.puzzleId,
+          difficulty: result.result.difficulty,
+          time: result.result.elapsedTime,
+          hintsUsed: result.result.hintsUsed,
+          mistakes: result.result.mistakes,
+          score: result.result.score,
+        })
+      } catch (err) {
+        console.error("[crossmath] recordGameCompletion failed:", err)
+      }
 
       ensureGameSubscriptions()
       completionBus.emit({

@@ -6,7 +6,7 @@ const gameProgressSchema = new mongoose.Schema(
     profileId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     gameId: { type: String, enum: ["sudoku", "crossmath", "nonogram", "tangram"], required: true },
     puzzleId: { type: String, required: true },
-    difficulty: { type: String, enum: ["easy", "medium", "hard"], required: true },
+    difficulty: { type: String, enum: ["easy", "medium", "hard", "expert"], required: true },
     completed: { type: Boolean, default: false },
     score: { type: Number, default: 0 },
     time: { type: Number, default: 0 },
