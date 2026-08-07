@@ -311,13 +311,12 @@ export function useNonogram(initialPuzzleId?: string) {
   }
 
   const lastMoveKeyRef = useRef('')
-
-  useEffect(() => {
+  useEffect(() => {
     if (!sessionIdRef.current || gameStatus !== 'playing') return
     const key = JSON.stringify({ g: grid, h: hintsUsed, m: mistakeCount })
     if (key === lastMoveKeyRef.current) return
     lastMoveKeyRef.current = key
-    const initialTime = difficulty === 'hard' ? 300 : difficulty === 'medium' ? 420 : 600
+    const initialTime = difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
     const elapsed = Math.max(0, initialTime - elapsedSeconds)
     saveMoveNow(grid, elapsed, hintsUsed, mistakeCount, moveCount)
   }, [grid, hintsUsed, mistakeCount, elapsedSeconds, gameStatus])
@@ -338,8 +337,8 @@ export function useNonogram(initialPuzzleId?: string) {
       setMoveCount(0)
       setSelectionHistory([])
 
-      // Set initial countdown time based on difficulty: easy=10m (600), medium=7m (420), hard=5m (300)
-      setElapsedSeconds(diff === 'hard' ? 300 : diff === 'medium' ? 420 : 600)
+      // Set initial countdown time based on difficulty
+      setElapsedSeconds(diff === 'hard' ? 900 : diff === 'medium' ? 600 : 300)
 
       setHintsUsed(0)
       setMaxHints(getHintLimits(diff))
@@ -404,7 +403,8 @@ export function useNonogram(initialPuzzleId?: string) {
             const restoredDiff = (serverSession.difficulty || diff) as Difficulty
             setDifficulty(restoredDiff)
             setMaxHints(getHintLimits(restoredDiff))
-            setElapsedSeconds(Math.max(0, (restoredDiff === 'hard' ? 300 : restoredDiff === 'medium' ? 420 : 600) - (serverSession.elapsedTime || 0)))
+            const initialTime = restoredDiff === 'hard' ? 900 : restoredDiff === 'medium' ? 600 : 300
+            setElapsedSeconds(Math.max(0, initialTime - (serverSession.elapsedTime || 0)))
             setGameStatus('playing')
             setRowValidation(validateAllRows(serverGrid, restoredPuzzle.rowClues))
             setColumnValidation(validateAllColumns(serverGrid, restoredPuzzle.columnClues))
@@ -439,7 +439,7 @@ export function useNonogram(initialPuzzleId?: string) {
           writeCache(puzzle.id, puzzle)
         }
       } else if (isDailyChallenge) {
-        const res = await gameApi.getDailyPuzzle('nonogram', getDailyDateString(dateParam))
+        const res = await gameApi.getDailyPuzzle('nonogram', getDailyDateString(dateParam), diff)
         if (!res || !(res as any).id) throw new Error('invalid_puzzle')
         puzzle = res as unknown as PuzzleData
         writeCache(puzzle.id, puzzle)
@@ -595,7 +595,7 @@ export function useNonogram(initialPuzzleId?: string) {
 
       const gapSec = Math.max(0, Math.round((Date.now() - lastSaveQueuedAtRef.current) / 1000))
       const remaining = Math.max(0, elapsedSecondsRef.current - gapSec)
-      const initialTime = difficultyRef.current === 'hard' ? 300 : difficultyRef.current === 'medium' ? 420 : 600
+      const initialTime = difficultyRef.current === 'hard' ? 900 : difficultyRef.current === 'medium' ? 600 : 300
       saveMoveNow(gridRef.current, Math.max(0, initialTime - remaining), hintsUsedRef.current, mistakeCountRef.current, moveCountRef.current)
     }
 
@@ -648,7 +648,7 @@ export function useNonogram(initialPuzzleId?: string) {
 
       // Report completion to the API (fire-and-forget). The session complete
       // endpoint owns all server side effects (stats, daily, leaderboard).
-      const initialTime = difficulty === 'hard' ? 300 : difficulty === 'medium' ? 420 : 600
+      const initialTime = difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
       const elapsed = Math.max(0, initialTime - elapsedSeconds)
       void completePuzzle(grid, elapsed, hintsUsed, mistakeCount, moveCount)
 
@@ -722,6 +722,12 @@ export function useNonogram(initialPuzzleId?: string) {
 
     const currentState = grid[position.row][position.col]
     if (currentState === 'error') return
+
+    // Greyed-out cells should be treated as non-interactive
+    const isRowCompleted = rowValidation[position.row] === 'completed'
+    const isColCompleted = columnValidation[position.col] === 'completed'
+    const shouldBeGreyed = (isRowCompleted || isColCompleted) && currentState !== 'filled'
+    if (shouldBeGreyed && currentState === 'empty') return
 
     const newState = applyCellAction(position, inputMode)
     if (newState === currentState) return
@@ -973,7 +979,7 @@ export function useNonogram(initialPuzzleId?: string) {
       setGrid(emptyGrid)
       setSelectedCell(null)
       setSelectionHistory([])
-      const initialSeconds = currentPuzzle.estimatedTime || (difficulty === 'hard' ? 300 : difficulty === 'medium' ? 420 : 600)
+      const initialSeconds = difficulty === 'hard' ? 900 : difficulty === 'medium' ? 600 : 300
       setElapsedSeconds(initialSeconds)
       setHintsUsed(0)
       setMistakeCount(0)

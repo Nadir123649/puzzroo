@@ -36,6 +36,7 @@ function DailyChallengeContent() {
   const [completionStats, setCompletionStats] = useState<any>(null)
 
   const gameIdForApi = gameId === 'cross-math' ? 'crossmath' : gameId
+  const replayParam = searchParams.get('replay')
   const backPath = `/past-puzzles/${gameId}`
 
   useEffect(() => {
@@ -52,6 +53,12 @@ function DailyChallengeContent() {
         const specificChallenge = generateDailyChallenge(date, gameId as 'sudoku' | 'cross-math' | 'nonogram' | 'tangram')
         if (!cancelled) setChallenge(specificChallenge)
       }
+
+      if (replayParam === 'true') {
+        setCompletionCheck('not-completed')
+        return
+      }
+
 
       try {
         const params: Record<string, string> = {}
@@ -92,66 +99,6 @@ function DailyChallengeContent() {
     return <GameLoader isOpen={true} text="Loading puzzle..." />
   }
 
-  if (completionCheck === 'completed') {
-    return (
-      <AppLayout>
-        <main className="flex-grow flex items-center justify-center px-4">
-          <div className="w-full max-w-md bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] p-6 md:p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check size={32} className="text-green-600" strokeWidth={3} />
-            </div>
-
-            <h1 className="font-urbanist font-bold text-[22px] text-[#212121] dark:text-white mb-2">
-              Challenge Completed
-            </h1>
-            <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#BDBDBD] mb-6">
-              {dateParam || "Today's Daily Challenge"}
-            </p>
-
-            {(completionStats?.elapsedSeconds !== undefined || completionStats?.score) && (
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                {completionStats.elapsedSeconds !== undefined && (
-                  <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-                    <Clock size={16} className="text-[#6949FF] mx-auto mb-1" />
-                    <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD]">Time</p>
-                    <p className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white">
-                      {formatTime(completionStats.elapsedSeconds)}
-                    </p>
-                  </div>
-                )}
-                {completionStats.accuracy !== undefined && (
-                  <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                    <Target size={16} className="text-green-600 mx-auto mb-1" />
-                    <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD]">Accuracy</p>
-                    <p className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white">
-                      {Math.round(completionStats.accuracy)}%
-                    </p>
-                  </div>
-                )}
-                {completionStats.score !== undefined && completionStats.score > 0 && (
-                  <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
-                    <Brain size={16} className="text-orange-600 mx-auto mb-1" />
-                    <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD]">Score</p>
-                    <p className="font-urbanist font-bold text-[14px] text-[#212121] dark:text-white">
-                      {completionStats.score}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <button
-              onClick={() => router.push(backPath)}
-              className="w-full h-[48px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <ArrowLeft size={18} />
-              Back to Past Puzzles
-            </button>
-          </div>
-        </main>
-      </AppLayout>
-    )
-  }
 
   return (
     <AppLayout>

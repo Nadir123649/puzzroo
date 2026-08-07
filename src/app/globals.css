@@ -23,6 +23,13 @@ html:not(.hydrated) * {
   transition: none !important;
 }
 
+/* Enable smooth theme transitions for all elements ONLY during theme toggle */
+html.theme-transitioning * {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
+  transition-duration: 300ms !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

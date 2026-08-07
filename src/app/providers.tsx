@@ -84,6 +84,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('theme', 'light')
     }
 
+    // Add class for smooth transition, remove it after the 300ms animation
+    root.classList.add('theme-transitioning')
+    setTimeout(() => {
+      root.classList.remove('theme-transitioning')
+    }, 300)
+
     setTheme(nextTheme)
 
     // Persist per-account so the preference syncs across devices.

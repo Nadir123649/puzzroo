@@ -203,9 +203,6 @@ export async function api<T = any>(
         }
       }
 
-      if (res.status === 429 && !sessionExpiredNotified) {
-        notify.errorKey("SYSTEM_RATE_LIMITED");
-      }
 
       if (!res.ok) {
         // Server returned an error (4xx/5xx) — return the body as-is so callers

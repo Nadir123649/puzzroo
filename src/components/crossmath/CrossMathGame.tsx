@@ -50,7 +50,10 @@ export function CrossMathGame() {
     handleFeedbackComplete,
     canUndo,
     loading,
+    hintsUsed,
   } = useCrossMath()
+
+  const isGameOver = gameStatus === 'won' || gameStatus === 'lost'
 
   // Show modal when game ends
   useEffect(() => {
@@ -165,22 +168,21 @@ export function CrossMathGame() {
                   />
                 </div>
 
-                {/* Feature Buttons */}
                 <SudokuControls
                   notesMode={false}
-                  availableHints={availableHints}
-                  onUndo={undoLastMove}
-                  onErase={eraseCell}
+                  availableHints={isGameOver ? 0 : availableHints}
+                  onUndo={isGameOver ? () => {} : undoLastMove}
+                  onErase={isGameOver ? () => {} : eraseCell}
                   onTogglePencil={() => {}}
-                  onHint={requestHint}
+                  onHint={isGameOver ? () => {} : requestHint}
                   showPencil={false}
-                  canUndo={canUndo}
+                  canUndo={canUndo && !isGameOver}
                 />
 
                 {/* Number Pad */}
                 <CrossMathNumberPad
                   availableNumbers={availableNumbers}
-                  onNumberSelect={enterNumber}
+                  onNumberSelect={isGameOver ? () => {} : enterNumber}
                   numbersPerRow={difficulty === 'easy' ? availableNumbers.size : numbersPerRow}
                   usedNumbersCount={usedNumbersCount}
                   requiredNumbersCount={requiredNumbersCount}
@@ -244,7 +246,7 @@ export function CrossMathGame() {
                <CrossMathBoard
                  board={board}
                  selectedCell={selectedCell}
-                 onCellClick={selectCell}
+                 onCellClick={isGameOver ? () => {} : selectCell}
                  mobile
                />
              </div>
@@ -252,7 +254,7 @@ export function CrossMathGame() {
              {/* Number Pad Mobile */}
              <CrossMathNumberPad
                availableNumbers={availableNumbers}
-               onNumberSelect={enterNumber}
+               onNumberSelect={isGameOver ? () => {} : enterNumber}
                numbersPerRow={numbersPerRow}
                mobile
                usedNumbersCount={usedNumbersCount}
@@ -263,14 +265,14 @@ export function CrossMathGame() {
               {/* Feature Buttons Mobile */}
               <SudokuControls
                 notesMode={false}
-                availableHints={availableHints}
-                onUndo={undoLastMove}
-                onErase={eraseCell}
+                availableHints={isGameOver ? 0 : availableHints}
+                onUndo={isGameOver ? () => {} : undoLastMove}
+                onErase={isGameOver ? () => {} : eraseCell}
                 onTogglePencil={() => {}}
-                onHint={requestHint}
+                onHint={isGameOver ? () => {} : requestHint}
                 mobile
                 showPencil={false}
-                canUndo={canUndo}
+                canUndo={canUndo && !isGameOver}
               />
               {isFromPastPuzzles ? (
                 <button
@@ -318,6 +320,7 @@ export function CrossMathGame() {
          })()}
          mistakes={mistakes}
          maxMistakes={maxMistakes}
+         hintsUsed={hintsUsed}
          score={score}
          lossReason={mistakes >= maxMistakes ? 'mistakes' : 'timeout'}
          onPlayAgain={handlePlayAgain}

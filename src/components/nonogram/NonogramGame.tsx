@@ -79,18 +79,15 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     setShowCompletionModal(false)
     setLoaderText('Replaying game...')
     setIsResetting(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    // Replay = restart the SAME puzzle through the replay API: the server
-    // abandons the old (completed/lost) session and opens a fresh one so
-    // subsequent saves/completes never hit already_completed.
+    // Replay = restart the SAME puzzle through the replay API
     await replayPuzzle()
     setIsResetting(false)
   }
 
   const handleNewPuzzle = async () => {
+    setShowCompletionModal(false)
     setLoaderText('Loading puzzle...')
     setIsResetting(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
     await newPuzzle()
     setIsResetting(false)
   }
@@ -639,9 +636,6 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                           // Visually grey out cells when row/column is complete
                           bgClass = 'bg-[#E8E8E8] dark:bg-[#252830]'
                           borderClass = 'opacity-40'
-                        } else if (isInDragPreview) {
-                          // Darker purple preview during drag
-                          bgClass = 'bg-[#5536E6] dark:bg-[#4E31D4] text-white'
                         } else if (isErrorCell) {
                           bgClass = 'bg-white dark:bg-[#181A20]'
                           borderClass = 'ring-2 ring-red-500 ring-inset'
@@ -649,6 +643,9 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                           bgClass = 'bg-[#000000] dark:bg-[#0A0A0A]'
                         } else if (cellState === 'marked') {
                           bgClass = 'bg-white dark:bg-[#181A20]'
+                        } else if (isInDragPreview) {
+                          // Darker purple preview during drag
+                          bgClass = 'bg-[#5536E6] dark:bg-[#4E31D4] text-white'
                         } else if (isSelected) {
                           bgClass = 'bg-[#E8DFFF] dark:bg-[#3D2F7A]'
                         } else {
@@ -672,7 +669,13 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                                 handleDragStart(position)
                               }
                             }}
-                            onMouseEnter={() => setHoveredCell(position)}
+                            onMouseEnter={() => {
+                              if (cellState === 'empty' && !isCellNonClickable) {
+                                setHoveredCell(position)
+                              } else {
+                                setHoveredCell(null)
+                              }
+                            }}
                             onMouseLeave={() => setHoveredCell(null)}
                             disabled={gameStatus !== 'playing'}
                             className={`group relative flex items-center justify-center border-[1px] border-[#D0D3DC] dark:border-[#616161] ${bgClass} ${borderClass} ${
@@ -691,7 +694,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                             aria-label={`Cell row ${rowIdx + 1}, column ${colIdx + 1}, ${cellState}`}
                           >
                             {/* Show red flag for marked cells OR when in preview with mark mode */}
-                            {((cellState === 'marked' && !isInDragPreview) || (isInDragPreview && dragAction === 'mark')) && (
+                            {((cellState === 'marked' && !(isInDragPreview && dragAction === 'unmark')) || (isInDragPreview && dragAction === 'mark')) && (
                               <Flag 
                                 size={cellSize * 0.5} 
                                 className="pointer-events-none text-[#EF4444]"
@@ -699,7 +702,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                               />
                             )}
                             {/* Show error X for wrong filled cells (permanently visible) */}
-                            {isErrorCell && !isInDragPreview && (
+                            {isErrorCell && (
                               <svg width={cellSize * 0.5} height={cellSize * 0.5} viewBox="0 0 16 16" fill="none" className="pointer-events-none">
                                 <path d="M2 2L14 14M14 2L2 14" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" />
                               </svg>

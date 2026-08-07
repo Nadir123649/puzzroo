@@ -9,9 +9,7 @@ import { useEmailPreferences, type EmailPreference } from '@/hooks/useEmailPrefe
 const getIcon = (iconName: string) => {
   switch (iconName) {
     case 'mail':
-      return function GmailIconComp(props: any) { 
-        return <Image src={images.gmailIcon} width={props.size || 18} height={props.size || 18} alt="Email" className={props.className} /> 
-      }
+      return Mail
     case 'bell':
       return Bell
     case 'shield':
@@ -24,7 +22,7 @@ const getIcon = (iconName: string) => {
 }
 
 export default function EmailPreferencesPage() {
-  const { preferences, updatePreferences, isUpdating } = useEmailPreferences()
+  const { preferences, isLoading, updatePreferences, isUpdating } = useEmailPreferences()
 
   const togglePreference = async (id: string) => {
     const updated = preferences.map((pref: EmailPreference) =>
@@ -33,16 +31,10 @@ export default function EmailPreferencesPage() {
     const prefsMap: Record<string, boolean> = {}
     updated.forEach((p: EmailPreference) => { prefsMap[p.id] = p.enabled })
     
-    try {
-      const res = await updatePreferences(prefsMap)
-      if (res) {
-        notify.successKey('ACCOUNT_PREFS_SAVED')
-      } else {
-        notify.errorKey('SYSTEM_GENERIC_ERROR')
-      }
-    } catch {
-      notify.errorKey('SYSTEM_GENERIC_ERROR')
-    }
+    // Fire and forget, no toasts. Handled optimistically by React Query.
+    updatePreferences(prefsMap).catch(() => {
+      // Errors handled silently or via React Query rollbacks
+    })
   }
 
   return (
@@ -59,7 +51,26 @@ export default function EmailPreferencesPage() {
 
       {/* Preferences List */}
       <div className="bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] overflow-hidden">
-        {preferences.map((pref: EmailPreference, index: number) => {
+        {isLoading ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={`skeleton-${index}`}
+              className={`flex items-center justify-between p-4 md:p-5 ${
+                index !== 4 ? 'border-b border-[#E0E0E0] dark:border-[#35383F]' : ''
+              }`}
+            >
+              <div className="flex items-start gap-3 flex-1 mr-4">
+                <div className="flex-shrink-0 w-10 h-10 bg-gray-200 dark:bg-[#35383F] rounded-xl animate-pulse" />
+                <div className="flex-1 min-w-0 flex flex-col gap-2 justify-center py-1">
+                  <div className="h-4 bg-gray-200 dark:bg-[#35383F] rounded animate-pulse w-1/3" />
+                  <div className="h-3 bg-gray-200 dark:bg-[#35383F] rounded animate-pulse w-2/3" />
+                </div>
+              </div>
+              <div className="h-6 w-11 flex-shrink-0 rounded-full bg-gray-200 dark:bg-[#35383F] animate-pulse" />
+            </div>
+          ))
+        ) : (
+          preferences.map((pref: EmailPreference, index: number) => {
           const Icon = getIcon(pref.iconName)
           return (
             <div
@@ -102,7 +113,8 @@ export default function EmailPreferencesPage() {
               </button>
             </div>
           )
-        })}
+        })
+        )}
       </div>
 
       {/* Info Box */}
