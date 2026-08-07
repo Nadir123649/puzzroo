@@ -711,6 +711,11 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     if (!cell.isEditable) return
 
+    // ✅ LOCK: Prevent any changes to green (correct) cells
+    if (cell.isCorrect) {
+      return
+    }
+
     // Protection: If cell is already correctly filled, ignore re-filling and re-scoring
     if (cell.type === 'number' && cell.isCorrect && cell.value === num) {
       return
@@ -956,6 +961,11 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     if (!cell.isEditable || (cell.type === 'empty' && cell.value === undefined)) return
 
+    // ✅ LOCK: Prevent erasing green (correct) cells
+    if (cell.isCorrect) {
+      return
+    }
+
     // Save last move for undo
     pushToHistory(
       { row, col },
@@ -999,6 +1009,11 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     const newBoard = board.map(r => r.map(c => ({ ...c })))
     const cell = newBoard[row][col]
+
+    // ✅ LOCK: Prevent undoing changes to green (correct) cells
+    if (cell.isCorrect) {
+      return
+    }
 
     // Update number usage count
     const newUsedCount = new Map(usedNumbersCount)
@@ -1245,6 +1260,11 @@ export function useCrossMath(initialPuzzleId?: string) {
     const { row, col } = selectedCell
     const cell = board[row][col]
     if (!cell.isEditable) return
+
+    // ✅ LOCK: Prevent keyboard input to green (correct) cells
+    if (cell.isCorrect) {
+      return
+    }
 
     let newValueStr = ''
     const newUsedCount = new Map(usedNumbersCount)

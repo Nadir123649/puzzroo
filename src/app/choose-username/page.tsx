@@ -127,7 +127,12 @@ export default function ChooseUsernamePage() {
                 value={username}
                 maxLength={20}
                 onChange={(e) => {
-                  setUsername(e.target.value.toLowerCase())
+                  const newValue = e.target.value.toLowerCase()
+                  // Show toast when max length is reached
+                  if (newValue.length >= 20 && username.length < 20) {
+                    notify.infoKey('AUTH_USERNAME_MAX_LENGTH')
+                  }
+                  setUsername(newValue)
                   if (error) setError('')
                 }}
                 className={`w-full h-[48px] px-4 rounded-xl border font-urbanist text-[15px] bg-white dark:bg-[#181A20] text-[#212121] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:border-transparent transition-all duration-200 ${

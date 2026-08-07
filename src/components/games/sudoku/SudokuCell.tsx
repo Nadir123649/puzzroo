@@ -38,11 +38,12 @@ function SudokuCellComponent({
   } else if (isSelected) {
     // Selected state takes priority - show selection even on correct cells
     bgClass = 'bg-[#A592FF] ring-2 ring-[var(--color-primary)] ring-inset'
-  } else if (cell.isCorrect) {
-    // Correct cell (not selected) - purple tint
-    bgClass = 'bg-[#E8DFFF] hover:bg-[#D4C5FF]'
   } else if (hasSelectedNumberHighlight) {
+    // Matching number or conflict source - dark purple highlight
     bgClass = 'bg-[#A592FF]'
+  } else if (cell.isCorrect) {
+    // Correct cell (not selected, not highlighted) - light purple tint
+    bgClass = 'bg-[#E8DFFF] hover:bg-[#D4C5FF]'
   } else if (isHighlighted) {
     bgClass = 'bg-[#F0EDFF] dark:bg-[#35383F]'
   } else {

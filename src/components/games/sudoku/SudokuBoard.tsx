@@ -56,27 +56,49 @@ export function SudokuBoard({
 
   /**
    * Determines if a cell is a source of conflict for a currently incorrect cell
+   * Returns true if this cell has a value that matches an error cell in the same row/column/box
    */
   const isConflictSource = (row: number, col: number): boolean => {
     const cell = board[row][col]
-    if (!cell.value) return false
     
-    for (let er = 0; er < 9; er++) {
-      for (let ec = 0; ec < 9; ec++) {
-        const other = board[er][ec]
-        if (other.isError && other.value === cell.value) {
-          if (er === row && ec === col) continue
-          
-          if (
-            er === row || 
-            ec === col || 
-            (Math.floor(er / 3) === Math.floor(row / 3) && Math.floor(ec / 3) === Math.floor(col / 3))
-          ) {
-            return true
-          }
+    // Only cells with values (that are not themselves errors) can be conflict sources
+    if (!cell.value || cell.isError) {
+      return false
+    }
+    
+    const cellValue = cell.value
+    const cellBoxRow = Math.floor(row / 3)
+    const cellBoxCol = Math.floor(col / 3)
+    
+    // Scan entire board for error cells
+    for (let errorRow = 0; errorRow < 9; errorRow++) {
+      for (let errorCol = 0; errorCol < 9; errorCol++) {
+        // Skip the current cell
+        if (errorRow === row && errorCol === col) {
+          continue
+        }
+        
+        const errorCell = board[errorRow][errorCol]
+        
+        // Is this cell an error with the same value?
+        if (!errorCell.isError || errorCell.value !== cellValue) {
+          continue
+        }
+        
+        // Check if error is in same row, column, or 3x3 box
+        const inSameRow = errorRow === row
+        const inSameCol = errorCol === col
+        
+        const errorBoxRow = Math.floor(errorRow / 3)
+        const errorBoxCol = Math.floor(errorCol / 3)
+        const inSameBox = (errorBoxRow === cellBoxRow && errorBoxCol === cellBoxCol)
+        
+        if (inSameRow || inSameCol || inSameBox) {
+          return true
         }
       }
     }
+    
     return false
   }
 

@@ -32,6 +32,7 @@ export const ToastMessages = {
   AUTH_SIGNUP_SUCCESS: 'Account created! Check your email for verification.',
   AUTH_SIGNUP_FAILED: 'Registration failed. Please try again.',
   AUTH_USERNAME_INVALID: 'Username can only use lowercase letters, numbers, . _ or -',
+  AUTH_USERNAME_MAX_LENGTH: 'Maximum characters reached (20 limit)',
   AUTH_RESET_SUCCESS: 'Password reset successful!',
   AUTH_RESET_FAILED: 'Failed to reset password. Please try again.',
   AUTH_LOGOUT_SUCCESS: 'You have been logged out.',
