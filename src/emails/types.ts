@@ -12,4 +12,5 @@ export type EmailTemplateName =
   | "security-alert"
   | "account-notification"
   | "email-changed"
-  | "username-changed";
+  | "username-changed"
+  | "account-link-confirm";

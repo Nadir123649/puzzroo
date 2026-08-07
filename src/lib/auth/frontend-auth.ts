@@ -430,7 +430,7 @@ export async function setUsername(username: string): Promise<{ success: boolean;
   }
 }
 
-export async function linkAndMerge(username: string): Promise<{ success: boolean; error?: string }> {
+export async function linkAndMerge(username: string): Promise<{ success: boolean; error?: string; confirmationRequired?: boolean; targetEmail?: string; message?: string }> {
   try {
     const res = await api("/api/v1/auth/link-and-merge", {
       method: "POST",
@@ -440,6 +440,9 @@ export async function linkAndMerge(username: string): Promise<{ success: boolean
       return { success: false, error: (res.payload as any)?.error?.message || "Failed to link accounts" };
     }
     const payload = res.payload as any;
+    if (payload?.confirmationRequired) {
+      return { success: true, confirmationRequired: true, targetEmail: payload.targetEmail, message: payload.message };
+    }
     if (payload.token?.accessToken) {
       setAccessToken(payload.token.accessToken);
       setAuthFlag(isRememberedSession());

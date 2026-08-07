@@ -10,6 +10,7 @@ import {
   EmailChanged,
   UsernameChanged,
   AccountNotification,
+  AccountLinkConfirm,
 } from "@/emails";
 
 // Email delivery strategy:
@@ -121,4 +122,9 @@ export async function sendUsernameChangedEmail(to: string, userName: string, new
 export async function sendAccountNotificationEmail(to: string, userName: string, subject: string, message: string) {
   const html = await render(<AccountNotification userName={userName} subject={subject} message={message} />);
   await deliver(to, subject, html);
+}
+
+export async function sendAccountLinkConfirmEmail(to: string, confirmUrl: string, donorEmail: string) {
+  const html = await render(<AccountLinkConfirm confirmUrl={confirmUrl} donorEmail={donorEmail} />);
+  await deliver(to, "Confirm linking your Puzzroo account", html);
 }

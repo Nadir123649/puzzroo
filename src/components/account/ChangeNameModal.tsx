@@ -31,14 +31,6 @@ export function ChangeNameModal({ isOpen, onClose, currentName, onNameChanged }:
       setError('Full name is required')
       return
     }
-    if (trimmed.length < 3) {
-      setError('Full name must be at least 3 characters')
-      return
-    }
-    if (trimmed.length > 16) {
-      setError('Full name must be at most 16 characters')
-      return
-    }
     if (trimmed === currentName) {
       setError('New name matches your current name')
       return
@@ -136,7 +128,6 @@ export function ChangeNameModal({ isOpen, onClose, currentName, onNameChanged }:
                 <input
                   type="text"
                   value={name}
-                  maxLength={16}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your full name"
                   required

@@ -72,8 +72,6 @@ export default function SignupPage() {
     
     if (!name.trim()) {
       newErrors.name = 'Full name is required'
-    } else if (name.trim().length > 50) {
-      newErrors.name = 'Full name must be at most 50 characters'
     }
     
     if (!email.trim()) {

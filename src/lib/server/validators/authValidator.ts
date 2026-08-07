@@ -11,8 +11,7 @@ const usernameField = z
 const nameField = z
   .string()
   .trim()
-  .min(1, "Full name is required")
-  .max(50, "Full name must be at most 50 characters");
+  .min(1, "Full name is required");
 
 export const registerSchema = z.object({
   name: nameField,
@@ -55,8 +54,7 @@ export const updateProfileSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(3, "Full name must be at least 3 characters")
-    .max(16, "Full name must be at most 16 characters")
+    .min(1, "Full name is required")
     .optional(),
   phone: z.string().optional(),
   avatar: z.string().url().nullish(),
