@@ -10,6 +10,7 @@ interface SudokuModalProps {
   mistakes?: number
   maxMistakes?: number
   score?: number
+  lossReason?: 'mistakes' | 'timeout'
   onPlayAgain: () => void
   onNewGame?: () => void
   onBackToGames?: () => void
@@ -24,6 +25,7 @@ export function SudokuModal({
   mistakes,
   maxMistakes,
   score,
+  lossReason,
   onPlayAgain,
   onNewGame,
   onBackToGames,
@@ -183,11 +185,14 @@ export function SudokuModal({
                   id="modal-title"
                   className="font-urbanist text-2xl sm:text-3xl font-bold text-[#212121] dark:text-white mb-1 sm:mb-2"
                 >
-                  You Lost!
-                  {time !== undefined && time <= 0 && " Time Ran Out"}
+                  {lossReason === 'timeout' || (lossReason === undefined && time !== undefined && time <= 0) 
+                    ? "⏰ Time's Up!" 
+                    : "You Lost!"}
                 </h2>
                 <p className="font-urbanist text-[#424242] dark:text-[#E0E0E0] text-sm sm:text-lg">
-                  {time !== undefined && time <= 0 ? "You ran out of time." : "You reached the maximum mistakes limit."}
+                  {lossReason === 'timeout' || (lossReason === undefined && time !== undefined && time <= 0)
+                    ? "You lost because the time limit expired." 
+                    : "You reached the maximum mistakes limit."}
                 </p>
               </div>
 

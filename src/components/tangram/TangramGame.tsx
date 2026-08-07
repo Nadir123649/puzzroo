@@ -42,6 +42,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   const mobileBoardRef = useRef<HTMLDivElement>(null)
   const desktopBoardRef = useRef<HTMLDivElement>(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [zOrder, setZOrder] = useState<string[]>([])
 
   const {
     puzzle,
@@ -165,6 +166,10 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
   const handlePieceSelect = (pieceId: TangramPieceId) => {
     selectPiece(pieceId)
+    setZOrder(prev => {
+      const without = prev.filter(id => id !== pieceId)
+      return [...without, pieceId]
+    })
   }
 
   const handlePieceMove = (pieceId: TangramPieceId, x: number, y: number, onSnapSuccess?: () => void) => {
@@ -237,6 +242,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     key={piece.id}
                     piece={piece}
                     isSelected={selectedPiece === piece.id}
+                    zOrderIndex={zOrder.indexOf(piece.id)}
                     onSelect={() => handlePieceSelect(piece.id)}
                     onMove={(x, y, onSnapSuccess) => handlePieceMove(piece.id, x, y, onSnapSuccess)}
                     onRotateLeft={handlePieceRotateLeft}
@@ -436,6 +442,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     key={piece.id}
                     piece={piece}
                     isSelected={selectedPiece === piece.id}
+                    zOrderIndex={zOrder.indexOf(piece.id)}
                     onSelect={() => handlePieceSelect(piece.id)}
                     onMove={(x, y, onSnapSuccess) => handlePieceMove(piece.id, x, y, onSnapSuccess)}
                     onRotateLeft={handlePieceRotateLeft}

@@ -596,6 +596,7 @@ export function useCrossMath(initialPuzzleId?: string) {
       if (!sessionIdRef.current || completionCalledRef.current) return
       if (boardRef.current.length === 0) return
       if (movesRef.current === 0) return
+
       const elapsed = elapsedFromCountdown(timeValueRef.current, difficultyRef.current) + savedGapSeconds(lastLocalSaveAtRef.current)
       Promise.resolve(gameApi.saveMove('crossmath', sessionIdRef.current, {
         grid: gridToRecord(boardRef.current),

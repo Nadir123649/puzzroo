@@ -91,7 +91,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
     setLoaderText('Loading puzzle...')
     setIsResetting(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
-    newPuzzle()
+    await newPuzzle()
     setIsResetting(false)
   }
 
