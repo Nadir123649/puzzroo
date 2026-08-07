@@ -33,16 +33,10 @@ export default function EmailPreferencesPage() {
     const prefsMap: Record<string, boolean> = {}
     updated.forEach((p: EmailPreference) => { prefsMap[p.id] = p.enabled })
     
-    try {
-      const res = await updatePreferences(prefsMap)
-      if (res) {
-        notify.successKey('ACCOUNT_PREFS_SAVED')
-      } else {
-        notify.errorKey('SYSTEM_GENERIC_ERROR')
-      }
-    } catch {
-      notify.errorKey('SYSTEM_GENERIC_ERROR')
-    }
+    // Fire and forget, no toasts. Handled optimistically by React Query.
+    updatePreferences(prefsMap).catch(() => {
+      // Errors handled silently or via React Query rollbacks
+    })
   }
 
   return (

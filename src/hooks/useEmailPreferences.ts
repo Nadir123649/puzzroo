@@ -106,9 +106,36 @@ export function useEmailPreferences() {
 
   const mutation = useMutation({
     mutationFn: updateEmailPreferences,
-    onSuccess: () => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["emailPreferences"] });
+    onMutate: async (newPrefs) => {
+      // Cancel any outgoing refetches to avoid overwriting our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["emailPreferences"] });
+
+      // Snapshot the previous value
+      const previousPrefs = queryClient.getQueryData<EmailPreference[]>(["emailPreferences"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<EmailPreference[]>(["emailPreferences"], (old) => {
+        if (!old) return old;
+        return old.map((pref) => {
+          if (newPrefs[pref.id] !== undefined) {
+            return { ...pref, enabled: newPrefs[pref.id] };
+          }
+          return pref;
+        });
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousPrefs };
+    },
+    onError: (err, newPrefs, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousPrefs) {
+        queryClient.setQueryData(["emailPreferences"], context.previousPrefs);
+      }
+    },
+    onSettled: () => {
+      // Don't invalidate immediately to avoid race conditions. 
+      // It will refetch when it expires.
     },
   });
 

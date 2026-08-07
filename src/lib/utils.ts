@@ -85,7 +85,7 @@ export const images = {
   arrowCounterClockwise: '/Arrow Counter Clockwise.svg',
   
   // Social Provider Icons
-  gmailIcon: '/gmail.png',
+  gmailIcon: '/gmail.svg',
 } as const
 
 // Image dimensions for optimization
