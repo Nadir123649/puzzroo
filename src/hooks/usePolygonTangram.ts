@@ -453,7 +453,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
         try {
           ensureGuestId()
           const challengeId = isDailyChallenge
-            ? `daily-tangram-${dateParam || getTodayDateParam()}`
+            ? `daily-tangram-${dateParam || getTodayDateParam()}-${difficulty}`
             : undefined
 
           let restored = false
@@ -471,26 +471,35 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
               (!isDailyChallenge || contRes.session?.puzzle?.pieceShapeIds?.length > 0)
             ) {
               const s = contRes.session
-              const p: PolygonPuzzle = {
-                id: s.puzzle.id,
-                sourceId: s.puzzle.id,
-                difficulty: s.puzzle.difficulty,
-                pieceShapeIds: s.puzzle.pieceShapeIds || [],
-                individualPiecePolygons: s.puzzle.individualPiecePolygons || [],
-                fullPolygon: s.puzzle.fullPolygon || [],
-                gameType: 'tangram',
-                active: true,
+              const restoredDifficulty = s.puzzle.difficulty || 'easy'
+
+              // CRITICAL: Only restore if the session's difficulty matches
+              // the requested difficulty. Otherwise skip and fetch fresh.
+              if (restoredDifficulty !== difficulty) {
+                // Difficulty mismatch — do NOT restore this session
+              } else {
+                const p: PolygonPuzzle = {
+                  id: s.puzzle.id,
+                  sourceId: s.puzzle.id,
+                  difficulty: restoredDifficulty,
+                  pieceShapeIds: s.puzzle.pieceShapeIds || [],
+                  individualPiecePolygons: s.puzzle.individualPiecePolygons || [],
+                  fullPolygon: s.puzzle.fullPolygon || [],
+                  gameType: 'tangram',
+                  active: true,
+                }
+                sessionIdRef.current = s.sessionId
+                sessionCreatedRef.current = true
+                serverRestoreRef.current = {
+                  pieceStates: s.pieceStates || [],
+                  elapsedSeconds: s.elapsedTime || 0,
+                  hintsUsed: s.hintsUsed || 0,
+                }
+                writeCache(p)
+                setPuzzle(p)
+                setTimeRemaining(getInitialTime(restoredDifficulty as TangramDifficulty))
+                restored = true
               }
-              sessionIdRef.current = s.sessionId
-              sessionCreatedRef.current = true
-              serverRestoreRef.current = {
-                pieceStates: s.pieceStates || [],
-                elapsedSeconds: s.elapsedTime || 0,
-                hintsUsed: s.hintsUsed || 0,
-              }
-              writeCache(p)
-              setPuzzle(p)
-              restored = true
             }
           } catch { /* fall through to fresh puzzle */ }
 
