@@ -414,43 +414,45 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
             </div>
 
             {/* Zoom Controls */}
-            <div className="flex items-center justify-center gap-2 flex-wrap">
-              <button
-                onClick={() => setZoomLevel(Math.max(0.6, zoomLevel - 0.1))}
-                className="w-8 h-8 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] hover:bg-[#D4C5F9] dark:hover:bg-[#4A3A8C] text-[#6949FF] dark:text-[#A592FF] flex items-center justify-center transition-all duration-200 active:scale-95"
-                aria-label="Zoom out"
-                title="Zoom out"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="m21 21-4.35-4.35"/>
-                  <line x1="8" y1="11" x2="14" y2="11"/>
-                </svg>
-              </button>
-              <span className="font-urbanist text-[12px] font-medium text-[#616161] dark:text-[#A0A4B8] min-w-[45px] text-center">
-                {Math.round(zoomLevel * 100)}%
-              </span>
-              <button
-                onClick={() => setZoomLevel(Math.min(1.5, zoomLevel + 0.1))}
-                className="w-8 h-8 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] hover:bg-[#D4C5F9] dark:hover:bg-[#4A3A8C] text-[#6949FF] dark:text-[#A592FF] flex items-center justify-center transition-all duration-200 active:scale-95"
-                aria-label="Zoom in"
-                title="Zoom in"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="m21 21-4.35-4.35"/>
-                  <line x1="11" y1="8" x2="11" y2="14"/>
-                  <line x1="8" y1="11" x2="14" y2="11"/>
-                </svg>
-              </button>
-              <button
-                onClick={() => setZoomLevel(1)}
-                className="ml-1 px-2 h-8 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] hover:bg-[#D4C5F9] dark:hover:bg-[#4A3A8C] font-urbanist text-[11px] font-medium text-[#6949FF] dark:text-[#A592FF] transition-all duration-200 active:scale-95"
-                title="Reset zoom"
-              >
-                Reset
-              </button>
-              <span className="font-urbanist font-bold text-[14px] text-[var(--color-primary)] ml-3" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 p-1 px-2.5 rounded-full border border-[#E0E0E0] dark:border-[#35383F] bg-[#F5F6FA] dark:bg-[#252830] shadow-sm">
+                <button
+                  onClick={() => setZoomLevel(Math.max(0.6, zoomLevel - 0.1))}
+                  className="w-8 h-8 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] hover:bg-[#D4C5F9] dark:hover:bg-[#4A3A8C] text-[#6949FF] dark:text-[#A592FF] flex items-center justify-center transition-all duration-200 active:scale-95"
+                  aria-label="Zoom out"
+                  title="Zoom out"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                    <line x1="8" y1="11" x2="14" y2="11"/>
+                  </svg>
+                </button>
+                <span className="font-urbanist text-[13px] font-semibold text-[#212121] dark:text-[#E0E0E0] min-w-[42px] text-center select-none">
+                  {Math.round(zoomLevel * 100)}%
+                </span>
+                <button
+                  onClick={() => setZoomLevel(Math.min(1.5, zoomLevel + 0.1))}
+                  className="w-8 h-8 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] hover:bg-[#D4C5F9] dark:hover:bg-[#4A3A8C] text-[#6949FF] dark:text-[#A592FF] flex items-center justify-center transition-all duration-200 active:scale-95"
+                  aria-label="Zoom in"
+                  title="Zoom in"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                    <line x1="11" y1="8" x2="11" y2="14"/>
+                    <line x1="8" y1="11" x2="14" y2="11"/>
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setZoomLevel(1)}
+                  className="px-3 h-8 rounded-full bg-[#E8DFFF] dark:bg-[#3D2F7A] hover:bg-[#D4C5F9] dark:hover:bg-[#4A3A8C] font-urbanist text-[12px] font-bold text-[#6949FF] dark:text-[#A592FF] transition-all duration-200 active:scale-95"
+                  title="Reset zoom"
+                >
+                  Reset
+                </button>
+              </div>
+              <span className="font-urbanist font-bold text-[14px] text-[var(--color-primary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>
                 Mistakes: {mistakeCount}/{maxMistakes}
               </span>
             </div>
@@ -467,10 +469,10 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
             <div
               ref={boardContainerRef}
               onScroll={handleBoardScroll}
-              className="w-full overflow-x-auto pb-2 hide-scrollbar flex justify-center"
+              className="w-full overflow-x-auto pb-2 hide-scrollbar flex justify-center transition-all duration-300 ease-in-out"
               style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             >
-              <div className="inline-flex flex-col border-2 border-[#D0D3DC] dark:border-[#616161] mx-auto">
+              <div className="inline-flex flex-col border-2 border-[#D0D3DC] dark:border-[#616161] mx-auto transition-all duration-300 ease-in-out">
                 
                 {/* Top: Corner + Column Clues */}
                 <div className="flex">
@@ -683,7 +685,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                               hasThickRight ? 'border-r-[3px] border-r-[#2B2F3A] dark:border-r-[#FAFAFA]' : ''
                             } ${hasThickBottom ? 'border-b-[3px] border-b-[#2B2F3A] dark:border-b-[#FAFAFA]' : ''} ${
                               isCellNonClickable ? 'cursor-not-allowed' : 'cursor-crosshair'
-                            } transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#6949FF] disabled:cursor-not-allowed disabled:opacity-70 select-none cell-flip-container`}
+                            } transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#6949FF] disabled:cursor-not-allowed disabled:opacity-70 select-none cell-flip-container`}
                             style={{ 
                               width: `${cellSize}px`, 
                               height: `${cellSize}px`, 

@@ -85,14 +85,14 @@ export function NonogramHero({ backTo }: NonogramHeroProps = {}) {
           <div className="flex flex-col items-center gap-4 md:gap-5">
             
             {/* Nonogram Image with background */}
-            <div className="w-[129px] h-[129px] relative flex items-center justify-center bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] p-[14px]">
+            <div className="w-[129px] h-[129px] relative flex items-center justify-center bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] p-[14px] transition-all duration-300 ease-in-out hover:scale-105">
               {/* Light Theme Image */}
               <Image
                 src={images.gameCards.nonogramWhite}
                 alt="Nonogram Light"
                 width={101}
                 height={101}
-                className="w-[101px] h-[101px] object-contain absolute opacity-100 dark:opacity-0 transition-opacity duration-200"
+                className="w-[101px] h-[101px] object-contain absolute opacity-100 dark:opacity-0 transition-all duration-300 ease-in-out"
                 priority
               />
               {/* Dark Theme Image */}
@@ -101,7 +101,7 @@ export function NonogramHero({ backTo }: NonogramHeroProps = {}) {
                 alt="Nonogram Dark"
                 width={101}
                 height={101}
-                className="w-[101px] h-[101px] object-contain absolute opacity-0 dark:opacity-100 transition-opacity duration-200"
+                className="w-[101px] h-[101px] object-contain absolute opacity-0 dark:opacity-100 transition-all duration-300 ease-in-out"
                 priority
               />
             </div>

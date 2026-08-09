@@ -409,6 +409,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const user = await User.findById(userResult.user.id);
       if (!user) return errorResponse(404, "user_not_found", "User not found");
       if (user.email && user.email === normalizedEmail) {
+        if (password && !user.password) {
+          user.password = await bcrypt.hash(password, 10);
+          if (!user.linkedProviders) user.linkedProviders = [];
+          if (!user.linkedProviders.includes("email")) user.linkedProviders.push("email");
+          await user.save({ validateBeforeSave: false });
+          return successResponse({ user: formatUser(user), message: "Password set successfully" });
+        }
         return errorResponse(400, "same_email", "This is already your current email");
       }
       // The new address must not belong to another account — neither as a live

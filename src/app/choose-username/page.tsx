@@ -130,7 +130,7 @@ export default function ChooseUsernamePage() {
                   const newValue = e.target.value.toLowerCase()
                   // Show toast when max length is reached
                   if (newValue.length >= 20 && username.length < 20) {
-                    notify.infoKey('AUTH_USERNAME_MAX_LENGTH')
+                    notify.errorKey('AUTH_USERNAME_MAX_LENGTH')
                   }
                   setUsername(newValue)
                   if (error) setError('')

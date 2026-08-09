@@ -35,8 +35,8 @@ export function ChangeNameModal({ isOpen, onClose, currentName, onNameChanged }:
       setError('Full name must be at least 3 characters')
       return
     }
-    if (trimmed.length > 16) {
-      setError('Full name must be at most 16 characters')
+    if (trimmed.length > 30) {
+      setError('Full name must be at most 30 characters')
       return
     }
     if (trimmed === currentName) {
@@ -78,7 +78,7 @@ export function ChangeNameModal({ isOpen, onClose, currentName, onNameChanged }:
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-black/60 dark:bg-black/80 animate-fadeIn overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-black/60 dark:bg-black/80 animate-fadeIn overflow-y-auto" onClick={handleClose}>
       <div 
         className="w-full max-w-[480px] bg-white dark:bg-[#1A1D23] rounded-3xl shadow-2xl relative overflow-hidden animate-slideUp my-auto"
         onClick={(e) => e.stopPropagation()}
@@ -136,8 +136,14 @@ export function ChangeNameModal({ isOpen, onClose, currentName, onNameChanged }:
                 <input
                   type="text"
                   value={name}
-                  maxLength={16}
-                  onChange={(e) => setName(e.target.value)}
+                  maxLength={30}
+                  onChange={(e) => {
+                    const newValue = e.target.value
+                    if (newValue.length >= 30 && name.length < 30) {
+                      notify.error('Maximum characters reached (30 limit)')
+                    }
+                    setName(newValue)
+                  }}
                   placeholder="Enter your full name"
                   required
                   className="w-full h-[52px] bg-[#FAFAFA] dark:bg-[#15171C] border border-[#EEEEEE] dark:border-[#2A2D35] rounded-xl px-5 font-urbanist text-[15px] text-[#212121] dark:text-white placeholder-[#BDBDBD] dark:placeholder-[#757575] focus:outline-none focus:border-[#6949FF] dark:focus:border-[#6949FF] focus:bg-white dark:focus:bg-[#1A1D23] transition-all"
