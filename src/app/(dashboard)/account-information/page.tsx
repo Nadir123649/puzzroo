@@ -41,13 +41,20 @@ function formatSessionTime(dateStr: string) {
   const now = Date.now()
   const diffMs = now - date.getTime()
   const diffMin = Math.floor(diffMs / 60000)
-  if (diffMin < 1) return 'Active now'
-  if (diffMin < 60) return `${diffMin}m ago`
+  
+  const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  
+  if (diffMin < 1) return `Just now`
+  if (diffMin < 60) return `${diffMin} ${diffMin === 1 ? 'minute' : 'minutes'} ago, ${timeStr}`
+  
   const diffHrs = Math.floor(diffMin / 60)
-  if (diffHrs < 24) return `${diffHrs}h ago`
+  if (diffHrs < 24) return `${diffHrs} ${diffHrs === 1 ? 'hour' : 'hours'} ago, ${timeStr}`
+  
   const diffDays = Math.floor(diffHrs / 24)
-  if (diffDays < 7) return `${diffDays}d ago`
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  if (diffDays === 1) return `Yesterday at ${timeStr}`
+  if (diffDays < 7) return `${diffDays} days ago, ${timeStr}`
+  
+  return `${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}, ${timeStr}`
 }
 
 export default function AccountInformationPage() {

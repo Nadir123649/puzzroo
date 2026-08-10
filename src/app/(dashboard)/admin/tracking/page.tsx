@@ -86,16 +86,23 @@ function fmtDateTime(iso: string | null): string {
 }
 
 function fmtRelative(iso: string | null): string {
-  if (!iso) return '—'
-  const diff = Date.now() - new Date(iso).getTime()
+  if (!iso) return "N/A"
+  const d = new Date(iso)
+  const diff = Date.now() - d.getTime()
   const min = Math.floor(diff / 60000)
-  if (min < 1) return 'just now'
-  if (min < 60) return `${min}m ago`
+  const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  
+  if (min < 1) return "Just now"
+  if (min < 60) return `${min} ${min === 1 ? 'minute' : 'minutes'} ago, ${timeStr}`
+  
   const hrs = Math.floor(min / 60)
-  if (hrs < 24) return `${hrs}h ago`
+  if (hrs < 24) return `${hrs} ${hrs === 1 ? 'hour' : 'hours'} ago, ${timeStr}`
+  
   const days = Math.floor(hrs / 24)
-  if (days < 30) return `${days}d ago`
-  return fmtDateTime(iso)
+  if (days === 1) return `Yesterday at ${timeStr}`
+  if (days < 30) return `${days} days ago, ${timeStr}`
+  
+  return `${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}, ${timeStr}`
 }
 
 const typeBadge: Record<string, string> = {
