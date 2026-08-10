@@ -52,7 +52,7 @@ function SudokuCellComponent({
 
   const textColorClass = cell.fixed
     ? 'text-[#C3B6FF] dark:text-[#C3B6FF]'
-    : 'text-[#212121] dark:text-[#FAFAFA]'
+    : 'text-[#212121] dark:text-[#212121]'
 
   const textSizeClass = isMobile ? 'text-[24px]' : 'text-[36.4px]'
   const borderRightClass = isRightBorder ? 'border-r-[3.03px]' : ''
@@ -94,7 +94,7 @@ function SudokuCellComponent({
                 isMobile ? 'text-[8px]' : 'text-[10px]'
               } ${
                 cell.notes?.includes(num)
-                  ? 'text-[#616161] dark:text-[#E0E0E0]'
+                  ? 'text-[#616161] dark:text-[#616161]'
                   : 'opacity-0'
               }`}
             >

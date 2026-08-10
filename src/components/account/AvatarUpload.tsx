@@ -22,7 +22,6 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
   const [preview, setPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const [pendingUpload, setPendingUpload] = useState<File | null>(null)
   const [error, setError] = useState('')
   const galleryInputRef = useRef<HTMLInputElement>(null)
@@ -188,11 +187,6 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
   }
 
   const handleRemove = async () => {
-    if (!confirmDelete) {
-      setConfirmDelete(true)
-      return
-    }
-
     setIsDeleting(true)
     setError('')
 
@@ -217,7 +211,6 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
     setShowCamera(false)
     setPreview(null)
     setError('')
-    setConfirmDelete(false)
     setPendingUpload(null)
   }
 
@@ -446,11 +439,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
                     type="button"
                     onClick={handleRemove}
                     disabled={isDeleting}
-                    className={`flex items-center justify-center gap-2 w-full h-[48px] rounded-full font-urbanist font-semibold text-[15px] border-[1.5px] transition-all duration-200 active:scale-95 disabled:opacity-70 animate-fade-in ${
-                      confirmDelete
-                        ? 'bg-red-500 border-red-500 text-white'
-                        : 'bg-white text-red-500 dark:bg-[#2A2D35] border-[#6949FF]/50 hover:border-[#6949FF] hover:bg-[#6949FF]/5 dark:border-[#6949FF]/50 dark:hover:border-[#6949FF] dark:hover:bg-[#6949FF]/10'
-                    }`}
+                    className="flex items-center justify-center gap-2 w-full h-[48px] rounded-full font-urbanist font-semibold text-[15px] border-[1.5px] transition-all duration-200 active:scale-95 disabled:opacity-70 animate-fade-in bg-white text-red-500 dark:bg-[#2A2D35] border-[#6949FF]/50 hover:border-[#6949FF] hover:bg-[#6949FF]/5 dark:border-[#6949FF]/50 dark:hover:border-[#6949FF] dark:hover:bg-[#6949FF]/10"
                     style={{ animationDelay: '280ms' }}
                   >
                     {isDeleting ? (
@@ -458,7 +447,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
                     ) : (
                       <Trash2 size={18} strokeWidth={2.5} />
                     )}
-                    {confirmDelete ? 'Tap to Confirm Removal' : isDeleting ? 'Removing...' : 'Remove Current Photo'}
+                    {isDeleting ? 'Removing...' : 'Remove Current Photo'}
                   </button>
                 )}
               </div>
