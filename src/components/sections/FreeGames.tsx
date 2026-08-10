@@ -274,14 +274,14 @@ function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentPr
               alt={game.imageAlt}
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="w-full h-full object-cover select-none transition-opacity duration-300 absolute inset-0 opacity-100 dark:opacity-0"
+              className="w-full h-full object-cover select-none transition-all duration-300 ease-in-out absolute inset-0 opacity-100 dark:opacity-0"
             />
             <Image
               src={game.image}
               alt={game.imageAlt}
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="w-full h-full object-cover select-none transition-opacity duration-300 absolute inset-0 opacity-0 dark:opacity-100"
+              className="w-full h-full object-cover select-none transition-all duration-300 ease-in-out absolute inset-0 opacity-0 dark:opacity-100"
             />
           </>
         ) : (

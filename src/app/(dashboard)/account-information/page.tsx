@@ -108,6 +108,15 @@ export default function AccountInformationPage() {
   const fetchedRef = useRef(false)
 
   useEffect(() => {
+    const handleAuthChange = () => {
+      const updated = getCurrentUser()
+      if (updated) setLocalUser(updated)
+    }
+    window.addEventListener('auth-change', handleAuthChange)
+    return () => window.removeEventListener('auth-change', handleAuthChange)
+  }, [])
+
+  useEffect(() => {
     if (fetchedRef.current) return
     fetchedRef.current = true
 
@@ -309,7 +318,14 @@ export default function AccountInformationPage() {
               ) : (
                 <Button
                   size="xs"
-                  onClick={() => setIsEmailModalOpen(true)}
+                  onClick={() => {
+                    const hasEmail = !!(localUser?.email && localUser.email !== 'N/A' && localUser.email.trim() !== '')
+                    if (!hasEmail) {
+                      notify.error('Please set your email first.')
+                      return
+                    }
+                    setIsPasswordModalOpen(true)
+                  }}
                 >
                   Set Password
                 </Button>
@@ -365,7 +381,7 @@ export default function AccountInformationPage() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+                      <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white truncate block">
                         {meta.label}
                       </span>
                       <div className="flex items-center gap-1 flex-wrap">
@@ -379,6 +395,11 @@ export default function AccountInformationPage() {
                           </span>
                         )}
                       </div>
+                      {(p === 'google' || p === 'email') && (localUser?.email || getCurrentUser()?.email) && (
+                        <span className="font-urbanist text-[12px] text-[#757575] dark:text-[#9E9E9E] truncate block mt-0.5">
+                          {localUser?.email || getCurrentUser()?.email}
+                        </span>
+                      )}
                     </div>
                     {canUnlink && p !== 'phone' && (
                       <button
@@ -608,7 +629,14 @@ export default function AccountInformationPage() {
       />
       <ChangePasswordModal 
         isOpen={isPasswordModalOpen} 
-        onClose={() => setIsPasswordModalOpen(false)} 
+        onClose={() => setIsPasswordModalOpen(false)}
+        hasPassword={canChangePassword}
+        currentEmail={localUser?.email}
+        onSuccess={() => {
+          refreshUserProfile().then(profile => {
+            if (profile) setLocalUser(prev => prev ? { ...prev, ...profile } : profile)
+          })
+        }}
       />
       <ChangeNameModal
         isOpen={isNameModalOpen}
