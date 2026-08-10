@@ -330,28 +330,19 @@ export default function AccountInformationPage() {
               Password
             </span>
             <div className="flex items-center gap-3">
-              {canChangePassword ? (
-                <Button
-                  size="xs"
-                  onClick={() => setIsPasswordModalOpen(true)}
-                >
-                  Change
-                </Button>
-              ) : (
-                <Button
-                  size="xs"
-                  onClick={() => {
-                    const hasEmail = !!(localUser?.email && localUser.email !== 'N/A' && localUser.email.trim() !== '')
-                    if (!hasEmail) {
-                      notify.error('Please set your email first.')
-                      return
-                    }
-                    setIsPasswordModalOpen(true)
-                  }}
-                >
-                  Set Password
-                </Button>
-              )}
+              <Button
+                size="xs"
+                onClick={() => {
+                  const hasEmail = !!(localUser?.email && localUser.email !== 'N/A' && localUser.email.trim() !== '')
+                  if (!hasEmail) {
+                    notify.error('Please set your email first.')
+                    return
+                  }
+                  setIsPasswordModalOpen(true)
+                }}
+              >
+                Change Password
+              </Button>
             </div>
           </div>
 
