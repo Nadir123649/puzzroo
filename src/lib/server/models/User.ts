@@ -46,6 +46,13 @@ const userSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     emailVerificationToken: String,
     emailVerificationTokenExpire: Date,
+    // Pending account-merge request (username-based link-and-merge). Set on the
+    // EXISTING (target) account; the merge only runs after the target's email
+    // owner clicks the confirmation link.
+    mergeRequestTokenHash: String,
+    mergeRequestTokenExpire: Date,
+    mergeRequestFromId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    mergeRequestDonorEmail: String,
     resetPasswordToken: String,
     resetPasswordTokenExpire: Date,
   },

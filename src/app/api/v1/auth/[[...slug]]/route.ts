@@ -8,7 +8,7 @@ import { connectDB } from "@/lib/server/db";
 import { successResponse, errorResponse, getOrigin } from "@/lib/server/utils/apiResponse";
 import { buildTokenPayload } from "@/lib/server/utils/generateTokens";
 import { cookieOptions, getRefreshCookieOptions } from "@/lib/server/utils/cookieOptions";
-import { sendVerificationEmail } from "@/lib/server/services/emailService";
+import { sendVerificationEmail, sendAccountLinkConfirmEmail } from "@/lib/server/services/emailService";
 import { auth, invalidateSessionCache } from "@/lib/server/middleware/auth";
 import { publishLogout } from "@/lib/server/auth/sessionBroker";
 import { validate } from "@/lib/server/middleware/validate";
@@ -102,20 +102,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         auditLog({ eventType: "auth:login_failed", ip: getClientIp(request), metadata: { identifier: lookup } }).catch(() => {});
         return errorResponse(401, "invalid_credentials", "Invalid email or password");
       }
+      if (!user.isVerified) {
+        // Hard-block unverified accounts: correct credentials don't get a
+        // session until the email is verified. Do NOT count this as a
+        // brute-force failure (the password was right). The client surfaces
+        // the verification banner with a resend link.
+        return errorResponse(401, "email_not_verified", "Please verify your email before logging in. Check your inbox for the verification link.");
+      }
       resetBruteForce(request, `login:${lookup}`);
       user.lastLoginAt = new Date();
       if (!user.linkedProviders) user.linkedProviders = [];
       if (!user.linkedProviders.includes("email")) user.linkedProviders.push("email");
       await user.save({ validateBeforeSave: false });
-      // NOTE: we no longer hard-block login for unverified emails in production.
-      // Undelivered verification emails would otherwise permanently lock users
-      // out ("can't log back in"). Instead we let them in and surface a
-      // verification prompt client-side via `requiresVerification`.
+      // Unverified accounts never reach this point: login hard-blocks them
+      // earlier with `email_not_verified`.
       void trackServer({ userId: user._id.toString(), event: "login", properties: { method: "password" }, request });
       auditLog({ eventType: "auth:login", userId: user._id.toString(), ip: getClientIp(request), userAgent: request.headers.get("user-agent") || undefined }).catch(() => {});
       const { payload } = await issueSession(request, user, "email", rememberMe);
       const res = NextResponse.json(
-        { success: true, payload, requiresVerification: !user.isVerified, timestamp: Date.now() },
+        { success: true, payload, timestamp: Date.now() },
         { status: 200 }
       );
       res.cookies.set("refreshToken", payload.token.refreshToken, getRefreshCookieOptions(rememberMe));
@@ -295,9 +300,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (existingUsername) {
         const userEmail = user.email || user.pendingEmail;
         const emailsMatch = userEmail && existingUsername.email && userEmail === existingUsername.email;
-        const isOAuthOrphan = !existingUsername.password && !existingUsername.linkedProviders?.includes("email");
-        if (emailsMatch || isOAuthOrphan) {
+        if (emailsMatch) {
           return errorResponse(409, "username_taken_conflict", "An account with this email and username already exists");
+        }
+        // An email-less OAuth account can't be verified by sending a
+        // confirmation email, so we never offer to link it by username alone.
+        const isOAuthOrphan =
+          !existingUsername.password &&
+          !existingUsername.linkedProviders?.includes("email") &&
+          !!(existingUsername.email || existingUsername.pendingEmail);
+        if (isOAuthOrphan) {
+          return errorResponse(409, "username_taken_conflict", "An account with this username already exists");
         }
         return errorResponse(409, "username_taken", "Username is already taken");
       }
@@ -328,6 +341,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!user) return errorResponse(404, "user_not_found", "User not found");
       // Find the target: same email (or pendingEmail), or OAuth orphan with matching username
       let target: any = null;
+      let targetByUsername = false;
       const userEmail = user.email || user.pendingEmail;
       if (userEmail) {
         target = await User.findOne({ email: userEmail, _id: { $ne: user._id } });
@@ -342,10 +356,43 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             _id: { $ne: user._id },
             password: null,
             linkedProviders: { $nin: ["email"] },
+            $or: [{ email: { $ne: null } }, { pendingEmail: { $ne: null } }],
           });
+          targetByUsername = !!target;
         }
       }
       if (!target) return errorResponse(404, "target_not_found", "No matching account found to link");
+      // Username-only matches are NOT owned by the requester — they might have
+      // guessed someone else's handle. Never merge without proof: send a
+      // confirmation link to the TARGET account's email address and only merge
+      // once its owner clicks it.
+      if (targetByUsername) {
+        const targetEmail = target.email || target.pendingEmail;
+        if (!targetEmail) return errorResponse(400, "target_no_email", "This account cannot be linked");
+        const mergeToken = crypto.randomBytes(32).toString("hex");
+        target.mergeRequestTokenHash = crypto.createHash("sha256").update(mergeToken).digest("hex");
+        target.mergeRequestTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        target.mergeRequestFromId = user._id;
+        target.mergeRequestDonorEmail = user.email || user.pendingEmail || "";
+        await target.save({ validateBeforeSave: false });
+        const confirmUrl = `${getOrigin(request)}/api/v1/verification/merge/confirm/${mergeToken}`;
+        // Fire-and-forget: SMTP send must never block the response.
+        void sendAccountLinkConfirmEmail(targetEmail, confirmUrl, target.mergeRequestDonorEmail || "").catch((e) => {
+          console.error("Account-link confirmation email failed to send:", e);
+        });
+        if (process.env.NODE_ENV !== "production") {
+          console.log(`[dev] Account-link confirmation for ${user.email || user.pendingEmail} -> ${targetEmail}: ${confirmUrl}`);
+        }
+        void trackServer({ userId: user._id.toString(), event: "account_link_confirmation_sent", properties: { targetUserId: target._id.toString() }, request });
+        return successResponse({
+          confirmationRequired: true,
+          targetEmail,
+          message: `Confirmation email sent to ${targetEmail}. Click the link in that email to finish linking your accounts.`,
+        });
+      }
+      // Same-email match: the requester demonstrably controls this email on both
+      // accounts (the target's email is verified by Google or a prior email
+      // verification), so merging is safe without a separate confirmation step.
       // Delete the new user FIRST so unique indexes (email, username) are freed
       // before we save the target with the new user's values.
       await User.deleteOne({ _id: user._id });

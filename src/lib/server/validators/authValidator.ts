@@ -12,7 +12,7 @@ const nameField = z
   .string()
   .trim()
   .min(1, "Full name is required")
-  .max(50, "Full name must be at most 50 characters");
+  .max(20, "Full name must be at most 20 characters");
 
 export const registerSchema = z.object({
   name: nameField,

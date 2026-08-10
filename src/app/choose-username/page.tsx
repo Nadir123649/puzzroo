@@ -20,6 +20,8 @@ export default function ChooseUsernamePage() {
   const [showLinkModal, setShowLinkModal] = useState(false)
   const [linkUsername, setLinkUsername] = useState('')
   const [linkLoading, setLinkLoading] = useState(false)
+  const [confirmationRequired, setConfirmationRequired] = useState(false)
+  const [confirmEmail, setConfirmEmail] = useState('')
 
   useEffect(() => {
     setMounted(true)
@@ -69,6 +71,12 @@ export default function ChooseUsernamePage() {
     setLinkLoading(true)
     const result = await linkAndMerge(linkUsername)
     setLinkLoading(false)
+    if (result.confirmationRequired) {
+      setShowLinkModal(false)
+      setConfirmEmail(result.targetEmail || '')
+      setConfirmationRequired(true)
+      return
+    }
     if (result.success) {
       setShowLinkModal(false)
       notify.success('Accounts linked! Welcome back.')
@@ -159,6 +167,39 @@ export default function ChooseUsernamePage() {
         </div>
       </main>
       
+      {/* Confirmation email sent */}
+      {confirmationRequired && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-black/60 dark:bg-black/80 animate-fadeIn">
+          <div className="w-full max-w-[420px] bg-white dark:bg-[#1A1D23] rounded-3xl shadow-2xl relative overflow-hidden animate-slideUp my-auto p-4 sm:p-8">
+            <div className="flex flex-col items-center text-center mt-4">
+              <div className="w-14 h-14 bg-purple-50 dark:bg-[#6949FF]/10 rounded-2xl flex items-center justify-center mb-4 border border-purple-100 dark:border-[#6949FF]/20">
+                <span className="text-2xl">✉️</span>
+              </div>
+              <h3 className="font-urbanist font-bold text-[22px] text-[#212121] dark:text-white mb-2">
+                Check your email
+              </h3>
+              <p className="font-urbanist text-[14px] text-[#757575] dark:text-[#9E9E9E] mb-6">
+                We sent a confirmation link to <strong className="text-[#212121] dark:text-white">{confirmEmail}</strong>. Click it to finish linking your accounts. Nothing changes on the existing account until you confirm.
+              </p>
+              <div className="flex flex-col gap-3 w-full">
+                <button
+                  onClick={() => router.push('/')}
+                  className="w-full h-[48px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-[0.98]"
+                >
+                  Continue browsing
+                </button>
+                <button
+                  onClick={() => setConfirmationRequired(false)}
+                  className="w-full h-[48px] bg-transparent border border-[#E0E0E0] dark:border-[#35383F] text-[#212121] dark:text-white rounded-full font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-[0.98]"
+                >
+                  Choose a different username
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Link Accounts Modal */}
       {showLinkModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-black/60 dark:bg-black/80 animate-fadeIn">
