@@ -89,15 +89,26 @@ function LoginPageContent() {
     setIsSubmitting(false)
 
     if (result.success) {
+      notify.dismiss()
       notify.successKey('AUTH_WELCOME_BACK')
       router.push('/')
     } else if (result.code === 'email_not_verified') {
+      notify.dismiss()
       setEmailNotVerified(true)
       setErrors({ general: result.error || ToastMessages.AUTH_EMAIL_NOT_VERIFIED })
       notify.errorKey('AUTH_EMAIL_NOT_VERIFIED', undefined, { duration: 6000 })
     } else {
-      notify.errorFromResult(result, 'AUTH_INVALID_CREDENTIALS')
-      setErrors({ general: notify.fromResult(result, 'AUTH_INVALID_CREDENTIALS') })
+      notify.dismiss() // Dismiss previous alerts immediately
+      if (result.code === 'rate_limited' || result.code === 'account_locked' || result.error?.toLowerCase().includes('too many')) {
+        notify.errorFromResult(result, 'AUTH_INVALID_CREDENTIALS', { duration: 10000 })
+        const errMsg = notify.fromResult(result, 'AUTH_INVALID_CREDENTIALS')
+        setErrors({ general: errMsg })
+        // Clear the inline form error after 10s as well
+        setTimeout(() => setErrors(prev => prev.general === errMsg ? { ...prev, general: undefined } : prev), 10000)
+      } else {
+        notify.errorFromResult(result, 'AUTH_INVALID_CREDENTIALS')
+        setErrors({ general: notify.fromResult(result, 'AUTH_INVALID_CREDENTIALS') })
+      }
     }
   }
 
