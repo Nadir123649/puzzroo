@@ -256,6 +256,9 @@ describe('crossmath resume time', () => {
   it('registered user: refresh with server session missing grid — local autosave values still shown', async () => {
     // Simulate a registered user: user JSON in localStorage scopes the save key
     localStorage.setItem('puzzroo_user', JSON.stringify({ id: 'u1' }))
+    // Non-remembered session: token + auth flag live in sessionStorage
+    sessionStorage.setItem('puzzroo_access_token', 'test-token')
+    sessionStorage.setItem('puzzroo_auth', 'true')
     localStorage.setItem('puzzroo_crossmath_game_easy_u1', JSON.stringify({
       version: '1.3',
       board: [
@@ -297,11 +300,13 @@ describe('crossmath resume time', () => {
     }
 
     render(<Probe />)
-    await sleep(300)
-    await sleep(1000)
+    await sleep(200)
+    await sleep(2000)
 
+    expect(gameApiMock.getContinueCrossMath).toHaveBeenCalled()
+    const text = screen.getByTestId('cm-board').textContent
     // Entered value 7 at (0,1) must survive the refresh
-    expect(screen.getByTestId('cm-board').textContent).toContain('7')
+    expect(text).toContain('7')
     expect(screen.getByTestId('cm-board').textContent).toContain('_')
   })
 
