@@ -249,6 +249,9 @@ export default function ContactUsPage() {
                   }`}
                   placeholder="Tell us what you need help with..."
                 />
+                <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD]">
+                  Message must be at least 10 characters.
+                </p>
                 {errors.message && (
                   <span className="font-urbanist font-semibold text-[12px] text-red-500">
                     {errors.message}
