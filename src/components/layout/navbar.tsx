@@ -360,7 +360,8 @@ export function Navbar() {
               <button
                 onClick={async () => {
                   await logout()
-                  notify.successKey('AUTH_LOGOUT_SUCCESS')
+                  // Set flag to show logout toast on login page
+                  sessionStorage.setItem('puzzroo_show_logout_toast', 'true')
                   setIsMenuOpen(false)
                   window.location.replace('/login')
                 }}

@@ -67,8 +67,12 @@ const keyFor = (puzzleId?: string, difficulty?: string) => {
   return getScopedKey(baseKey)
 }
 
+/**
+ * Save game state to localStorage
+ */
 export function saveGameState(state: Omit<SavedCrossMathState, 'version' | 'savedAt'>, puzzleId?: string, difficulty?: string): void {
   if (!isBrowser) return
+  
   try {
     const dataToSave: SavedCrossMathState = {
       ...state,
@@ -78,13 +82,50 @@ export function saveGameState(state: Omit<SavedCrossMathState, 'version' | 'save
     }
     const key = keyFor(puzzleId, difficulty || state.difficulty)
     localStorage.setItem(key, JSON.stringify(dataToSave))
+    
+    // ✅ Track guest session for same-page continuity
+    const guestId = localStorage.getItem('puzzroo_guest_id')
+    const hasLocalToken = !!localStorage.getItem('puzzroo_access_token')
+    const hasSessionToken = !!sessionStorage.getItem('puzzroo_access_token')
+    const hasAuthFlag = !!localStorage.getItem('puzzroo_auth') || !!sessionStorage.getItem('puzzroo_auth')
+    const isGuest = !!guestId && !hasLocalToken && !hasSessionToken && !hasAuthFlag
+    
+    if (isGuest) {
+      // Mark this as guest session - cleared on navigation
+      sessionStorage.setItem('puzzroo_guest_game_session', 'active')
+    }
   } catch (error) {
     console.error('Failed to save game state:', error)
   }
 }
 
+/**
+ * Load game state from localStorage
+ * Guest users will NOT have their progress restored
+ */
 export function loadGameState(puzzleId?: string, difficulty?: string): SavedCrossMathState | null {
   if (!isBrowser) return null
+  
+  // ✅ GUEST USERS ONLY: Do not restore game progress
+  // Check BOTH localStorage AND sessionStorage for access token
+  try {
+    const guestId = localStorage.getItem('puzzroo_guest_id')
+    const hasLocalToken = !!localStorage.getItem('puzzroo_access_token')
+    const hasSessionToken = !!sessionStorage.getItem('puzzroo_access_token')
+    const hasAuthFlag = !!localStorage.getItem('puzzroo_auth') || !!sessionStorage.getItem('puzzroo_auth')
+    
+    // User is guest ONLY if: has guest ID AND no tokens AND no auth flag
+    const isGuest = !!guestId && !hasLocalToken && !hasSessionToken && !hasAuthFlag
+    
+    if (isGuest) {
+      // Guest users always start fresh - clear any existing saved state
+      clearGameState(puzzleId, difficulty)
+      return null
+    }
+  } catch {
+    // If we can't determine user type, assume registered and allow resume
+  }
+  
   try {
     const key = keyFor(puzzleId, difficulty)
     const data = localStorage.getItem(key)

@@ -18,11 +18,11 @@ export function AppLayout({ children, hideFooter = false, className = '' }: AppL
   return (
     <div className="min-h-screen bg-white dark:bg-[#181A20] flex flex-col">
       <Navbar />
-      
+
       <main className={`flex-1 ${className}`}>
         {children}
       </main>
-      
+
       {!hideFooter && <Footer />}
     </div>
   )

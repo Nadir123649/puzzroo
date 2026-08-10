@@ -53,11 +53,11 @@ export function SudokuGame() {
     canUndo,
   } = useSudoku()
 
-
+  const isGameOver = gameStatus === 'won' || gameStatus === 'lost'
 
   // Show modal automatically when game is won or lost
   useEffect(() => {
-    if (gameStatus === 'won' || gameStatus === 'lost') {
+    if (isGameOver) {
       setShowModal(true)
     } else {
       setShowModal(false)
@@ -160,6 +160,7 @@ export function SudokuGame() {
                 onTogglePencil={toggleNotesMode}
                 onHint={requestHint}
                 showReset={true}
+                disabled={isGameOver}
               />
 
               {/* Number Pad */}
@@ -259,6 +260,7 @@ export function SudokuGame() {
               onHint={requestHint}
               mobile
               showReset={true}
+              disabled={isGameOver}
             />
 
              {/* Action Button Mobile - New Game or Replay Game */}

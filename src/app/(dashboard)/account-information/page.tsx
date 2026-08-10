@@ -71,7 +71,10 @@ export default function AccountInformationPage() {
   const [linkedProviders, setLinkedProviders] = useState<string[]>(localUser?.linkedProviders || [])
   const canChangePassword = !!localUser?.hasPassword
 
-  const currentSessionProvider = sessions.find(s => s.isCurrent)?.provider || provider
+  let currentSessionProvider = sessions.find(s => s.isCurrent)?.provider || provider
+  if (currentSessionProvider && linkedProviders.length > 0 && !linkedProviders.includes(currentSessionProvider)) {
+    currentSessionProvider = provider
+  }
 
   const canUnlink = linkedProviders.length >= 2
   const [confirmUnlink, setConfirmUnlink] = useState<string | null>(null)

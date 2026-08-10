@@ -34,6 +34,16 @@ function LoginPageContent() {
   useEffect(() => {
     if (verified === 'true') notify.successKey('AUTH_EMAIL_VERIFIED', undefined, { duration: 5000 })
     if (verified === 'false') notify.errorKey('AUTH_VERIFY_INVALID', undefined, { duration: 5000 })
+    
+    // Check for logout flag and show toast
+    const showLogoutToast = sessionStorage.getItem('puzzroo_show_logout_toast')
+    if (showLogoutToast === 'true') {
+      sessionStorage.removeItem('puzzroo_show_logout_toast')
+      // Delay to ensure page is fully loaded
+      setTimeout(() => {
+        notify.successKey('AUTH_LOGOUT_SUCCESS', undefined, { duration: 4000 })
+      }, 100)
+    }
   }, [verified])
 
   // Consume a Facebook (redirect) OAuth result when the provider bounces back.

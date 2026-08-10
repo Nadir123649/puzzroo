@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { SudokuGame } from '@/components/sudoku/SudokuGame'
 import { CrossMathGame } from '@/components/crossmath/CrossMathGame'
 import { useSudoku } from '@/hooks/useSudoku'
+import { useCrossMath } from '@/hooks/useCrossMath'
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -250,6 +251,58 @@ describe('crossmath resume time', () => {
     const shown = screen.getAllByText(/0[0-9]:[0-9]{2}/).map((n) => n.textContent)
 
     expect(shown[0]).toBe('03:23')
+  })
+
+  it('registered user: refresh with server session missing grid — local autosave values still shown', async () => {
+    // Simulate a registered user: user JSON in localStorage scopes the save key
+    localStorage.setItem('puzzroo_user', JSON.stringify({ id: 'u1' }))
+    localStorage.setItem('puzzroo_crossmath_game_easy_u1', JSON.stringify({
+      version: '1.3',
+      board: [
+        [ { row: 0, col: 0, value: 4, type: 'number', isEditable: false, isCorrect: true, isError: false },
+          { row: 0, col: 1, value: 7, type: 'number', isEditable: true, isCorrect: false, isError: false },
+          { row: 0, col: 2, value: 9, type: 'number', isEditable: false, isCorrect: true, isError: false }],
+        [ { row: 1, col: 0, value: undefined, type: 'empty', isEditable: true, isCorrect: false, isError: false },
+          { row: 1, col: 1, value: 5, type: 'number', isEditable: false, isCorrect: true, isError: false },
+          { row: 1, col: 2, value: undefined, type: 'empty', isEditable: true, isCorrect: false, isError: false }],
+      ],
+      puzzleId: 'cm1',
+      difficulty: 'easy',
+      mistakes: 0,
+      score: 0,
+      time: 100,
+      gameStatus: 'playing',
+      savedAt: Date.now(),
+    }))
+    // Server session exists but its grid is empty (close-flush lost on reload)
+    gameApiMock.getContinueCrossMath.mockResolvedValue({
+      hasActiveSession: true,
+      session: {
+        sessionId: 'cs1',
+        puzzleId: 'cm1',
+        difficulty: 'easy',
+        sessionStatus: 'playing',
+        grid: {},
+        elapsedTime: 95,
+        moves: 1,
+        mistakes: 0,
+        hintsUsed: 0,
+        puzzle: puzzleDoc,
+      },
+    })
+
+    const Probe = () => {
+      const { board } = useCrossMath()
+      return <div data-testid="cm-board">{board.flat().map(c => (c?.value === undefined || c?.value === null ? '_' : c.value)).join('')}</div>
+    }
+
+    render(<Probe />)
+    await sleep(300)
+    await sleep(1000)
+
+    // Entered value 7 at (0,1) must survive the refresh
+    expect(screen.getByTestId('cm-board').textContent).toContain('7')
+    expect(screen.getByTestId('cm-board').textContent).toContain('_')
   })
 
   it('pagehide: flushes exact remaining time so resume does not rewind', async () => {

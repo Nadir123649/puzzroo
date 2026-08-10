@@ -44,7 +44,7 @@ import {
 } from '@shared/lib/sudoku/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
-import { getAccessToken, ensureGuestId } from '@/lib/auth/frontend-auth'
+import { getAccessToken, ensureGuestId, isLoggedIn, resetGuestProgressIfNewGame } from '@/lib/auth/frontend-auth'
 
 function getTodayDateParam(): string {
   const d = new Date()
@@ -168,6 +168,9 @@ export function useSudoku() {
   const [loading, setLoading] = useState(true)
   const [boardHistory, setBoardHistory] = useState<SudokuBoard[]>([])
   const [selectedCell, setSelectedCell] = useState<Position | null>(null)
+
+  // Reset guest progress if navigating from another page
+  resetGuestProgressIfNewGame('sudoku')
 
   const [gameState, setGameState] = useState<{
     currentBoard: SudokuBoard
@@ -428,48 +431,46 @@ export function useSudoku() {
           }
 
           // STEP 1: Check server for active play session
+          // ✅ GUEST USERS: Skip server session restore
           if (!urlId && !isDailyChallenge) {
-            if (!getAccessToken()) ensureGuestId()
-            const continueResult = await gameApi.getContinue('sudoku', currentDiff).catch(() => null)
-            const serverSession = continueResult?.hasActiveSession ? continueResult.session : null
+            const hasAccessToken = !!getAccessToken()
+            if (!hasAccessToken) ensureGuestId()
+            
+            // Only registered users can restore from server session
+            if (hasAccessToken) {
+              const continueResult = await gameApi.getContinue('sudoku', currentDiff).catch(() => null)
+              const serverSession = continueResult?.hasActiveSession ? continueResult.session : null
 
-            if (serverSession && serverSession.puzzle && serverSession.currentBoard) {
-              const puzzleStr = serverSession.puzzle.puzzle as string
-              const solStr = serverSession.puzzle.solution as string
-              const freshArr = parseBoardStr(puzzleStr)
-              const solArr = parseBoardStr(solStr)
-              const restored = sudokuRestoreFromSession(serverSession, freshArr)
+              if (serverSession && serverSession.puzzle && serverSession.currentBoard) {
+                const puzzleStr = serverSession.puzzle.puzzle as string
+                const solStr = serverSession.puzzle.solution as string
+                const freshArr = parseBoardStr(puzzleStr)
+                const solArr = parseBoardStr(solStr)
+                const restored = sudokuRestoreFromSession(serverSession, freshArr)
 
-               if (restored) {
-                 const status = serverSession.status === 'completed' ? 'won'
-                   : serverSession.status === 'abandoned' ? 'lost' : 'playing'
-                 // Local autosave runs every second — fresher than the server
-                 // save (debounced/throttled). Prefer local board when available
-                 // so a move entered moments before refresh is not lost.
-                 const pId = serverSession.puzzleId || (serverSession.puzzle && (serverSession.puzzle.id || serverSession.puzzle._id)) || ''
-                 const local = loadGameState(undefined, currentDiff)
-                 const localBoard = (local && (local.puzzleId === pId || local.puzzleId === serverSession.puzzleId)) ? local.currentBoard : null
-                 const localTime = (local && (local.puzzleId === pId || local.puzzleId === serverSession.puzzleId)) ? local.time : undefined
-                 // Single source of truth for the restored clock: use ONE value
-                 // for both the displayed time and the timer baseline. Mixing
-                 // local time with a separate server-based baseline made the
-                 // first tick visibly jump/rewind on re-entry.
-                 const restoredTime = localTime ?? (serverSession.elapsedTime || 0)
-                 
-                 if (localBoard) {
-                   for (let r = 0; r < 9; r++) {
-                     for (let c = 0; c < 9; c++) {
-                       if (!restored[r][c].value && localBoard[r][c].notes) {
-                         restored[r][c].notes = [...(localBoard[r][c].notes || [])]
-                       }
-                       if (!restored[r][c].value && localBoard[r][c].value) {
-                         restored[r][c] = { ...localBoard[r][c] }
-                       }
-                     }
-                   }
-                 }
+                if (restored) {
+                  const status = serverSession.status === 'completed' ? 'won'
+                    : serverSession.status === 'abandoned' ? 'lost' : 'playing'
+                  const pId = serverSession.puzzleId || (serverSession.puzzle && (serverSession.puzzle.id || serverSession.puzzle._id)) || ''
+                  const local = loadGameState(undefined, currentDiff)
+                  const localBoard = (local && (local.puzzleId === pId || local.puzzleId === serverSession.puzzleId)) ? local.currentBoard : null
+                  const localTime = (local && (local.puzzleId === pId || local.puzzleId === serverSession.puzzleId)) ? local.time : undefined
+                  const restoredTime = localTime ?? (serverSession.elapsedTime || 0)
+                  
+                  if (localBoard) {
+                    for (let r = 0; r < 9; r++) {
+                      for (let c = 0; c < 9; c++) {
+                        if (!restored[r][c].value && localBoard[r][c].notes) {
+                          restored[r][c].notes = [...(localBoard[r][c].notes || [])]
+                        }
+                        if (!restored[r][c].value && localBoard[r][c].value) {
+                          restored[r][c] = { ...localBoard[r][c] }
+                        }
+                      }
+                    }
+                  }
 
-setGameState({
+                  setGameState({
                    currentBoard: restored,
                    initialBoard: convertToSudokuBoard(freshArr),
                    solution: convertToSudokuBoard(solArr),
@@ -496,65 +497,72 @@ setGameState({
           }
 
           // STEP 2: Check server for active daily challenge session
+          // ✅ GUEST USERS: Skip server session restore
           if (isDailyChallenge) {
-            if (!getAccessToken()) ensureGuestId()
-            const dcResult = await gameApi.getContinueDailySudoku().catch(() => null)
-            const dcSession = dcResult?.hasActiveSession ? dcResult.session : null
+            const hasAccessToken = !!getAccessToken()
+            if (!hasAccessToken) ensureGuestId()
+            
+            // Only registered users can restore from server session
+            if (hasAccessToken) {
+              const dcResult = await gameApi.getContinueDailySudoku().catch(() => null)
+              const dcSession = dcResult?.hasActiveSession ? dcResult.session : null
 
-            if (dcSession && dcSession.puzzle && dcSession.currentBoard) {
-              const puzzleStr = dcSession.puzzle.puzzle as string
-              const solStr = dcSession.puzzle.solution as string
-              const freshArr = parseBoardStr(puzzleStr)
-              const solArr = parseBoardStr(solStr)
-              const restored = sudokuRestoreFromSession(dcSession, freshArr)
+              if (dcSession && dcSession.puzzle && dcSession.currentBoard) {
+                const puzzleStr = dcSession.puzzle.puzzle as string
+                const solStr = dcSession.puzzle.solution as string
+                const freshArr = parseBoardStr(puzzleStr)
+                const solArr = parseBoardStr(solStr)
+                const restored = sudokuRestoreFromSession(dcSession, freshArr)
 
-              if (restored) {
-                const status = dcSession.status === 'completed' ? 'won'
-                  : dcSession.status === 'abandoned' ? 'lost' : 'playing'
-                 const pId = dcSession.puzzleId || (dcSession.puzzle && (dcSession.puzzle.id || dcSession.puzzle._id)) || ''
-                 const local = loadGameState(undefined, currentDiff)
-                 const localBoard = (local && (local.puzzleId === pId || local.puzzleId === dcSession.puzzleId)) ? local.currentBoard : null
-                 const localTime = (local && (local.puzzleId === pId || local.puzzleId === dcSession.puzzleId)) ? local.time : undefined
-                 const restoredTime = localTime ?? (dcSession.elapsedTime || 0)
-                 
-                 if (localBoard) {
-                   for (let r = 0; r < 9; r++) {
-                     for (let c = 0; c < 9; c++) {
-                       if (!restored[r][c].value && localBoard[r][c].notes) {
-                         restored[r][c].notes = [...(localBoard[r][c].notes || [])]
-                       }
-                       if (!restored[r][c].value && localBoard[r][c].value) {
-                         restored[r][c] = { ...localBoard[r][c] }
-                       }
-                     }
-                   }
-                 }
+                if (restored) {
+                  const status = dcSession.status === 'completed' ? 'won'
+                    : dcSession.status === 'abandoned' ? 'lost' : 'playing'
+                  const pId = dcSession.puzzleId || (dcSession.puzzle && (dcSession.puzzle.id || dcSession.puzzle._id)) || ''
+                  const local = loadGameState(undefined, currentDiff)
+                  const localBoard = (local && (local.puzzleId === pId || local.puzzleId === dcSession.puzzleId)) ? local.currentBoard : null
+                  const localTime = (local && (local.puzzleId === pId || local.puzzleId === dcSession.puzzleId)) ? local.time : undefined
+                  const restoredTime = localTime ?? (dcSession.elapsedTime || 0)
+                  
+                  if (localBoard) {
+                    for (let r = 0; r < 9; r++) {
+                      for (let c = 0; c < 9; c++) {
+                        if (!restored[r][c].value && localBoard[r][c].notes) {
+                          restored[r][c].notes = [...(localBoard[r][c].notes || [])]
+                        }
+                        if (!restored[r][c].value && localBoard[r][c].value) {
+                          restored[r][c] = { ...localBoard[r][c] }
+                        }
+                      }
+                    }
+                  }
 
-setGameState({
-                 currentBoard: restored,
-                 initialBoard: convertToSudokuBoard(freshArr),
-                 solution: convertToSudokuBoard(solArr),
-                 puzzleId: dcSession.puzzleId || pId,
-                 mistakes: dcSession.mistakes || 0,
-                 score: dcSession.score || 0,
-                 time: restoredTime,
-                 gameStatus: status as GameStatus,
-               })
-                 // Rebuild mistake tracking from restored board
-                 rebuildMistakeTracking(restored, convertToSudokuBoard(solArr))
-                 setBoardHistory(local?.history || [])
-                 if (local?.selectedCell) setSelectedCell(local.selectedCell)
-                puzzleIdRef.current = dcSession.puzzleId || pId
-                sessionIdRef.current = dcSession.id
-                sessionCreatedRef.current = true
-                hintsUsedRef.current = dcSession.hintsUsed || 0
-                movesRef.current = dcSession.moves || 0
-                startTimeRef.current = Date.now() - (restoredTime * 1000)
-                setIsInitialized(true)
-                setLoading(false)
-                return
+                  setGameState({
+                    currentBoard: restored,
+                    initialBoard: convertToSudokuBoard(freshArr),
+                    solution: convertToSudokuBoard(solArr),
+                    puzzleId: dcSession.puzzleId || pId,
+                    mistakes: dcSession.mistakes || 0,
+                    score: dcSession.score || 0,
+                    time: restoredTime,
+                    gameStatus: status as GameStatus,
+                  })
+                  // Rebuild mistake tracking from restored board
+                  rebuildMistakeTracking(restored, convertToSudokuBoard(solArr))
+                  setBoardHistory(local?.history || [])
+                  if (local?.selectedCell) setSelectedCell(local.selectedCell)
+                  puzzleIdRef.current = dcSession.puzzleId || pId
+                  sessionIdRef.current = dcSession.id
+                  sessionCreatedRef.current = true
+                  hintsUsedRef.current = dcSession.hintsUsed || 0
+                  movesRef.current = dcSession.moves || 0
+                  startTimeRef.current = Date.now() - (restoredTime * 1000)
+                  setIsInitialized(true)
+                  setLoading(false)
+                  return
+                }
               }
             }
+          }
           }
 
           // STEP 3: Resume from local save. Fetch the saved puzzle BY ID so
