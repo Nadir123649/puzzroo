@@ -98,7 +98,7 @@ export default function EmailPreferencesPage() {
               {/* Toggle Switch */}
               <button
                 onClick={() => togglePreference(pref.id)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#6949FF] focus:ring-offset-2 dark:focus:ring-offset-[#181A20] ${
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
                   pref.enabled ? 'bg-[#6949FF]' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
                 role="switch"

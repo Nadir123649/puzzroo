@@ -176,6 +176,8 @@ export function CrossMathGame() {
                   onTogglePencil={() => {}}
                   onHint={isGameOver ? () => {} : requestHint}
                   showPencil={false}
+                  showReset={true}
+                  disabled={isGameOver}
                   canUndo={canUndo && !isGameOver}
                 />
 
@@ -272,6 +274,8 @@ export function CrossMathGame() {
                 onHint={isGameOver ? () => {} : requestHint}
                 mobile
                 showPencil={false}
+                showReset={true}
+                disabled={isGameOver}
                 canUndo={canUndo && !isGameOver}
               />
               {isFromPastPuzzles ? (

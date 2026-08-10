@@ -50,13 +50,40 @@ export async function GET(request: NextRequest) {
     ]);
 
     const completionRate = totalPlayed > 0 ? Math.round((totalCompleted / totalPlayed) * 100) : 0;
-    const lastWeek = new Date();
-    lastWeek.setDate(lastWeek.getDate() - 7);
-    const streak = await GameProgress.countDocuments({
-      userId,
-      completed: true,
-      completedAt: { $gte: lastWeek },
-    });
+    
+    // Calculate current streak: consecutive days with at least one completed game
+    let currentStreak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Check each day going backwards from today
+    let checkDate = new Date(today);
+    let streakBroken = false;
+    
+    while (!streakBroken && currentStreak < 365) { // Max 365 days to prevent infinite loop
+      const dayStart = new Date(checkDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(checkDate);
+      dayEnd.setHours(23, 59, 59, 999);
+      
+      const completedToday = await GameProgress.countDocuments({
+        userId,
+        completed: true,
+        completedAt: { $gte: dayStart, $lte: dayEnd },
+      });
+      
+      if (completedToday > 0) {
+        currentStreak++;
+        checkDate.setDate(checkDate.getDate() - 1); // Move to previous day
+      } else {
+        // If it's today and no games completed, don't break streak yet
+        if (checkDate.getTime() === today.getTime()) {
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          streakBroken = true;
+        }
+      }
+    }
 
     const totals = agg[0] || { hintsUsed: 0, mistakes: 0, totalMoves: 0 };
 
@@ -83,7 +110,7 @@ export async function GET(request: NextRequest) {
     return successResponse({
       gamesPlayed: totalPlayed,
       completed: totalCompleted,
-      currentStreak: streak,
+      currentStreak: currentStreak,
       completionRate: `${completionRate}%`,
       totalHintsUsed: totals.hintsUsed,
       totalMistakes: totals.mistakes,

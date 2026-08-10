@@ -53,7 +53,7 @@ function getTodayDateParam(): string {
 }
 
 import { gameApi } from '@/lib/api/gameApi'
-import { getAccessToken, ensureGuestId } from '@/lib/auth/frontend-auth'
+import { getAccessToken, ensureGuestId, isLoggedIn, resetGuestProgressIfNewGame } from '@/lib/auth/frontend-auth'
 
 // Module-level guard to cancel StrictMode double-mount in dev
 let _nonogramMountGuard = false
@@ -138,6 +138,9 @@ export function useNonogram(initialPuzzleId?: string) {
   // Check if this is from daily challenge
   const dateParam = searchParams.get('date')
   const isDailyChallenge = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
+
+  // Reset guest progress if navigating from another page
+  resetGuestProgressIfNewGame('nonogram')
 
   // Phase 3: Input mode system
   const [inputMode, setInputMode] = useState<InputMode>('fill')
@@ -404,9 +407,9 @@ export function useNonogram(initialPuzzleId?: string) {
     // Falls back to the normal fresh/localStorage path below when there is
     // no active server session. Any restore failure is non-fatal: a fresh
     // puzzle is loaded instead of breaking the mount.
-    if (loadSaved && !puzzleId && typeof window !== 'undefined') {
+    // ✅ GUEST USERS: Skip server session restore — guests always start fresh
+    if (loadSaved && !puzzleId && typeof window !== 'undefined' && isLoggedIn()) {
       try {
-        if (!getAccessToken()) ensureGuestId()
         const challengeId = `daily-nonogram-${dateParam || getTodayDateParam()}`
         const continueResult = isDailyChallenge
           ? await gameApi.getContinueDaily('nonogram', challengeId)

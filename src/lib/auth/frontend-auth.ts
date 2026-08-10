@@ -734,3 +734,30 @@ function formatDate(iso: string): string {
   const date = new Date(iso);
   return `${date.getDate()} ${date.toLocaleString("en", { month: "short" })} ${date.getFullYear()}`;
 }
+
+/**
+ * Checks if the guest is navigating to a new game (different from the current tab's active game).
+ * If so, wipes out all guest game progress in localStorage so they start fresh.
+ * Called synchronously at the top of game hooks.
+ */
+export function resetGuestProgressIfNewGame(gameName: string) {
+  if (typeof window === 'undefined') return
+  if (isLoggedIn()) return
+
+  try {
+    const activeGame = sessionStorage.getItem('puzzroo_guest_active_game')
+    if (activeGame !== gameName) {
+      const keysToRemove: string[] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.includes('game') && key.includes('guest')) {
+          keysToRemove.push(key)
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k))
+      sessionStorage.setItem('puzzroo_guest_active_game', gameName)
+    }
+  } catch (e) {
+    console.error('Failed to reset guest progress:', e)
+  }
+}

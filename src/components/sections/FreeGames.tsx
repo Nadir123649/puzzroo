@@ -113,14 +113,36 @@ export const markGameAsPlayed = (gameId: string): void => {
   }
 }
 
+import { isLoggedIn } from '@/lib/auth/frontend-auth'
+
+// ... existing code down to FreeGames
+
 export function FreeGames() {
   const [playedGames, setPlayedGames] = useState<Set<string>>(new Set())
   const [lastPlayedGame, setLastPlayedGame] = useState<string | null>(null)
+  const [isGuest, setIsGuest] = useState(false)
 
   useEffect(() => {
     // Load played games and last played game from localStorage
     setPlayedGames(getPlayedGames())
     setLastPlayedGame(getLastPlayedGame())
+    
+    const guestStatus = !isLoggedIn()
+    setIsGuest(guestStatus)
+
+    // If guest, clear game states whenever they visit the lobby so resuming is prevented
+    if (guestStatus) {
+      try {
+        const keysToRemove = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && key.includes('game') && key.includes('guest')) {
+            keysToRemove.push(key)
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k))
+      } catch (e) {}
+    }
   }, [])
 
   return (
@@ -154,7 +176,8 @@ export function FreeGames() {
               key={game.id} 
               game={game} 
               isPlayed={playedGames.has(game.id)}
-              isLastPlayed={lastPlayedGame === game.id}
+              isLastPlayed={!isGuest && lastPlayedGame === game.id}
+              isGuest={isGuest}
             />
           ))}
         </div>
@@ -170,28 +193,57 @@ interface GameCardComponentProps {
   game: GameCard
   isPlayed: boolean
   isLastPlayed: boolean
+  isGuest: boolean
 }
 
-function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentProps) {
+function GameCardComponent({ game, isPlayed, isLastPlayed, isGuest }: GameCardComponentProps) {
   const { theme } = useTheme()
   const router = useRouter()
   const isActive = ACTIVE_GAMES.includes(game.id)
   
   const displayStatus = isPlayed ? 'Played' : game.status
+
+  const handleNavigation = (e: React.MouseEvent, path: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (isGuest) {
+      // Guest user: clear all saved game states for this game so they start fresh
+      try {
+        const keysToRemove = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          // Look for generic keys matching the game ID and guest
+          if (key && (key.includes(game.id) || key.includes(game.id.replace('-', '')))) {
+             if (key.includes('guest') || key.includes('game')) {
+               // We only want to clear the game state, not everything
+               // Typically keys are like `puzzroo_sudoku_game_guest` or `puzzroo_crossmath_game_guest`
+               keysToRemove.push(key)
+             }
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key))
+      } catch (e) {}
+    }
+    
+    router.push(path)
+  }
   
   // Locked/Coming Soon state
   if (!isActive) {
     return (
       <div className="flex flex-col bg-[#F0EDFF] dark:bg-[#262A34] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[16px] lg:p-[24px] gap-[12px] md:gap-[16px] lg:gap-[24px] opacity-60 cursor-not-allowed relative md:min-h-auto border-2 border-transparent dark:border-[#35383F]">
-        {/* Overlay effect - NO BLUR */}
-        <div className="absolute inset-0 bg-gray-500/10 dark:bg-black/20 rounded-[6px] md:rounded-[12.31px] z-10 flex items-center justify-center">
-          <span className="font-urbanist font-bold text-[12px] md:text-[16px] lg:text-[18px] text-[#212121] dark:text-[#FAFAFA] bg-white/80 dark:bg-black/60 px-4 py-2 md:px-6 md:py-3 rounded-full">
-            Coming Soon
-          </span>
-        </div>
+        {/* Semi-transparent overlay for blur effect */}
+        <div className="absolute inset-0 bg-gray-500/10 dark:bg-black/20 rounded-[6px] md:rounded-[12.31px] z-[5]" />
         
         {/* Game Image - Grayscale (no blur) */}
         <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F0EDFF] dark:bg-[#1F222A] grayscale">
+          {/* Coming Soon Label - Centered on IMAGE only */}
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <span className="font-urbanist font-bold text-[12px] md:text-[16px] lg:text-[18px] text-[#212121] dark:text-[#FAFAFA] bg-white/90 dark:bg-black/70 px-4 py-2 md:px-6 md:py-3 rounded-full shadow-lg whitespace-nowrap">
+              Coming Soon
+            </span>
+          </div>
           {game.imageLight ? (
             <>
               <Image
@@ -262,7 +314,7 @@ function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentPr
   // Active game card with 3 buttons
   return (
     <div 
-      onClick={() => router.push(`/game/${game.id}`)}
+      onClick={(e) => handleNavigation(e, `/game/${game.id}`)}
       className="flex flex-col bg-[#F0EDFF] dark:bg-[#1F222A] rounded-[6px] md:rounded-[12.31px] p-[12px] md:p-[16px] lg:p-[24px] gap-[12px] md:gap-[16px] lg:gap-[24px] hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group cursor-pointer h-full"
     >
       {/* Game Image - Fluid and responsive */}
@@ -311,33 +363,37 @@ function GameCardComponent({ game, isPlayed, isLastPlayed }: GameCardComponentPr
         {/* Button Group */}
         <div className="flex flex-col gap-[6px] md:gap-[10px]">
           {game.id === 'chess' ? (
-            <Link href={`/game/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()} prefetch={false}>
-              <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}>
-                Play Chess
-              </button>
-            </Link>
+            <button 
+              onClick={(e) => handleNavigation(e, `/game/${game.id}`)}
+              className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}
+            >
+              Play Chess
+            </button>
           ) : (
             <>
               {/* Daily Challenge Button */}
-              <Link href={`/daily-challenge/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()} prefetch={false}>
-                <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Daily Challenge for ${game.title}`}>
-                  Daily Challenge
-                </button>
-              </Link>
+              <button 
+                onClick={(e) => handleNavigation(e, `/daily-challenge/${game.id}`)}
+                className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Daily Challenge for ${game.title}`}
+              >
+                Daily Challenge
+              </button>
 
               {/* Play Now Button */}
-              <Link href={`/game/${game.id}`} className="w-full" onClick={(e) => e.stopPropagation()} prefetch={false}>
-                <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}>
-                  {isLastPlayed ? 'Play Again' : 'Play Now'}
-                </button>
-              </Link>
+              <button 
+                onClick={(e) => handleNavigation(e, `/game/${game.id}`)}
+                className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-[#6949FF] hover:bg-[#5536E6] hover:border-[#5536E6] text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Play ${game.title}`}
+              >
+                {isLastPlayed ? 'Play Again' : 'Play Now'}
+              </button>
 
               {/* Past Puzzle Button */}
-              <Link href={`/past-puzzles/${game.id}`} className="w-full group" onClick={(e) => e.stopPropagation()} prefetch={false}>
-                <button className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] hover:text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Past Puzzles for ${game.title}`}>
-                  Past Puzzle
-                </button>
-              </Link>
+              <button 
+                onClick={(e) => handleNavigation(e, `/past-puzzles/${game.id}`)}
+                className="w-full h-[18.65px] md:h-[38px] lg:h-[42px] flex items-center justify-center rounded-full border-[0.86px] md:border-2 border-[#6949FF] bg-white dark:bg-[#1F222A] hover:bg-[#6949FF] dark:hover:bg-[#6949FF] text-[#6949FF] hover:text-white font-urbanist font-semibold text-[7px] md:text-[clamp(0.875rem,2vw,1rem)] transition-all duration-300 active:scale-95 py-[4.32px] px-[17.3px] md:py-0 md:px-0" aria-label={`Past Puzzles for ${game.title}`}
+              >
+                Past Puzzle
+              </button>
             </>
           )}
         </div>

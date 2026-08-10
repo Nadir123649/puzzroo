@@ -18,7 +18,7 @@ import {
 } from '@shared/lib/crossmath/storage'
 import { markPuzzleCompleted } from '@shared/lib/completion/universal'
 import { updateChallengeStatus, getChallengeStatus } from '@shared/lib/dailyChallenge/storage'
-import { getAccessToken, ensureGuestId } from '@/lib/auth/frontend-auth'
+import { getAccessToken, ensureGuestId, isLoggedIn, resetGuestProgressIfNewGame } from '@/lib/auth/frontend-auth'
 
 // Module-level guard to cancel StrictMode double-mount in dev
 let _crossmathMountGuard = false
@@ -111,7 +111,11 @@ export function useCrossMath(initialPuzzleId?: string) {
   const [board, setBoard] = useState<Cell[][]>([])
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null)
   const [mistakes, setMistakes] = useState(0)
-  const [maxMistakes, setMaxMistakes] = useState(5)
+
+  // Reset guest progress if navigating from another page
+  resetGuestProgressIfNewGame('crossmath')
+
+  const [maxMistakes, setMaxMistakes] = useState(3)
   const [score, setScore] = useState(0)
   const [time, setTime] = useState(() => getInitialTime(getInitialDifficulty()))
   const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing')
@@ -336,11 +340,20 @@ export function useCrossMath(initialPuzzleId?: string) {
         try {
           const savedGame = loadGameState(undefined, difficultyParam)
 
+          // ✅ GUEST USERS: Skip server session restore
+          const hasAccessToken = !!getAccessToken()
+          
           const dcId = isDailyChallenge ? `daily-cross-math-${dateParam || getTodayDateParam()}` : undefined
-          const continueResult = isDailyChallenge && dcId
-            ? await gameApi.getContinueDailyCrossMath(dcId).catch(() => null)
-            : await gameApi.getContinueCrossMath(difficultyParam).catch(() => null)
-          let serverSession = continueResult?.hasActiveSession ? continueResult.session : null
+          
+          // Only registered users can restore from server session
+          let serverSession = null
+          if (hasAccessToken) {
+            const continueResult = isDailyChallenge && dcId
+              ? await gameApi.getContinueDailyCrossMath(dcId).catch(() => null)
+              : await gameApi.getContinueCrossMath(difficultyParam).catch(() => null)
+            serverSession = continueResult?.hasActiveSession ? continueResult.session : null
+          }
+          
           if (isReplayMode && serverSession && serverSession.sessionId) {
             try {
               const result = await gameApi.replayCrossMathSession(serverSession.sessionId, serverSession.puzzleId)
@@ -380,6 +393,28 @@ export function useCrossMath(initialPuzzleId?: string) {
                 }
               }
 
+              // ✅ OVERLAY LOCAL AUTOSAVE — the local save runs every second and
+              // is fresher than the server session (server saves on moves and a
+              // fire-and-forget close-flush that can abort on reload). Merge any
+              // entered values the server grid is missing so a refresh never
+              // hides the player's inputs. Registered users only — guests never
+              // reach this branch.
+              const serverPuzzleId = serverSession.puzzleId || (serverSession.puzzle as any)?.id
+              if (savedGame && savedGame.puzzleId === serverPuzzleId && Array.isArray(savedGame.board)) {
+                for (const savedRow of savedGame.board) {
+                  for (const savedCell of savedRow) {
+                    if (!savedCell?.isEditable || savedCell.value === undefined || savedCell.value === null) continue
+                    const target = freshBoard[savedCell.row]?.[savedCell.col]
+                    if (target && target.isEditable) {
+                      target.value = savedCell.value
+                      target.type = savedCell.type
+                      target.isCorrect = savedCell.isCorrect
+                      target.isError = savedCell.isError
+                    }
+                  }
+                }
+              }
+
               setBoard(freshBoard)
               setMistakes(serverSession.mistakes || 0)
               setScore(serverSession.score || 0)
@@ -396,7 +431,8 @@ export function useCrossMath(initialPuzzleId?: string) {
              setSelectedCell(null)
               setIsTyping(false)
               setHistory(savedGame?.history || [])
-              clearGameState()
+              // DO NOT clear localStorage for registered users - they need it for local autosave
+              // clearGameState() // REMOVED: This was clearing registered users' progress
               cellMistakesRef.current.clear()
               cellScoreAwardedRef.current.clear()
 
@@ -405,7 +441,7 @@ export function useCrossMath(initialPuzzleId?: string) {
               movesRef.current = serverSession.moves || 0
               hintsUsedRef.current = serverSession.hintsUsed || 0
 
-              const limit = (serverSession.difficulty || difficulty) === 'hard' ? 2 : serverPuzzle.maxMistakes
+              const limit = (serverSession.difficulty || difficulty) === 'hard' ? 2 : 3
               setMaxMistakes(limit)
               setAvailableNumbers(new Set(serverPuzzle.availableNumbers))
 
@@ -511,7 +547,7 @@ export function useCrossMath(initialPuzzleId?: string) {
             setIsTyping(false)
 
             setCurrentPuzzle(puzzle)
-            const limit = difficulty === 'hard' ? 2 : puzzle.maxMistakes
+            const limit = difficulty === 'hard' ? 2 : 3
             setMaxMistakes(limit)
             setAvailableNumbers(new Set(puzzle.availableNumbers))
 
@@ -533,7 +569,7 @@ export function useCrossMath(initialPuzzleId?: string) {
             if (puzzle.difficulty && puzzle.difficulty !== difficulty) {
               setDifficulty(puzzle.difficulty as Difficulty)
             }
-            const limit = targetDiff === 'hard' ? 2 : puzzle.maxMistakes
+            const limit = targetDiff === 'hard' ? 2 : 3
             setMaxMistakes(limit)
             setAvailableNumbers(new Set(puzzle.availableNumbers))
             setUsedNumbersCount(new Map())
@@ -585,7 +621,7 @@ export function useCrossMath(initialPuzzleId?: string) {
   }, [difficulty, usePatternMode, isDailyChallenge, dateParam, puzzleId])
 
   useEffect(() => {
-    if (gameStatus === 'playing' && board.length > 0 && currentPuzzle && history.length > 0) {
+    if (gameStatus === 'playing' && board.length > 0 && currentPuzzle) {
    saveGameState({
          board,
          puzzleId: currentPuzzle.id,
@@ -718,16 +754,6 @@ export function useCrossMath(initialPuzzleId?: string) {
 
     // Protection: If cell is already correctly filled, ignore re-filling and re-scoring
     if (cell.type === 'number' && cell.isCorrect && cell.value === num) {
-      return
-    }
-
-    // Prevent entering a number if it is already used up elsewhere
-    const usedCount = usedNumbersCount.get(num) || 0
-    const requiredCount = requiredNumbersCount.get(num) || 0
-    const isOverwritingSelf = cell.type === 'number' && cell.value === num
-    const adjustedUsedCount = isOverwritingSelf ? usedCount - 1 : usedCount
-
-    if (adjustedUsedCount >= requiredCount) {
       return
     }
 
@@ -944,6 +970,13 @@ export function useCrossMath(initialPuzzleId?: string) {
     const cell = board[row]?.[col]
     if (!cell || !cell.isEditable) return
 
+    // If we click the same cell again, unselect it
+    if (selectedCell && selectedCell.row === row && selectedCell.col === col) {
+      setSelectedCell(null)
+      setIsTyping(false)
+      return
+    }
+
     // If we were typing in another cell, commit it first!
     if (isTyping && selectedCell && (selectedCell.row !== row || selectedCell.col !== col)) {
       commitCurrentInput()
@@ -1043,10 +1076,8 @@ export function useCrossMath(initialPuzzleId?: string) {
       isError: previousIsError,
     }
 
-    // Revert score: undo the score change that was applied when this move was made
-    if (scoreChange !== 0) {
-      setScore(prev => prev - scoreChange)
-    }
+    // Do NOT revert score on undo. Mistake penalties should remain.
+
 
     setBoard(newBoard)
     setHistory(prev => prev.slice(0, -1)) // Pop the stack
@@ -1127,7 +1158,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     setCurrentPuzzle(puzzle)
     const gridCopy = puzzle.grid.map(row => row.map(cell => ({ ...cell })))
     setBoard(gridCopy)
-    const limit = difficulty === 'hard' ? 2 : puzzle.maxMistakes
+    const limit = difficulty === 'hard' ? 2 : 3
     setMaxMistakes(limit)
     setAvailableNumbers(new Set(puzzle.availableNumbers))
     setUsedNumbersCount(new Map())
@@ -1210,7 +1241,6 @@ export function useCrossMath(initialPuzzleId?: string) {
     if (!cellScoreAwardedRef.current.has(cellKey)) {
       cellScoreAwardedRef.current.add(cellKey)
       finalScore += SCORING.CORRECT_ANSWER
-      triggerScoreFeedback(SCORING.CORRECT_ANSWER)
     }
     
     // Deduct hint cost

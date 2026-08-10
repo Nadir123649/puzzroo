@@ -69,6 +69,18 @@ export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>
     
     const key = keyFor(puzzleId, difficulty || state.difficulty)
     localStorage.setItem(key, JSON.stringify(dataToSave))
+    
+    // ✅ Track guest session for same-page continuity
+    const guestId = localStorage.getItem('puzzroo_guest_id')
+    const hasLocalToken = !!localStorage.getItem('puzzroo_access_token')
+    const hasSessionToken = !!sessionStorage.getItem('puzzroo_access_token')
+    const hasAuthFlag = !!localStorage.getItem('puzzroo_auth') || !!sessionStorage.getItem('puzzroo_auth')
+    const isGuest = !!guestId && !hasLocalToken && !hasSessionToken && !hasAuthFlag
+    
+    if (isGuest) {
+      // Mark this as guest session - cleared on navigation
+      sessionStorage.setItem('puzzroo_guest_game_session', 'active')
+    }
   } catch (error) {
     console.error('Failed to save game state:', error)
   }
@@ -76,9 +88,30 @@ export function saveGameState(state: Omit<SavedGameState, 'version' | 'savedAt'>
 
 /**
  * Load game state from localStorage
+ * Guest users will NOT have their progress restored
  */
 export function loadGameState(puzzleId?: string, difficulty?: string): SavedGameState | null {
   if (!isBrowser) return null
+  
+  // ✅ GUEST USERS: Do not restore game progress
+  // Check if user is a guest (no access token in localStorage OR sessionStorage, only guest ID)
+  try {
+    const guestId = localStorage.getItem('puzzroo_guest_id')
+    const accessTokenLocal = localStorage.getItem('puzzroo_access_token')
+    const accessTokenSession = sessionStorage.getItem('puzzroo_access_token')
+    const hasAuthFlag = localStorage.getItem('puzzroo_auth') || sessionStorage.getItem('puzzroo_auth')
+    
+    // User is guest ONLY if they have guest ID but NO access token anywhere and NO auth flag
+    const isGuest = !!guestId && !accessTokenLocal && !accessTokenSession && !hasAuthFlag
+    
+    if (isGuest) {
+      // Guest users always start fresh - clear any existing saved state
+      clearGameState(puzzleId, difficulty)
+      return null
+    }
+  } catch {
+    // If we can't determine user type, assume registered and allow resume
+  }
   
   try {
     const key = keyFor(puzzleId, difficulty)

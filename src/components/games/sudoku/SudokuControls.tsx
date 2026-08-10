@@ -17,6 +17,7 @@ interface SudokuControlsProps {
   showReplay?: boolean
   onReplay?: () => void
   showReset?: boolean
+  disabled?: boolean
 }
 
 export function SudokuControls({
@@ -32,6 +33,7 @@ export function SudokuControls({
   showReplay = false,
   onReplay,
   showReset = true,
+  disabled = false,
 }: SudokuControlsProps) {
   if (mobile) {
     return (
@@ -40,7 +42,7 @@ export function SudokuControls({
         {showReset && (
           <button
             onClick={onUndo}
-            disabled={!canUndo}
+            disabled={disabled || !canUndo}
             className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Undo"
           >
@@ -51,7 +53,8 @@ export function SudokuControls({
         {/* Erase Button */}
         <button
           onClick={onErase}
-          className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity"
+          disabled={disabled}
+          className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Erase"
         >
           <Eraser size={20} strokeWidth={2} className="text-[#424242]" />
@@ -61,7 +64,8 @@ export function SudokuControls({
         {showReplay && onReplay && (
           <button
             onClick={onReplay}
-            className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity"
+            disabled={disabled}
+            className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Replay"
           >
             <RotateCcw size={20} strokeWidth={2} className="text-[#424242]" />
@@ -72,7 +76,8 @@ export function SudokuControls({
         {showPencil && (
           <button
             onClick={onTogglePencil}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+            disabled={disabled}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
               notesMode
                 ? 'bg-[#A592FF] ring-2 ring-[var(--color-primary)]'
                 : 'bg-[#F0EDFF] dark:bg-[#F0EDFF] hover:opacity-80'
@@ -87,7 +92,7 @@ export function SudokuControls({
         {/* Hint Button */}
         <button
           onClick={onHint}
-          disabled={availableHints <= 0}
+          disabled={disabled || availableHints <= 0}
           className="relative w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Hint"
         >
@@ -111,7 +116,7 @@ export function SudokuControls({
       {showReset && (
         <button
           onClick={onUndo}
-          disabled={!canUndo}
+          disabled={disabled || !canUndo}
           className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Undo"
         >
@@ -122,7 +127,8 @@ export function SudokuControls({
       {/* Erase Button */}
       <button
         onClick={onErase}
-        className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity"
+        disabled={disabled}
+        className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Erase"
       >
         <Eraser size={27} strokeWidth={2} className="text-[#424242]" />
@@ -132,7 +138,8 @@ export function SudokuControls({
       {showReplay && onReplay && (
         <button
           onClick={onReplay}
-          className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity"
+          disabled={disabled}
+          className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Replay"
         >
           <RotateCcw size={27} strokeWidth={2} className="text-[#424242]" />
@@ -143,7 +150,8 @@ export function SudokuControls({
       {showPencil && (
         <button
           onClick={onTogglePencil}
-          className={`w-[50.31px] h-[50.31px] rounded-full flex items-center justify-center transition-all ${
+          disabled={disabled}
+          className={`w-[50.31px] h-[50.31px] rounded-full flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
             notesMode
               ? 'bg-[#A592FF] ring-2 ring-[var(--color-primary)]'
               : 'bg-[#F0EDFF] dark:bg-[#F0EDFF] hover:opacity-80'
@@ -158,7 +166,7 @@ export function SudokuControls({
       {/* Hint Button */}
       <button
         onClick={onHint}
-        disabled={availableHints <= 0}
+        disabled={disabled || availableHints <= 0}
         className="relative w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Hint"
       >

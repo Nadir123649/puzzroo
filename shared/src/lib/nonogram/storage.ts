@@ -25,9 +25,27 @@ function getScopedKey(baseKey: string): string {
 
 /**
  * Save current game state
+ * Guest users will NOT have their progress saved
  */
 export function saveGameState(state: SavedGameState): void {
   if (typeof window === 'undefined') return
+  
+  // ✅ GUEST USERS: Do NOT save game progress
+  try {
+    const guestId = localStorage.getItem('puzzroo_guest_id')
+    const hasLocalToken = !!localStorage.getItem('puzzroo_access_token')
+    const hasSessionToken = !!sessionStorage.getItem('puzzroo_access_token')
+    const hasAuthFlag = !!localStorage.getItem('puzzroo_auth') || !!sessionStorage.getItem('puzzroo_auth')
+    
+    const isGuest = !!guestId && !hasLocalToken && !hasSessionToken && !hasAuthFlag
+    
+    if (isGuest) {
+      // Guest users: do not save progress
+      return
+    }
+  } catch {
+    // If error, continue and try to save (safer for registered users)
+  }
   
   try {
     const key = getScopedKey(STORAGE_KEYS.GAME_STATE)
@@ -39,9 +57,30 @@ export function saveGameState(state: SavedGameState): void {
 
 /**
  * Load saved game state
+ * Guest users will NOT have their progress restored
  */
 export function loadGameState(): SavedGameState | null {
   if (typeof window === 'undefined') return null
+  
+  // ✅ GUEST USERS ONLY: Do not restore game progress
+  // Check BOTH localStorage AND sessionStorage for access token
+  try {
+    const guestId = localStorage.getItem('puzzroo_guest_id')
+    const hasLocalToken = !!localStorage.getItem('puzzroo_access_token')
+    const hasSessionToken = !!sessionStorage.getItem('puzzroo_access_token')
+    const hasAuthFlag = !!localStorage.getItem('puzzroo_auth') || !!sessionStorage.getItem('puzzroo_auth')
+    
+    // User is guest ONLY if: has guest ID AND no tokens AND no auth flag
+    const isGuest = !!guestId && !hasLocalToken && !hasSessionToken && !hasAuthFlag
+    
+    if (isGuest) {
+      // Guest users always start fresh - clear any existing saved state
+      clearGameState()
+      return null
+    }
+  } catch {
+    // If we can't determine user type, assume registered and allow resume
+  }
   
   try {
     const key = getScopedKey(STORAGE_KEYS.GAME_STATE)

@@ -307,7 +307,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                   </div>
                 </div>
 
-                {/* Feature Row - Hint + Replay + Undo (Sudoku style) */}
+                {/* Feature Row - Hint + Undo + Redo */}
                 <div className="flex justify-between items-center gap-[8px] pt-1">
                   {/* Hint Button */}
                   <button
@@ -326,17 +326,6 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                         </span>
                       </span>
                     )}
-                  </button>
-
-                  {/* Replay Button */}
-                  <button
-                    onClick={handleReplay}
-                    disabled={gameStatus !== 'playing' && isModalVisible}
-                    className="w-[50.31px] h-[50.31px] rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Restart same puzzle"
-                    aria-label="Replay"
-                  >
-                    <RotateCcw size={27} strokeWidth={2} className="text-[#424242]" />
                   </button>
 
                   {/* Undo Button */}
@@ -365,7 +354,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
 
               {/* Bottom Actions Section */}
               <div className="w-full flex flex-col gap-[12px] mt-auto">
-                {/* Replay Game / New Game / Replay Button */}
+                {/* Replay Game / New Game Buttons - Side by side like Sudoku */}
                 {isFromPastPuzzles ? (
                   <Button
                     onClick={handleReplay}
@@ -377,15 +366,27 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     Replay Game
                   </Button>
                 ) : (
-                  <Button
-                    onClick={mode === 'normal' ? handleNewGame : handleReplay}
-                    disabled={isResetting}
-                    fullWidth
-                    size="md"
-                    className="h-[46px]"
-                  >
-                    {mode === 'normal' ? 'New Game' : 'Replay'}
-                  </Button>
+                  <div className="flex gap-[12px]">
+                    <Button
+                      onClick={handleNewGame}
+                      disabled={isResetting}
+                      fullWidth
+                      size="md"
+                      className="flex-1 h-[46px] whitespace-nowrap text-[13px] font-bold"
+                    >
+                      New Game
+                    </Button>
+                    <Button
+                      onClick={handleReplay}
+                      disabled={isResetting}
+                      variant="outline"
+                      fullWidth
+                      size="md"
+                      className="flex-1 h-[46px] whitespace-nowrap text-[13px] font-bold"
+                    >
+                      Replay Game
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -453,7 +454,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               </TangramBoard>
             </div>
 
-            {/* Feature Row Mobile - Hint + Replay + Undo */}
+            {/* Feature Row Mobile - Hint + Undo + Redo */}
             <div className="w-full flex justify-between items-center px-4">
               {/* Hint Button */}
               <button
@@ -472,17 +473,6 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                     </span>
                   </span>
                 )}
-              </button>
-
-              {/* Replay Button */}
-              <button
-                onClick={handleReplay}
-                disabled={gameStatus !== 'playing' && isModalVisible}
-                className="w-10 h-10 rounded-full bg-[#F0EDFF] dark:bg-[#F0EDFF] flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Restart same puzzle"
-                aria-label="Replay"
-              >
-                <RotateCcw size={20} strokeWidth={2} className="text-[#424242]" />
               </button>
 
               {/* Undo Button */}
@@ -508,7 +498,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
               </button>
             </div>
 
-            {/* Replay / New Game Button Mobile */}
+            {/* Replay / New Game Button Mobile - Side by side like Sudoku */}
             <div className="w-full px-4">
               {isFromPastPuzzles || mode !== 'normal' ? (
                 <Button
@@ -521,15 +511,27 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
                   Replay Game
                 </Button>
               ) : (
-                <Button
-                  onClick={handleNewGame}
-                  disabled={isResetting}
-                  fullWidth
-                  size="md"
-                  className="h-[46px]"
-                >
-                  New Game
-                </Button>
+                <div className="flex gap-[12px]">
+                  <Button
+                    onClick={handleNewGame}
+                    disabled={isResetting}
+                    fullWidth
+                    size="md"
+                    className="flex-1 h-[46px] whitespace-nowrap text-[13px] font-bold"
+                  >
+                    New Game
+                  </Button>
+                  <Button
+                    onClick={handleReplay}
+                    disabled={isResetting}
+                    variant="outline"
+                    fullWidth
+                    size="md"
+                    className="flex-1 h-[46px] whitespace-nowrap text-[13px] font-bold"
+                  >
+                    Replay Game
+                  </Button>
+                </div>
               )}
             </div>
           </div>

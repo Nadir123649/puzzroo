@@ -45,7 +45,7 @@ import { calculateCentroid, polygonToPoints } from '@shared/lib/tangram/polygon-
 import { validatePuzzle } from '@shared/lib/tangram/polygon-validation'
 import { attemptSnap, geometricallyMatches } from '@shared/lib/tangram/polygon-snapping'
 import { PIECE_CONFIG } from '@shared/lib/tangram/pieceConfig'
-import { ensureGuestId, getCurrentUser } from '@/lib/auth/frontend-auth'
+import { ensureGuestId, getCurrentUser, isLoggedIn, resetGuestProgressIfNewGame } from '@/lib/auth/frontend-auth'
 
 const PIECE_COLORS: Record<TangramPieceId, string> = {
   baseTriangle1: '#4A90E2',
@@ -207,6 +207,9 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const dateParam = searchParams?.get('date')
   const isDailyChallenge = !!dateParam || (typeof window !== 'undefined' && window.location.pathname.includes('/daily-challenge/'))
 
+  // Reset guest progress if navigating from another page
+  resetGuestProgressIfNewGame('tangram')
+
   const [puzzle, setPuzzle] = useState<PolygonPuzzle | null>(null)
   const getInitialTime = (diff: TangramDifficulty) => {
     const normalizedDiff = String(diff || 'easy').toLowerCase()
@@ -355,7 +358,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     }).catch(() => { /* best-effort close flush */ })
 
     // Keep the local fallback fresh too (only used when no server session).
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && isLoggedIn()) {
       try {
         const userStr = getCurrentUser()
         const userId = userStr ? userStr.id : 'guest'
@@ -501,9 +504,11 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           const isReplayMode = searchParams?.get('replay') === 'true'
           
           try {
-            const contRes = (!isReplayMode && isDailyChallenge)
+            // ✅ GUEST USERS: Skip server session restore — guests always start fresh
+            const canResume = !isReplayMode && isLoggedIn()
+            const contRes = (canResume && isDailyChallenge)
               ? await gameApi.getContinueDaily('tangram', challengeId as string).catch(() => null)
-              : (!isReplayMode) ? await gameApi.getContinue('tangram', difficulty).catch(() => null) : null
+              : canResume ? await gameApi.getContinue('tangram', difficulty).catch(() => null) : null
             if (
               !cancelled &&
               contRes?.hasActiveSession &&
@@ -719,7 +724,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     }
 
     // Check if there is a saved state in LocalStorage first!
-    if (typeof window !== 'undefined') {
+    // ✅ GUEST USERS: Skip local restore — guests always start fresh
+    if (typeof window !== 'undefined' && isLoggedIn()) {
       try {
         const userStr = getCurrentUser()
         const userId = userStr ? userStr.id : 'guest'
@@ -798,7 +804,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     lastMoveKeyRef.current = key
 
     // Save to LocalStorage
-    if (typeof window !== 'undefined') {
+    // ✅ GUEST USERS: Do not persist game progress locally
+    if (typeof window !== 'undefined' && isLoggedIn()) {
       try {
         const userStr = getCurrentUser()
         const userId = userStr ? userStr.id : 'guest'
@@ -1055,8 +1062,11 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     const pieceIds = pieces.map(p => p.id)
     const validation = validatePuzzle(pieceIds, currentPolygons, targetPolygons)
 
-    // Get all pieces that are not correctly placed/snapped
+    // Get all pieces that are not correctly placed/snapped AND not already placed
     const unsolvedPieces = pieces.filter(p => {
+      // Skip pieces that are already snapped/placed correctly
+      if (p.isSnapped || p.isPlaced) return false
+      
       const val = validation.pieces.find(vp => vp.pieceId === p.id)
       return val ? !val.isCorrect : true
     })
