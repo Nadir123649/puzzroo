@@ -998,16 +998,14 @@ setGameState({
         newBoard[selectedCell.row][selectedCell.col].isError = true
         newBoard[selectedCell.row][selectedCell.col].isCorrect = false
 
-        // Track mistakes per 3x3 box only
-        // Same number in same 3x3 box = no duplicate mistake
-        const boxRow = Math.floor(selectedCell.row / 3)
-        const boxCol = Math.floor(selectedCell.col / 3)
-        const boxKey = `box-${boxRow}-${boxCol}-num-${num}`
-        
-        const isDuplicateMistake = cellMistakesRef.current.has(boxKey)
+        // Track mistakes per cell
+        const cellKey = `${selectedCell.row}-${selectedCell.col}`
+        const isDuplicateMistake = cellMistakesRef.current.get(cellKey)?.has(num)
         
         if (!isDuplicateMistake) {
-          cellMistakesRef.current.set(boxKey, new Set([num]))
+          const currentSet = cellMistakesRef.current.get(cellKey) || new Set<number>()
+          currentSet.add(num)
+          cellMistakesRef.current.set(cellKey, currentSet)
         }
 
         setGameState((prev) => {
