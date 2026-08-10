@@ -73,10 +73,19 @@ export default function AccountInformationPage() {
   // Compute canChangePassword reactively from localUser state
   const canChangePassword = !!localUser?.hasPassword
 
-  let currentSessionProvider = sessions.find(s => s.isCurrent)?.provider || provider
-  if (currentSessionProvider && linkedProviders.length > 0 && !linkedProviders.includes(currentSessionProvider)) {
-    currentSessionProvider = provider
-  }
+  // Calculate current session provider from sessions
+  const currentSessionProvider = (() => {
+    const currentSession = sessions.find(s => s.isCurrent)
+    if (!currentSession) return provider
+    
+    // Use session provider if it exists and is in linkedProviders
+    if (currentSession.provider && linkedProviders.includes(currentSession.provider)) {
+      return currentSession.provider
+    }
+    
+    // Fallback to main provider
+    return provider
+  })()
 
   const canUnlink = linkedProviders.length >= 2
   const [confirmUnlink, setConfirmUnlink] = useState<string | null>(null)
@@ -84,14 +93,20 @@ export default function AccountInformationPage() {
   const handleUnlinkProvider = async (providerToUnlink: string) => {
     const result = await unlinkProvider(providerToUnlink)
     if (result.success) {
-      setLinkedProviders(prev => prev.filter(p => p !== providerToUnlink))
       notify.success(`${providerToUnlink === 'email' ? 'Email' : providerToUnlink.charAt(0).toUpperCase() + providerToUnlink.slice(1)} has been unlinked`)
-      fetchUserProfile().then(profile => {
-        if (profile) {
-          if (profile.linkedProviders?.length) setLinkedProviders(profile.linkedProviders)
-          if (profile.provider) setProvider(profile.provider)
-        }
-      })
+      
+      // Immediately refetch user profile to update state
+      const profile = await fetchUserProfile()
+      if (profile) {
+        if (profile.linkedProviders?.length) setLinkedProviders(profile.linkedProviders)
+        if (profile.provider) setProvider(profile.provider)
+        // Also update localUser to keep everything in sync
+        setLocalUser(prev => prev ? { ...prev, linkedProviders: profile.linkedProviders, provider: profile.provider } : prev)
+      }
+      
+      // Refetch sessions to update "Current Session" badge
+      const updatedSessions = await fetchSessions()
+      setSessions(updatedSessions)
     } else {
       notify.error(result.error || 'Failed to unlink provider')
     }
@@ -236,7 +251,7 @@ export default function AccountInformationPage() {
             <span className="font-urbanist font-semibold text-[13px] text-[#757575] dark:text-[#BDBDBD] mb-1 sm:mb-0">
               Account ID
             </span>
-            <span className="font-urbanist font-mono text-[12px] text-[#212121] dark:text-white break-all">
+            <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
               {localUser?.publicId || localUser?.id || 'N/A'}
             </span>
           </div>
@@ -272,12 +287,12 @@ export default function AccountInformationPage() {
               Email Address
             </span>
             <div className="flex flex-col items-start sm:items-end">
-              {localUser?.email && localUser?.email !== 'N/A' ? (
+              {localUser?.email && localUser?.email !== 'N/A' && localUser.email.trim() !== '' ? (
                 <>
                   <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
                     {localUser.email}
                   </span>
-                  {localUser?.isVerified || (localUser?.provider === 'google' && !localUser?.hasPassword) ? (
+                  {(localUser?.isVerified || localUser?.provider === 'google') ? (
                     <div className="flex items-center gap-1 mt-0.5">
                       <Check size={12} className="text-green-600 dark:text-green-400" strokeWidth={3} />
                       <span className="font-urbanist text-[11px] text-green-600 dark:text-green-400 font-semibold">
@@ -358,7 +373,10 @@ export default function AccountInformationPage() {
             <div className="space-y-2">
               {(linkedProviders.length > 0 ? linkedProviders : (provider ? [provider] : ['email'])).map(p => {
                 const meta = PROVIDER_META[p] || PROVIDER_META.email
-                const isCurrent = currentSessionProvider === p
+                // Check if this provider matches the current session
+                // Current session can be the actual session provider OR the main provider (fallback)
+                const isCurrent = p === currentSessionProvider
+                
                 return (
                   <div key={p} className="flex items-center gap-3 p-2.5 bg-gray-50 dark:bg-[#181A20] rounded-xl max-w-sm">
                     <div className="w-8 h-8 bg-white dark:bg-[#1F222A] rounded-lg flex items-center justify-center border border-gray-100 dark:border-gray-800">

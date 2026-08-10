@@ -25,6 +25,12 @@ export default function ChooseUsernamePage() {
 
   useEffect(() => {
     setMounted(true)
+    
+    // Set global flag for navbar to detect username setup is active
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('puzzroo_username_setup_active', 'true')
+    }
+    
     if (!isLoggedIn()) {
       window.location.replace('/login')
       return
@@ -33,6 +39,13 @@ export default function ChooseUsernamePage() {
     // Users who already picked a username don't belong here.
     if (user?.usernameSet) {
       window.location.replace('/')
+    }
+    
+    // Cleanup flag when component unmounts
+    return () => {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('puzzroo_username_setup_active')
+      }
     }
   }, [])
 
@@ -51,6 +64,10 @@ export default function ChooseUsernamePage() {
     setIsSubmitting(false)
 
     if (result.success) {
+      // Clear the username setup flag
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('puzzroo_username_setup_active')
+      }
       notify.successKey('AUTH_USERNAME_SET')
       router.push('/')
     } else if (result.code === 'username_taken_conflict') {
@@ -78,6 +95,10 @@ export default function ChooseUsernamePage() {
       return
     }
     if (result.success) {
+      // Clear the username setup flag
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('puzzroo_username_setup_active')
+      }
       setShowLinkModal(false)
       notify.success('Accounts linked! Welcome back.')
       router.push('/')
@@ -183,7 +204,11 @@ export default function ChooseUsernamePage() {
               </p>
               <div className="flex flex-col gap-3 w-full">
                 <button
-                  onClick={() => router.push('/')}
+                  onClick={() => {
+                    // Clear the username setup flag
+                    sessionStorage.removeItem('puzzroo_username_setup_active')
+                    router.push('/')
+                  }}
                   className="w-full h-[48px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-bold text-[15px] transition-all duration-200 active:scale-[0.98]"
                 >
                   Continue browsing
