@@ -986,6 +986,15 @@ export function useCrossMath(initialPuzzleId?: string) {
     setIsTyping(false)
   }, [board, isTyping, selectedCell, commitCurrentInput])
 
+  // Deselect cell function for external use (e.g., clicking outside board)
+  const deselectCell = useCallback(() => {
+    if (isTyping) {
+      commitCurrentInput()
+    }
+    setSelectedCell(null)
+    setIsTyping(false)
+  }, [isTyping, commitCurrentInput])
+
   const eraseCell = useCallback(() => {
     if (!selectedCell || gameStatus !== 'playing') return
 
@@ -1551,6 +1560,7 @@ export function useCrossMath(initialPuzzleId?: string) {
     requiredNumbersCount,
     scoreFeedbacks,
     selectCell,
+    deselectCell,
     enterNumber,
     eraseCell,
     undoLastMove,

@@ -42,6 +42,7 @@ export function CrossMathGame() {
     scoreFeedbacks,
     availableHints,
     selectCell,
+    deselectCell,
     enterNumber,
     eraseCell,
     undoLastMove,
@@ -82,7 +83,7 @@ export function CrossMathGame() {
         !target.closest('button') &&
         !target.closest('[role="button"]')
       ) {
-        selectCell(null)
+        deselectCell()
       }
     }
 
@@ -90,7 +91,7 @@ export function CrossMathGame() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isGameOver, selectCell])
+  }, [isGameOver, deselectCell])
 
   const handleNewGame = async (isReplay = false) => {
     setLoaderText(isReplay ? 'Replaying puzzle...' : 'Loading puzzle...')
