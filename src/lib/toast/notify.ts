@@ -85,9 +85,9 @@ export const notify = {
   /**
    * Show an error toast derived from an API result.
    */
-  errorFromResult(result: ApiLike, fallbackKey: ToastKey = 'SYSTEM_GENERIC_ERROR'): string | null {
+  errorFromResult(result: ApiLike, fallbackKey: ToastKey = 'SYSTEM_GENERIC_ERROR', options?: ToastOptions): string | null {
     const message = notify.fromResult(result, fallbackKey)
-    return toast.error(message, baseOptions(PERSISTENT_DURATION, { id: message }))
+    return toast.error(message, baseOptions(PERSISTENT_DURATION, { id: message, ...options }))
   },
 
   /**

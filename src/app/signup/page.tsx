@@ -101,19 +101,32 @@ export default function SignupPage() {
     setIsSubmitting(false)
 
     if (result.success) {
+      notify.dismiss()
       setIsLinking(!!result.linking)
       setServerMessage(result.message || '')
       if (!result.linking) notify.successKey('AUTH_SIGNUP_SUCCESS')
       setIsSuccess(true)
     } else {
+      notify.dismiss() // Dismiss previous alerts immediately
       if (result.code === 'account_already_exists') {
         setErrors({ email: result.error })
       } else {
-        notify.errorFromResult(result, 'AUTH_SIGNUP_FAILED')
-        if (result.code === 'email_taken') {
-          setErrors({ email: result.error })
+        if (result.code === 'rate_limited' || result.code === 'account_locked' || result.error?.toLowerCase().includes('too many')) {
+          notify.errorFromResult(result, 'AUTH_SIGNUP_FAILED', { duration: 10000 })
+          const errMsg = notify.fromResult(result, 'AUTH_SIGNUP_FAILED')
+          if (result.code === 'email_taken') {
+            setErrors({ email: errMsg })
+          } else {
+            setErrors({ general: errMsg || 'Registration failed' })
+            setTimeout(() => setErrors(prev => prev.general === (errMsg || 'Registration failed') ? { ...prev, general: undefined } : prev), 10000)
+          }
         } else {
-          setErrors({ general: result.error || 'Registration failed' })
+          notify.errorFromResult(result, 'AUTH_SIGNUP_FAILED')
+          if (result.code === 'email_taken') {
+            setErrors({ email: result.error })
+          } else {
+            setErrors({ general: result.error || 'Registration failed' })
+          }
         }
       }
     }
