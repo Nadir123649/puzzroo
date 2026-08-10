@@ -42,7 +42,7 @@ export default function ChooseUsernamePage() {
 
     const trimmed = username.trim()
     if (!/^[a-z0-9._-]{3,20}$/.test(trimmed)) {
-      setError('Username must be 3-20 characters: lowercase letters, numbers, . _ or -')
+      setError('Username must be 3-20 characters')
       return
     }
 
