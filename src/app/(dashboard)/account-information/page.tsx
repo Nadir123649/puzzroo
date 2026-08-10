@@ -69,6 +69,8 @@ export default function AccountInformationPage() {
   const [currentLocation, setCurrentLocation] = useState<string | null>(null)
   const [provider, setProvider] = useState<string | null>(localUser?.provider || null)
   const [linkedProviders, setLinkedProviders] = useState<string[]>(localUser?.linkedProviders || [])
+  
+  // Compute canChangePassword reactively from localUser state
   const canChangePassword = !!localUser?.hasPassword
 
   let currentSessionProvider = sessions.find(s => s.isCurrent)?.provider || provider
@@ -638,6 +640,9 @@ export default function AccountInformationPage() {
         hasPassword={canChangePassword}
         currentEmail={localUser?.email}
         onSuccess={() => {
+          // Update hasPassword immediately so UI reflects the change
+          setLocalUser(prev => prev ? { ...prev, hasPassword: true } : prev)
+          // Also refresh from server to get latest profile
           refreshUserProfile().then(profile => {
             if (profile) setLocalUser(prev => prev ? { ...prev, ...profile } : profile)
           })
