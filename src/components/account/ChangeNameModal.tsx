@@ -79,7 +79,7 @@ export function ChangeNameModal({ isOpen, onClose, currentName, onNameChanged }:
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-black/60 dark:bg-black/80 animate-fadeIn overflow-y-auto" onClick={handleClose}>
-      <div 
+      <div
         className="w-full max-w-[480px] bg-white dark:bg-[#1A1D23] rounded-3xl shadow-2xl relative overflow-hidden animate-slideUp my-auto"
         onClick={(e) => e.stopPropagation()}
       >

@@ -194,6 +194,57 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return res;
     }
 
+    // ──── GET /api/v1/verification/merge/confirm/:token (email link) ────
+    if (resource === "merge" && action === "confirm") {
+      const baseUrl = getOrigin(request);
+      if (!token) return NextResponse.redirect(new URL("/login?merge=false", baseUrl));
+      const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+      const target = await User.findOne({
+        mergeRequestTokenHash: hashedToken,
+        mergeRequestTokenExpire: { $gt: Date.now() },
+      });
+      const failRedirect = async (t: any) => {
+        t.mergeRequestTokenHash = undefined;
+        t.mergeRequestTokenExpire = undefined;
+        t.mergeRequestFromId = undefined;
+        t.mergeRequestDonorEmail = undefined;
+        await t.save({ validateBeforeSave: false }).catch(() => {});
+        return NextResponse.redirect(new URL("/login?merge=false", baseUrl));
+      };
+      if (!target) return NextResponse.redirect(new URL("/login?merge=false", baseUrl));
+      const donor = target.mergeRequestFromId ? await User.findById(target.mergeRequestFromId) : null;
+      if (!donor) return failRedirect(target);
+      const donorEmail = donor.email || donor.pendingEmail;
+      if (donorEmail) {
+        const conflict = await User.findOne({
+          $or: [{ email: donorEmail }, { pendingEmail: donorEmail }],
+          _id: { $ne: target._id },
+        });
+        if (conflict && String(conflict._id) !== String(donor._id)) return failRedirect(target);
+      }
+      // Delete the donor account FIRST so its unique email/username are freed
+      // before we save the target with the donor's values.
+      await User.deleteOne({ _id: donor._id });
+      if (donor.pendingEmail) target.email = donor.pendingEmail;
+      else if (donor.email) target.email = donor.email;
+      if (donor.password) target.password = donor.password;
+      if (donor.isVerified) target.isVerified = true;
+      if (donor.name && !target.name) target.name = donor.name;
+      if (!target.linkedProviders) target.linkedProviders = [];
+      if (!target.linkedProviders.includes("email")) target.linkedProviders.push("email");
+      target.mergeRequestTokenHash = undefined;
+      target.mergeRequestTokenExpire = undefined;
+      target.mergeRequestFromId = undefined;
+      target.mergeRequestDonorEmail = undefined;
+      target.lastLoginAt = new Date();
+      await target.save({ validateBeforeSave: false });
+      void trackServer({ userId: target._id.toString(), event: "accounts_merged", properties: { deletedUserId: donor._id.toString(), method: "email_confirmation" }, request });
+      const { payload } = await issueSession(request, target);
+      const res = NextResponse.redirect(new URL("/auth/complete", baseUrl));
+      res.cookies.set("refreshToken", payload.token.refreshToken, cookieOptions);
+      return res;
+    }
+
     return errorResponse(404, "not_found", "Route not found");
   } catch (error: any) {
     console.error(error);

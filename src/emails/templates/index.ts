@@ -4,5 +4,6 @@ export { default as PasswordChanged } from "./PasswordChanged";
 export { default as Welcome } from "./Welcome";
 export { default as SecurityAlert } from "./SecurityAlert";
 export { default as AccountNotification } from "./AccountNotification";
+export { default as AccountLinkConfirm } from "./AccountLinkConfirm";
 export { default as EmailChanged } from "./EmailChanged";
 export { default as UsernameChanged } from "./UsernameChanged";
