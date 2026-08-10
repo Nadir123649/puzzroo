@@ -279,20 +279,42 @@ export function Navbar() {
               />
             </button>
 
-            {/* Hamburger Menu */}
+            {/* Mobile Menu Trigger */}
             {!isAccountSection && (
-              <button
-                ref={hamburgerRef}
-                onClick={() => setIsMenuOpen(prev => !prev)}
-                className="w-11 h-11 rounded-lg flex items-center justify-center ml-1 hover:bg-gray-100 dark:hover:bg-[#1F222A] active:scale-95 transition-all duration-200"
-                aria-label="Toggle menu"
-              >
-                <div className="w-5 h-4 flex flex-col justify-between">
-                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-200 ${isMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`}></span>
-                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-200 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
-                  <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-200 ${isMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`}></span>
-                </div>
-              </button>
+              navbarMounted && loggedIn && user ? (
+                <button
+                  ref={hamburgerRef}
+                  onClick={() => setIsMenuOpen(prev => !prev)}
+                  className="flex items-center justify-center gap-1.5 h-9 px-2 ml-1 rounded-full bg-[#6949FF] hover:opacity-80 active:scale-95 transition-all duration-200"
+                  aria-label="Toggle user menu"
+                >
+                  <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0 border-none">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="font-urbanist font-bold text-[13px] text-[#6949FF]">
+                        {user.name?.charAt(0).toUpperCase() || 'U'}
+                      </span>
+                    )}
+                  </div>
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className={`text-white mr-1 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`}>
+                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  ref={hamburgerRef}
+                  onClick={() => setIsMenuOpen(prev => !prev)}
+                  className="w-11 h-11 rounded-lg flex items-center justify-center ml-1 hover:bg-gray-100 dark:hover:bg-[#1F222A] active:scale-95 transition-all duration-200"
+                  aria-label="Toggle menu"
+                >
+                  <div className="w-5 h-4 flex flex-col justify-between">
+                    <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-200 ${isMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`}></span>
+                    <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-200 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
+                    <span className={`w-full h-0.5 bg-[#212121] dark:bg-white transition-all duration-200 ${isMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`}></span>
+                  </div>
+                </button>
+              )
             )}
           </div>
 
