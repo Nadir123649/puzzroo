@@ -267,11 +267,11 @@ export default function AccountInformationPage() {
               Email Address
             </span>
             <div className="flex flex-col items-start sm:items-end">
-              <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
-                {localUser?.email || 'N/A'}
-              </span>
               {localUser?.email && localUser?.email !== 'N/A' ? (
                 <>
+                  <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
+                    {localUser.email}
+                  </span>
                   {localUser?.isVerified || (localUser?.provider === 'google' && !localUser?.hasPassword) ? (
                     <div className="flex items-center gap-1 mt-0.5">
                       <Check size={12} className="text-green-600 dark:text-green-400" strokeWidth={3} />
@@ -294,17 +294,12 @@ export default function AccountInformationPage() {
                   </button>
                 </>
               ) : (
-                <>
-                  <span className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] mt-0.5">
-                    No email connected
-                  </span>
-                  <button
-                    onClick={() => setIsEmailModalOpen(true)}
-                    className="mt-1 font-urbanist font-semibold text-[11px] text-[#6949FF] hover:underline"
-                  >
-                    Set Email
-                  </button>
-                </>
+                <button
+                  onClick={() => setIsEmailModalOpen(true)}
+                  className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline"
+                >
+                  Set Email
+                </button>
               )}
             </div>
           </div>

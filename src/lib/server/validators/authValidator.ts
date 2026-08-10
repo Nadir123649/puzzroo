@@ -5,7 +5,7 @@ const usernameField = z
   .trim()
   .regex(
     /^[a-z0-9._-]{3,20}$/,
-    "Username must be 3-20 characters: lowercase letters, numbers, . _ or - only"
+    "Username must be 3-20 characters"
   );
 
 const nameField = z
