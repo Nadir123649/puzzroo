@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Eye, EyeOff } from 'lucide-react'
 import Image from 'next/image'
 import { images } from '@/lib/utils'
 import { manageEmail } from '@/lib/auth/frontend-auth'
@@ -16,16 +16,26 @@ interface SetEmailModalProps {
 
 export function SetEmailModal({ isOpen, onClose, currentEmail }: SetEmailModalProps) {
   const [email, setEmail] = useState(currentEmail || '')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [unlocked, setUnlocked] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
       setEmail(currentEmail || '')
+      setPassword('')
+      setConfirmPassword('')
+      setShowPassword(false)
+      setShowConfirmPassword(false)
       setError('')
       setSuccess(false)
       setIsLoading(false)
+      setUnlocked(false)
     }
   }, [isOpen, currentEmail])
 
@@ -46,9 +56,27 @@ export function SetEmailModal({ isOpen, onClose, currentEmail }: SetEmailModalPr
       return
     }
 
+    // Validate password
+    if (!password) {
+      setError('Password is required')
+      return
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long')
+      return
+    }
+    if (password.length > 20) {
+      setError('Password must be at most 20 characters long')
+      return
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
     setIsLoading(true)
     try {
-      const res = await manageEmail(trimmedEmail)
+      const res = await manageEmail(trimmedEmail, password)
       if (!res.success) {
         setError(res.error || 'Failed to update email')
         setIsLoading(false)
@@ -68,6 +96,8 @@ export function SetEmailModal({ isOpen, onClose, currentEmail }: SetEmailModalPr
   const handleClose = () => {
     setError('')
     setEmail('')
+    setPassword('')
+    setConfirmPassword('')
     setSuccess(false)
     onClose()
   }
@@ -134,6 +164,64 @@ export function SetEmailModal({ isOpen, onClose, currentEmail }: SetEmailModalPr
                 required
                 className="w-full h-[52px] bg-[#FAFAFA] dark:bg-[#15171C] border border-[#EEEEEE] dark:border-[#2A2D35] rounded-xl px-5 font-urbanist text-[15px] text-[#212121] dark:text-white placeholder-[#BDBDBD] dark:placeholder-[#757575] focus:outline-none focus:border-[#6949FF] dark:focus:border-[#6949FF] focus:bg-white dark:focus:bg-[#1A1D23] transition-all"
               />
+            </div>
+
+            {/* Password Field */}
+            <div className="flex flex-col gap-2">
+              <label className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+                Password
+              </label>
+              <div className="relative flex items-center">
+                <input
+                  type={unlocked && !showPassword ? "password" : "text"}
+                  value={password}
+                  maxLength={20}
+                  readOnly={!unlocked}
+                  onFocus={() => setUnlocked(true)}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  required
+                  className="w-full h-[52px] bg-[#FAFAFA] dark:bg-[#15171C] border border-[#EEEEEE] dark:border-[#2A2D35] rounded-xl px-5 font-urbanist text-[15px] text-[#212121] dark:text-white placeholder-[#BDBDBD] dark:placeholder-[#757575] focus:outline-none focus:border-[#6949FF] dark:focus:border-[#6949FF] focus:bg-white dark:focus:bg-[#1A1D23] transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 text-[#9E9E9E] hover:text-[#212121] dark:hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password Field */}
+            <div className="flex flex-col gap-2">
+              <label className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+                Confirm Password
+              </label>
+              <div className="relative flex items-center">
+                <input
+                  type={unlocked && !showConfirmPassword ? "password" : "text"}
+                  value={confirmPassword}
+                  maxLength={20}
+                  readOnly={!unlocked}
+                  onFocus={() => setUnlocked(true)}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm password"
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  required
+                  className="w-full h-[52px] bg-[#FAFAFA] dark:bg-[#15171C] border border-[#EEEEEE] dark:border-[#2A2D35] rounded-xl px-5 font-urbanist text-[15px] text-[#212121] dark:text-white placeholder-[#BDBDBD] dark:placeholder-[#757575] focus:outline-none focus:border-[#6949FF] dark:focus:border-[#6949FF] focus:bg-white dark:focus:bg-[#1A1D23] transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 text-[#9E9E9E] hover:text-[#212121] dark:hover:text-white transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
             <Button
