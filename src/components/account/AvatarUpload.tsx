@@ -197,7 +197,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
       }
       onAvatarChanged(null)
       closeViewer()
-      notify.success('Avatar removed')
+      notify.success('Profile picture removed successfully')
     } catch (err: any) {
       setError(err.message || 'Failed to remove photo. Please try again.')
       notify.error(err.message || 'Failed to remove photo')
