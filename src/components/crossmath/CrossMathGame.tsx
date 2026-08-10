@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
@@ -21,6 +21,7 @@ export function CrossMathGame() {
   const [isResetting, setIsResetting] = useState(false)
   const [loaderText, setLoaderText] = useState('Loading puzzle...')
   const [showModal, setShowModal] = useState(false)
+  const boardRef = useRef<HTMLDivElement>(null)
   
   // Check if this is from past puzzles or daily challenge (has date param or daily challenge route)
   const dateParam = searchParams?.get('date')
@@ -66,6 +67,30 @@ export function CrossMathGame() {
       setShowModal(false)
     }
   }, [gameStatus])
+
+  // Deselect cell when clicking outside the board
+  useEffect(() => {
+    if (isGameOver) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      
+      // Check if click is inside board or on interactive elements
+      if (
+        boardRef.current && 
+        !boardRef.current.contains(target) &&
+        !target.closest('button') &&
+        !target.closest('[role="button"]')
+      ) {
+        selectCell(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isGameOver, selectCell])
 
   const handleNewGame = async (isReplay = false) => {
     setLoaderText(isReplay ? 'Replaying puzzle...' : 'Loading puzzle...')
@@ -124,13 +149,15 @@ export function CrossMathGame() {
     : Math.max(36, Math.min(50, Math.floor(targetBoardPx / numCols)))
 
   return (
-    <section className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}>
+    <section 
+      className={`w-full bg-white dark:bg-[#181A20] transition-colors duration-300 relative ${(isResetting || loading) ? 'pointer-events-none select-none' : ''}`}
+    >
       <div className="w-full px-[20px] flex justify-center">
         <div className="w-full max-w-[1200px] flex flex-col gap-[15px] pb-0 md:pb-[50px]">
           {/* Desktop Layout */}
           <div className="hidden md:flex gap-[30px] lg:gap-[48px] justify-center items-stretch">
             {/* CrossMath Board - Center aligned for easy mode */}
-            <div className="flex-shrink-0 relative">
+            <div className="flex-shrink-0 relative" ref={boardRef}>
               <CrossMathBoard
                 board={board}
                 selectedCell={selectedCell}
@@ -244,7 +271,7 @@ export function CrossMathGame() {
              </div>
  
              {/* CrossMath Board */}
-             <div className="w-full relative">
+             <div className="w-full relative" ref={boardRef}>
                <CrossMathBoard
                  board={board}
                  selectedCell={selectedCell}

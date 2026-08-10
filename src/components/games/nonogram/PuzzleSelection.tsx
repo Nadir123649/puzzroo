@@ -228,7 +228,7 @@ export function PuzzleSelection({ onSelectPuzzle }: { onSelectPuzzle: (puzzleId:
                       <div className="flex items-center justify-between">
                         <span className="font-urbanist text-[#757575] dark:text-[#BDBDBD] flex items-center gap-1">
                           <Clock size={12} />
-                          Est. Time
+                          Time
                         </span>
                         <span className="font-urbanist font-semibold text-[#424242] dark:text-[#E0E0E0]">
                           ~{puzzle.difficulty === 'hard' ? 5 : puzzle.difficulty === 'medium' ? 7 : 10} min

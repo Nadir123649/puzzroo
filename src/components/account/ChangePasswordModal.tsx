@@ -134,12 +134,14 @@ export function ChangePasswordModal({ isOpen, onClose, hasPassword = true, curre
           return
         }
 
-        setSuccess(true)
-        notify.success('Password changed successfully.')
-        onSuccess?.()
+        // Close modal immediately without showing success state
+        notify.success('Password set successfully.')
+        handleClose()
+        
+        // Call onSuccess after a short delay to allow modal to close
         setTimeout(() => {
-          handleClose()
-        }, 1500)
+          onSuccess?.()
+        }, 200)
       }
     } catch {
       setError('Failed to update password. Please try again.')

@@ -1062,10 +1062,14 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     const pieceIds = pieces.map(p => p.id)
     const validation = validatePuzzle(pieceIds, currentPolygons, targetPolygons)
 
-    // Get all pieces that are not correctly placed/snapped AND not already placed
+    // Get all pieces that are not correctly snapped (validation.isCorrect)
     const unsolvedPieces = pieces.filter(p => {
-      // Skip pieces that are already snapped/placed correctly
-      if (p.isSnapped || p.isPlaced) return false
+      // Only skip pieces that are CORRECTLY snapped/placed
+      // Don't skip pieces that are just "placed" but not correctly snapped
+      if (p.isSnapped) {
+        const val = validation.pieces.find(vp => vp.pieceId === p.id)
+        if (val && val.isCorrect) return false // Skip correctly placed pieces
+      }
       
       const val = validation.pieces.find(vp => vp.pieceId === p.id)
       return val ? !val.isCorrect : true

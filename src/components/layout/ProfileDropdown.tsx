@@ -13,9 +13,11 @@ interface ProfileDropdownProps {
   userName: string
   userEmail: string
   userAvatar?: string | null
+  isDisabled?: boolean
+  onDisabledClick?: () => void
 }
 
-export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDropdownProps) {
+export function ProfileDropdown({ userName, userEmail, userAvatar, isDisabled = false, onDisabledClick }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -61,8 +63,18 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
     <div className="relative" ref={dropdownRef}>
       {/* Profile Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 h-[38px] px-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#1F222A] transition-all duration-200 active:scale-95 mr-1.5"
+        onClick={() => {
+          if (isDisabled) {
+            onDisabledClick?.()
+            return
+          }
+          setIsOpen(!isOpen)
+        }}
+        className={`flex items-center gap-2.5 h-[38px] px-3 rounded-full transition-all duration-200 mr-1.5 ${
+          isDisabled 
+            ? 'opacity-60 cursor-not-allowed' 
+            : 'hover:bg-gray-100 dark:hover:bg-[#1F222A] active:scale-95'
+        }`}
         aria-label="Profile menu"
       >
         {/* Avatar */}
@@ -75,7 +87,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
         </div>
         
         {/* Name */}
-        <span className="font-urbanist font-semibold text-[15px] text-[#212121] dark:text-white transition-colors duration-300">
+        <span className="font-urbanist font-semibold text-[15px] text-[#212121] dark:text-white">
           {displayName}
         </span>
 
@@ -99,7 +111,7 @@ export function ProfileDropdown({ userName, userEmail, userAvatar }: ProfileDrop
       </button>
 
       {/* Dropdown Menu */}
-      {isOpen && (
+      {isOpen && !isDisabled && (
         <div className="absolute right-0 top-[calc(100%+8px)] w-[240px] bg-white dark:bg-[#1F222A] rounded-2xl border-[1.5px] border-[#E0E0E0] dark:border-[#35383F] shadow-xl shadow-purple-500/10 overflow-hidden z-50 animate-slideDown">
           {/* User Info */}
           <div className="px-4 py-3 border-b border-[#E0E0E0] dark:border-[#35383F]">

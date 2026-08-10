@@ -39,6 +39,8 @@ export function Navbar() {
     return null
   })
   const [navbarMounted, setNavbarMounted] = useState(false)
+  const [isUsernameSetupActive, setIsUsernameSetupActive] = useState(false)
+  const [lastToastTime, setLastToastTime] = useState(0)
   const pathname = usePathname()
   const router = useRouter()
 
@@ -56,9 +58,30 @@ export function Navbar() {
                            pathname.startsWith('/subscription') || 
                            pathname.startsWith('/change-password');
 
+  // Show toast only once every 3 seconds for username setup restriction
+  const showUsernameSetupToast = () => {
+    const now = Date.now()
+    if (now - lastToastTime >= 3000) {
+      notify.error('Please set your username first')
+      setLastToastTime(now)
+    }
+  }
+
   useLayoutEffect(() => {
     setNavbarMounted(true)
     globalMounted = true;
+    
+    // Check if username setup is active
+    const checkUsernameSetup = () => {
+      if (typeof window !== 'undefined') {
+        const isActive = sessionStorage.getItem('puzzroo_username_setup_active') === 'true'
+        setIsUsernameSetupActive(isActive)
+      }
+    }
+    
+    checkUsernameSetup()
+    // Re-check on storage events
+    window.addEventListener('storage', checkUsernameSetup)
 
     const checkAuth = () => {
       const isAuth = isLoggedIn()
@@ -88,7 +111,6 @@ export function Navbar() {
 
     checkAuth()
 
-    window.addEventListener('storage', checkAuth)
     window.addEventListener('auth-change', checkAuth)
     return () => {
       window.removeEventListener('storage', checkAuth)
@@ -180,8 +202,13 @@ export function Navbar() {
           <div className="flex items-center gap-[clamp(8px,1vw,12px)] select-none">
             <Link prefetch={false}
               href="/"
-              className="flex items-center gap-[clamp(8px,1vw,12px)] cursor-pointer"
+              className={`flex items-center gap-[clamp(8px,1vw,12px)] ${isUsernameSetupActive ? 'pointer-events-none opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
               onClick={(e) => {
+                if (isUsernameSetupActive) {
+                  e.preventDefault()
+                  showUsernameSetupToast()
+                  return
+                }
                 if (pathname === '/') {
                   e.preventDefault()
                   window.scrollTo({
@@ -253,11 +280,23 @@ export function Navbar() {
               {/* Subscribe Us Button - Only for logged in users */}
               <Link prefetch={false}
                 href="/subscription"
-                className="inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 active:scale-95"
+                className={`inline-flex items-center justify-center h-[38px] px-[clamp(16px,2vw,24px)] rounded-full bg-[#6949FF] text-white text-[16px] font-semibold font-urbanist transition-all duration-200 ${isUsernameSetupActive ? 'pointer-events-none opacity-60 cursor-not-allowed' : 'hover:bg-[#5536E6] active:scale-95'}`}
+                onClick={(e) => {
+                  if (isUsernameSetupActive) {
+                    e.preventDefault()
+                    showUsernameSetupToast()
+                  }
+                }}
               >
                 Subscribe Us
               </Link>
-              <ProfileDropdown userName={navbarMounted ? (user?.name || '') : ''} userEmail={navbarMounted ? (user?.email || '') : ''} userAvatar={navbarMounted ? user?.avatar : null} />
+              <ProfileDropdown 
+                userName={navbarMounted ? (user?.name || '') : ''} 
+                userEmail={navbarMounted ? (user?.email || '') : ''} 
+                userAvatar={navbarMounted ? user?.avatar : null}
+                isDisabled={isUsernameSetupActive}
+                onDisabledClick={showUsernameSetupToast}
+              />
             </div>
 
           </div>

@@ -72,7 +72,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const resetToken = crypto.randomBytes(32).toString("hex");
       const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
       user.resetPasswordToken = hashedToken;
-      user.resetPasswordTokenExpire = Date.now() + RESET_TOKEN_MINUTES * 60 * 1000;
+      user.resetPasswordTokenExpire = new Date(Date.now() + RESET_TOKEN_MINUTES * 60 * 1000);
       await user.save({ validateBeforeSave: false });
       const resetUrl = `${getOrigin(request)}/reset-password/${resetToken}`;
       // Email is fire-and-forget: never block the response on SMTP latency.
