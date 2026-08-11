@@ -207,6 +207,12 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
           {/* Puzzle Metadata */}
           <div className="text-center space-y-1 w-full mt-4">
             <div className="flex items-center justify-center gap-3 flex-wrap">
+              {/* Difficulty Badge - Only visible on mobile */}
+              <span className="md:hidden inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 font-urbanist text-[13px] font-bold text-[#6949FF] capitalize">
+                {puzzle?.difficulty || difficulty}
+              </span>
+              
+              {/* Estimated Time Badge */}
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5F6FA] dark:bg-[#35383F] font-urbanist text-[12px] font-semibold text-[#616161] dark:text-[#A0A4B8]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/>
