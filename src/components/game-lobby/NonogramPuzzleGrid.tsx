@@ -151,7 +151,7 @@ export function NonogramPuzzleGrid() {
                       Time
                     </span>
                     <span className="font-urbanist font-semibold text-[#424242] dark:text-[#E0E0E0]">
-                      ~{Math.floor(getTimeLimitSeconds(puzzle.difficulty) / 60)} min
+                      {Math.floor(getTimeLimitSeconds(puzzle.difficulty) / 60)} min
                     </span>
                   </div>
                 </div>

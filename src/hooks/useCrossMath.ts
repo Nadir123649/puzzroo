@@ -1309,16 +1309,28 @@ export function useCrossMath(initialPuzzleId?: string) {
     const newUsedCount = new Map(usedNumbersCount)
 
     if (!isTyping) {
+      // ✅ FIX: Clear the cell completely before starting new input
       newValueStr = key
       setIsTyping(true)
 
-      // If overwriting a number, decrement its usage count
+      // If overwriting a number, decrement its usage count AND clear the cell
       if (cell.type === 'number' && typeof cell.value === 'number') {
         const prevCount = newUsedCount.get(cell.value) || 0
         if (prevCount > 0) {
           newUsedCount.set(cell.value, prevCount - 1)
         }
         setUsedNumbersCount(newUsedCount)
+        
+        // Clear the cell visually
+        const clearBoard = board.map(r => r.map(c => ({ ...c })))
+        clearBoard[row][col] = {
+          ...cell,
+          type: 'empty',
+          value: undefined,
+          isCorrect: undefined,
+          isError: undefined,
+        }
+        setBoard(clearBoard)
       }
     } else {
       const currentVal = cell.value !== undefined ? String(cell.value) : ''
@@ -1394,22 +1406,36 @@ export function useCrossMath(initialPuzzleId?: string) {
 
       // Score / Mistakes
       if (isCorrect) {
-        const newScore = score + SCORING.CORRECT_ANSWER
-        setScore(newScore)
-        triggerScoreFeedback(SCORING.CORRECT_ANSWER)
+        const cellKey = `${row}-${col}`
+        if (!cellScoreAwardedRef.current.has(cellKey)) {
+          cellScoreAwardedRef.current.add(cellKey)
+          const newScore = score + SCORING.CORRECT_ANSWER
+          setScore(newScore)
+          triggerScoreFeedback(SCORING.CORRECT_ANSWER)
+        }
       } else {
-        const newScore = Math.max(0, score + SCORING.WRONG_ANSWER)
-        setScore(newScore)
-        triggerScoreFeedback(SCORING.WRONG_ANSWER)
+        // ✅ FIX: Track duplicate mistakes - same wrong number on same cell should not count again
+        const cellKey = `${row}-${col}`
+        const cellMistakes = cellMistakesRef.current.get(cellKey) || new Set<number>()
+        const isDuplicateMistake = cellMistakes.has(num)
+        
+        if (!isDuplicateMistake) {
+          cellMistakes.add(num)
+          cellMistakesRef.current.set(cellKey, cellMistakes)
+          
+          const newScore = Math.max(0, score + SCORING.WRONG_ANSWER)
+          setScore(newScore)
+          triggerScoreFeedback(SCORING.WRONG_ANSWER)
 
-        const newMistakes = mistakes + 1
-        setMistakes(newMistakes)
+          const newMistakes = mistakes + 1
+          setMistakes(newMistakes)
 
-        if (newMistakes >= maxMistakes) {
-          setGameStatus('lost')
-          clearGameState()
-          void failSession()
-          return
+          if (newMistakes >= maxMistakes) {
+            setGameStatus('lost')
+            clearGameState()
+            void failSession()
+            return
+          }
         }
       }
 
