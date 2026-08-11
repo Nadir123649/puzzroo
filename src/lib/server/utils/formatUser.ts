@@ -6,13 +6,6 @@ export function formatUser(user: any) {
     usernameSet: user.usernameSet,
     name: user.name,
     email: user.email,
-    // Older OAuth accounts may not have been backfilled yet. Their current
-    // email is still their provider email until they add an email provider.
-    providerEmail: user.providerEmail || (
-      user.firebaseProvider && !user.linkedProviders?.includes("email")
-        ? user.email
-        : null
-    ),
     phone: user.phone,
     role: user.role === "premium" ? "free" : user.role,
     status: user.status,

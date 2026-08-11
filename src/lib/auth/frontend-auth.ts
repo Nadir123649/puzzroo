@@ -172,7 +172,6 @@ export interface User {
   publicId?: string
   name: string
   email: string
-  providerEmail?: string | null
   username: string
   usernameSet?: boolean
   role?: string
@@ -694,7 +693,6 @@ function mapUser(u: any): User {
     publicId: u.publicId,
     name: u.name || u.username,
     email: u.email || "",
-    providerEmail: u.providerEmail || null,
     username: u.username,
     usernameSet: u.usernameSet,
     role: mappedRole,

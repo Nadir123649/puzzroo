@@ -11,9 +11,6 @@ const userSchema = new mongoose.Schema(
     publicId: { type: String, default: null, unique: true, sparse: true },
     name: { type: String, trim: true, default: null },
     email: { type: String, lowercase: true, trim: true, default: null, unique: true, sparse: true },
-    // The email supplied by an OAuth provider. This stays separate from the
-    // Puzzroo email a user may later set for their account.
-    providerEmail: { type: String, lowercase: true, trim: true, default: null },
     password: { type: String, default: null },
     phone: { type: String, default: null },
     firebaseUid: { type: String, default: null, index: true },

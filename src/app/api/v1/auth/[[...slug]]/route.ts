@@ -455,11 +455,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const normalizedEmail = email.toLowerCase().trim();
       const user = await User.findById(userResult.user.id);
       if (!user) return errorResponse(404, "user_not_found", "User not found");
-      // Backfill the OAuth email before a separate account email replaces the
-      // legacy `email` value. This preserves it for Connected Accounts.
-      if (user.firebaseProvider && !user.providerEmail && user.email) {
-        user.providerEmail = user.email;
-      }
       if (user.email && user.email === normalizedEmail) {
         if (password && !user.password) {
           user.password = await bcrypt.hash(password, 10);

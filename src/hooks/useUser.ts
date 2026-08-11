@@ -16,7 +16,6 @@ function mapUser(u: any): User {
     publicId: u.publicId,
     name: u.name || u.username,
     email: u.email || "",
-    providerEmail: u.providerEmail || null,
     username: u.username,
     usernameSet: u.usernameSet,
     role: u.role || "free",

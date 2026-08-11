@@ -118,10 +118,7 @@ export async function handleOAuth(
       guest.firebaseUid = uid;
       guest.firebaseProvider = mappedProvider;
       guest.provider = mappedProvider;
-      if (normalizedEmail) {
-        guest.email = normalizedEmail;
-        guest.providerEmail = normalizedEmail;
-      }
+      if (normalizedEmail) guest.email = normalizedEmail;
       if (name) guest.name = name;
       if (picture) guest.avatar = picture;
       guest.role = "free";
@@ -141,7 +138,7 @@ export async function handleOAuth(
     user = await User.create({
       username, usernameSet: false, name: name || null,
       email: normalizedEmail || null, firebaseUid: uid, publicId: await generatePublicId(),
-      providerEmail: normalizedEmail || null, provider: mappedProvider, firebaseProvider: mappedProvider, avatar: picture || null,
+      provider: mappedProvider, firebaseProvider: mappedProvider, avatar: picture || null,
       role: "free", isVerified: true, linkedProviders: [mappedProvider],
     });
   } else if (user.role !== "guest" && !user.publicId) {
@@ -154,9 +151,6 @@ export async function handleOAuth(
   // block, so subsequent Google/Facebook logins aren't silently dropped from
   // the linked-providers list. Email is linked whenever a password exists.
   addLinkedProvider(user, mappedProvider);
-  // Keep the OAuth address available for the Connected Accounts card even
-  // after the user adds or changes their separate Puzzroo email address.
-  if (normalizedEmail) user.providerEmail = normalizedEmail;
   if (user.password) addLinkedProvider(user, "email");
   user.lastLoginAt = new Date();
   await user.save({ validateBeforeSave: false });
