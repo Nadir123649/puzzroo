@@ -169,7 +169,17 @@ export function PuzzleSelection({ onSelectPuzzle }: { onSelectPuzzle: (puzzleId:
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin text-[#6949FF]" size={36} />
+            <Loader2 
+              key="puzzle-list-loader"
+              className="animate-spin text-[#6949FF]" 
+              size={36}
+              style={{ 
+                willChange: 'transform',
+                animationDuration: '1s',
+                animationTimingFunction: 'linear',
+                animationIterationCount: 'infinite'
+              }}
+            />
           </div>
         ) : puzzles.length > 0 ? (
           <>
@@ -259,7 +269,19 @@ export function PuzzleSelection({ onSelectPuzzle }: { onSelectPuzzle: (puzzleId:
                   disabled={loadingMore}
                   className="inline-flex items-center gap-2 px-8 py-3 border-2 border-[#6949FF] text-[#6949FF] font-urbanist font-bold text-[16px] rounded-full hover:bg-[#6949FF] hover:text-white transition-all duration-200 active:scale-95 disabled:opacity-50"
                 >
-                  {loadingMore ? <Loader2 className="animate-spin" size={18} /> : null}
+                  {loadingMore ? (
+                    <Loader2 
+                      key="load-more-spinner"
+                      className="animate-spin" 
+                      size={18}
+                      style={{ 
+                        willChange: 'transform',
+                        animationDuration: '1s',
+                        animationTimingFunction: 'linear',
+                        animationIterationCount: 'infinite'
+                      }}
+                    />
+                  ) : null}
                   {loadingMore ? 'Loading...' : 'Load More'}
                 </button>
               </div>

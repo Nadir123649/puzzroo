@@ -277,3 +277,28 @@ html.dark input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 2px #6949FF, 0 0 0 100px #181A20 inset !important;
   border-color: transparent !important;
 }
+
+/* Optimized Spinner Animation - Prevents Stutter/Freeze */
+@keyframes spin-smooth {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Override Tailwind's animate-spin with GPU-accelerated version */
+.animate-spin {
+  animation: spin-smooth 1s linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+  perspective: 1000px;
+  transform: translateZ(0);
+}
+
+/* Ensure spinner never pauses during React re-renders */
+.animate-spin,
+.animate-spin * {
+  animation-play-state: running !important;
+}

@@ -30,7 +30,7 @@ export default function EmailLayout({ preview, children }: EmailLayoutProps) {
                 <tr>
                   <td style={logoIconTdStyle}>
                     <Img 
-                      src="https://puzzroo.com/logo-icon.png" 
+                      src="https://res.cloudinary.com/df80crgrw/image/upload/v1786438725/logo-icon_qqxztv.png" 
                       width="37" 
                       height="37" 
                       alt="Puzzroo Logo" 

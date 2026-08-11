@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react'
 import { Eye, EyeOff, X, Lock } from 'lucide-react'
-import { notify } from '@/lib/toast'
 import { changePassword, forgotPassword, getCurrentUser, logout, manageEmail } from '@/lib/auth/frontend-auth'
 import { Button } from '@/components/ui/button'
 
@@ -60,14 +59,11 @@ export function ChangePasswordModal({ isOpen, onClose, hasPassword = true, curre
       const res = await forgotPassword(user.email)
       if (res.success) {
         setForgotSent(true)
-        notify.successKey('ACCOUNT_RESET_LINK_SENT')
       } else {
         setError(res.error || 'Failed to send reset email')
-        notify.errorFromResult(res, 'ACCOUNT_RESET_EMAIL_FAILED')
       }
     } catch {
       setError('Failed to send reset email. Please try again.')
-      notify.errorKey('ACCOUNT_RESET_EMAIL_FAILED_RETRY')
     } finally {
       setForgotLoading(false)
     }
@@ -116,7 +112,6 @@ export function ChangePasswordModal({ isOpen, onClose, hasPassword = true, curre
         }
 
         setSuccess(true)
-        notify.success('Password changed successfully.')
         // Server logged out every device (this one included) after the change.
         // Log out locally and send the user straight back to sign in.
         void logout().then(() => window.location.replace('/login'))
@@ -135,7 +130,6 @@ export function ChangePasswordModal({ isOpen, onClose, hasPassword = true, curre
         }
 
         // Close modal immediately without showing success state
-        notify.success('Password set successfully.')
         handleClose()
         
         // Call onSuccess after a short delay to allow modal to close

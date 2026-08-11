@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { SudokuHero } from '@/components/sudoku/SudokuHero'
 import { SudokuGame } from '@/components/sudoku/SudokuGame'
-import { GameLoader } from '@/components/ui/GameLoader'
+import { useGlobalLoader } from '@/contexts/GlobalLoaderContext'
 import { markGameAsPlayed } from '@/components/sections/FreeGames'
 
 function SudokuContent() {
@@ -26,17 +26,26 @@ function SudokuContent() {
 }
 
 export default function SudokuPage() {
-  const [initialLoading, setInitialLoading] = useState(true)
+  const { showLoader, hideLoader } = useGlobalLoader()
 
   useEffect(() => {
-    const timer = setTimeout(() => setInitialLoading(false), 200)
-    return () => clearTimeout(timer)
-  }, [])
+    // Show loader on mount
+    showLoader('Loading puzzle...', 200)
+    
+    // Hide after minimum duration
+    const timer = setTimeout(() => {
+      hideLoader()
+    }, 200)
+    
+    return () => {
+      clearTimeout(timer)
+      hideLoader()
+    }
+  }, [showLoader, hideLoader])
 
   return (
     <>
       <title>Sudoku | Puzzroo Games</title>
-      <GameLoader isOpen={initialLoading} text="Loading puzzle..." />
       <AppLayout>
         <main className="flex-grow flex flex-col">
           <Suspense fallback={<div className="flex-grow" />}>

@@ -29,6 +29,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
   const quickMenuRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const [videoTransform, setVideoTransform] = useState('')
 
   useEffect(() => {
     if (!isViewerOpen) return
@@ -81,10 +82,38 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
       }
     }
     start()
+    
+    // Handle orientation changes for live video preview
+    const updateVideoOrientation = () => {
+      if (!window.screen?.orientation) return
+      
+      const angle = window.screen.orientation.angle
+      // Front camera (selfie) needs mirroring AND rotation compensation
+      // The video stream is in sensor orientation, so we need to rotate based on device angle
+      let transform = 'scaleX(-1)' // Mirror for selfie
+      
+      // Compensate for device rotation
+      // angle = 0: portrait, angle = 90: landscape-left, angle = -90/270: landscape-right, angle = 180: upside-down portrait
+      if (angle === 90) {
+        transform += ' rotate(-90deg)' // Rotate back to correct orientation
+      } else if (angle === 270 || angle === -90) {
+        transform += ' rotate(90deg)'
+      } else if (angle === 180) {
+        transform += ' rotate(180deg)'
+      }
+      // angle === 0 needs no rotation compensation
+      
+      setVideoTransform(transform)
+    }
+    
+    updateVideoOrientation()
+    window.screen?.orientation?.addEventListener('change', updateVideoOrientation)
+    
     return () => {
       cancelled = true
       streamRef.current?.getTracks().forEach(t => t.stop())
       streamRef.current = null
+      window.screen?.orientation?.removeEventListener('change', updateVideoOrientation)
     }
   }, [showCamera])
 
@@ -97,13 +126,44 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
 
   const capturePhoto = () => {
     const video = videoRef.current
-    if (!video || !video.videoWidth) return
+    if (!video || !video.videoWidth || !video.videoHeight) return
+    
     const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    ctx.drawImage(video, 0, 0)
+    
+    // Get the device orientation angle
+    const angle = window.screen?.orientation?.angle || 0
+    
+    // For rotated orientations (90° or 270°), swap width and height
+    const needsSwap = angle === 90 || angle === 270 || angle === -90
+    canvas.width = needsSwap ? video.videoHeight : video.videoWidth
+    canvas.height = needsSwap ? video.videoWidth : video.videoHeight
+    
+    // Apply transformations to match what the user sees in the preview
+    ctx.translate(canvas.width / 2, canvas.height / 2)
+    
+    // Mirror for selfie camera
+    ctx.scale(-1, 1)
+    
+    // Rotate based on device orientation to match preview
+    if (angle === 90) {
+      ctx.rotate(-Math.PI / 2)
+    } else if (angle === 270 || angle === -90) {
+      ctx.rotate(Math.PI / 2)
+    } else if (angle === 180) {
+      ctx.rotate(Math.PI)
+    }
+    
+    // Draw video centered
+    ctx.drawImage(
+      video,
+      -video.videoWidth / 2,
+      -video.videoHeight / 2,
+      video.videoWidth,
+      video.videoHeight
+    )
+    
     canvas.toBlob(
       (blob) => {
         if (!blob) return
@@ -111,7 +171,8 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
         setShowCamera(false)
         validateAndPreview(captured)
       },
-      'image/png'
+      'image/png',
+      0.95
     )
   }
 
@@ -365,6 +426,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
                     autoPlay
                     playsInline
                     muted
+                    style={{ transform: videoTransform }}
                     className="w-full h-full object-cover"
                   />
                 </div>

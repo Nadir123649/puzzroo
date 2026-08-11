@@ -170,7 +170,19 @@ export default function SubscriptionPage() {
               disabled={loading !== null}
               className="w-full h-[40px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95 mb-2 flex items-center justify-center gap-2 disabled:opacity-70"
             >
-              {loading === "monthly" ? <Loader2 size={16} className="animate-spin" /> : null}
+              {loading === "monthly" ? (
+                <Loader2 
+                  key="monthly-sub-spinner"
+                  size={16} 
+                  className="animate-spin"
+                  style={{ 
+                    willChange: 'transform',
+                    animationDuration: '1s',
+                    animationTimingFunction: 'linear',
+                    animationIterationCount: 'infinite'
+                  }}
+                />
+              ) : null}
               {currentSub?.plan === "monthly" ? "Current Plan" : "Choose Monthly"}
             </button>
             <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] text-center">
@@ -212,7 +224,19 @@ export default function SubscriptionPage() {
               disabled={loading !== null}
               className="w-full h-[40px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95 mb-2 flex items-center justify-center gap-2 disabled:opacity-70"
             >
-              {loading === "yearly" ? <Loader2 size={16} className="animate-spin" /> : null}
+              {loading === "yearly" ? (
+                <Loader2 
+                  key="yearly-sub-spinner"
+                  size={16} 
+                  className="animate-spin"
+                  style={{ 
+                    willChange: 'transform',
+                    animationDuration: '1s',
+                    animationTimingFunction: 'linear',
+                    animationIterationCount: 'infinite'
+                  }}
+                />
+              ) : null}
               {currentSub?.plan === "yearly" ? "Current Plan" : "Choose Yearly"}
             </button>
             <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] text-center">
@@ -242,7 +266,19 @@ export default function SubscriptionPage() {
               disabled={loading !== null}
               className="w-full h-[40px] bg-[#6949FF] hover:bg-[#5536E6] text-white rounded-full font-urbanist font-semibold text-[13px] transition-all duration-200 active:scale-95 mb-2 flex items-center justify-center gap-2 disabled:opacity-70"
             >
-              {loading === "lifetime" ? <Loader2 size={16} className="animate-spin" /> : null}
+              {loading === "lifetime" ? (
+                <Loader2 
+                  key="lifetime-sub-spinner"
+                  size={16} 
+                  className="animate-spin"
+                  style={{ 
+                    willChange: 'transform',
+                    animationDuration: '1s',
+                    animationTimingFunction: 'linear',
+                    animationIterationCount: 'infinite'
+                  }}
+                />
+              ) : null}
               {currentSub?.plan === "lifetime" ? "Current Plan" : "Get Lifetime Access"}
             </button>
             <p className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] text-center">

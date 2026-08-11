@@ -56,7 +56,7 @@ function writeAccessToken(token: string, remember: boolean): void {
       sessionStorage.setItem(TOKEN_KEY, token);
       localStorage.removeItem(TOKEN_KEY);
     }
-  } catch {}
+  } catch { }
 }
 
 function readAccessToken(): string | null {
@@ -67,7 +67,7 @@ function readAccessToken(): string | null {
 function writeStoredUser(userJson: string, remember?: boolean): void {
   if (!canUseStorage()) return;
   const target = remember !== undefined ? (remember ? localStorage : sessionStorage) : getAuthScope();
-  try { target.setItem(USER_KEY, userJson); } catch {}
+  try { target.setItem(USER_KEY, userJson); } catch { }
 }
 
 function readStoredUser(): User | null {
@@ -92,7 +92,7 @@ export function storeAuth(remember: boolean, token: string, userJson: string): v
     target.setItem(FLAG_KEY, "true");
     target.setItem(USER_KEY, userJson);
     [TOKEN_KEY, FLAG_KEY, USER_KEY].forEach((k) => other.removeItem(k));
-  } catch {}
+  } catch { }
 }
 
 export function setAuthFlag(remember: boolean): void {
@@ -100,7 +100,7 @@ export function setAuthFlag(remember: boolean): void {
   try {
     (remember ? localStorage : sessionStorage).setItem(FLAG_KEY, "true");
     (remember ? sessionStorage : localStorage).removeItem(FLAG_KEY);
-  } catch {}
+  } catch { }
 }
 
 export function setAuthUser(userJson: string, remember?: boolean): void {
@@ -111,7 +111,7 @@ export function setAuthUser(userJson: string, remember?: boolean): void {
     try {
       target.setItem(USER_KEY, userJson);
       other.removeItem(USER_KEY);
-    } catch {}
+    } catch { }
   } else {
     writeStoredUser(userJson);
   }
@@ -133,7 +133,7 @@ export function clearAccessToken(): void {
   try {
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
-  } catch {}
+  } catch { }
 }
 
 // Wipes the full client-side auth state (token + flag + user) from BOTH
@@ -147,7 +147,7 @@ export function clearAuthState(): void {
       s.removeItem(FLAG_KEY);
       s.removeItem(USER_KEY);
     });
-  } catch {}
+  } catch { }
 }
 
 export function getStoredUser(): User | null {
@@ -164,7 +164,7 @@ if (typeof window !== "undefined") {
     } else {
       currentAccessToken = readAccessToken();
     }
-  } catch {}
+  } catch { }
 }
 
 export interface User {
@@ -213,7 +213,7 @@ export async function logout(): Promise<void> {
   // access token synchronously when the request is built, so an unauthenticated
   // logout would leave the LoginSession `active` and a same-device re-login
   // would resurrect the old session (and its stale login time).
-  const serverLogout = api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
+  const serverLogout = api("/api/v1/auth/logout", { method: "POST" }).catch(() => { });
 
   // Clear client state immediately so the UI reflects logged-out instantly.
   clearAuthState();
@@ -226,8 +226,8 @@ export async function logout(): Promise<void> {
       import("@/lib/config/firebase-client"),
       import("firebase/auth"),
     ]);
-    if (auth) signOut(auth).catch(() => {});
-  } catch {}
+    if (auth) signOut(auth).catch(() => { });
+  } catch { }
 }
 
 export function isLoggedIn(): boolean {
@@ -269,18 +269,18 @@ const REFRESH_COOLDOWN = 2000; // 2 seconds cooldown between refreshes
 //   home page opens; stale/revoked tokens are reconciled by the api() 401 flow).
 export async function ensureSession(): Promise<void> {
   if (typeof window === "undefined") return;
-  
+
   // If a refresh is already in progress, wait for it
   if (refreshPromise) {
     return refreshPromise;
   }
-  
+
   // Prevent rapid successive calls (cooldown period)
   const now = Date.now();
   if (now - lastRefreshTime < REFRESH_COOLDOWN) {
     return;
   }
-  
+
   const token = getAccessToken();
   const hasFlag = hasStoredAuth();
   if (!token && !hasFlag) return;
@@ -624,7 +624,7 @@ export function ensureGuestId(): string {
     id = crypto.randomUUID()
     try {
       localStorage.setItem("puzzroo_guest_id", id)
-    } catch {}
+    } catch { }
   }
   return id
 }
@@ -731,7 +731,7 @@ function mapUserForStorage(u: any): Partial<User> {
 export function applyUserTheme(theme?: string | null): void {
   if (typeof window === "undefined") return;
   if (!theme || (theme !== "light" && theme !== "dark")) return;
-  try { localStorage.setItem("theme", theme) } catch {}
+  try { localStorage.setItem("theme", theme) } catch { }
   const root = document.documentElement;
   if (theme === "dark") root.classList.add("dark");
   else root.classList.remove("dark");
