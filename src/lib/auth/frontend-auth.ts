@@ -208,12 +208,18 @@ export async function login(identifier: string, password: string, rememberMe: bo
 }
 
 export async function logout(): Promise<void> {
+  // Fire the server-side revoke BEFORE wiping the token: api() reads the
+  // access token synchronously when the request is built, so an unauthenticated
+  // logout would leave the LoginSession `active` and a same-device re-login
+  // would resurrect the old session (and its stale login time).
+  const serverLogout = api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
+
   // Clear client state immediately so the UI reflects logged-out instantly.
   clearAuthState();
   window.dispatchEvent(new Event("auth-change"));
 
   // Server cleanup + Firebase signOut — fire in background, never block.
-  api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
+  await serverLogout;
   try {
     const [{ auth }, { signOut }] = await Promise.all([
       import("@/lib/config/firebase-client"),
