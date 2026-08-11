@@ -97,68 +97,20 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
 
   const capturePhoto = () => {
     const video = videoRef.current
-    if (!video || !video.videoWidth) return
+    if (!video || !video.videoWidth || !video.videoHeight) return
     
-    // Get actual video dimensions
-    const videoWidth = video.videoWidth
-    const videoHeight = video.videoHeight
-    
-    // Detect device orientation
-    const orientation = window.screen?.orientation?.type || 'portrait-primary'
-    
-    // Determine if we need to rotate based on orientation
-    // portrait-primary: 0°, landscape-primary: 90°, portrait-secondary: 180°, landscape-secondary: 270°
-    let rotation = 0
-    let needsRotation = false
-    
-    if (orientation.includes('landscape')) {
-      // In landscape, mobile cameras typically need adjustment
-      // Check if the video aspect ratio suggests it needs rotation
-      const videoAspect = videoWidth / videoHeight
-      const isVideoPortrait = videoAspect < 1
-      
-      if (isVideoPortrait) {
-        // Video is portrait but device is landscape - needs rotation
-        rotation = orientation === 'landscape-primary' ? 90 : -90
-        needsRotation = true
-      }
-    }
-    
-    // Create canvas with correct dimensions
+    // Create canvas matching video's natural dimensions
+    // The browser already handles orientation for getUserMedia with facingMode: 'user'
     const canvas = document.createElement('canvas')
-    
-    if (needsRotation && (Math.abs(rotation) === 90 || Math.abs(rotation) === 270)) {
-      // Swap dimensions for 90° or 270° rotation
-      canvas.width = videoHeight
-      canvas.height = videoWidth
-    } else {
-      canvas.width = videoWidth
-      canvas.height = videoHeight
-    }
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
     
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     
-    // Apply transformations
-    ctx.save()
-    
-    if (needsRotation) {
-      // Translate to center, rotate, then translate back
-      if (rotation === 90) {
-        ctx.translate(canvas.width, 0)
-        ctx.rotate(Math.PI / 2)
-      } else if (rotation === -90 || rotation === 270) {
-        ctx.translate(0, canvas.height)
-        ctx.rotate(-Math.PI / 2)
-      } else if (rotation === 180 || rotation === -180) {
-        ctx.translate(canvas.width, canvas.height)
-        ctx.rotate(Math.PI)
-      }
-    }
-    
-    // Draw the video frame
-    ctx.drawImage(video, 0, 0, videoWidth, videoHeight)
-    ctx.restore()
+    // Simply draw the video as-is without any rotation
+    // The browser's getUserMedia API already provides correctly oriented video
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
     
     canvas.toBlob(
       (blob) => {
@@ -167,7 +119,8 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarChanged }: Avata
         setShowCamera(false)
         validateAndPreview(captured)
       },
-      'image/png'
+      'image/png',
+      0.95
     )
   }
 
