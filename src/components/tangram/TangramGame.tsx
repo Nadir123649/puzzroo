@@ -54,6 +54,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     score,
     hintsUsed,
     hintPiece,
+    hintTargetIndex,
     availableHints,
     scaledData,
     selectPiece,
@@ -189,7 +190,11 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   }
 
   // Get hint piece data from polygon pieces
+  // When hintTargetIndex is provided, use that target polygon instead of the piece's assigned target
   const hintPieceData = hintPiece ? pieces.find(p => p.id === hintPiece) : null
+  const hintTargetPolygon = (hintPieceData && hintTargetIndex !== null && hintTargetIndex !== undefined) 
+    ? pieces[hintTargetIndex]?.targetPolygon 
+    : hintPieceData?.targetPolygon
 
   // Get silhouette path from scaled polygon data
   const silhouettePath = scaledData ? polygonToSVGPath(scaledData.polygon) : undefined
@@ -230,10 +235,10 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
             <div ref={desktopBoardRef} className="flex-1 max-w-[700px] min-w-[320px] overflow-visible">
               <TangramBoard silhouette={silhouettePath} onBoardClick={() => selectPiece(null)}>
                 {/* Hint Ghost */}
-                {hintPiece && hintPieceData && (
+                {hintPiece && hintPieceData && hintTargetPolygon && (
                   <PolygonHintGhost
                     pieceId={hintPiece}
-                    targetPolygon={hintPieceData.targetPolygon}
+                    targetPolygon={hintTargetPolygon}
                     color={hintPieceData.color}
                     boardContainerWidth={desktopBoardWidth}
                   />
@@ -431,10 +436,10 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
             <div ref={mobileBoardRef} className="w-full">
               <TangramBoard mobile silhouette={silhouettePath} onBoardClick={() => selectPiece(null)}>
                 {/* Hint Ghost */}
-                {hintPiece && hintPieceData && (
+                {hintPiece && hintPieceData && hintTargetPolygon && (
                   <PolygonHintGhost
                     pieceId={hintPiece}
-                    targetPolygon={hintPieceData.targetPolygon}
+                    targetPolygon={hintTargetPolygon}
                     color={hintPieceData.color}
                     boardContainerWidth={mobileBoardWidth}
                   />
