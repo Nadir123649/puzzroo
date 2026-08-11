@@ -114,6 +114,7 @@ interface PieceState {
   color: string
   isPlaced: boolean
   isSnapped: boolean
+  snappedTargetIndex?: number  // Track which target position this piece actually snapped to
 }
 
 const getTargetRotation = (pieceType: string, scaledTarget: number[][], scale: number): number => {
@@ -966,13 +967,14 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
             }, 0)
           }
 
-          // Snap: use target polygon and target center
+          // Snap: use target polygon and target center, and store which target index was snapped to
           return {
             ...piece,
             transform: snapResult.snapTransform,
             currentPolygon: snapResult.targetPolygon,
             isPlaced: true,
-            isSnapped: true
+            isSnapped: true,
+            snappedTargetIndex: snapResult.targetIndex
           }
         }
 
@@ -982,7 +984,8 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
           transform: newTransform,
           currentPolygon: newPolygon,
           isPlaced: true,
-          isSnapped: false
+          isSnapped: false,
+          snappedTargetIndex: undefined
         }
       })
 
@@ -1065,10 +1068,10 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
 
     // Build a set of target indices that are occupied by correctly snapped pieces
     const occupiedTargets = new Set<number>()
-    validation.pieces.forEach((vp, index) => {
-      if (vp.isCorrect && pieces[index].isSnapped) {
-        // This target position is occupied
-        occupiedTargets.add(index)
+    pieces.forEach((piece) => {
+      // Use the actual snapped target index if available, otherwise use validation
+      if (piece.isSnapped && piece.snappedTargetIndex !== undefined) {
+        occupiedTargets.add(piece.snappedTargetIndex)
       }
     })
 

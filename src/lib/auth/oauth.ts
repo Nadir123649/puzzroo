@@ -64,7 +64,7 @@ function getAuthOrThrow(): Auth {
 // Falls back to a redirect flow whenever the popup channel fails.
 export async function signInOAuthPopup(
   provider: OAuthProvider
-): Promise<string | typeof OAUTH_REDIRECT_SENTINEL> {
+): Promise<{ token: string; firebaseEmail?: string } | typeof OAUTH_REDIRECT_SENTINEL> {
   if (oauthInFlight) {
     // Debounce true double-clicks: the first attempt's popup is still open.
     throw Object.assign(new Error('OAuth operation already in progress'), { code: 'auth/cancelled-popup-request' })
@@ -74,7 +74,9 @@ export async function signInOAuthPopup(
   const fp = provider === 'google' ? googleProvider! : facebookProvider!
   try {
     const result = await signInWithPopup(getAuthOrThrow(), fp, browserPopupRedirectResolver)
-    return result.user.getIdToken()
+    const token = await result.user.getIdToken()
+    const firebaseEmail = result.user.email ?? undefined
+    return { token, firebaseEmail }
   } catch (err: any) {
     if (err?.code && POPUP_FALLBACK_CODES.has(err.code)) {
       // Drain any stale pending redirect state so the follow-up redirect
@@ -104,13 +106,13 @@ export async function startOAuthRedirect(provider: OAuthProvider): Promise<void>
 
 // Dedupe concurrent consumers (StrictMode double-mount fires the effect
 // twice). getRedirectResult is one-shot, so both mounts MUST share one read.
-let consumePromise: Promise<{ token: string; provider: OAuthProvider } | { error: unknown } | null> | null = null
+let consumePromise: Promise<{ token: string; provider: OAuthProvider; firebaseEmail?: string } | { error: unknown } | null> | null = null
 
 // Consume a redirect result after the provider bounces the user back.
 // Returns null when there is nothing pending, or the error so callers can
 // surface the real cause instead of silently dropping the login.
 export function consumeOAuthRedirect(): Promise<
-  { token: string; provider: OAuthProvider } | { error: unknown } | null
+  { token: string; provider: OAuthProvider; firebaseEmail?: string } | { error: unknown } | null
 > {
   if (!consumePromise) {
     consumePromise = doConsumeOAuthRedirect().finally(() => { consumePromise = null })
@@ -134,7 +136,8 @@ async function doConsumeOAuthRedirect() {
       try { localStorage.removeItem(OAUTH_REDIRECT_SENTINEL) } catch {}
       const token = await result.user.getIdToken()
       const provider: OAuthProvider = result.providerId === 'facebook.com' ? 'facebook' : 'google'
-      return { token, provider }
+      const firebaseEmail = result.user.email ?? undefined
+      return { token, provider, firebaseEmail }
     }
     // Nothing pending and no redirect in flight → bail immediately.
     if (!hasSentinel) return null
@@ -148,12 +151,14 @@ async function doConsumeOAuthRedirect() {
   }
 }
 
-function mapUserData(payload: any, provider: OAuthProvider) {
+function mapUserData(payload: any, provider: OAuthProvider, firebaseEmail?: string) {
   const u = payload.user
+  // Use backend email first, fall back to Firebase email (Google always provides it via Firebase)
+  const resolvedEmail = u.email || firebaseEmail || ''
   return {
     id: u.id,
     name: u.name || u.username,
-    email: u.email || '',
+    email: resolvedEmail,
     username: u.username,
     usernameSet: u.usernameSet,
     joinedDate: u.createdAt
@@ -179,6 +184,7 @@ export async function completeOAuthLogin(
     setErrors?: (e: any) => void
     welcomeKey?: string
     router?: any
+    firebaseEmail?: string
   }
 ) {
   opts.setSubmitting(true)
@@ -201,7 +207,7 @@ export async function completeOAuthLogin(
       return
     }
     const payload = res.payload as any
-    const userData = mapUserData(payload, provider)
+    const userData = mapUserData(payload, provider, opts.firebaseEmail)
     storeAuth(rememberMe, payload.token.accessToken, JSON.stringify(userData))
     window.dispatchEvent(new Event('auth-change'))
     if (opts.welcomeKey && payload.user.usernameSet) notify.successKey(opts.welcomeKey as any)
