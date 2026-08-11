@@ -375,7 +375,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                       <circle cx="12" cy="12" r="10"/>
                       <polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    <span>~{Math.floor(getTimeLimitSeconds(currentPuzzle.difficulty) / 60)} min</span>
+                    <span>{Math.floor(getTimeLimitSeconds(currentPuzzle.difficulty) / 60)} min</span>
                   </span>
                 </div>
               </div>

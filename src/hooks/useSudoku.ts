@@ -1008,6 +1008,16 @@ export function useSudoku() {
 
         // Track mistakes per cell
         const cellKey = `${selectedCell.row}-${selectedCell.col}`
+        
+        // Get the current value in the cell BEFORE this entry
+        const previousValue = cell.value
+        
+        // If the cell had a different value before (or was empty), clear the mistake history
+        // This allows the same incorrect number to count as a new mistake after the cell changes
+        if (previousValue !== num) {
+          cellMistakesRef.current.delete(cellKey)
+        }
+        
         const isDuplicateMistake = cellMistakesRef.current.get(cellKey)?.has(num)
         
         if (!isDuplicateMistake) {

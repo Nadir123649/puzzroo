@@ -1101,30 +1101,51 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
 
     if (unsolvedPieces.length === 0) return // No pieces to hint
 
-    // Get unsolved pieces that haven't been shown yet
-    const unhintedPieces = unsolvedPieces.filter(p => !shownHints.current.has(p.id))
+    // Build list of all available (piece, target) combinations that haven't been shown yet
+    const availableCombinations: Array<{ pieceId: TangramPieceId; targetIndex: number }> = []
+    
+    unsolvedPieces.forEach(piece => {
+      const validIndices = getValidTargetIndices(piece.id, pieceIds)
+      validIndices.forEach(targetIndex => {
+        // Skip if target is occupied
+        if (occupiedTargets.has(targetIndex)) return
+        
+        // Skip if this combination was already shown
+        const combinationKey = `${piece.id}-${targetIndex}`
+        if (shownHints.current.has(combinationKey)) return
+        
+        availableCombinations.push({ pieceId: piece.id, targetIndex })
+      })
+    })
 
     let chosenPieceId: TangramPieceId
+    let availableTargetIndex: number
 
-    // If all unsolved pieces have been hinted, clear the set and start over
-    if (unhintedPieces.length === 0) {
+    // If no unhinted combinations remain, clear the set and start over
+    if (availableCombinations.length === 0) {
       shownHints.current.clear()
-      // Now all unsolved pieces are available for hints again
-      const randomPiece = unsolvedPieces[Math.floor(Math.random() * unsolvedPieces.length)]
-      chosenPieceId = randomPiece.id
-    } else {
-      // Show hint for a random unhinted piece
-      const randomPiece = unhintedPieces[Math.floor(Math.random() * unhintedPieces.length)]
-      chosenPieceId = randomPiece.id
+      // Rebuild combinations list
+      unsolvedPieces.forEach(piece => {
+        const validIndices = getValidTargetIndices(piece.id, pieceIds)
+        validIndices.forEach(targetIndex => {
+          if (!occupiedTargets.has(targetIndex)) {
+            availableCombinations.push({ pieceId: piece.id, targetIndex })
+          }
+        })
+      })
     }
 
-    // Find the first unoccupied valid target index for the chosen piece
-    const validIndices = getValidTargetIndices(chosenPieceId, pieceIds)
-    const availableTargetIndex = validIndices.find(targetIndex => !occupiedTargets.has(targetIndex))
-    
-    if (availableTargetIndex === undefined) return // Safety check
+    if (availableCombinations.length === 0) return // Safety check
 
-    shownHints.current.add(chosenPieceId)
+    // Pick a random combination
+    const randomCombo = availableCombinations[Math.floor(Math.random() * availableCombinations.length)]
+    chosenPieceId = randomCombo.pieceId
+    availableTargetIndex = randomCombo.targetIndex
+
+    // Track this combination as shown
+    const combinationKey = `${chosenPieceId}-${availableTargetIndex}`
+    shownHints.current.add(combinationKey)
+
     const newHintsUsed = hintsUsed + 1
     setHintsUsed(newHintsUsed)
     setHintPiece(chosenPieceId)
