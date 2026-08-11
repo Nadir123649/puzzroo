@@ -245,7 +245,17 @@ function GameHeroContent({ name, image, imageLight, difficulties, gameSlug }: Ga
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="animate-spin" size={20} />
+                    <Loader2 
+                      key="game-hero-spinner"
+                      className="animate-spin" 
+                      size={20}
+                      style={{ 
+                        willChange: 'transform',
+                        animationDuration: '1s',
+                        animationTimingFunction: 'linear',
+                        animationIterationCount: 'infinite'
+                      }}
+                    />
                     <span>Loading...</span>
                   </>
                 ) : (

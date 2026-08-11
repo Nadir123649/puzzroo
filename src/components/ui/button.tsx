@@ -59,10 +59,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading && (
           <svg
+            key="button-spinner"
             className="animate-spin h-4 w-4 text-current"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
+            style={{ 
+              willChange: 'transform',
+              animationDuration: '1s',
+              animationTimingFunction: 'linear',
+              animationIterationCount: 'infinite'
+            }}
           >
             <circle
               className="opacity-25"

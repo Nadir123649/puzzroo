@@ -195,7 +195,16 @@ export default function AdminTrackingPage() {
   if (!authChecked || !isAdmin) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-[#6949FF] animate-spin" />
+        <Loader2 
+          key="admin-auth-spinner"
+          className="w-8 h-8 text-[#6949FF] animate-spin"
+          style={{ 
+            willChange: 'transform',
+            animationDuration: '1s',
+            animationTimingFunction: 'linear',
+            animationIterationCount: 'infinite'
+          }}
+        />
       </div>
     )
   }
@@ -236,7 +245,21 @@ export default function AdminTrackingPage() {
             disabled={loading || !query.trim()}
             className="px-6 py-3 bg-[#6949FF] hover:bg-[#5536E6] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-urbanist font-semibold text-[14px] transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
           >
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
+            {loading ? (
+              <Loader2 
+                key="admin-search-spinner"
+                size={18} 
+                className="animate-spin"
+                style={{ 
+                  willChange: 'transform',
+                  animationDuration: '1s',
+                  animationTimingFunction: 'linear',
+                  animationIterationCount: 'infinite'
+                }}
+              />
+            ) : (
+              <Search size={18} />
+            )}
             Search
           </button>
         </div>

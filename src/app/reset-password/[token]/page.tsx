@@ -229,7 +229,17 @@ export default function ResetPasswordPage() {
             </div>
           ) : checkingToken ? (
             <div className="text-center py-6 flex flex-col items-center gap-4">
-              <Loader2 size={32} className="animate-spin text-[#6949FF]" />
+              <Loader2 
+                key="token-check-spinner"
+                size={32} 
+                className="animate-spin text-[#6949FF]"
+                style={{ 
+                  willChange: 'transform',
+                  animationDuration: '1s',
+                  animationTimingFunction: 'linear',
+                  animationIterationCount: 'infinite'
+                }}
+              />
               <p className="font-urbanist font-medium text-[14px] text-[#757575] dark:text-[#BDBDBD]">
                 Checking your link…
               </p>

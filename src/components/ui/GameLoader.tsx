@@ -1,47 +1,55 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
 import { images } from '@/lib/utils'
+import { useGlobalLoader } from '@/contexts/GlobalLoaderContext'
 
 interface GameLoaderProps {
-  isOpen: boolean
+  isOpen?: boolean
   text?: string
 }
 
-export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
-  const [mounted, setMounted] = useState(isOpen)
-  const [visible, setVisible] = useState(isOpen)
+export function GameLoader({ isOpen, text }: GameLoaderProps) {
+  // Use global context if available, otherwise fall back to props
+  const globalLoader = useGlobalLoader()
+  const effectiveIsOpen = isOpen !== undefined ? isOpen : globalLoader.isLoading
+  const effectiveText = text !== undefined ? text : globalLoader.loadingText
 
-  // Instantly mount when isOpen becomes true to prevent any visual delay/flicker
-  if (isOpen && !mounted) {
-    setMounted(true)
-    setVisible(true)
-  }
+  const [shouldRender, setShouldRender] = useState(effectiveIsOpen)
+  const [isVisible, setIsVisible] = useState(effectiveIsOpen)
+  const mountedRef = useRef(false)
 
   useEffect(() => {
-    if (!isOpen && visible) {
-      setVisible(false)
+    if (effectiveIsOpen) {
+      // Mount immediately
+      setShouldRender(true)
+      // Small delay to ensure smooth entrance
+      requestAnimationFrame(() => {
+        setIsVisible(true)
+      })
+      mountedRef.current = true
+    } else if (mountedRef.current) {
+      // Fade out before unmounting
+      setIsVisible(false)
       const timer = setTimeout(() => {
-        setMounted(false)
+        setShouldRender(false)
       }, 300)
       return () => clearTimeout(timer)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen])
+  }, [effectiveIsOpen])
 
-  if (!mounted) return null
+  if (!shouldRender) return null
 
   return (
     <div
-      className={`fixed inset-0 bg-white dark:bg-[#181A20] z-[100001] flex items-center justify-center ${
-        isOpen ? '' : 'transition-opacity duration-300'
-      } ${
-        visible ? 'opacity-100' : 'opacity-0'
+      className={`fixed inset-0 bg-white dark:bg-[#181A20] z-[100001] flex items-center justify-center transition-opacity duration-300 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
       }`}
+      style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
     >
-      <div className="flex flex-col items-center gap-4 text-center select-none pointer-events-auto">
+      <div className="flex flex-col items-center gap-4 text-center select-none">
         {/* Puzzroo Logo & Brand */}
         <div className="flex items-center gap-[clamp(8px,1vw,12px)] select-none">
           <Image
@@ -57,12 +65,22 @@ export function GameLoader({ isOpen, text = 'Loading...' }: GameLoaderProps) {
           </span>
         </div>
         
-        {/* Loading Spinner */}
-        <Loader2 className="animate-spin text-[var(--color-primary)] mt-2" size={40} />
+        {/* Loading Spinner - Key prevents remounting, style ensures continuous animation */}
+        <Loader2 
+          key="game-loader-spinner"
+          className="animate-spin text-[var(--color-primary)] mt-2" 
+          size={40}
+          style={{ 
+            willChange: 'transform',
+            animationDuration: '1s',
+            animationTimingFunction: 'linear',
+            animationIterationCount: 'infinite'
+          }}
+        />
         
         {/* Loading Text */}
         <p className="font-urbanist text-base font-semibold text-[var(--color-primary)] animate-pulse mt-1">
-          {text}
+          {effectiveText}
         </p>
       </div>
     </div>
