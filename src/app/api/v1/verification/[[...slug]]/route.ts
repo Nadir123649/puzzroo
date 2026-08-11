@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import crypto from "crypto";
 import User from "@/lib/server/models/User";
 import { connectDB } from "@/lib/server/db";
@@ -52,8 +52,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         user.pendingEmail = undefined;
         if (oldEmail) {
           // Fire-and-forget: never block the verification response on SMTP.
-          void sendEmailChangedEmail(oldEmail, user.name || user.username, user.email).catch((e) =>
-            console.error("Email-changed notification failed to send:", e)
+          // after() keeps the send alive past the response on serverless (Vercel).
+          after(() =>
+            sendEmailChangedEmail(oldEmail, user.name || user.username, user.email).catch((e) =>
+              console.error("Email-changed notification failed to send:", e)
+            )
           );
         }
       }
@@ -83,10 +86,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await user.save({ validateBeforeSave: false });
       const verifyUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
       // Fire-and-forget: SMTP send takes seconds — never block the response.
+      // after() keeps the send alive past the response on serverless (Vercel).
       // Failure is logged; the token stays valid so the user can retry resend.
-      void sendVerificationEmail(user.email, verifyUrl).catch((e) => {
-        console.error("Verification email failed to send:", e);
-      });
+      after(() =>
+        sendVerificationEmail(user.email, verifyUrl).catch((e) => {
+          console.error("Verification email failed to send:", e);
+        })
+      );
       return successResponse({ message: "Verification email sent. Check your inbox." });
     }
 
@@ -170,8 +176,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         user.pendingEmail = undefined;
         if (oldEmail) {
           // Fire-and-forget: never block the email-verify redirect on SMTP.
-          void sendEmailChangedEmail(oldEmail, user.name || user.username, user.email).catch((e) =>
-            console.error("Email-changed notification failed to send:", e)
+          // after() keeps the send alive past the response on serverless (Vercel).
+          after(() =>
+            sendEmailChangedEmail(oldEmail, user.name || user.username, user.email).catch((e) =>
+              console.error("Email-changed notification failed to send:", e)
+            )
           );
         }
       }
