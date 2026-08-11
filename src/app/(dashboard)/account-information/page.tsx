@@ -418,9 +418,9 @@ export default function AccountInformationPage() {
                           </div>
                         )
                       })()}
-                      {/* Google: show the Google account email (strict non-empty check) */}
+                      {/* Google: show the Google account email (persisted at OAuth login; falls back to account email only for pre-backfill users) */}
                       {p === 'google' && (() => {
-                        const googleEmail = localUser?.email ?? getCurrentUser()?.email ?? ''
+                        const googleEmail = (localUser?.googleEmail || getCurrentUser()?.googleEmail) ?? (localUser?.email ?? getCurrentUser()?.email ?? '')
                         return googleEmail && googleEmail !== 'N/A' && googleEmail.trim() !== '' ? (
                           <span className="font-urbanist text-[12px] text-[#757575] dark:text-[#9E9E9E] truncate block mt-0.5">
                             {googleEmail}

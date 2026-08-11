@@ -11,6 +11,10 @@ const userSchema = new mongoose.Schema(
     publicId: { type: String, default: null, unique: true, sparse: true },
     name: { type: String, trim: true, default: null },
     email: { type: String, lowercase: true, trim: true, default: null, unique: true, sparse: true },
+    // Email of the Google account the user signed in with. Distinct from the
+    // account email: set at OAuth login and never changed by the account
+    // email-update flow, so the Google card can always show the real one.
+    googleEmail: { type: String, lowercase: true, trim: true, default: null },
     password: { type: String, default: null },
     phone: { type: String, default: null },
     firebaseUid: { type: String, default: null, index: true },
