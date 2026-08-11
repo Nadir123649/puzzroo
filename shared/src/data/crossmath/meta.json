@@ -7,9 +7,9 @@
     "hard"
   ],
   "counts": {
-    "easy": 1000,
-    "medium": 1000,
-    "hard": 1000
+    "easy": 887,
+    "medium": 994,
+    "hard": 995
   },
   "encoding": "compact: solution (full) + blanks; grid reconstructed via patterns.ts"
 }
