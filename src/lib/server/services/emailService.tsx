@@ -34,6 +34,9 @@ function getTransporter(): nodemailer.Transporter {
       port: Number(process.env.SMTP_PORT),
       secure: Number(process.env.SMTP_PORT) === 465,
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 30_000,
     });
   }
   return transporter;
@@ -66,7 +69,18 @@ async function deliver(to: string, subject: string, html: string) {
       "Email is not configured: set RESEND_API_KEY (preferred) or SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS"
     );
   }
-  await getTransporter().sendMail({ from: FROM, to, subject, html });
+  // Transient SMTP failures (throttling, connection blips) are common; one
+  // retry with a short backoff before surfacing the error.
+  try {
+    await getTransporter().sendMail({ from: FROM, to, subject, html });
+  } catch (firstErr) {
+    await new Promise((r) => setTimeout(r, 1000));
+    try {
+      await getTransporter().sendMail({ from: FROM, to, subject, html });
+    } catch {
+      throw firstErr;
+    }
+  }
 }
 
 export function validateSmtpEnv(): string | null {

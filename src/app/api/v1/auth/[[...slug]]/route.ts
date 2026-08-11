@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import mongoose from "mongoose";
@@ -65,11 +65,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       });
       const verifyUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
       // Email is fire-and-forget: never block registration on SMTP latency.
+      // after() keeps the send alive past the response on serverless (Vercel),
+      // where a plain void promise is killed when the function drains.
       // A failed send (e.g. dev SMTP absent) leaves the account usable (isVerified
       // is dev-true / prod-false; the user can still verify via resend).
-      void sendVerificationEmail(user.email, verifyUrl).catch((e) => {
-        console.error("Verification email failed to send:", e);
-      });
+      after(() =>
+        sendVerificationEmail(user.email, verifyUrl).catch((e) => {
+          console.error("Verification email failed to send:", e);
+        })
+      );
       void trackServer({ userId: user._id.toString(), event: "signup_completed", properties: { method: "email" }, request });
       return successResponse({ message: "Registration successful. Please check your email to verify your account." }, 201);
     }
@@ -376,10 +380,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         target.mergeRequestDonorEmail = user.email || user.pendingEmail || "";
         await target.save({ validateBeforeSave: false });
         const confirmUrl = `${getOrigin(request)}/api/v1/verification/merge/confirm/${mergeToken}`;
-        // Fire-and-forget: SMTP send must never block the response.
-        void sendAccountLinkConfirmEmail(targetEmail, confirmUrl, target.mergeRequestDonorEmail || "").catch((e) => {
-          console.error("Account-link confirmation email failed to send:", e);
-        });
+        // Fire-and-forget: SMTP send must never block the response. after() keeps
+        // the send alive past the response on serverless (Vercel).
+        after(() =>
+          sendAccountLinkConfirmEmail(targetEmail, confirmUrl, target.mergeRequestDonorEmail || "").catch((e) => {
+            console.error("Account-link confirmation email failed to send:", e);
+          })
+        );
         if (process.env.NODE_ENV !== "production") {
           console.log(`[dev] Account-link confirmation for ${user.email || user.pendingEmail} -> ${targetEmail}: ${confirmUrl}`);
         }
@@ -484,12 +491,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       user.emailVerificationToken = crypto.createHash("sha256").update(verificationToken).digest("hex");
       user.emailVerificationTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000);
       const confirmUrl = `${getOrigin(request)}/api/v1/verification/email/verify/${verificationToken}`;
-      // Fire-and-forget: SMTP send takes seconds — never block the response.
+// Fire-and-forget: SMTP send takes seconds — never block the response.
+      // after() keeps the send alive past the response on serverless (Vercel).
       // A delivery failure is logged; the pending email stays set so the user
       // can re-trigger a confirmation from the UI.
-      void sendVerificationEmail(normalizedEmail, confirmUrl).catch((e) => {
-        console.error("Confirmation email failed to send:", e);
-      });
+      after(() =>
+        sendVerificationEmail(normalizedEmail, confirmUrl).catch((e) => {
+          console.error("Email change confirmation failed to send:", e);
+        })
+      );
       if (process.env.NODE_ENV !== "production") {
         console.log(`[dev] Email change confirmation for ${user.email} -> ${normalizedEmail}: ${confirmUrl}`);
       }

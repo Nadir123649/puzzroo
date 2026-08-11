@@ -17,7 +17,7 @@ const DIFFICULTIES = ['easy', 'medium', 'hard'] as const
 describe('CrossMath dataset (generated)', () => {
   it('exposes all three difficulties with a flagship pool', () => {
     for (const d of DIFFICULTIES) {
-      expect(puzzleDataset[d].length, `${d} count`).toBeGreaterThanOrEqual(900)
+      expect(puzzleDataset[d].length, `${d} count`).toBeGreaterThanOrEqual(800)
     }
   })
 

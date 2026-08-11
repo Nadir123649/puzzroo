@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, after } from "next/server";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import User from "@/lib/server/models/User";
@@ -76,11 +76,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await user.save({ validateBeforeSave: false });
       const resetUrl = `${getOrigin(request)}/reset-password/${resetToken}`;
       // Email is fire-and-forget: never block the response on SMTP latency.
-      // A delivery failure is logged by the service; the token stays valid so
-      // the user can retry forgot-password.
-      void sendResetPasswordEmail(user.email, resetUrl, RESET_TOKEN_MINUTES).catch((e) => {
-        console.error("Reset password email failed to send:", e);
-      });
+      // after() keeps the send alive past the response on serverless (Vercel),
+      // where a plain void promise is killed when the function drains.
+      // A delivery failure is logged; the token stays valid so the user can
+      // retry forgot-password.
+      after(() =>
+        sendResetPasswordEmail(user.email, resetUrl, RESET_TOKEN_MINUTES).catch((e) => {
+          console.error("Reset password email failed to send:", e);
+        })
+      );
       if (process.env.NODE_ENV !== "production") {
         console.log(`[dev] Password reset link for ${user.email}: ${resetUrl}`);
       }
