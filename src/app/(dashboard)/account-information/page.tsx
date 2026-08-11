@@ -69,6 +69,17 @@ export default function AccountInformationPage() {
   const [currentLocation, setCurrentLocation] = useState<string | null>(null)
   const [provider, setProvider] = useState<string | null>(localUser?.provider || null)
   const [linkedProviders, setLinkedProviders] = useState<string[]>(localUser?.linkedProviders || [])
+
+  const hasAccountEmail = Boolean(
+    localUser?.email &&
+    localUser.email !== 'N/A' &&
+    localUser.email.trim() !== '' &&
+    // An OAuth-only account's email belongs to Google/Facebook, not to the
+    // Puzzroo email address shown in Account Details.
+    (!localUser.providerEmail
+      ? localUser.provider !== 'google' && localUser.provider !== 'facebook'
+      : localUser.email !== localUser.providerEmail)
+  )
   
   // Compute canChangePassword reactively from localUser state
   const canChangePassword = !!localUser?.hasPassword
@@ -287,12 +298,12 @@ export default function AccountInformationPage() {
               Email Address
             </span>
             <div className="flex flex-col items-start sm:items-end">
-              {localUser?.email && localUser?.email !== 'N/A' && localUser.email.trim() !== '' ? (
+              {hasAccountEmail ? (
                 <>
                   <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
                     {localUser.email}
                   </span>
-                  {(localUser?.isVerified || localUser?.provider === 'google') ? (
+                  {localUser?.isVerified || localUser?.provider === 'google' ? (
                     <div className="flex items-center gap-1 mt-0.5">
                       <Check size={12} className="text-green-600 dark:text-green-400" strokeWidth={3} />
                       <span className="font-urbanist text-[11px] text-green-600 dark:text-green-400 font-semibold">
@@ -314,12 +325,17 @@ export default function AccountInformationPage() {
                   </button>
                 </>
               ) : (
-                <button
-                  onClick={() => setIsEmailModalOpen(true)}
-                  className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline"
-                >
-                  Set Email
-                </button>
+                <>
+                  <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
+                    N/A
+                  </span>
+                  <button
+                    onClick={() => setIsEmailModalOpen(true)}
+                    className="mt-1 font-urbanist font-semibold text-[11px] text-[#6949FF] hover:underline"
+                  >
+                    Set Email
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -333,8 +349,7 @@ export default function AccountInformationPage() {
               <Button
                 size="xs"
                 onClick={() => {
-                  const hasEmail = !!(localUser?.email && localUser.email !== 'N/A' && localUser.email.trim() !== '')
-                  if (!hasEmail) {
+                  if (!hasAccountEmail) {
                     notify.error('Please set your email first.')
                     return
                   }
@@ -411,9 +426,14 @@ export default function AccountInformationPage() {
                           </span>
                         )}
                       </div>
-                      {(p === 'google' || p === 'email') && (localUser?.email || getCurrentUser()?.email) && (
+                      {p === 'google' && (localUser?.providerEmail || localUser?.email || getCurrentUser()?.providerEmail || getCurrentUser()?.email) && (
                         <span className="font-urbanist text-[12px] text-[#757575] dark:text-[#9E9E9E] truncate block mt-0.5">
-                          {localUser?.email || getCurrentUser()?.email}
+                          {localUser?.providerEmail || localUser?.email || getCurrentUser()?.providerEmail || getCurrentUser()?.email}
+                        </span>
+                      )}
+                      {p === 'email' && hasAccountEmail && (
+                        <span className="font-urbanist text-[12px] text-[#757575] dark:text-[#9E9E9E] truncate block mt-0.5">
+                          {localUser?.email}
                         </span>
                       )}
                     </div>
@@ -640,7 +660,7 @@ export default function AccountInformationPage() {
       <SetEmailModal
         isOpen={isEmailModalOpen}
         onClose={() => { setIsEmailModalOpen(false); fetchUserProfile().then(p => { if (p?.user) setLocalUser(prev => prev ? { ...prev, email: p.user.email, hasPassword: p.user.hasPassword } : prev); }); }}
-        currentEmail={localUser?.email}
+        currentEmail={hasAccountEmail ? localUser?.email : undefined}
         hasPassword={!!localUser?.hasPassword}
       />
       <ChangePasswordModal 

@@ -190,10 +190,13 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   }
 
   // Get hint piece data from polygon pieces
-  // When hintTargetIndex is provided, use that target polygon instead of the piece's assigned target
+  // When hintTargetIndex is provided, use that target polygon from puzzle data
   const hintPieceData = hintPiece ? pieces.find(p => p.id === hintPiece) : null
-  const hintTargetPolygon = (hintPieceData && hintTargetIndex !== null && hintTargetIndex !== undefined) 
-    ? pieces[hintTargetIndex]?.targetPolygon 
+  const hintTargetPolygon = (hintPieceData && hintTargetIndex !== null && hintTargetIndex !== undefined && puzzle) 
+    ? puzzle.individualPiecePolygons[hintTargetIndex].map(([x, y]) => [
+        x * (scaledData?.scale || 1) + (scaledData?.offsetX || 0),
+        y * (scaledData?.scale || 1) + (scaledData?.offsetY || 0)
+      ])
     : hintPieceData?.targetPolygon
 
   // Get silhouette path from scaled polygon data
