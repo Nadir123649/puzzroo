@@ -255,6 +255,15 @@ export function CrossMathGame() {
  
            {/* Mobile Layout */}
            <div className="md:hidden flex flex-col gap-[16px] items-center pb-[50px]">
+             {/* Difficulty Badge - Mobile Only */}
+             <div className="w-full flex justify-center">
+               <div className="px-4 py-1.5 bg-purple-50 dark:bg-purple-500/10 rounded-full border border-purple-100 dark:border-purple-500/20">
+                 <span className="font-urbanist text-[13px] font-bold text-[#6949FF] capitalize">
+                   {difficulty}
+                 </span>
+               </div>
+             </div>
+
              {/* Stats Row */}
              <div className="w-full relative overflow-visible">
                <SudokuStats

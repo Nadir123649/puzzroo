@@ -42,7 +42,7 @@ function getDailyDateString(dateParam?: string | null): string {
 import { gameApi } from '@/lib/api/gameApi'
 import { scaleAndCenterPolygon } from '@shared/lib/tangram/polygon-renderer'
 import { calculateCentroid, polygonToPoints } from '@shared/lib/tangram/polygon-geometry'
-import { validatePuzzle } from '@shared/lib/tangram/polygon-validation'
+import { validatePuzzle, getValidTargetIndices } from '@shared/lib/tangram/polygon-validation'
 import { attemptSnap, geometricallyMatches } from '@shared/lib/tangram/polygon-snapping'
 import { PIECE_CONFIG } from '@shared/lib/tangram/pieceConfig'
 import { ensureGuestId, getCurrentUser, isLoggedIn, resetGuestProgressIfNewGame } from '@/lib/auth/frontend-auth'
@@ -227,6 +227,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
   const [score, setScore] = useState(0)
   const [hintsUsed, setHintsUsed] = useState(0)
   const [hintPiece, setHintPiece] = useState<TangramPieceId | null>(null)
+  const [hintTargetIndex, setHintTargetIndex] = useState<number | null>(null)
   const [moveHistory, setMoveHistory] = useState<PieceState[][]>([])
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [hasWonOnce, setHasWonOnce] = useState(false)
@@ -1062,13 +1063,33 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     const pieceIds = pieces.map(p => p.id)
     const validation = validatePuzzle(pieceIds, currentPolygons, targetPolygons)
 
-    // Get all pieces that are not correctly snapped (validation.isCorrect)
-    const unsolvedPieces = pieces.filter(p => {
-      // Only skip pieces that are CORRECTLY snapped/placed
-      // Don't skip pieces that are just "placed" but not correctly snapped
+    // Build a set of target indices that are occupied by correctly snapped pieces
+    const occupiedTargets = new Set<number>()
+    validation.pieces.forEach((vp, index) => {
+      if (vp.isCorrect && pieces[index].isSnapped) {
+        // This target position is occupied
+        occupiedTargets.add(index)
+      }
+    })
+
+    // Get all pieces that are not correctly snapped AND have at least one unoccupied valid target
+    const unsolvedPieces = pieces.filter((p, pieceIndex) => {
+      // Skip pieces that are correctly snapped
       if (p.isSnapped) {
         const val = validation.pieces.find(vp => vp.pieceId === p.id)
-        if (val && val.isCorrect) return false // Skip correctly placed pieces
+        if (val && val.isCorrect) return false
+      }
+      
+      // For this piece, get all valid target indices (includes interchangeable positions)
+      const validIndices = getValidTargetIndices(p.id, pieceIds)
+      
+      // Check if ALL valid target positions for this piece are occupied
+      // If at least one valid position is free, this piece can be hinted
+      const hasAvailableTarget = validIndices.some(targetIndex => !occupiedTargets.has(targetIndex))
+      
+      if (!hasAvailableTarget) {
+        // All valid positions for this piece are occupied, skip it
+        return false
       }
       
       const val = validation.pieces.find(vp => vp.pieceId === p.id)
@@ -1094,16 +1115,24 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
       chosenPieceId = randomPiece.id
     }
 
+    // Find the first unoccupied valid target index for the chosen piece
+    const validIndices = getValidTargetIndices(chosenPieceId, pieceIds)
+    const availableTargetIndex = validIndices.find(targetIndex => !occupiedTargets.has(targetIndex))
+    
+    if (availableTargetIndex === undefined) return // Safety check
+
     shownHints.current.add(chosenPieceId)
     const newHintsUsed = hintsUsed + 1
     setHintsUsed(newHintsUsed)
     setHintPiece(chosenPieceId)
+    setHintTargetIndex(availableTargetIndex)
 
     // Easy: 3s, Medium: 2s, Hard: 1s
     const hintDuration = difficulty === 'hard' ? 1000 : difficulty === 'medium' ? 2000 : 3000
 
     hintTimeoutRef.current = setTimeout(() => {
       setHintPiece(null)
+      setHintTargetIndex(null)
       hintTimeoutRef.current = null
     }, hintDuration)
   }, [hintsUsed, pieces, difficulty])
@@ -1416,6 +1445,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
     score,
     hintsUsed,
     hintPiece,
+    hintTargetIndex,
     availableHints: 3 - hintsUsed,
     isSolved: gameStatus === 'won',
     scaledData: scaledData.current,

@@ -54,6 +54,7 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
     score,
     hintsUsed,
     hintPiece,
+    hintTargetIndex,
     availableHints,
     scaledData,
     selectPiece,
@@ -189,7 +190,11 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
   }
 
   // Get hint piece data from polygon pieces
+  // When hintTargetIndex is provided, use that target polygon instead of the piece's assigned target
   const hintPieceData = hintPiece ? pieces.find(p => p.id === hintPiece) : null
+  const hintTargetPolygon = (hintPieceData && hintTargetIndex !== null && hintTargetIndex !== undefined) 
+    ? pieces[hintTargetIndex]?.targetPolygon 
+    : hintPieceData?.targetPolygon
 
   // Get silhouette path from scaled polygon data
   const silhouettePath = scaledData ? polygonToSVGPath(scaledData.polygon) : undefined
@@ -207,6 +212,12 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
           {/* Puzzle Metadata */}
           <div className="text-center space-y-1 w-full mt-4">
             <div className="flex items-center justify-center gap-3 flex-wrap">
+              {/* Difficulty Badge - Only visible on mobile */}
+              <span className="md:hidden inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 font-urbanist text-[13px] font-bold text-[#6949FF] capitalize">
+                {puzzle?.difficulty || difficulty}
+              </span>
+              
+              {/* Estimated Time Badge */}
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5F6FA] dark:bg-[#35383F] font-urbanist text-[12px] font-semibold text-[#616161] dark:text-[#A0A4B8]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/>
@@ -224,10 +235,10 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
             <div ref={desktopBoardRef} className="flex-1 max-w-[700px] min-w-[320px] overflow-visible">
               <TangramBoard silhouette={silhouettePath} onBoardClick={() => selectPiece(null)}>
                 {/* Hint Ghost */}
-                {hintPiece && hintPieceData && (
+                {hintPiece && hintPieceData && hintTargetPolygon && (
                   <PolygonHintGhost
                     pieceId={hintPiece}
-                    targetPolygon={hintPieceData.targetPolygon}
+                    targetPolygon={hintTargetPolygon}
                     color={hintPieceData.color}
                     boardContainerWidth={desktopBoardWidth}
                   />
@@ -425,10 +436,10 @@ export function TangramGame({ mode = 'normal', puzzleId: _puzzleId }: TangramGam
             <div ref={mobileBoardRef} className="w-full">
               <TangramBoard mobile silhouette={silhouettePath} onBoardClick={() => selectPiece(null)}>
                 {/* Hint Ghost */}
-                {hintPiece && hintPieceData && (
+                {hintPiece && hintPieceData && hintTargetPolygon && (
                   <PolygonHintGhost
                     pieceId={hintPiece}
-                    targetPolygon={hintPieceData.targetPolygon}
+                    targetPolygon={hintTargetPolygon}
                     color={hintPieceData.color}
                     boardContainerWidth={mobileBoardWidth}
                   />
