@@ -107,7 +107,10 @@ export function CrossMathGame() {
   }
 
   const handlePlayAgain = () => {
-    handleNewGame(true) // Always replay same puzzle on Try Again
+    // Shuffle: always fetch a fresh random puzzle on Play Again.
+    // Daily/past-puzzle replays still resolve to the same date-fixed puzzle
+    // via resetBoard's daily path.
+    handleNewGame(false)
   }
 
   const handleBackToGames = () => {
@@ -241,7 +244,7 @@ export function CrossMathGame() {
                     </button>
 
                     <button
-                      onClick={() => handleNewGame(true)}
+                      onClick={() => handleNewGame(false)}
                       disabled={isResetting}
                       className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
@@ -334,7 +337,7 @@ export function CrossMathGame() {
                   </button>
 
                   <button
-                    onClick={() => handleNewGame(true)}
+                    onClick={() => handleNewGame(false)}
                     disabled={isResetting}
                     className="w-full h-[46px] rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[#F0EDFF] dark:hover:bg-[#35383F] font-urbanist font-bold text-[16px] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
