@@ -379,6 +379,8 @@ export function useNonogram(initialPuzzleId?: string) {
       setGrid(createEmptyGrid(puzzle.size))
       setMistakeCount(0)
       setMoveCount(0)
+      setSelectedCell(null) // ✅ Clear selected cell
+      setHoveredCell(null) // ✅ Clear hover state
       setSelectionHistory([])
 
       // Set initial countdown time based on difficulty: easy=10m (600), medium=7m (420), hard=5m (300)
@@ -468,6 +470,7 @@ export function useNonogram(initialPuzzleId?: string) {
             setProgress(calculateProgress(serverGrid, restoredPuzzle.solution))
             setInputMode('fill')
             setSelectedCell(null)
+            setHoveredCell(null) // ✅ Clear hover state
             setSelectionHistory([])
             startTimeRef.current = null
 
@@ -525,6 +528,8 @@ export function useNonogram(initialPuzzleId?: string) {
         setGrid(saved.grid)
         setMistakeCount(saved.mistakeCount)
         setMoveCount(saved.moveCount || 0)
+        setSelectedCell(null) // ✅ Clear selected cell
+        setHoveredCell(null) // ✅ Clear hover state
         setElapsedSeconds(saved.elapsedSeconds)
         // Completed snapshots restore the win/loss review (survives FAQ/back
         // navigation); in-progress games always resume as playing.
@@ -1070,6 +1075,7 @@ export function useNonogram(initialPuzzleId?: string) {
       const emptyGrid = createEmptyGrid(currentPuzzle.size)
       setGrid(emptyGrid)
       setSelectedCell(null)
+      setHoveredCell(null) // ✅ Clear hover state
       setSelectionHistory([])
       const initialSeconds = currentPuzzle.estimatedTime || getTimeLimitSeconds(difficulty)
       setElapsedSeconds(initialSeconds)
@@ -1239,31 +1245,79 @@ export function useNonogram(initialPuzzleId?: string) {
         const baseCell = hoveredCell || selectedCell
 
         if (!baseCell) {
-          setSelectedCell({ row: 0, col: 0 })
-          setHoveredCell({ row: 0, col: 0 })
+          // Find first empty cell to start navigation
+          let found = false
+          for (let r = 0; r < currentPuzzle.size; r++) {
+            for (let c = 0; c < currentPuzzle.size; c++) {
+              if (grid[r][c] === 'empty') {
+                setSelectedCell({ row: r, col: c })
+                setHoveredCell({ row: r, col: c })
+                found = true
+                break
+              }
+            }
+            if (found) break
+          }
           return
         }
 
         let newRow = baseCell.row
         let newCol = baseCell.col
+        let direction: 'up' | 'down' | 'left' | 'right' | null = null
 
         switch (e.key) {
           case 'ArrowUp':
-            newRow = Math.max(0, baseCell.row - 1)
+            direction = 'up'
             break
           case 'ArrowDown':
-            newRow = Math.min(currentPuzzle.size - 1, baseCell.row + 1)
+            direction = 'down'
             break
           case 'ArrowLeft':
-            newCol = Math.max(0, baseCell.col - 1)
+            direction = 'left'
             break
           case 'ArrowRight':
-            newCol = Math.min(currentPuzzle.size - 1, baseCell.col + 1)
+            direction = 'right'
             break
         }
 
-        setSelectedCell({ row: newRow, col: newCol })
-        setHoveredCell({ row: newRow, col: newCol })
+        // Find next empty cell in the direction
+        let attempts = 0
+        const maxAttempts = currentPuzzle.size // Prevent infinite loop
+        
+        while (attempts < maxAttempts) {
+          // Move in direction
+          switch (direction) {
+            case 'up':
+              newRow = newRow > 0 ? newRow - 1 : currentPuzzle.size - 1
+              break
+            case 'down':
+              newRow = newRow < currentPuzzle.size - 1 ? newRow + 1 : 0
+              break
+            case 'left':
+              newCol = newCol > 0 ? newCol - 1 : currentPuzzle.size - 1
+              break
+            case 'right':
+              newCol = newCol < currentPuzzle.size - 1 ? newCol + 1 : 0
+              break
+          }
+
+          // Check if this cell is empty
+          if (grid[newRow][newCol] === 'empty') {
+            setSelectedCell({ row: newRow, col: newCol })
+            setHoveredCell({ row: newRow, col: newCol })
+            return
+          }
+
+          attempts++
+          
+          // If we've cycled back to starting position, stop
+          if (newRow === baseCell.row && newCol === baseCell.col) {
+            break
+          }
+        }
+
+        // If no empty cell found, don't move
+        return
       }
 
 

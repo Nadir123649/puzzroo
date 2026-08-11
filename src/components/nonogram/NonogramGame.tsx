@@ -806,7 +806,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                 </button>
               )}
               
-              {/* Action Buttons - Replay or New Puzzle */}
+              {/* Action Buttons - Replay or New Game */}
               {isFromPastPuzzles ? (
                 <button
                   onClick={handleReplay}
@@ -826,7 +826,7 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                     onClick={handleNewPuzzle}
                     className="w-full sm:flex-1 h-[46px] rounded-full bg-[#6949FF] hover:bg-[#5536E6] text-white font-urbanist font-bold text-[15px] transition-all duration-300 active:scale-95"
                   >
-                    New Puzzle
+                    New Game
                   </button>
                 </>
               )}
@@ -847,8 +847,8 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
         </div>
       </section>
 
-      {/* Floating Tooltip - Follows Mouse Cursor */}
-      {!isCurrentlyLoading && hoveredCell && mousePosition && (
+      {/* Floating Tooltip - Follows Mouse Cursor - Only for Empty Cells */}
+      {!isCurrentlyLoading && hoveredCell && mousePosition && grid[hoveredCell.row]?.[hoveredCell.col] === 'empty' && (
         <div
           className="fixed pointer-events-none transition-none"
           style={{
