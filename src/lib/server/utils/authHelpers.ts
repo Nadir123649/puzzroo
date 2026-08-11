@@ -152,6 +152,12 @@ export async function handleOAuth(
   // the linked-providers list. Email is linked whenever a password exists.
   addLinkedProvider(user, mappedProvider);
   if (user.password) addLinkedProvider(user, "email");
+  // Persist the provider's own email so the UI can always show the correct
+  // Google account email, independent of the account email (which the user
+  // can change later). Only set, never overwritten once present.
+  if (mappedProvider === "google" && normalizedEmail && !user.googleEmail) {
+    user.googleEmail = normalizedEmail;
+  }
   user.lastLoginAt = new Date();
   await user.save({ validateBeforeSave: false });
   let sessionId: string | undefined;

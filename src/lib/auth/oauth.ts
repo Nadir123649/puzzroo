@@ -159,6 +159,7 @@ function mapUserData(payload: any, provider: OAuthProvider, firebaseEmail?: stri
     id: u.id,
     name: u.name || u.username,
     email: resolvedEmail,
+    googleEmail: u.googleEmail || (provider === 'google' ? (firebaseEmail ?? null) : null),
     username: u.username,
     usernameSet: u.usernameSet,
     joinedDate: u.createdAt

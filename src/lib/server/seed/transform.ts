@@ -116,6 +116,7 @@ export function crossMathDocs(): IndexedDoc[] {
     maxMistakes: r.maxMistakes ?? 3,
     hash: r._hash || "",
     generatorVersion: GENERATOR_VERSION,
+    isActive: true,
   }));
   return assignDailyIndex(docs);
 }

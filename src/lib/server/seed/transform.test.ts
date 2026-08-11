@@ -40,10 +40,11 @@ describe("seed transforms", () => {
 
   it("crossmath: keeps compact fields", () => {
     const docs = crossMathDocs();
-    expect(docs.length).toBeGreaterThan(0);
+    expect(docs.length).toBe(2876);
     const d: any = docs[0];
     expect(d.solution).toBeTypeOf("object");
     expect(Array.isArray(d.blanks)).toBe(true);
+    expect(d.isActive).toBe(true);
     assertDailyIndexUniquePerDifficulty(docs);
   });
 

@@ -6,6 +6,7 @@ export function formatUser(user: any) {
     usernameSet: user.usernameSet,
     name: user.name,
     email: user.email,
+    googleEmail: user.googleEmail || null,
     phone: user.phone,
     role: user.role === "premium" ? "free" : user.role,
     status: user.status,
