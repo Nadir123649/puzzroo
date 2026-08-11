@@ -62,11 +62,14 @@ export async function createSession(request: NextRequest, userId: string, provid
     // Reuse the existing active session for this device, but NEVER reset
     // tokenVersion: doing so silently invalidates refresh tokens already
     // issued to other tabs/windows of this session, which forces a
-    // token_reused logout minutes later.
+    // token_reused logout minutes later. Reset createdAt so a re-login on
+    // the same device reports a fresh "last login" time. createdAt is
+    // immutable in the schema, so overwriteImmutable is required or
+    // mongoose silently strips it from $set.
     const existing = await LoginSession.findOneAndUpdate(
       { userId, deviceFingerprint, status: "active" },
-      { $set: sessionData },
-      { returnDocument: 'after' },
+      { $set: { ...sessionData, createdAt: new Date() } },
+      { returnDocument: 'after', overwriteImmutable: true },
     );
     if (existing) return existing;
   }
