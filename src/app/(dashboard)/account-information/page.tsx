@@ -287,10 +287,10 @@ export default function AccountInformationPage() {
               Email Address
             </span>
             <div className="flex flex-col items-start sm:items-end">
-              {localUser?.email && localUser?.email !== 'N/A' && localUser.email.trim() !== '' ? (
+              {localUser?.email && localUser?.email !== 'N/A' && localUser?.email.trim() !== '' ? (
                 <>
                   <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
-                    {localUser.email}
+                    {localUser?.email}
                   </span>
                   {localUser?.isVerified || localUser?.provider === 'google' ? (
                     <div className="flex items-center gap-1 mt-0.5">

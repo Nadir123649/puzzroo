@@ -62,6 +62,7 @@ export default function SignupPage() {
         setErrors,
         welcomeKey: 'AUTH_WELCOME_OAUTH',
         router,
+        firebaseEmail: result.firebaseEmail,
       })
     })()
     return () => { cancelled = true }
@@ -314,13 +315,14 @@ export default function SignupPage() {
                 type="button"
                 onClick={async () => {
                   try {
-                    const firebaseToken = await signInOAuthPopup('google')
-                    if (firebaseToken === OAUTH_REDIRECT_SENTINEL) return
-                    await completeOAuthLogin(firebaseToken, 'google', false, {
+                    const oauthResult = await signInOAuthPopup('google')
+                    if (oauthResult === OAUTH_REDIRECT_SENTINEL) return
+                    await completeOAuthLogin(oauthResult.token, 'google', false, {
                       setSubmitting: () => {},
                       setErrors,
                       welcomeKey: 'AUTH_WELCOME_OAUTH',
                       router,
+                      firebaseEmail: oauthResult.firebaseEmail,
                     })
                   } catch (err: any) {
                     const code = err?.code
