@@ -27,7 +27,7 @@ async selectRandom(options: SelectRandomOptions, page = 1, pageSize = 20, shapeN
       excludeRecentAbandons = true,
     } = options
 
-    const matchFilter: Record<string, any> = { game: "crossmath" }
+    const matchFilter: Record<string, any> = { game: "crossmath", isActive: true }
     if (difficulty) matchFilter.difficulty = difficulty
 
     const isObjectId = mongoose.Types.ObjectId.isValid(userId)
@@ -114,7 +114,7 @@ async selectRandom(options: SelectRandomOptions, page = 1, pageSize = 20, shapeN
   async selectPuzzleForPlayer(options: SelectPuzzleForPlayerOptions) {
     const { userId, difficulty, patternId } = options
 
-    const matchFilter: Record<string, any> = { game: "crossmath" }
+    const matchFilter: Record<string, any> = { game: "crossmath", isActive: true }
     if (difficulty) matchFilter.difficulty = difficulty
     if (patternId !== undefined) matchFilter.patternId = patternId
 
@@ -185,7 +185,7 @@ async selectRandom(options: SelectRandomOptions, page = 1, pageSize = 20, shapeN
   }
 
   async selectDailyPuzzle(dateStr: string, difficulty?: "easy" | "medium" | "hard") {
-    const matchFilter: Record<string, any> = { game: "crossmath", dailyIndex: { $exists: true } }
+    const matchFilter: Record<string, any> = { game: "crossmath", dailyIndex: { $exists: true }, isActive: true }
     if (difficulty) matchFilter.difficulty = difficulty
 
     const allPuzzles = await CrossMathPuzzle.find(matchFilter)
