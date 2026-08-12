@@ -69,6 +69,7 @@ export default function AccountInformationPage() {
   const [sessions, setSessions] = useState<SessionDevice[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
   const [currentLocation, setCurrentLocation] = useState<string | null>(null)
+  const [serverGoogleEmail, setServerGoogleEmail] = useState<string | null>(null)
   const [provider, setProvider] = useState<string | null>(localUser?.provider || null)
   const [linkedProviders, setLinkedProviders] = useState<string[]>(localUser?.linkedProviders || [])
   
@@ -157,7 +158,18 @@ export default function AccountInformationPage() {
     // Pull the server profile (name, avatar) so changes made on other devices
     // are reflected here; the localStorage snapshot can lag behind.
     refreshUserProfile().then(profile => {
-      if (profile) setLocalUser(prev => (prev ? { ...prev, ...profile } : profile))
+      if (profile) {
+        setLocalUser(prev => (prev ? { ...prev, ...profile } : profile))
+        if (profile.linkedProviders?.length) setLinkedProviders(profile.linkedProviders)
+        if (profile.provider) setProvider(profile.provider)
+      }
+    })
+
+    // Also fetch raw profile to get googleEmail directly from the server
+    // (bypasses any localStorage mapping issues)
+    fetchUserProfile().then(p => {
+      if (p?.googleEmail) setServerGoogleEmail(p.googleEmail)
+      else if (p?.email) setServerGoogleEmail(p.email)
     })
 
     fetchGameStats().then(setGameStats)
@@ -361,6 +373,10 @@ export default function AccountInformationPage() {
               <Button
                 size="xs"
                 onClick={() => {
+                  if (originallyGoogle && !hasLinkedApplicationEmail) {
+                    notify.error('Link your email first')
+                    return
+                  }
                   const hasEmail = !!(localUser?.email && localUser.email !== 'N/A' && localUser.email.trim() !== '')
                   if (!originallyGoogle && !hasEmail) {
                     notify.error('Link your email first')
@@ -448,7 +464,7 @@ export default function AccountInformationPage() {
                       })()}
                       {/* Google: show the Google account email (persisted at OAuth login; falls back to account email only for pre-backfill users) */}
                       {p === 'google' && (() => {
-                        const googleEmail = (localUser?.googleEmail || getCurrentUser()?.googleEmail) ?? (localUser?.email ?? getCurrentUser()?.email ?? '')
+                        const googleEmail = localUser?.googleEmail || getCurrentUser()?.googleEmail || serverGoogleEmail || localUser?.email || getCurrentUser()?.email || ''
                         return googleEmail && googleEmail !== 'N/A' && googleEmail.trim() !== '' ? (
                           <span className="font-urbanist text-[12px] text-[#757575] dark:text-[#9E9E9E] truncate block mt-0.5">
                             {googleEmail}
