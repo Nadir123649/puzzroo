@@ -34,11 +34,15 @@ export function DeleteAccountModal({ isOpen, onClose, onDeleted }: DeleteAccount
         setIsLoading(false)
         return
       }
-      notify.successKey('ACCOUNT_DELETED')
+      
+      // Set flag to show delete success toast on login page (survives navigation)
+      sessionStorage.setItem('puzzroo_show_account_deleted_toast', 'true')
+      
       setIsLoading(false)
       setConfirmed(false)
-      if (onDeleted) onDeleted()
-      else handleClose()
+      
+      // Navigate to login page where toast will be shown
+      window.location.replace('/login')
     } catch {
       notify.errorKey('ACCOUNT_DELETE_FAILED_RETRY')
       setIsLoading(false)
