@@ -253,7 +253,7 @@ export function usePolygonTangram(difficulty: TangramDifficulty = 'easy') {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const shownHints = useRef<Set<TangramPieceId>>(new Set())
+  const shownHints = useRef<Set<string>>(new Set()) // Changed from TangramPieceId to string to track "pieceId-targetIndex" combinations
   const scaledData = useRef<ReturnType<typeof scaleAndCenterPolygon> | null>(null)
   const lastCommittedStateRef = useRef<PieceState[] | null>(null)
   const timeRemainingRef = useRef(timeRemaining)
