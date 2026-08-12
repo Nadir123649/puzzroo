@@ -318,7 +318,7 @@ export default function AccountInformationPage() {
                   onClick={() => setIsEmailModalOpen(true)}
                   className="font-urbanist font-semibold text-[14px] text-[#6949FF] hover:underline"
                 >
-                  Link
+                  Link email
                 </button>
               )}
             </div>
@@ -440,7 +440,7 @@ export default function AccountInformationPage() {
                             onClick={() => setIsEmailModalOpen(true)}
                             className="font-urbanist font-semibold text-[12px] text-[#6949FF] hover:underline mt-0.5"
                           >
-                            Link
+                            Link email
                           </button>
                         )
                       })()}
