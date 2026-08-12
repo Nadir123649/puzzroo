@@ -59,10 +59,9 @@ function TangramDailyChallengeContent() {
     })
   }, [dateParam])
 
-  if (!mounted || completionCheck === 'loading') {
+  if (!mounted) {
     return null
   }
-
 
   return (
     <>

@@ -81,7 +81,7 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validate()) return
+    if (!validate() || isSubmitting) return
 
     setIsSubmitting(true)
 
@@ -90,6 +90,7 @@ export default function ResetPasswordPage() {
     setIsSubmitting(false)
 
     if (result.success) {
+      notify.dismiss() // Clear any existing toasts
       notify.successKey('AUTH_RESET_SUCCESS')
       setIsSuccess(true)
       setTimeout(() => {
@@ -103,6 +104,7 @@ export default function ResetPasswordPage() {
       if (isTokenInvalid) {
         setTokenError(true)
       }
+      notify.dismiss() // Clear any existing toasts before showing new error
       notify.errorFromResult(result, 'AUTH_RESET_FAILED')
       setErrors({ general: notify.fromResult(result, 'AUTH_RESET_FAILED') })
     }
