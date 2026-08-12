@@ -1,41 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import { notify } from '@/lib/toast'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
-  const [isUsernameSetupActive, setIsUsernameSetupActive] = useState(false)
-  const [lastToastTime, setLastToastTime] = useState(0)
-
-  useEffect(() => {
-    // Check if username setup is active
-    const checkUsernameSetup = () => {
-      if (typeof window !== 'undefined') {
-        const flag = sessionStorage.getItem('puzzroo_username_setup_active')
-        setIsUsernameSetupActive(flag === 'true')
-      }
-    }
-
-    // Check on mount
-    checkUsernameSetup()
-
-    // Also check on storage changes (in case opened in multiple tabs)
-    window.addEventListener('storage', checkUsernameSetup)
-    return () => window.removeEventListener('storage', checkUsernameSetup)
-  }, [])
-
-  const handleDisabledClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    
-    // Throttle toast to once every 3 seconds
-    const now = Date.now()
-    if (now - lastToastTime < 3000) return
-    
-    setLastToastTime(now)
-    notify.error('Please set your username first')
-  }
 
   return (
     <footer className="w-full bg-[#F0EDFF] dark:bg-[#1F222A] transition-colors duration-300">
@@ -56,10 +25,7 @@ export function Footer() {
             <Link
               href="/faq"
               prefetch={false}
-              onClick={isUsernameSetupActive ? handleDisabledClick : undefined}
-              className={`font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap ${
-                isUsernameSetupActive ? 'opacity-60 cursor-not-allowed' : ''
-              }`}
+              className="font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap"
             >
               FAQ
             </Link>
@@ -67,10 +33,7 @@ export function Footer() {
             <Link
               href="/contact-us"
               prefetch={false}
-              onClick={isUsernameSetupActive ? handleDisabledClick : undefined}
-              className={`font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap ${
-                isUsernameSetupActive ? 'opacity-60 cursor-not-allowed' : ''
-              }`}
+              className="font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap"
             >
               Contact Us
             </Link>
@@ -78,10 +41,7 @@ export function Footer() {
             <Link
               href="/privacy-policy"
               prefetch={false}
-              onClick={isUsernameSetupActive ? handleDisabledClick : undefined}
-              className={`font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap ${
-                isUsernameSetupActive ? 'opacity-60 cursor-not-allowed' : ''
-              }`}
+              className="font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap"
             >
               Privacy Policy
             </Link>
@@ -89,10 +49,7 @@ export function Footer() {
             <Link
               href="/terms-and-conditions"
               prefetch={false}
-              onClick={isUsernameSetupActive ? handleDisabledClick : undefined}
-              className={`font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap ${
-                isUsernameSetupActive ? 'opacity-60 cursor-not-allowed' : ''
-              }`}
+              className="font-urbanist font-medium text-[12px] text-[#424242] dark:text-[#FAFAFA] hover:text-[#6949FF] transition-colors whitespace-nowrap"
             >
               Terms and Conditions
             </Link>
