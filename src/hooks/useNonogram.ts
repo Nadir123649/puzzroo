@@ -519,10 +519,32 @@ export function useNonogram(initialPuzzleId?: string) {
       return
     }
 
-    const targetPuzzleId = isDailyChallenge && dateParam ? `daily-nonogram-${dateParam}` : puzzle.id
-
     if (loadSaved && typeof window !== 'undefined') {
       const saved = loadGameState()
+
+      // Completed-game review (won/lost) must survive navigation (FAQ, back
+      // button). The random fetch above excludes already-played puzzles, so it
+      // never returns the completed snapshot's puzzle. When the snapshot is a
+      // completed review of a DIFFERENT puzzle, load the SAVED puzzle (cache
+      // or by id) and restore it instead of silently starting a new game.
+      if (
+        saved &&
+        !puzzleId &&
+        (saved.gameStatus === 'won' || saved.gameStatus === 'lost') &&
+        saved.puzzleId !== puzzle.id
+      ) {
+        try {
+          const cached = readCache(saved.puzzleId)
+          const savedPuzzle = cached || (await gameApi.getPuzzleById('nonogram', saved.puzzleId) as unknown as PuzzleData)
+          if (savedPuzzle && (savedPuzzle as any).id) {
+            puzzle = savedPuzzle
+            writeCache(savedPuzzle.id, savedPuzzle)
+          }
+        } catch { /* keep the freshly fetched puzzle */ }
+      }
+
+      const targetPuzzleId = puzzle.id
+
       if (saved && saved.puzzleId === targetPuzzleId && saved.difficulty === diff) {
         setCurrentPuzzle(puzzle)
         setGrid(saved.grid)
