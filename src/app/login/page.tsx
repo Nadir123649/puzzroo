@@ -44,6 +44,16 @@ function LoginPageContent() {
         notify.successKey('AUTH_LOGOUT_SUCCESS', undefined, { duration: 4000 })
       }, 100)
     }
+    
+    // Check for account deleted flag and show toast
+    const showAccountDeletedToast = sessionStorage.getItem('puzzroo_show_account_deleted_toast')
+    if (showAccountDeletedToast === 'true') {
+      sessionStorage.removeItem('puzzroo_show_account_deleted_toast')
+      // Delay to ensure page is fully loaded
+      setTimeout(() => {
+        notify.successKey('ACCOUNT_DELETED', undefined, { duration: 4000 })
+      }, 100)
+    }
   }, [verified])
 
   // Consume a Facebook (redirect) OAuth result when the provider bounces back.
