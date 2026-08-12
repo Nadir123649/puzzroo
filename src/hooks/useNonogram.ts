@@ -369,6 +369,20 @@ export function useNonogram(initialPuzzleId?: string) {
    * Initialize a new puzzle
    */
   const initializePuzzle = useCallback(async (diff: Difficulty, loadSaved = true, puzzleId?: string, refresh = false) => {
+    // Immediately clear all state to prevent previous board visual bleed
+    setCurrentPuzzle(null)
+    setGrid([])
+    setSelectedCell(null)
+    setHoveredCell(null)
+    setSelectionHistory([])
+    setErrorCell(null)
+    setDragPreviewCells(new Set())
+    setIsDragging(false)
+    setDragAction(null)
+    dragStartPos.current = null
+    dragActionRef.current = null
+    dragPathRef.current = []
+
     // Load new puzzle (async fetch from API with static fallback + cache)
     const token = ++initTokenRef.current
     let cancelled = false
@@ -998,13 +1012,6 @@ export function useNonogram(initialPuzzleId?: string) {
     handleDragEnter({ row, col })
   }, [isDragging, handleDragEnter])
 
-  // Setup global pointer move listener for drag
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('pointermove', handlePointerMove)
-      return () => window.removeEventListener('pointermove', handlePointerMove)
-    }
-  }, [isDragging, handlePointerMove])
 
   // End drag - clean up drag state
   const handleDragEnd = useCallback(() => {
@@ -1089,6 +1096,20 @@ export function useNonogram(initialPuzzleId?: string) {
     dragActionRef.current = null
   }, [isDragging, dragPreviewCells, grid, currentPuzzle, validationMode, mistakeCount, difficulty, rowValidation, columnValidation])
 
+  // Setup global pointer move, up and cancel listeners for drag
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('pointermove', handlePointerMove)
+      window.addEventListener('pointerup', handleDragEnd)
+      window.addEventListener('pointercancel', handleDragEnd)
+      return () => {
+        window.removeEventListener('pointermove', handlePointerMove)
+        window.removeEventListener('pointerup', handleDragEnd)
+        window.removeEventListener('pointercancel', handleDragEnd)
+      }
+    }
+  }, [isDragging, handlePointerMove, handleDragEnd])
+
   /**
    * Reset the current puzzle
    */
@@ -1099,6 +1120,13 @@ export function useNonogram(initialPuzzleId?: string) {
       setSelectedCell(null)
       setHoveredCell(null) // ✅ Clear hover state
       setSelectionHistory([])
+      setErrorCell(null)
+      setDragPreviewCells(new Set())
+      setIsDragging(false)
+      setDragAction(null)
+      dragStartPos.current = null
+      dragActionRef.current = null
+      dragPathRef.current = []
       const initialSeconds = currentPuzzle.estimatedTime || getTimeLimitSeconds(difficulty)
       setElapsedSeconds(initialSeconds)
       setHintsUsed(0)

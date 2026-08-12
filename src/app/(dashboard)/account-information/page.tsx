@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
 import { ChangeNameModal } from '@/components/account/ChangeNameModal'
 import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
@@ -58,6 +59,7 @@ function formatSessionTime(dateStr: string) {
 }
 
 export default function AccountInformationPage() {
+  const router = useRouter()
   const [localUser, setLocalUser] = useState(getCurrentUser())
   const [gameStats, setGameStats] = useState<any>(null)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
@@ -70,6 +72,11 @@ export default function AccountInformationPage() {
   const [provider, setProvider] = useState<string | null>(localUser?.provider || null)
   const [linkedProviders, setLinkedProviders] = useState<string[]>(localUser?.linkedProviders || [])
   
+  const originallyGoogle = linkedProviders.includes('google') || provider === 'google'
+  const hasLinkedApplicationEmail = originallyGoogle 
+    ? (linkedProviders.includes('email') && localUser?.email && localUser?.email !== 'N/A' && localUser?.email.trim() !== '')
+    : (!!localUser?.email && localUser?.email !== 'N/A' && localUser?.email.trim() !== '')
+
   // Compute canChangePassword reactively from localUser state
   const canChangePassword = !!localUser?.hasPassword
 
@@ -275,9 +282,18 @@ export default function AccountInformationPage() {
               <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white">
                 {localUser?.username || 'N/A'}
               </span>
-              <span className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] mt-0.5">
-                Username cannot be changed
-              </span>
+              {localUser?.usernameSet === false ? (
+                <button
+                  onClick={() => router.push('/choose-username')}
+                  className="mt-1 font-urbanist font-semibold text-[11px] text-[#6949FF] hover:underline"
+                >
+                  Set Username
+                </button>
+              ) : (
+                <span className="font-urbanist text-[11px] text-[#757575] dark:text-[#BDBDBD] mt-0.5">
+                  Username cannot be changed
+                </span>
+              )}
             </div>
           </div>
 
@@ -287,7 +303,19 @@ export default function AccountInformationPage() {
               Email Address
             </span>
             <div className="flex flex-col items-start sm:items-end">
-              {localUser?.email && localUser?.email !== 'N/A' && localUser?.email.trim() !== '' ? (
+              {originallyGoogle && !hasLinkedApplicationEmail ? (
+                <>
+                  <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
+                    N/A
+                  </span>
+                  <button
+                    onClick={() => setIsEmailModalOpen(true)}
+                    className="mt-1 font-urbanist font-semibold text-[11px] text-[#6949FF] hover:underline"
+                  >
+                    Link email
+                  </button>
+                </>
+              ) : localUser?.email && localUser?.email !== 'N/A' && localUser?.email.trim() !== '' ? (
                 <>
                   <span className="font-urbanist font-semibold text-[14px] text-[#212121] dark:text-white break-all">
                     {localUser?.email}
@@ -334,14 +362,14 @@ export default function AccountInformationPage() {
                 size="xs"
                 onClick={() => {
                   const hasEmail = !!(localUser?.email && localUser.email !== 'N/A' && localUser.email.trim() !== '')
-                  if (!hasEmail) {
+                  if (!originallyGoogle && !hasEmail) {
                     notify.error('Link your email first')
                     return
                   }
                   setIsPasswordModalOpen(true)
                 }}
               >
-                Change Password
+                {canChangePassword ? 'Change Password' : 'Set Password'}
               </Button>
             </div>
           </div>
@@ -668,7 +696,7 @@ export default function AccountInformationPage() {
       <SetEmailModal
         isOpen={isEmailModalOpen}
         onClose={() => { setIsEmailModalOpen(false); fetchUserProfile().then(p => { if (p?.user) setLocalUser(prev => prev ? { ...prev, email: p.user.email, hasPassword: p.user.hasPassword } : prev); }); }}
-        currentEmail={localUser?.email}
+        currentEmail={originallyGoogle && !hasLinkedApplicationEmail ? '' : localUser?.email}
         hasPassword={!!localUser?.hasPassword}
       />
       <ChangePasswordModal 

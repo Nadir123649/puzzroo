@@ -608,7 +608,6 @@ export function NonogramGame({ puzzleId, onBackToSelection }: { puzzleId?: strin
                       touchAction: 'none',
                     }}
                     onPointerUp={handleDragEnd}
-                    onPointerLeave={handleDragEnd}
                     onPointerCancel={handleDragEnd}
                   >
                     {grid.map((row, rowIdx) =>
