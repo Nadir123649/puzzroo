@@ -73,16 +73,19 @@ export function NonogramModal({
       />
 
       {/* Modal */}
-      <div className={`fixed inset-0 z-[100000] flex items-center justify-center p-3 transition-opacity duration-300 ${
-        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}>
+      <div 
+        className={`fixed inset-0 z-[100000] flex items-center justify-center p-3 transition-opacity duration-300 pointer-events-none ${
+          isOpen ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
         <div
-          className={`bg-white dark:bg-[#1F222A] rounded-xl shadow-2xl max-w-[320px] w-full overflow-hidden transform transition-all duration-300 ${
+          className={`bg-white dark:bg-[#1F222A] rounded-xl shadow-2xl max-w-[320px] w-full overflow-hidden transform transition-all duration-300 pointer-events-auto ${
             isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
           }`}
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Header with Purple Gradient (matching original design) */}
           <div className="bg-gradient-to-br from-[#6949FF] to-[#8B6EFF] px-4 py-4 text-center relative overflow-hidden">
