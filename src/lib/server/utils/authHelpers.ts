@@ -119,6 +119,7 @@ export async function handleOAuth(
       guest.firebaseProvider = mappedProvider;
       guest.provider = mappedProvider;
       if (normalizedEmail) guest.email = normalizedEmail;
+      if (mappedProvider === "google" && normalizedEmail) guest.googleEmail = normalizedEmail;
       if (name) guest.name = name;
       if (picture) guest.avatar = picture;
       guest.role = "free";
@@ -140,6 +141,7 @@ export async function handleOAuth(
       email: normalizedEmail || null, firebaseUid: uid, publicId: await generatePublicId(),
       provider: mappedProvider, firebaseProvider: mappedProvider, avatar: picture || null,
       role: "free", isVerified: true, linkedProviders: [mappedProvider],
+      ...(mappedProvider === "google" && normalizedEmail ? { googleEmail: normalizedEmail } : {}),
     });
   } else if (user.role !== "guest" && !user.publicId) {
     // Backfill a publicId for pre-existing real accounts that never had one.
@@ -155,7 +157,7 @@ export async function handleOAuth(
   // Persist the provider's own email so the UI can always show the correct
   // Google account email, independent of the account email (which the user
   // can change later). Only set, never overwritten once present.
-  if (mappedProvider === "google" && normalizedEmail && !user.googleEmail) {
+  if (mappedProvider === "google" && normalizedEmail) {
     user.googleEmail = normalizedEmail;
   }
   user.lastLoginAt = new Date();
